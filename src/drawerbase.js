@@ -272,6 +272,7 @@ $.DrawerBase = class DrawerBase{
         * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
         * @property {Array} tiles - An array of Tile objects that were drawn.
         * @property {?Object} userData - Arbitrary subscriber-defined object.
+        * @private
         */
         this.viewer.raiseEvent( 'tiled-image-drawn', {
             tiledImage: tiledImage,

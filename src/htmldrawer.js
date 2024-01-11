@@ -115,7 +115,6 @@ class HTMLDrawer extends $.DrawerBase{
      */
     setImageSmoothingEnabled(){
         // noop - HTML Drawer does not deal with this property
-        $.console.warn('HTMLDrawer.setImageSmoothingEnabled does not have an effect.');
     }
 
     /**

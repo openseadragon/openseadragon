@@ -16,7 +16,6 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
-                drawer: ['canvas', 'html'],
                 // defaultZoomLevel: 2,
                 // homeFillsViewer: true,
                 // sequenceMode: true,

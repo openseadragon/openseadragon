@@ -214,7 +214,7 @@
   *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
-  *     Image smoothing for canvas rendering (only if canvas is used). Note: Ignored
+  *     Image smoothing for canvas rendering (only if the canvas drawer is used). Note: Ignored
   *     by some (especially older) browsers which do not support this canvas property.
   *     This property can be changed in {@link Viewer.Drawer.setImageSmoothingEnabled}.
   *
