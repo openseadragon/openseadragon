@@ -7,7 +7,7 @@
 
     function runDrawerTests(drawerType){
 
-        QUnit.module('Drawer', {
+        QUnit.module('Drawer-'+drawerType, {
             beforeEach: function () {
                 $('<div id="example"></div>').appendTo("#qunit-fixture");
 
@@ -34,7 +34,7 @@
         };
 
         // ----------
-        QUnit.test('basics-'+drawerType, function(assert) {
+        QUnit.test('basics', function(assert) {
             var done = assert.async();
             createViewer();
             assert.ok(viewer.drawer, 'Drawer exists');
@@ -43,7 +43,7 @@
         });
 
         // ----------
-        QUnit.test('rotation-'+drawerType, function(assert) {
+        QUnit.test('rotation', function(assert) {
             var done = assert.async();
 
             createViewer({
@@ -70,7 +70,7 @@
         });
 
         // ----------
-        QUnit.test('debug-'+drawerType, function(assert) {
+        QUnit.test('debug', function(assert) {
             var done = assert.async();
             createViewer({
                 tileSources: '/test/data/testpattern.dzi',
@@ -89,7 +89,7 @@
         });
 
         // ----------
-        QUnit.test('sketchCanvas-'+drawerType, function(assert) {
+        QUnit.test('sketchCanvas', function(assert) {
             var done = assert.async();
 
             createViewer({
@@ -137,7 +137,7 @@
         });
 
         // ----------
-        QUnit.test('deprecations-'+drawerType, function(assert) {
+        QUnit.test('deprecations', function(assert) {
             var done = assert.async();
 
             createViewer({
