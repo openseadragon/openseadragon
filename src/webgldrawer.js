@@ -38,7 +38,17 @@
    /**
     * @class WebGLDrawer
     * @memberof OpenSeadragon
-    * @classdesc Default implementation of WebGLDrawer for an {@link OpenSeadragon.Viewer}.
+    * @classdesc Default implementation of WebGLDrawer for an {@link OpenSeadragon.Viewer}. The WebGLDrawer
+    * loads tile data as textures to the graphics card as soon as it is available (via the tile-ready event),
+    * and unloads the data (via the image-unloaded event). The drawer utilizes a context-dependent two pass drawing pipeline.
+    * For the first pass, tile composition for a given TiledImage is always done using a canvas with a WebGL context.
+    * This allows tiles to be stitched together without seams or artifacts, without requiring a tile source with overlap. If overlap is present,
+    * overlapping pixels are discarded. The second pass copies all pixel data from the WebGL context onto an output canvas
+    * with a Context2d context. This allows appliations to have access to pixel data and other functionality provided by
+    * Context2d, regardless of whether the CanvasDrawer or the WebGLDrawer is used. Certain options, including compositeOperation,
+    * clip, croppingPolygons, and debugMode are implemented using Context2d operations; in these scenarios, each TiledImage is
+    * drawn onto the output canvas immediately after the tile composition step (pass 1). Otherwise, for efficiency, all TiledImages
+    * are copied over to the output canvas at once, after all tiles have been composited for all images.
     * @param {Object} options - Options for this Drawer.
     * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
     * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
