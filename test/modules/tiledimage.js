@@ -1,7 +1,9 @@
 /* global QUnit, $, Util, testLog */
 
 (function() {
-    var viewer;
+    let viewer;
+
+    let precision = 0.000000001;
 
     QUnit.module('TiledImage', {
         beforeEach: function() {
@@ -120,8 +122,8 @@
 
             viewer.addHandler('animation-finish', function animationHandler() {
                 viewer.removeHandler('animation-finish', animationHandler);
-                assert.propEqual(image.getBounds(), new OpenSeadragon.Rect(1, 2, 3, 3), 'target bounds after animation');
-                assert.propEqual(image.getBounds(true), new OpenSeadragon.Rect(1, 2, 3, 3), 'current bounds after animation');
+                Util.assertRectangleEquals(assert,  new OpenSeadragon.Rect(1, 2, 3, 3), image.getBounds(), precision, 'target bounds after animation');
+                Util.assertRectangleEquals(assert,  new OpenSeadragon.Rect(1, 2, 3, 3), image.getBounds(true), precision, 'target bounds after animation');
                 done();
             });
         });

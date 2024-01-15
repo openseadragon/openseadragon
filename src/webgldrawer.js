@@ -44,7 +44,7 @@
     * For the first pass, tile composition for a given TiledImage is always done using a canvas with a WebGL context.
     * This allows tiles to be stitched together without seams or artifacts, without requiring a tile source with overlap. If overlap is present,
     * overlapping pixels are discarded. The second pass copies all pixel data from the WebGL context onto an output canvas
-    * with a Context2d context. This allows appliations to have access to pixel data and other functionality provided by
+    * with a Context2d context. This allows applications to have access to pixel data and other functionality provided by
     * Context2d, regardless of whether the CanvasDrawer or the WebGLDrawer is used. Certain options, including compositeOperation,
     * clip, croppingPolygons, and debugMode are implemented using Context2d operations; in these scenarios, each TiledImage is
     * drawn onto the output canvas immediately after the tile composition step (pass 1). Otherwise, for efficiency, all TiledImages
@@ -83,7 +83,7 @@
            this.viewer.addHandler("image-unloaded", ev => this._imageUnloadedHandler(ev));
 
            // this.viewer and this.canvas are part of the public DrawerBase API
-           // and are set by the parent constructor. Additional setup is done by
+           // and are defined by the parent DrawerBase class. Additional setup is done by
            // the private _setupCanvases and _setupRenderer functions.
            this._setupCanvases();
            this._setupRenderer();
@@ -273,6 +273,10 @@
                 }
 
                 let maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+                if(maxTextures <= 0){
+                    $.console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
+                    return;
+                }
                 let texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
                 let textureDataArray = new Array(maxTextures);
                 let matrixArray = new Array(maxTextures);
@@ -362,7 +366,10 @@
                     gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
                 }
 
-                this._raiseTiledImageDrawnEvent(tiledImage, tilesToDraw.map(info=>info.tile));
+                // after drawing the first TiledImage, fire the tiled-image-drawn event (for testing)
+                if(tiledImageIndex === 0){
+                    this._raiseTiledImageDrawnEvent(tiledImage, tilesToDraw.map(info=>info.tile));
+                }
 
             });
 
