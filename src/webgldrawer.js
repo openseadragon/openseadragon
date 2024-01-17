@@ -89,6 +89,10 @@
            this._setupRenderer();
 
            this.context = this._outputContext; // API required by tests
+
+            // for use with qunit tests
+            this._numGlMaxTextureErrors = 0;
+
        }
 
         // Public API required by all Drawer implementations
@@ -274,6 +278,7 @@
 
                 let maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
                 if(maxTextures <= 0){
+                    this._numGlMaxTextureErrors += 1;
                     $.console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
                     return;
                 }
