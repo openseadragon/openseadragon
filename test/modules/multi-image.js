@@ -7,7 +7,7 @@
 
     function runDrawerTests(drawerType){
 
-        QUnit.module.only( 'Multi-Image-'+drawerType, {
+        QUnit.module( 'Multi-Image-'+drawerType, {
             beforeEach: function() {
                 $( '<div id="example"></div>' ).appendTo( "#qunit-fixture" );
 
