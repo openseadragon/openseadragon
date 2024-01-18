@@ -8,7 +8,7 @@
     var SPRING_STIFFNESS = 100; // Faster animation = faster tests
     var EPSILON = 0.0000000001;
 
-     QUnit.module.only("viewport", {
+     QUnit.module("viewport", {
         beforeEach: function () {
             $('<div id="example"></div>').appendTo("#qunit-fixture");
 
@@ -22,7 +22,7 @@
         },
         afterEach: function () {
             if (viewer){
-                Util.logWebGLInfo(viewer);
+                // Util.logWebGLInfo(viewer);
                 viewer.destroy();
             }
 
@@ -82,7 +82,7 @@
                 };
 
                 if (viewer){
-                    Util.logWebGLInfo(viewer);
+                    // Util.logWebGLInfo(viewer);
                     viewer.destroy();
                 }
                 viewerConfig[config.property] = level;
@@ -103,7 +103,7 @@
         viewerConfig[config.property] = level;
 
         if (viewer){
-            Util.logWebGLInfo(viewer);
+            // Util.logWebGLInfo(viewer);
             viewer.destroy();
         }
         viewer = OpenSeadragon(viewerConfig);
@@ -383,7 +383,7 @@
             i++;
             if (i < testZoomLevels.length) {
                 if (viewer){
-                    Util.logWebGLInfo(viewer);
+                    // Util.logWebGLInfo(viewer);
                     viewer.destroy();
                 }
                 viewer = OpenSeadragon({
@@ -400,7 +400,7 @@
             }
         };
         if (viewer){
-            Util.logWebGLInfo(viewer);
+            // Util.logWebGLInfo(viewer);
             viewer.destroy();
         }
         viewer = OpenSeadragon({

@@ -26,17 +26,9 @@
 
         afterEach: function () {
             if (viewer1){
-                let errors = viewer1.drawer._numGlMaxTextureErrors;
-                if(errors > 0){
-                    console.log('Number of times MAX_TEXTURE_IMAGE_UNITS had a bad value:', errors);
-                }
                 viewer1.destroy();
             }
             if (viewer2){
-                let errors = viewer2.drawer._numGlMaxTextureErrors;
-                if(errors > 0){
-                    console.log('Number of times MAX_TEXTURE_IMAGE_UNITS had a bad value:', errors);
-                }
                 viewer2.destroy();
             }
             viewer1 = viewer2 = null;

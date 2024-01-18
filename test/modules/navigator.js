@@ -43,9 +43,8 @@
             resetTestVariables();
 
             if (viewer){
-
-                    viewer.destroy();
-                }
+                viewer.destroy();
+            }
 
             viewer = null;
         }

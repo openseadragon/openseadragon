@@ -22,7 +22,6 @@
             },
             afterEach: function() {
                 if (viewer){
-
                     viewer.destroy();
                 }
 

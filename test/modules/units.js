@@ -20,9 +20,8 @@
         },
         afterEach: function () {
             if (viewer){
-
-                    viewer.destroy();
-                }
+                viewer.destroy();
+            }
 
             viewer = null;
         }
