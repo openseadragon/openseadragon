@@ -18,12 +18,14 @@
         },
         afterEach: function () {
             if (viewer){
-                let errors = viewer.drawer._numGlMaxTextureErrors;
-                if(errors > 0){
-                    console.log('Number of times MAX_TEXTURE_IMAGE_UNITS had a bad value:', errors);
+                    let errors = viewer.drawer._numGlMaxTextureErrors;
+                    if(errors > 0){
+                        console.log('Number of times MAX_TEXTURE_IMAGE_UNITS had a bad value:', errors);
+                    } else {
+                        console.log('Num OK draw calls', viewer.drawer._numGlMaxTextureOks);
+                    }
+                    viewer.destroy();
                 }
-                viewer.destroy();
-            }
             viewer = null;
         }
     } );

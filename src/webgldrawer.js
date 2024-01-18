@@ -92,6 +92,7 @@
 
             // for use with qunit tests
             this._numGlMaxTextureErrors = 0;
+            this._numGlMaxTextureOks = 0;
 
        }
 
@@ -281,6 +282,8 @@
                     this._numGlMaxTextureErrors += 1;
                     $.console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
                     return;
+                } else {
+                    this._numGlMaxTextureOks += 1;
                 }
                 let texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
                 let textureDataArray = new Array(maxTextures);
