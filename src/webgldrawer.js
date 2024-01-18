@@ -281,7 +281,7 @@
                 if(maxTextures <= 0){
                     this._numGlMaxTextureErrors += 1;
                     $.console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
-                    console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
+                    console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures}), total errors = ${this._numGlMaxTextureErrors}`);
                     return;
                 } else {
                     this._numGlMaxTextureOks += 1;

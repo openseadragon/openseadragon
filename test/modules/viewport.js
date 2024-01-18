@@ -8,7 +8,7 @@
     var SPRING_STIFFNESS = 100; // Faster animation = faster tests
     var EPSILON = 0.0000000001;
 
-     QUnit.module("viewport", {
+     QUnit.module.only("viewport", {
         beforeEach: function () {
             $('<div id="example"></div>').appendTo("#qunit-fixture");
 
@@ -22,6 +22,17 @@
         },
         afterEach: function () {
             if (viewer){
+                let drawers = [viewer.drawer, viewer.navigator && viewer.navigator.drawer];
+                for(const drawer of drawers){
+                    if(!drawer){
+                        return;
+                    }
+                    let errors = drawer._numGlMaxTextureErrors;
+                    let ok = drawer._numGlMaxTextureErrors;
+                    errors === 0 ? console.log('No GL errors') : errors ? console.log(`GL errors: ${errors}`) : null;
+                    ok === 0 ? console.log('No GL calls') : ok ? console.log(`GL calls: ${ok}`) : null;
+                }
+
                 viewer.destroy();
             }
 
