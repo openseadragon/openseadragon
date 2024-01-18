@@ -22,17 +22,7 @@
         },
         afterEach: function () {
             if (viewer){
-                let drawers = [viewer.drawer, viewer.navigator && viewer.navigator.drawer];
-                for(const drawer of drawers){
-                    if(!drawer){
-                        return;
-                    }
-                    let errors = drawer._numGlMaxTextureErrors;
-                    let ok = drawer._numGlMaxTextureErrors;
-                    errors === 0 ? console.log('No GL errors') : errors ? console.log(`GL errors: ${errors}`) : null;
-                    ok === 0 ? console.log('No GL calls') : ok ? console.log(`GL calls: ${ok}`) : null;
-                }
-
+                Util.logWebGLInfo(viewer);
                 viewer.destroy();
             }
 
@@ -91,6 +81,10 @@
                     springStiffness: SPRING_STIFFNESS
                 };
 
+                if (viewer){
+                    Util.logWebGLInfo(viewer);
+                    viewer.destroy();
+                }
                 viewerConfig[config.property] = level;
                 viewer = OpenSeadragon(viewerConfig);
                 viewer.addOnceHandler('open', openHandler);
@@ -107,6 +101,11 @@
         };
 
         viewerConfig[config.property] = level;
+
+        if (viewer){
+            Util.logWebGLInfo(viewer);
+            viewer.destroy();
+        }
         viewer = OpenSeadragon(viewerConfig);
         viewer.addOnceHandler('open', openHandler);
         viewer.open(DZI_PATH);
@@ -383,6 +382,10 @@
             );
             i++;
             if (i < testZoomLevels.length) {
+                if (viewer){
+                    Util.logWebGLInfo(viewer);
+                    viewer.destroy();
+                }
                 viewer = OpenSeadragon({
                     id: VIEWER_ID,
                     prefixUrl: PREFIX_URL,
@@ -396,6 +399,10 @@
                 done();
             }
         };
+        if (viewer){
+            Util.logWebGLInfo(viewer);
+            viewer.destroy();
+        }
         viewer = OpenSeadragon({
             id: VIEWER_ID,
             prefixUrl: PREFIX_URL,

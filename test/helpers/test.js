@@ -146,6 +146,19 @@
             obj0[member0]();
             assert.equal(called, true, 'called through for ' + member0);
             assert.equal(errored, true, 'errored for ' + member0);
+        },
+
+        logWebGLInfo: function(viewer){
+            let drawers = [viewer.drawer, viewer.navigator && viewer.navigator.drawer];
+            for(const drawer of drawers){
+                if(!drawer){
+                    return;
+                }
+                let errors = drawer._numGlMaxTextureErrors;
+                let ok = drawer._numGlMaxTextureErrors;
+                errors === 0 ? console.log('No GL errors') : errors ? console.log(`GL errors: ${errors}`) : null;
+                ok === 0 ? console.log('No GL calls') : ok ? console.log(`GL calls: ${ok}`) : null;
+            }
         }
     };
 
