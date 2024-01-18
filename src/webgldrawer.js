@@ -90,6 +90,10 @@
 
            this.context = this._outputContext; // API required by tests
 
+            // for use with qunit tests
+            this._numGlMaxTextureErrors = 0;
+            this._numGlMaxTextureOks = 0;
+
        }
 
         // Public API required by all Drawer implementations
@@ -274,6 +278,14 @@
                 }
 
                 let maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+                if(maxTextures <= 0){
+                    this._numGlMaxTextureErrors += 1;
+                    $.console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
+                    console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
+                    return;
+                } else {
+                    this._numGlMaxTextureOks += 1;
+                }
                 let texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
                 let textureDataArray = new Array(maxTextures);
                 let matrixArray = new Array(maxTextures);
