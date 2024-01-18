@@ -90,12 +90,6 @@
 
            this.context = this._outputContext; // API required by tests
 
-            // for use with qunit tests
-            this._numGlMaxTextureErrors = 0;
-            this._numGlMaxTextureOks = 0;
-
-            console.log('WebGLDrawer created');
-
        }
 
         // Public API required by all Drawer implementations
@@ -281,13 +275,13 @@
 
                 let maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
                 if(maxTextures <= 0){
-                    this._numGlMaxTextureErrors += 1;
-                    $.console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
-                    console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures}), total errors = ${this._numGlMaxTextureErrors}`);
+                    // This can apparently happen on some systems if too many WebGL contexts have been created
+                    // in which case maxTextures can be null, leading to out of bounds errors with the array
+                    // use plain console.error instead of $.console.error in order to have the message show up in the test log.
+                    console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
                     return;
-                } else {
-                    this._numGlMaxTextureOks += 1;
                 }
+
                 let texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
                 let textureDataArray = new Array(maxTextures);
                 let matrixArray = new Array(maxTextures);
