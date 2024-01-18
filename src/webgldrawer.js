@@ -94,6 +94,8 @@
             this._numGlMaxTextureErrors = 0;
             this._numGlMaxTextureOks = 0;
 
+            console.log('WebGLDrawer created');
+
        }
 
         // Public API required by all Drawer implementations
