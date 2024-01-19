@@ -276,9 +276,15 @@
                 let maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
                 if(maxTextures <= 0){
                     // This can apparently happen on some systems if too many WebGL contexts have been created
-                    // in which case maxTextures can be null, leading to out of bounds errors with the array
+                    // in which case maxTextures can be null, leading to out of bounds errors with the array.
+                    // For example, when viewers were created and not destroyed in the test suite, this error
+                    // occured in the TravisCI tests, though it did not happen when testing locally either in
+                    // a browser or on the command line via grunt test.
+
                     // use plain console.error instead of $.console.error in order to have the message show up in the test log.
                     console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
+                    throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
+                    if too many contexts have been created and not released, or there is another problem with the graphics card.`));
                     return;
                 }
 
