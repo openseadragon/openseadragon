@@ -1,9 +1,6 @@
 /* global QUnit, $, testLog */
 
 ( function() {
-    QUnit.testStart((details) => {
-        console.log(`Starting test ${details.module}.${details.name}`);
-    });
 
     QUnit.module( 'Polyfills', {
         beforeEach: function() {
