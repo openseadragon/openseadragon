@@ -285,7 +285,6 @@
                     console.error(`There was a WebGL problem: bad value for MAX_TEXTURE_IMAGE_UNITS (${maxTextures})`);
                     throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
                     if too many contexts have been created and not released, or there is another problem with the graphics card.`));
-                    return;
                 }
 
                 let texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
