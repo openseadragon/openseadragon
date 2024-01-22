@@ -2607,7 +2607,8 @@ function OpenSeadragon( options ){
          *      jpg:  true,
          *      png:  true,
          *      tif:  false,
-         *      wdp:  false
+         *      wdp:  false,
+         *      webp: true
          * }
          * </code></pre>
          * @function
@@ -2673,7 +2674,8 @@ function OpenSeadragon( options ){
             jpg:  true,
             png:  true,
             tif:  false,
-            wdp:  false
+            wdp:  false,
+            webp: true
         },
         URLPARAMS = {};
 
