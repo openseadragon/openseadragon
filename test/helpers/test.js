@@ -151,7 +151,6 @@
 
     // Log the name of the currently running test when it starts. Uses console.log rather than
     // $.console.log so that the message is printed even after the $.console is diverted (see below).
-    // Uncomment this code to log which test is currently running. Useful for debugging.
     QUnit.testStart((details) => {
         console.log(`Starting test ${details.module}.${details.name}`);
     });
