@@ -2613,8 +2613,8 @@ function OpenSeadragon( options ){
          * </code></pre>
          * @function
          * @example
-         * // sets webp as supported and png as unsupported
-         * setImageFormatsSupported({webp: true, png: false});
+         * // sets bmp as supported and png as unsupported
+         * setImageFormatsSupported({bmp: true, png: false});
          * @param {Object} formats An object containing format extensions as
          * keys and booleans as values.
          */
