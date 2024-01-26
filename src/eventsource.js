@@ -92,6 +92,11 @@ $.EventSource.prototype = {
      * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
      */
     addHandler: function ( eventName, handler, userData, priority ) {
+        let errorMsg = this._validateEvent(eventName);
+        if(errorMsg){
+            $.console.error(`Error adding event handler: ${errorMsg}`);
+            return;
+        }
         var events = this.events[ eventName ];
         if ( !events ) {
             this.events[ eventName ] = events = [];
@@ -201,6 +206,23 @@ $.EventSource.prototype = {
             return handler( this, eventArgs || {} );
         }
         return undefined;
+    },
+
+    /**
+     * Check
+     * @param {String} eventName the event to listen for
+     * @returns {String | null} Error message (if invalid) or null
+     * @private
+     */
+    _validateEvent(eventName){
+        // check for listeners on incompatible events
+        if(eventName === 'tile-drawing' && this instanceof $.Viewer){
+            return this.drawer.getType() === 'canvas' ? null : 'The tile-drawing event requires the canvas drawer.';
+        } else if(eventName === 'tile-drawn' && this instanceof $.Viewer){
+            return ['canvas', 'html'].includes(this.drawer.getType()) ? null : `The tile-drawn event is not valid for the ${this.drawer.getType()} drawer.`;
+        }
+        // default to returning true unless a rule has been added specifically for an event type
+        return null;
     }
 };
 
