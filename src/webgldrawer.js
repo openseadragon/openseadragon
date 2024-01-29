@@ -82,6 +82,10 @@
            this.viewer.addHandler("tile-ready", ev => this._tileReadyHandler(ev));
            this.viewer.addHandler("image-unloaded", ev => this._imageUnloadedHandler(ev));
 
+           // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
+           this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
+           this.viewer.rejectEventHandler("tile-drawing", "The WebGLDrawer does not raise the tile-drawing event");
+
            // this.viewer and this.canvas are part of the public DrawerBase API
            // and are defined by the parent DrawerBase class. Additional setup is done by
            // the private _setupCanvases and _setupRenderer functions.

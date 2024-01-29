@@ -51,6 +51,7 @@
  */
 $.EventSource = function() {
     this.events = {};
+    this.rejectedEventList = {};
 };
 
 /** @lends OpenSeadragon.EventSource.prototype */
@@ -90,13 +91,15 @@ $.EventSource.prototype = {
      * @param {OpenSeadragon.EventHandler} handler - Function to call when event is triggered.
      * @param {Object} [userData=null] - Arbitrary object to be passed unchanged to the handler.
      * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
+     * @returns {Boolean} - True if the handler was added, false if it was rejected
      */
     addHandler: function ( eventName, handler, userData, priority ) {
-        let errorMsg = this._validateEvent(eventName);
-        if(errorMsg){
-            $.console.error(`Error adding event handler: ${errorMsg}`);
-            return;
+
+        if(Object.prototype.hasOwnProperty.call(this.rejectedEventList, eventName)){
+            $.console.error(`Error adding handler for ${eventName}. ${this.rejectedEventList[eventName]}`);
+            return false;
         }
+
         var events = this.events[ eventName ];
         if ( !events ) {
             this.events[ eventName ] = events = [];
@@ -111,6 +114,7 @@ $.EventSource.prototype = {
                 index--;
             }
         }
+        return true;
     },
 
     /**
@@ -209,21 +213,15 @@ $.EventSource.prototype = {
     },
 
     /**
-     * Check
-     * @param {String} eventName the event to listen for
-     * @returns {String | null} Error message (if invalid) or null
-     * @private
+     * Set an event name as being disabled, and provide an optional error message
+     * to be printed to the console
+     * @param {String} eventName
+     * @param {[String]} errorMessage
      */
-    _validateEvent(eventName){
-        // check for listeners on incompatible events
-        if(eventName === 'tile-drawing' && this instanceof $.Viewer){
-            return this.drawer.getType() === 'canvas' ? null : 'The tile-drawing event requires the canvas drawer.';
-        } else if(eventName === 'tile-drawn' && this instanceof $.Viewer){
-            return ['canvas', 'html'].includes(this.drawer.getType()) ? null : `The tile-drawn event is not valid for the ${this.drawer.getType()} drawer.`;
-        }
-        // default to returning true unless a rule has been added specifically for an event type
-        return null;
+    rejectEventHandler(eventName, errorMessage = ''){
+        this.rejectedEventList[eventName] = errorMessage;
     }
+
 };
 
 }( OpenSeadragon ));
