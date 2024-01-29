@@ -51,7 +51,7 @@
  */
 $.EventSource = function() {
     this.events = {};
-    this.rejectedEventList = {};
+    this._rejectedEventList = {};
 };
 
 /** @lends OpenSeadragon.EventSource.prototype */
@@ -95,8 +95,8 @@ $.EventSource.prototype = {
      */
     addHandler: function ( eventName, handler, userData, priority ) {
 
-        if(Object.prototype.hasOwnProperty.call(this.rejectedEventList, eventName)){
-            $.console.error(`Error adding handler for ${eventName}. ${this.rejectedEventList[eventName]}`);
+        if(Object.prototype.hasOwnProperty.call(this._rejectedEventList, eventName)){
+            $.console.error(`Error adding handler for ${eventName}. ${this._rejectedEventList[eventName]}`);
             return false;
         }
 
@@ -217,9 +217,20 @@ $.EventSource.prototype = {
      * to be printed to the console
      * @param {String} eventName - Name of the event
      * @param {String} [errorMessage] - Optional string to print to the console
+     * @private
      */
     rejectEventHandler(eventName, errorMessage = ''){
-        this.rejectedEventList[eventName] = errorMessage;
+        this._rejectedEventList[eventName] = errorMessage;
+    },
+
+    /**
+     * Explicitly allow an event handler to be added for this event type, undoing
+     * the effects of rejectEventHandler
+     * @param {String} eventName - Name of the event
+     * @private
+     */
+    allowEventHandler(eventName){
+        delete this._rejectedEventList[eventName];
     }
 
 };

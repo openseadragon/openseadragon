@@ -65,6 +65,11 @@ class CanvasDrawer extends $.DrawerBase{
         // Canvas default is "true", so this will only be changed if user specifies "false" in the options or via setImageSmoothinEnabled.
         this._imageSmoothingEnabled = true;
 
+
+        // Since the tile-drawn and tile-drawing events are fired by this drawer, make sure handlers can be added for them
+        this.viewer.allowEventHandler("tile-drawn");
+        this.viewer.allowEventHandler("tile-drawing");
+
     }
 
     /**
