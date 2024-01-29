@@ -215,8 +215,8 @@ $.EventSource.prototype = {
     /**
      * Set an event name as being disabled, and provide an optional error message
      * to be printed to the console
-     * @param {String} eventName
-     * @param {[String]} errorMessage
+     * @param {String} eventName - Name of the event
+     * @param {String} [errorMessage] - Optional string to print to the console
      */
     rejectEventHandler(eventName, errorMessage = ''){
         this.rejectedEventList[eventName] = errorMessage;
