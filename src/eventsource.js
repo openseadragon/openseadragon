@@ -69,6 +69,7 @@ $.EventSource.prototype = {
      * @param {Number} [times=1] - The number of times to handle the event
      * before removing it.
      * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
+     * @returns {Boolean} - True if the handler was added, false if it was rejected
      */
     addOnceHandler: function(eventName, handler, userData, times, priority) {
         var self = this;
@@ -81,7 +82,7 @@ $.EventSource.prototype = {
             }
             return handler(event);
         };
-        this.addHandler(eventName, onceHandler, userData, priority);
+        return this.addHandler(eventName, onceHandler, userData, priority);
     },
 
     /**
@@ -200,16 +201,22 @@ $.EventSource.prototype = {
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {Object} eventArgs - Event-specific data.
+     * @returns {Boolean} True if the event was fired, false if it was rejected because of rejectEventHandler(eventName)
      */
     raiseEvent: function( eventName, eventArgs ) {
         //uncomment if you want to get a log of all events
         //$.console.log( eventName );
 
+        if(Object.prototype.hasOwnProperty.call(this._rejectedEventList, eventName)){
+            $.console.error(`Error adding handler for ${eventName}. ${this._rejectedEventList[eventName]}`);
+            return false;
+        }
+
         var handler = this.getHandler( eventName );
         if ( handler ) {
-            return handler( this, eventArgs || {} );
+            handler( this, eventArgs || {} );
         }
-        return undefined;
+        return true;
     },
 
     /**
