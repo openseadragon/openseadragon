@@ -216,7 +216,7 @@
   * @property {Boolean} [imageSmoothingEnabled=true]
   *     Image smoothing for canvas rendering (only if the canvas drawer is used). Note: Ignored
   *     by some (especially older) browsers which do not support this canvas property.
-  *     This property can be changed in {@link Viewer.Drawer.setImageSmoothingEnabled}.
+  *     This property can be changed in {@link Viewer.DrawerBase.setImageSmoothingEnabled}.
   *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
