@@ -2,7 +2,7 @@
  * OpenSeadragon - TileCache
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -236,19 +236,51 @@ $.TileCache.prototype = {
         var tile = tileRecord.tile;
         var tiledImage = tileRecord.tiledImage;
 
+        // tile.getCanvasContext should always exist in normal usage (with $.Tile)
+        // but the tile cache test passes in a dummy object
+        let context2D = tile.getCanvasContext && tile.getCanvasContext();
+
         tile.unload();
         tile.cacheImageRecord = null;
 
         var imageRecord = this._imagesLoaded[tile.cacheKey];
+        if(!imageRecord){
+            return;
+        }
         imageRecord.removeTile(tile);
         if (!imageRecord.getTileCount()) {
+
             imageRecord.destroy();
             delete this._imagesLoaded[tile.cacheKey];
             this._imagesLoadedCount--;
+
+            if(context2D){
+                /**
+                 * Free up canvas memory
+                 * (iOS 12 or higher on 2GB RAM device has only 224MB canvas memory,
+                 * and Safari keeps canvas until its height and width will be set to 0).
+                 */
+                context2D.canvas.width = 0;
+                context2D.canvas.height = 0;
+
+                /**
+                 * Triggered when an image has just been unloaded
+                 *
+                 * @event image-unloaded
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
+                 */
+                tiledImage.viewer.raiseEvent("image-unloaded", {
+                    context2D: context2D,
+                    tile: tile
+                });
+            }
+
         }
 
         /**
-         * Triggered when a tile has just been unloaded from memory.
+         * Triggered when a tile has just been unloaded from the cache.
          *
          * @event tile-unloaded
          * @memberof OpenSeadragon.Viewer
@@ -260,6 +292,7 @@ $.TileCache.prototype = {
             tile: tile,
             tiledImage: tiledImage
         });
+
     }
 };
 

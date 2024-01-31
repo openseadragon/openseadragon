@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewport
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1133,7 +1133,7 @@ $.Viewport.prototype = {
     /**
      * Update the zoom, degrees, and center (X and Y) springs.
      * @function
-     * @returns {Boolean} True if any change has been made, false otherwise.
+     * @returns {Boolean} True if the viewport is still animating, false otherwise.
      */
     update: function() {
         var _this = this;
@@ -1165,7 +1165,13 @@ $.Viewport.prototype = {
         this._oldZoom    = this.zoomSpring.current.value;
         this._oldDegrees = this.degreesSpring.current.value;
 
-        return changed;
+        var isAnimating = changed ||
+                          !this.zoomSpring.isAtTargetValue() ||
+                          !this.centerSpringX.isAtTargetValue() ||
+                          !this.centerSpringY.isAtTargetValue() ||
+                          !this.degreesSpring.isAtTargetValue();
+
+        return isAnimating;
     },
 
     // private - pass true to use spring, or a number for degrees for immediate rotation

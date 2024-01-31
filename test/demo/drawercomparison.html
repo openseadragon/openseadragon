@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drawer Comparison Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <script type="text/javascript" src='../lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
+    <link rel="stylesheet" href="../lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+
+    <script type="module" src="./drawercomparison.js"></script>
+    <style type="text/css">
+        .content{
+            max-width:960px;
+            margin: 0 auto;
+        }
+        .mirrored{
+            display:grid;
+            grid-template-columns:50% 50%;
+            gap: 2em;
+        }
+        .viewer-container {
+            /* width: 600px;
+            height: 400px; */
+            aspect-ratio: 4 / 3;
+            border: thin gray solid;
+            position:relative;
+        }
+        .example-code{
+            background-color:tan;
+            border: thin black solid;
+            padding:10px;
+            display:inline-block;
+            width:95%;
+        }
+        .description pre{
+            display:inline-block;
+            background-color:gainsboro;
+            padding:0;
+            margin:0;
+        }
+
+        .image-options{
+            display: grid;
+            grid-template-columns: 2em 9em 1fr;
+            padding:3px;
+            border: thin gray solid;
+        }
+        .option-grid{
+            display: grid;
+            grid-template-columns: 7em 7em 9em 9em 10em 9em;
+            /* grid-template-columns: repeat(5, auto); */
+        }
+        .image-options input[type=number]{
+            width: 5em;
+        }
+        .image-options select{
+            width: 5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+
+        <h2>Compare behavior of <strong>Context2d</strong> and <strong>WebGL</strong> drawers</h2>
+        <div class="mirrored">
+            <div>
+                <h3 id="title-w1">Loading...</h3>
+                <div id="canvasdrawer" class="viewer-container"></div>
+            </div>
+
+            <div>
+                <h3 id="title-w2">Loading...</h3>
+                <div id="webgl" class="viewer-container"></div>
+            </div>
+        </div>
+
+
+        <div id="image-picker">
+            <h3>Image options (drag and drop to re-order images)</h3>
+
+
+        </div>
+
+        <h2>HTMLDrawer: legacy pre-HTML5 drawer that uses &lt;img&gt; elements for tiles</h2>
+        <div class="mirrored">
+            <div>
+                <div class="description">
+                    HTML-based rendering can be selected in two different ways:
+                </div>
+                <pre class="example-code">
+    // via the 'html' drawer option:
+    let viewer = OpenSeadragon({
+        ...
+        drawer: 'html',
+        ...
+    });
+
+    // or by passing the HTMLDrawer constructor
+    let viewer = OpenSeadragon({
+        ...
+        drawer:OpenSeadragon.HTMLDrawer,
+        ...
+    });
+                </pre>
+            </div>
+            <div id="htmldrawer" class="viewer-container"></div>
+        </div>
+    </div>
+
+
+
+</body>
+</html>
+

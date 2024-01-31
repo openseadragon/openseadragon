@@ -41,6 +41,12 @@
             }
 
             resetTestVariables();
+
+            if (viewer){
+                viewer.destroy();
+            }
+
+            viewer = null;
         }
     });
 
