@@ -1434,7 +1434,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         let lowestLevel = tiles.length ? tiles[0].level : 0;
 
         let drawArea = this.getDrawArea();
-        if(!drawArea || this._opacity === 0){
+        if(!drawArea || (this._opacity === 0 && !this._preload)){
             return;
         }
 
