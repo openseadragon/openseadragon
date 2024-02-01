@@ -89,7 +89,7 @@ class HTMLDrawer extends $.DrawerBase{
         var _this = this;
         this._prepareNewFrame(); // prepare to draw a new frame
         tiledImages.forEach(function(tiledImage){
-            if (tiledImage.opacity !== 0 || tiledImage._preload) {
+            if (tiledImage.opacity !== 0) {
                 _this._drawTiles(tiledImage);
             }
         });
