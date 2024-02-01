@@ -51,7 +51,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         super(options);
 
         /**
-         * The HTML element (<canvas>) that this drawer uses for drawing
+         * The HTML element (canvas) that this drawer uses for drawing
          * @member {Element} canvas
          * @memberof OpenSeadragon.CanvasDrawer#
          */
