@@ -1,5 +1,5 @@
 const sources = {
-    "rainbow":"../data/testpattern.dzi",
+    "rainbow": "../data/testpattern.dzi",
     "leaves":"../data/iiif_2_0_sizes/info.json",
     "bblue":{
         type:'image',
