@@ -222,7 +222,7 @@
 
                 let tilesToDraw = tiledImage.getTilesToDraw();
 
-                if(tilesToDraw.length === 0){
+                if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
                     return;
                 }
                 let firstTile = tilesToDraw[0];

@@ -1020,8 +1020,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Get the region of this tiled image that falls within the viewport.
      * @returns {OpenSeadragon.Rect} the region of this tiled image that falls within the viewport.
+     * Returns false for images with opacity==0 unless preload==true
      */
     getDrawArea: function(){
+
+        if( this._opacity === 0 && !this._preload){
+            return false;
+        }
 
         var drawArea = this._viewportToTiledImageRectangle(
             this.viewport.getBoundsWithMargins(true));

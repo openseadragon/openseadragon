@@ -102,7 +102,7 @@ class CanvasDrawer extends $.DrawerBase{
         this._prepareNewFrame(); // prepare to draw a new frame
 
         for(const tiledImage of tiledImages){
-            if (tiledImage.opacity !== 0 || tiledImage._preload) {
+            if (tiledImage.opacity !== 0) {
                 this._drawTiles(tiledImage);
             }
         }
