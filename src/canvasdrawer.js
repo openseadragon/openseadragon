@@ -34,9 +34,10 @@
 
 (function( $ ){
 
+    const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
 /**
- * @class CanvasDrawer
- * @memberof OpenSeadragon
+ * @class OpenSeadragon.CanvasDrawer
+ * @extends OpenSeadragon.DrawerBase
  * @classdesc Default implementation of CanvasDrawer for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
@@ -45,14 +46,28 @@
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
 
-class CanvasDrawer extends $.DrawerBase{
+class CanvasDrawer extends OpenSeadragon.DrawerBase{
     constructor(options){
         super(options);
+
+        /**
+         * The HTML element (<canvas>) that this drawer uses for drawing
+         * @member {Element} canvas
+         * @memberof OpenSeadragon.CanvasDrawer#
+         */
+
+        /**
+         * The parent element of this Drawer instance, passed in when the Drawer was created.
+         * The parent of {@link OpenSeadragon.WebGLDrawer#canvas}.
+         * @member {Element} container
+         * @memberof OpenSeadragon.CanvasDrawer#
+         */
 
         /**
          * 2d drawing context for {@link OpenSeadragon.CanvasDrawer#canvas}.
          * @member {Object} context
          * @memberof OpenSeadragon.CanvasDrawer#
+         * @private
          */
         this.context = this.canvas.getContext( '2d' );
 

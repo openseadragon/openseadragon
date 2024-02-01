@@ -34,17 +34,18 @@
 
 (function( $ ){
 
+    const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
 /**
- * @class DrawerBase
- * @memberof OpenSeadragon
+ * @class OpenSeadragon.DrawerBase
  * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
  * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
- * @param {Element} options.element - Parent element.
+ * @param {HTMLElement} options.element - Parent element.
+ * @abstract
  */
 
-$.DrawerBase = class DrawerBase{
+OpenSeadragon.DrawerBase = class DrawerBase{
     constructor(options){
         $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
         $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
@@ -55,12 +56,6 @@ $.DrawerBase = class DrawerBase{
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
         this.options = options.options || {};
 
-        /**
-         * The parent element of this Drawer instance, passed in when the Drawer was created.
-         * The parent of {@link OpenSeadragon.DrawerBase#canvas}.
-         * @member {Element} container
-         * @memberof OpenSeadragon.DrawerBase#
-         */
         this.container  = $.getElement( options.element );
 
         this._renderingTarget = this._createDrawingElement();
@@ -95,7 +90,8 @@ $.DrawerBase = class DrawerBase{
     }
 
     /**
-     * @returns {String|undefined} What type of drawer this is.
+     * @abstract
+     * @returns {String | undefined} What type of drawer this is. Must be overridden by extending classes.
      */
     getType(){
         $.console.error('Drawer.getType must be implemented by child class');
@@ -103,15 +99,17 @@ $.DrawerBase = class DrawerBase{
     }
 
     /**
-     * @returns {Boolean} whether the drawer implementation is supported by the browser
+     * @abstract
+     * @returns {Boolean} Whether the drawer implementation is supported by the browser. Must be overridden by extending classes.
      */
     static isSupported() {
         $.console.error('Drawer.isSupported must be implemented by child class');
     }
 
     /**
-     * create the HTML element (e.g. canvas, div) that the image will be drawn into
+     * @abstract
      * @returns {Element} the element to draw into
+     * @private
      */
     _createDrawingElement() {
         $.console.error('Drawer._createDrawingElement must be implemented by child class');
@@ -119,13 +117,16 @@ $.DrawerBase = class DrawerBase{
     }
 
     /**
-     * @param {Array} tiledImages - An array of TiledImages that are ready to be drawn
+     * @abstract
+     * @param {Array} tiledImages - An array of TiledImages that are ready to be drawn.
+     * @private
      */
     draw(tiledImages) {
         $.console.error('Drawer.draw must be implemented by child class');
     }
 
     /**
+     * @abstract
      * @returns {Boolean} True if rotation is supported.
      */
     canRotate() {
@@ -133,7 +134,7 @@ $.DrawerBase = class DrawerBase{
     }
 
     /**
-     * Destroy the drawer (unload current loaded tiles)
+     * @abstract
      */
     destroy() {
         $.console.error('Drawer.destroy must be implemented by child class');
@@ -141,6 +142,7 @@ $.DrawerBase = class DrawerBase{
 
     /**
      * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+     * @private
      */
     minimumOverlapRequired() {
         return false;
@@ -148,9 +150,7 @@ $.DrawerBase = class DrawerBase{
 
 
     /**
-     * Turns image smoothing on or off for this viewer. Note: Ignored in some (especially older) browsers that do not support this property.
-     *
-     * @function
+     * @abstract
      * @param {Boolean} [imageSmoothingEnabled] - Whether or not the image is
      * drawn smoothly on the canvas; see imageSmoothingEnabled in
      * {@link OpenSeadragon.Options} for more explanation.

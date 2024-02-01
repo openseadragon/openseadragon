@@ -34,9 +34,11 @@
 
 (function( $ ){
 
+    const OpenSeadragon = $; // alias back for JSDoc
+
 /**
- * @class HTMLDrawer
- * @memberof OpenSeadragon
+ * @class OpenSeadragon.HTMLDrawer
+ * @extends OpenSeadragon.DrawerBase
  * @classdesc HTML-based implementation of DrawerBase for an {@link OpenSeadragon.Viewer}.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
@@ -45,9 +47,22 @@
  * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
  */
 
-class HTMLDrawer extends $.DrawerBase{
+class HTMLDrawer extends OpenSeadragon.DrawerBase{
     constructor(options){
         super(options);
+
+        /**
+         * The HTML element (<div>) that this drawer uses for drawing
+         * @member {Element} canvas
+         * @memberof OpenSeadragon.HTMLDrawer#
+         */
+
+        /**
+         * The parent element of this Drawer instance, passed in when the Drawer was created.
+         * The parent of {@link OpenSeadragon.WebGLDrawer#canvas}.
+         * @member {Element} container
+         * @memberof OpenSeadragon.HTMLDrawer#
+         */
 
         // Reject listening for the tile-drawing event, which this drawer does not fire
         this.viewer.rejectEventHandler("tile-drawing", "The HTMLDrawer does not raise the tile-drawing event");
@@ -62,6 +77,10 @@ class HTMLDrawer extends $.DrawerBase{
         return true;
     }
 
+    /**
+     *
+     * @returns 'html'
+     */
     getType(){
         return 'html';
     }
@@ -111,9 +130,7 @@ class HTMLDrawer extends $.DrawerBase{
     }
 
     /**
-     * Turns image smoothing on or off for this viewer. Note: Ignored by HTML Drawer
-     *
-     * @function
+     * This function is ignored by the HTML Drawer. Implementing it is required by DrawerBase.
      * @param {Boolean} [imageSmoothingEnabled] - Whether or not the image is
      * drawn smoothly on the canvas; see imageSmoothingEnabled in
      * {@link OpenSeadragon.Options} for more explanation.
