@@ -35,9 +35,10 @@
 
 (function( $ ){
 
+    const OpenSeadragon = $; // alias for JSDoc
+
    /**
-    * @class WebGLDrawer
-    * @memberof OpenSeadragon
+    * @class OpenSeadragon.WebGLDrawer
     * @classdesc Default implementation of WebGLDrawer for an {@link OpenSeadragon.Viewer}. The WebGLDrawer
     * loads tile data as textures to the graphics card as soon as it is available (via the tile-ready event),
     * and unloads the data (via the image-unloaded event). The drawer utilizes a context-dependent two pass drawing pipeline.
@@ -56,43 +57,55 @@
     * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
     */
 
-    $.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
+    OpenSeadragon.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
         constructor(options){
            super(options);
 
-           this.destroyed = false;
-           // private members
+            /**
+             * The HTML element (canvas) that this drawer uses for drawing
+             * @member {Element} canvas
+             * @memberof OpenSeadragon.WebGLDrawer#
+             */
 
-           this._TextureMap = new Map();
-           this._TileMap = new Map();
+            /**
+             * The parent element of this Drawer instance, passed in when the Drawer was created.
+             * The parent of {@link OpenSeadragon.WebGLDrawer#canvas}.
+             * @member {Element} container
+             * @memberof OpenSeadragon.WebGLDrawer#
+             */
 
-           this._gl = null;
-           this._firstPass = null;
-           this._secondPass = null;
-           this._glFrameBuffer = null;
-           this._renderToTexture = null;
-           this._glFramebufferToCanvasTransform = null;
-           this._outputCanvas = null;
-           this._outputContext = null;
-           this._clippingCanvas = null;
-           this._clippingContext = null;
-           this._renderingCanvas = null;
+            // private members
+            this._destroyed = false;
+            this._TextureMap = new Map();
+            this._TileMap = new Map();
 
-           // Add listeners for events that require modifying the scene or camera
-           this.viewer.addHandler("tile-ready", ev => this._tileReadyHandler(ev));
-           this.viewer.addHandler("image-unloaded", ev => this._imageUnloadedHandler(ev));
+            this._gl = null;
+            this._firstPass = null;
+            this._secondPass = null;
+            this._glFrameBuffer = null;
+            this._renderToTexture = null;
+            this._glFramebufferToCanvasTransform = null;
+            this._outputCanvas = null;
+            this._outputContext = null;
+            this._clippingCanvas = null;
+            this._clippingContext = null;
+            this._renderingCanvas = null;
 
-           // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
-           this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
-           this.viewer.rejectEventHandler("tile-drawing", "The WebGLDrawer does not raise the tile-drawing event");
+            // Add listeners for events that require modifying the scene or camera
+            this.viewer.addHandler("tile-ready", ev => this._tileReadyHandler(ev));
+            this.viewer.addHandler("image-unloaded", ev => this._imageUnloadedHandler(ev));
 
-           // this.viewer and this.canvas are part of the public DrawerBase API
-           // and are defined by the parent DrawerBase class. Additional setup is done by
-           // the private _setupCanvases and _setupRenderer functions.
-           this._setupCanvases();
-           this._setupRenderer();
+            // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
+            this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
+            this.viewer.rejectEventHandler("tile-drawing", "The WebGLDrawer does not raise the tile-drawing event");
 
-           this.context = this._outputContext; // API required by tests
+            // this.viewer and this.canvas are part of the public DrawerBase API
+            // and are defined by the parent DrawerBase class. Additional setup is done by
+            // the private _setupCanvases and _setupRenderer functions.
+            this._setupCanvases();
+            this._setupRenderer();
+
+            this.context = this._outputContext; // API required by tests
 
        }
 
@@ -101,7 +114,7 @@
         * Clean up the renderer, removing all resources
         */
         destroy(){
-            if(this.destroyed){
+            if(this._destroyed){
                 return;
             }
             // clear all resources used by the renderer, geometries, textures etc
@@ -145,13 +158,13 @@
             this._gl = null;
 
             // set our destroyed flag to true
-            this.destroyed = true;
+            this._destroyed = true;
         }
 
         // Public API required by all Drawer implementations
         /**
         *
-        * @returns {Boolean} true if the drawer supports rotation
+        * @returns {Boolean} true
         */
         canRotate(){
             return true;
@@ -172,6 +185,10 @@
             return !!( webglContext );
         }
 
+        /**
+         *
+         * @returns 'webgl'
+         */
         getType(){
             return 'webgl';
         }
@@ -393,7 +410,7 @@
 
         // Public API required by all Drawer implementations
         /**
-        * Set the context2d imageSmoothingEnabled parameter
+        * Required by DrawerBase, but has no effect on WebGLDrawer.
         * @param {Boolean} enabled
         */
         setImageSmoothingEnabled(enabled){
