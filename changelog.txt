@@ -5,7 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * BREAKING CHANGE: Dropped support for IE11 (#2300, #2361 @AndrewADev)
 * DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
-* The viewer now uses WebGL when available (#2310, #2462 @pearcetm, @Aiosa)
+* The viewer now uses WebGL when available (#2310, #2462, #2466 @pearcetm, @Aiosa)
 * Added webp to supported image formats (#2455 @BeebBenjamin)
 * Introduced maxTilesPerFrame option to allow loading more tiles simultaneously (#2387 @jetic83)
 * Now when creating a viewer or navigator, we leave its position style alone if possible (#2393 @VIRAT9358)
