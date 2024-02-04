@@ -18,10 +18,9 @@
             } );
         },
         afterEach: function () {
-            if ( viewer && viewer.close ) {
-                viewer.close();
+            if (viewer){
+                viewer.destroy();
             }
-
             viewer = null;
         }
     } );
@@ -1156,6 +1155,12 @@
     // ----------
     QUnit.test( 'Viewer: event count test with \'tile-drawing\'', function (assert) {
         var done = assert.async();
+        if(viewer.drawer.getType() !== 'canvas'){
+            assert.expect(0);
+            done();
+            return;
+        }
+
         assert.ok(viewer.numberOfHandlers('tile-drawing') === 0,
             "'tile-drawing' event is empty by default.");
 
@@ -1163,6 +1168,7 @@
             viewer.removeHandler( 'tile-drawing', tileDrawing );
             assert.ok(viewer.numberOfHandlers('tile-drawing') === 0,
                 "'tile-drawing' deleted: count is 0.");
+
             viewer.close();
             done();
         };
@@ -1186,6 +1192,12 @@
 
     QUnit.test( 'Viewer: tile-drawing event', function (assert) {
         var done = assert.async();
+        if(viewer.drawer.getType() !== 'canvas'){
+            assert.expect(0);
+            done();
+            return;
+        }
+
         var tileDrawing = function ( event ) {
             viewer.removeHandler( 'tile-drawing', tileDrawing );
             assert.ok( event, 'Event handler should be invoked' );

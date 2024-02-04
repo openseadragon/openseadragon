@@ -2,7 +2,7 @@
  * OpenSeadragon - TileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -376,6 +376,7 @@ $.TileSource.prototype = {
             point.y >= 0 && point.y <= 1 / this.aspectRatio;
         $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
 
+
         var widthScaled = this.dimensions.x * this.getLevelScale(level);
         var pixelX = point.x * widthScaled;
         var pixelY = point.y * widthScaled;
@@ -622,6 +623,16 @@ $.TileSource.prototype = {
      */
     configure: function( data, url, postData ) {
         throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * Shall this source need to free some objects
+     * upon unloading, it must be done here. For example, canvas
+     * size must be set to 0 for safari to free.
+     * @param {OpenSeadragon.Viewer} viewer
+     */
+    destroy: function ( viewer ) {
+        //no-op
     },
 
     /**

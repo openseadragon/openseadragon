@@ -2,7 +2,7 @@
  * OpenSeadragon - Tile
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -81,6 +81,12 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.bounds  = bounds;
+    /**
+     * Where this tile fits, in normalized coordinates, after positioning
+     * @member {OpenSeadragon.Rect} positionedBounds
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.positionedBounds  = new OpenSeadragon.Rect(bounds.x, bounds.y, bounds.width, bounds.height);
     /**
      * The portion of the tile to use as the source of the drawing operation, in pixels. Note that
      * this only works when drawing with canvas; when drawing with HTML the entire tile is always used.
@@ -299,59 +305,6 @@ $.Tile.prototype = {
     },
 
     /**
-     * Renders the tile in an html container.
-     * @function
-     * @param {Element} container
-     */
-    drawHTML: function( container ) {
-        if ( !this.loaded ) {
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
-            return;
-        }
-
-        //EXPERIMENTAL - trying to figure out how to scale the container
-        //               content during animation of the container size.
-        if ( !this.element ) {
-            const image = this.getImage();
-            if (!image) {
-                $.console.warn(
-                    '[Tile.drawHTML] attempting to draw tile %s when it\'s not cached',
-                    this.toString());
-                return;
-            }
-
-            this.element                              = $.makeNeutralElement( "div" );
-            this.imgElement                           = image.cloneNode();
-            this.imgElement.style.msInterpolationMode = "nearest-neighbor";
-            this.imgElement.style.width               = "100%";
-            this.imgElement.style.height              = "100%";
-
-            this.style                     = this.element.style;
-            this.style.position            = "absolute";
-        }
-        if ( this.element.parentNode !== container ) {
-            container.appendChild( this.element );
-        }
-        if ( this.imgElement.parentNode !== this.element ) {
-            this.element.appendChild( this.imgElement );
-        }
-
-        this.style.top     = this.position.y + "px";
-        this.style.left    = this.position.x + "px";
-        this.style.height  = this.size.y + "px";
-        this.style.width   = this.size.x + "px";
-
-        if (this.flipped) {
-            this.style.transform = "scaleX(-1)";
-        }
-
-        $.setElementOpacity( this.element, this.opacity );
-    },
-
-    /**
      * The Image object for this tile.
      * @member {Object} image
      * @memberof OpenSeadragon.Tile#
@@ -380,7 +333,7 @@ $.Tile.prototype = {
      * @returns {?Image}
      */
     getImage: function() {
-        //TODO: after-merge-aiosa $.console.error("[Tile.getImage] property has been deprecated. Use [Tile.getData] instead.");
+        $.console.error("[Tile.getImage] property has been deprecated. Use [Tile.getData] instead.");
         //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
@@ -408,7 +361,7 @@ $.Tile.prototype = {
      * @returns {?CanvasRenderingContext2D}
      */
     getCanvasContext: function() {
-        //TODO: after-merge-aiosa $.console.error("[Tile.getCanvasContext] property has been deprecated. Use [Tile.getData] instead.");
+        $.console.error("[Tile.getCanvasContext] property has been deprecated. Use [Tile.getData] instead.");
         //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
@@ -623,144 +576,13 @@ $.Tile.prototype = {
     },
 
     /**
-     * Renders the tile in a canvas-based context.
-     * @function
-     * @param {CanvasRenderingContext2D} context
-     * @param {Function} drawingHandler - Method for firing the drawing event.
-     * drawingHandler({context, tile, rendered})
-     * where <code>rendered</code> is the context with the pre-drawn image.
-     * @param {Number} [scale=1] - Apply a scale to position and size
-     * @param {OpenSeadragon.Point} [translate] - A translation vector
-     * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
-     * position and size of tiles supporting alpha channel in non-transparency context.
-     * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
-     */
-    drawCanvas: function( context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source) {
-
-        var position = this.position.times($.pixelDensityRatio),
-            size     = this.size.times($.pixelDensityRatio);
-
-        const _this = this;
-        // This gives the application a chance to make image manipulation
-        // changes as we are rendering the image
-        drawingHandler({context: context, get tile() {
-                $.console.warn("[tile-drawing] event is deprecated. " +
-                    "Use 'tile-drawn' event instead.");
-                return _this;
-            }, get rendered() {
-            $.console.warn("[tile-drawing] rendered property and this event itself are deprecated. " +
-                "Use Tile data API and `tile-drawn` event instead.");
-            const context = _this.getCanvasContext();
-            if (!context) {
-                $.console.warn(
-                    '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
-                    _this.toString());
-                return undefined;
-            }
-
-            if ( !_this.loaded || !context ){
-                $.console.warn(
-                    "Attempting to draw tile %s when it's not yet loaded.",
-                    _this.toString()
-                );
-                return undefined;
-            }
-            return _this.getCanvasContext();
-        }});
-
-        //Now really get the tile data
-        const cache = this.getCache(this.cacheKey);
-        if (!cache) {
-            $.console.error(
-                "Attempting to draw tile %s when it's main cache key has no associated cache record!",
-                this.toString()
-            );
-            return;
-        }
-
-        if (cache.type !== "context2d") {
-            //cache not ready to render, wait
-            cache.transformTo("context2d");
-            return;
-        }
-
-        if ( !cache.loaded ){
-            //cache not ready to render, wait
-            return;
-        }
-        const rendered = cache.data;
-
-        context.save();
-        context.globalAlpha = this.opacity;
-
-        if (typeof scale === 'number' && scale !== 1) {
-            // draw tile at a different scale
-            position = position.times(scale);
-            size = size.times(scale);
-        }
-
-        if (translate instanceof $.Point) {
-            // shift tile position slightly
-            position = position.plus(translate);
-        }
-
-        //if we are supposed to be rendering fully opaque rectangle,
-        //ie its done fading or fading is turned off, and if we are drawing
-        //an image with an alpha channel, then the only way
-        //to avoid seeing the tile underneath is to clear the rectangle
-        if (context.globalAlpha === 1 && this.hasTransparency) {
-            if (shouldRoundPositionAndSize) {
-                // Round to the nearest whole pixel so we don't get seams from overlap.
-                position.x = Math.round(position.x);
-                position.y = Math.round(position.y);
-                size.x = Math.round(size.x);
-                size.y = Math.round(size.y);
-            }
-
-            //clearing only the inside of the rectangle occupied
-            //by the png prevents edge flikering
-            context.clearRect(
-                position.x,
-                position.y,
-                size.x,
-                size.y
-            );
-        }
-
-        var sourceWidth, sourceHeight;
-        if (this.sourceBounds) {
-            sourceWidth = Math.min(this.sourceBounds.width, rendered.canvas.width);
-            sourceHeight = Math.min(this.sourceBounds.height, rendered.canvas.height);
-        } else {
-            sourceWidth = rendered.canvas.width;
-            sourceHeight = rendered.canvas.height;
-        }
-
-        context.translate(position.x + size.x / 2, 0);
-        if (this.flipped) {
-            context.scale(-1, 1);
-        }
-        context.drawImage(
-            rendered.canvas,
-            0,
-            0,
-            sourceWidth,
-            sourceHeight,
-            -size.x / 2,
-            position.y,
-            size.x,
-            size.y
-        );
-
-        context.restore();
-    },
-
-    /**
      * Get the ratio between current and original size.
      * @function
-     * @returns {Number}
+     * @returns {number}
      */
     getScaleForEdgeSmoothing: function() {
+        // getCanvasContext is deprecated and so should be this method.
+        $.console.warn("[Tile.getScaleForEdgeSmoothing] is deprecated, the following error is the consequence:");
         const context = this.getCanvasContext();
         if (!context) {
             $.console.warn(
@@ -800,13 +622,13 @@ $.Tile.prototype = {
      * @function
      */
     unload: function() {
+        //TODO AIOSA remove this.element and move it to a data constructor
         if ( this.imgElement && this.imgElement.parentNode ) {
             this.imgElement.parentNode.removeChild( this.imgElement );
         }
         if ( this.element && this.element.parentNode ) {
             this.element.parentNode.removeChild( this.element );
         }
-
         this.tiledImage = null;
         this._caches    = [];
         this._cacheSize = 0;
@@ -814,7 +636,7 @@ $.Tile.prototype = {
         this.imgElement = null;
         this.loaded     = false;
         this.loading    = false;
-        this.cacheKey = this.originalCacheKey;
+        this.cacheKey   = this.originalCacheKey;
     }
 };
 

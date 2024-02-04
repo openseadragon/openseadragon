@@ -2,7 +2,7 @@
  * OpenSeadragon - ReferenceStrip
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -46,7 +46,7 @@ var THIS = {};
  *
  *  This idea is a reexpression of the idea of dzi collections
  *  which allows a clearer algorithm to reuse the tile sources already
- *  supported by OpenSeadragon, in heterogenious or homogenious
+ *  supported by OpenSeadragon, in heterogeneous or homogeneous
  *  sequences just like mixed groups already supported by the viewer
  *  for the purpose of image sequnces.
  *
@@ -455,7 +455,7 @@ function loadPanels( strip, viewerSize, scroll ) {
                 animationTime:          0,
                 loadTilesWithAjax:      strip.viewer.loadTilesWithAjax,
                 ajaxHeaders:            strip.viewer.ajaxHeaders,
-                useCanvas:              strip.useCanvas
+                drawer:                 'canvas', //always use canvas for the reference strip
             } );
             // Allow pointer events to pass through miniViewer's canvas/container
             //   elements so implicit pointer capture works on touch devices

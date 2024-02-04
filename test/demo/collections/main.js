@@ -16,7 +16,6 @@
                 // debugMode: true,
                 zoomPerScroll: 1.02,
                 showNavigator: testNavigator,
-                useCanvas: true,
                 // defaultZoomLevel: 2,
                 // homeFillsViewer: true,
                 // sequenceMode: true,
@@ -131,8 +130,9 @@
                     var box = new OpenSeadragon.Rect(margins.left, margins.top,
                         $('#contentDiv').width() - (margins.left + margins.right),
                         $('#contentDiv').height() - (margins.top + margins.bottom));
-
-                    self.viewer.drawer.debugRect(box);
+                    // If drawDebuggingRect is implemented, use it to show the box.
+                    // This is not implemented by all drawers however.
+                    self.viewer.drawer.drawDebuggingRect(box);
                 });
             }
 

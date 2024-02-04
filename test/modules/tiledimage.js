@@ -1,7 +1,9 @@
 /* global QUnit, $, Util, testLog */
 
 (function() {
-    var viewer;
+    let viewer;
+
+    let precision = 0.000000001;
 
     QUnit.module('TiledImage', {
         beforeEach: function() {
@@ -13,12 +15,13 @@
             viewer = OpenSeadragon({
                 id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
-                springStiffness: 100 // Faster animation = faster tests
+                springStiffness: 100, // Faster animation = faster tests
+                drawer: 'canvas', // always use canvas drawer for these tests
             });
         },
         afterEach: function() {
-            if (viewer && viewer.close) {
-                viewer.close();
+            if (viewer){
+                viewer.destroy();
             }
 
             viewer = null;
@@ -119,8 +122,8 @@
 
             viewer.addHandler('animation-finish', function animationHandler() {
                 viewer.removeHandler('animation-finish', animationHandler);
-                assert.propEqual(image.getBounds(), new OpenSeadragon.Rect(1, 2, 3, 3), 'target bounds after animation');
-                assert.propEqual(image.getBounds(true), new OpenSeadragon.Rect(1, 2, 3, 3), 'current bounds after animation');
+                Util.assertRectangleEquals(assert,  new OpenSeadragon.Rect(1, 2, 3, 3), image.getBounds(), precision, 'target bounds after animation');
+                Util.assertRectangleEquals(assert,  new OpenSeadragon.Rect(1, 2, 3, 3), image.getBounds(true), precision, 'target bounds after animation');
                 done();
             });
         });
@@ -132,6 +135,7 @@
     QUnit.test('update', function(assert) {
         var done = assert.async();
         var handlerCount = 0;
+        let expectedHandlers = 4;
 
         viewer.addHandler('open', function(event) {
             var image = viewer.world.getItemAt(0);
@@ -160,6 +164,7 @@
                 assert.ok(event.tile, 'update-tile event includes tile');
             });
 
+
             viewer.addHandler('tile-drawing', function tileDrawingHandler(event) {
                 viewer.removeHandler('tile-drawing', tileDrawingHandler);
                 handlerCount++;
@@ -170,18 +175,20 @@
                 assert.ok(event.rendered, 'tile-drawing event includes a rendered');
             });
 
-            viewer.addHandler('tile-drawn', function tileDrawnHandler(event) {
-                viewer.removeHandler('tile-drawn', tileDrawnHandler);
-                handlerCount++;
-                assert.equal(event.eventSource, viewer, 'sender of tile-drawn event was viewer');
-                assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
-                assert.ok(event.tile, 'tile-drawn event includes tile');
 
-                assert.equal(handlerCount, 4, 'correct number of handlers called');
+
+            viewer.addHandler('tiled-image-drawn', function tileDrawnHandler(event) {
+                viewer.removeHandler('tiled-image-drawn', tileDrawnHandler);
+                handlerCount++;
+                assert.equal(event.eventSource, viewer, 'sender of tiled-image-drawn event was viewer');
+                assert.equal(event.tiledImage, image, 'tiledImage of update-level event is correct');
+                assert.ok(event.tiles, 'tiled-image-drawn event includes tiles');
+
+                assert.equal(handlerCount, expectedHandlers, 'correct number of handlers called');
                 done();
             });
 
-            image.draw();
+            viewer.drawer.draw( [ image ] );
         });
 
         viewer.open('/test/data/testpattern.dzi');
@@ -190,14 +197,14 @@
     // ----------
     QUnit.test('reset', function(assert) {
         var done = assert.async();
-        viewer.addHandler('tile-drawn', function updateHandler() {
-            viewer.removeHandler('tile-drawn', updateHandler);
-            assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tile-drawn');
+        viewer.addHandler('tiled-image-drawn', function updateHandler() {
+            viewer.removeHandler('tiled-image-drawn', updateHandler);
+            assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tiled-image-drawn');
             viewer.world.getItemAt(0).reset();
             assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after reset');
 
-            viewer.addHandler('tile-drawn', function updateHandler2() {
-                viewer.removeHandler('tile-drawn', updateHandler2);
+            viewer.addHandler('tiled-image-drawn', function updateHandler2() {
+                viewer.removeHandler('tiled-image-drawn', updateHandler2);
                 assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'more tiles load');
                 viewer.world.getItemAt(0).destroy();
                 assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after destroy');
@@ -225,7 +232,7 @@
             image.setClip(clip);
             assert.propEqual(image.getClip(), clip, 'clip is set correctly');
 
-            Util.spyOnce(viewer.drawer, 'setClip', function(rect) {
+            Util.spyOnce(viewer.drawer, '_setClip', function(rect) {
                 var homeBounds = viewer.viewport.getHomeBounds();
                 var canvasClip = viewer.drawer
                     .viewportToDrawerRectangle(homeBounds);

@@ -2,7 +2,7 @@
  * OpenSeadragon - ImageTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -31,9 +31,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 (function ($) {
-
 /**
  * @class ImageTileSource
  * @classdesc The ImageTileSource allows a simple image to be loaded
@@ -68,7 +66,6 @@ $.ImageTileSource = class extends $.TileSource {
             buildPyramid: true,
             crossOriginPolicy: false,
             ajaxWithCredentials: false,
-            useCanvas: true
         }, props));
     }
 
@@ -196,13 +193,9 @@ $.ImageTileSource = class extends $.TileSource {
      * @deprecated
      */
     getContext2D(level, x, y) {
-        $.console.warn('Using [TiledImage.getContext2D] (for plain images only) is deprecated. ' +
+        $.console.error('Using [TiledImage.getContext2D] (for plain images only) is deprecated. ' +
             'Use overridden downloadTileStart (https://openseadragon.github.io/examples/advanced-data-model/) instead.');
-        var context = null;
-        if (level >= this.minLevel && level <= this.maxLevel) {
-            context = this.levels[level].context2D;
-        }
-        return context;
+        return this._createContext2D();
     }
 
     downloadTileStart(job) {
@@ -242,21 +235,8 @@ $.ImageTileSource = class extends $.TileSource {
 
         let currentWidth = image.naturalWidth,
             currentHeight = image.naturalHeight;
-
-        // We cache the context of the highest level because the browser
-        // is a lot faster at downsampling something it already has
-        // downsampled before.
-        levels[0].context2D = this._createContext2D(image, currentWidth, currentHeight);
-        // We don't need the image anymore. Allows it to be GC.
-
-        if ($.isCanvasTainted(levels[0].context2D)) {
-            // If the canvas is tainted, we can't compute the pyramid.
-            this.buildPyramid = false;
-            return levels;
-        }
-
         // We build smaller levels until either width or height becomes
-        // 1 pixel wide.
+        // 2 pixel wide.
         while (currentWidth >= 2 && currentHeight >= 2) {
             currentWidth = Math.floor(currentWidth / 2);
             currentHeight = Math.floor(currentHeight / 2);

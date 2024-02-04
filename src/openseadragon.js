@@ -2,7 +2,7 @@
  * OpenSeadragon
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -190,6 +190,16 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
+  * @property {String|DrawerImplementation|Array} [drawer = ['webgl', 'canvas', 'html']]
+  *     Which drawer to use. Valid strings are 'webgl', 'canvas', and 'html'. Valid drawer
+  *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
+  *     An array of strings and/or constructors can be used to indicate the priority
+  *     of different implementations, which will be tried in order based on browser support.
+  *
+  * @property {Object} drawerOptions
+  *     Options to pass to the selected drawer implementation. For details
+  *     please see {@link OpenSeadragon.DrawerOptions}.
+  *
   * @property {Number} [opacity=1]
   *     Default proportional opacity of the tiled images (1=opaque, 0=hidden)
   *     Hidden images do not draw and only load when preloading is allowed.
@@ -204,9 +214,9 @@
   *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
-  *     Image smoothing for canvas rendering (only if canvas is used). Note: Ignored
+  *     Image smoothing for canvas rendering (only if the canvas drawer is used). Note: Ignored
   *     by some (especially older) browsers which do not support this canvas property.
-  *     This property can be changed in {@link Viewer.Drawer.setImageSmoothingEnabled}.
+  *     This property can be changed in {@link Viewer.DrawerBase.setImageSmoothingEnabled}.
   *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
   *     Draws a colored rectangle behind the tile if it is not loaded yet.
@@ -508,7 +518,7 @@
   *     Milliseconds to wait after each tile retry if tileRetryMax is set.
   *
   * @property {Boolean} [useCanvas=true]
-  *     Set to false to not use an HTML canvas element for image rendering even if canvas is supported.
+  *     Deprecated. Use the `drawer` option to specify preferred renderer.
   *
   * @property {Number} [minPixelRatio=0.5]
   *     The higher the minPixelRatio, the lower the quality of the image that
@@ -749,6 +759,16 @@
   *     Note: springStiffness and animationTime also affect the "spring" used to stop the flick animation.
   *
   */
+
+ /**
+  * @typedef {Object} DrawerOptions
+  * @memberof OpenSeadragon
+  * @property {Object} webgl - options if the WebGLDrawer is used. No options are currently supported.
+  * @property {Object} canvas - options if the CanvasDrawer is used. No options are currently supported.
+  * @property {Object} html - options if the HTMLDrawer is used. No options are currently supported.
+  * @property {Object} custom - options if a custom drawer is used. No options are currently supported.
+  */
+
 
 /**
   * The names for the image resources used for the image navigation buttons.
@@ -1350,12 +1370,32 @@ function OpenSeadragon( options ){
             flipped:                    false,
 
             // APPEARANCE
-            opacity:                           1,
-            preload:                           false,
-            compositeOperation:                null,
-            imageSmoothingEnabled:             true,
-            placeholderFillStyle:              null,
-            subPixelRoundingForTransparency:   null,
+            opacity:                           1, // to be passed into each TiledImage
+            compositeOperation:                null, // to be passed into each TiledImage
+
+            // DRAWER SETTINGS
+            drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
+
+            drawerOptions: {
+                webgl: {
+
+                },
+                canvas: {
+
+                },
+                html: {
+
+                },
+                custom: {
+
+                }
+            },
+
+            // TILED IMAGE SETTINGS
+            preload:                           false, // to be passed into each TiledImage
+            imageSmoothingEnabled:             true,  // to be passed into each TiledImage
+            placeholderFillStyle:              null,  // to be passed into each TiledImage
+            subPixelRoundingForTransparency:   null,  // to be passed into each TiledImage
 
             //REFERENCE STRIP SETTINGS
             showReferenceStrip:          false,
@@ -1378,7 +1418,6 @@ function OpenSeadragon( options ){
             imageLoaderLimit:       0,
             maxImageCacheCount:     200,
             timeout:                30000,
-            useCanvas:              true,  // Use canvas element for drawing if available
             tileRetryMax:           0,
             tileRetryDelay:         2500,
 
@@ -1447,18 +1486,6 @@ function OpenSeadragon( options ){
             silenceMultiImageWarnings: false
 
         },
-
-
-        /**
-         * TODO: remove soon
-         * @deprecated
-         * @ignore
-         */
-        get SIGNAL() {
-            $.console.error("OpenSeadragon.SIGNAL is deprecated and should not be used.");
-            return "----seadragon----";
-        },
-
 
         /**
          * Returns a function which invokes the method as if it were a method belonging to the object.
@@ -2598,13 +2625,14 @@ function OpenSeadragon( options ){
          *      jpg:  true,
          *      png:  true,
          *      tif:  false,
-         *      wdp:  false
+         *      wdp:  false,
+         *      webp: true
          * }
          * </code></pre>
          * @function
          * @example
-         * // sets webp as supported and png as unsupported
-         * setImageFormatsSupported({webp: true, png: false});
+         * // sets bmp as supported and png as unsupported
+         * setImageFormatsSupported({bmp: true, png: false});
          * @param {Object} formats An object containing format extensions as
          * keys and booleans as values.
          */
@@ -2728,7 +2756,8 @@ function OpenSeadragon( options ){
             jpg:  true,
             png:  true,
             tif:  false,
-            wdp:  false
+            wdp:  false,
+            webp: true
         },
         URLPARAMS = {};
 

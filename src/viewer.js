@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -88,6 +88,21 @@ $.Viewer = function( options ) {
         $.extend( true, options, options.config );
         delete options.config;
     }
+
+    // Move deprecated drawer options from the base options object into a sub-object
+    // This is an array to make it easy to add additional properties to convert to
+    // drawer options later if it makes sense to set at the drawer level rather than
+    // per tiled image (for example, subPixelRoundingForTransparency).
+    let drawerOptionList = [
+            'useCanvas', // deprecated
+        ];
+    options.drawerOptions = Object.assign({},
+        drawerOptionList.reduce((drawerOptions, option) => {
+            drawerOptions[option] = options[option];
+            delete options[option];
+            return drawerOptions;
+        }, {}),
+        options.drawerOptions);
 
     //Public properties
     //Allow the options object to override global defaults
@@ -197,6 +212,7 @@ $.Viewer = function( options ) {
         // the previous viewer with the same hash and now want to recreate it.
         $.console.warn("Hash " + this.hash + " has already been used.");
     }
+
 
     //Private state properties
     THIS[ this.hash ] = {
@@ -434,13 +450,63 @@ $.Viewer = function( options ) {
         maxImageCacheCount: this.maxImageCacheCount
     });
 
-    // Create the drawer
-    this.drawer = new $.Drawer({
-        viewer:             this,
-        viewport:           this.viewport,
-        element:            this.canvas,
-        debugGridColor:     this.debugGridColor
-    });
+    //Create the drawer based on selected options
+    if (Object.prototype.hasOwnProperty.call(this.drawerOptions, 'useCanvas') ){
+        $.console.error('useCanvas is deprecated, use the "drawer" option to indicate preferred drawer(s)');
+
+        // for backwards compatibility, use HTMLDrawer if useCanvas is defined and is falsey
+        if (!this.drawerOptions.useCanvas){
+            this.drawer = $.HTMLDrawer;
+        }
+
+        delete this.drawerOptions.useCanvas;
+    }
+    let drawerCandidates = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
+    if (drawerCandidates.length === 0){
+        // if an empty array was passed in, throw a warning and use the defaults
+        // note: if the drawer option is not specified, the defaults will already be set so this won't apply
+        drawerCandidates = [$.DEFAULT_SETTINGS.drawer].flat(); // ensure it is a list
+        $.console.warn('No valid drawers were selected. Using the default value.');
+    }
+
+
+    this.drawer = null;
+    for (let i = 0; i < drawerCandidates.length; i++) {
+
+        let drawerCandidate = drawerCandidates[i];
+        let Drawer = null;
+
+        //if inherits from a drawer base, use it
+        if (drawerCandidate && drawerCandidate.prototype instanceof $.DrawerBase) {
+            Drawer = drawerCandidate;
+            drawerCandidate = 'custom';
+        } else if (typeof drawerCandidate === "string") {
+            Drawer = $.determineDrawer(drawerCandidate);
+        } else {
+            $.console.warn('Unsupported drawer! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.');
+            continue;
+        }
+
+        // if the drawer is supported, create it and break the loop
+        if (Drawer && Drawer.isSupported()) {
+            this.drawer = new Drawer({
+                viewer:             this,
+                viewport:           this.viewport,
+                element:            this.canvas,
+                debugGridColor:     this.debugGridColor,
+                options:            this.drawerOptions[drawerCandidate],
+            });
+
+            break;
+        }
+    }
+    if (!this.drawer){
+        $.console.error('No drawer could be created!');
+        throw('Error with creating the selected drawer(s)');
+    }
+
+    // Pass the imageSmoothingEnabled option along to the drawer
+    this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
 
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
@@ -486,6 +552,7 @@ $.Viewer = function( options ) {
             displayRegionColor: this.navigatorDisplayRegionColor,
             crossOriginPolicy: this.crossOriginPolicy,
             animationTime:     this.animationTime,
+            drawer:            this.drawer.getType(),
         });
     }
 
@@ -511,11 +578,6 @@ $.Viewer = function( options ) {
     $.requestAnimationFrame( function(){
         beginControlsAutoHide( _this );
     } );
-
-    // Initial canvas options
-    if ( this.imageSmoothingEnabled !== undefined && !this.imageSmoothingEnabled){
-        this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
-    }
 
     // Register the viewer
     $._viewers.set(this.element, this);
@@ -1056,7 +1118,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Boolean}
      */
     isFullPage: function () {
-        return THIS[ this.hash ].fullPage;
+        return THIS[this.hash] && THIS[ this.hash ].fullPage;
     },
 
 
@@ -1103,7 +1165,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        if ( fullPage ) {
+        if ( fullPage && this.element ) {
 
             this.elementSize = $.getElementSize( this.element );
             this.pageScroll = $.getPageScroll();
@@ -2426,7 +2488,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     width:       this.referenceStripWidth,
                     tileSources: this.tileSources,
                     prefixUrl:   this.prefixUrl,
-                    useCanvas:   this.useCanvas,
                     viewer:      this
                 });
 
@@ -2575,7 +2636,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 ajaxHeaders: imgOptions.ajaxHeaders ?
                     imgOptions.ajaxHeaders : viewer.ajaxHeaders,
                 splitHashDataForPost: viewer.splitHashDataForPost,
-                useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
                 }
@@ -2592,9 +2652,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
-            }
-            if (tileSource.useCanvas === undefined) {
-                tileSource.useCanvas = viewer.useCanvas;
             }
 
             if ( $.isFunction( tileSource.getTileUrl ) ) {
@@ -3198,10 +3255,11 @@ function onCanvasDragEnd( event ) {
      */
      this.raiseEvent('canvas-drag-end', canvasDragEndEventArgs);
 
-     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
     if (!canvasDragEndEventArgs.preventDefaultAction && this.viewport) {
         if ( !THIS[ this.hash ].draggingToZoom &&
+            gestureSettings.dragToPan &&
             gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
             var amplitudeX = 0;
@@ -3728,7 +3786,7 @@ function updateOnce( viewer ) {
 
 
     var viewportChange = viewer.viewport.update();
-    var animated = viewer.world.update() || viewportChange;
+    var animated = viewer.world.update(viewportChange) || viewportChange;
 
     if (viewportChange) {
         /**
@@ -3818,7 +3876,6 @@ function updateOnce( viewer ) {
 
 function drawWorld( viewer ) {
     viewer.imageLoader.clear();
-    viewer.drawer.clear();
     viewer.world.draw();
 
     /**
@@ -3971,5 +4028,23 @@ function onRotateRight() {
 function onFlip() {
    this.viewport.toggleFlip();
 }
+
+/**
+ * Find drawer
+ */
+$.determineDrawer = function( id ){
+    for (let property in OpenSeadragon) {
+        const drawer = OpenSeadragon[ property ],
+            proto = drawer.prototype;
+        if( proto &&
+            proto instanceof OpenSeadragon.DrawerBase &&
+            $.isFunction( proto.getType ) &&
+            proto.getType.call( drawer ) === id
+        ){
+            return drawer;
+        }
+    }
+    return null;
+};
 
 }( OpenSeadragon ));

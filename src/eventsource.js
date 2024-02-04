@@ -2,7 +2,7 @@
  * OpenSeadragon - EventSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -51,6 +51,7 @@
  */
 $.EventSource = function() {
     this.events = {};
+    this._rejectedEventList = {};
 };
 
 /** @lends OpenSeadragon.EventSource.prototype */
@@ -68,6 +69,7 @@ $.EventSource.prototype = {
      * @param {Number} [times=1] - The number of times to handle the event
      * before removing it.
      * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
+     * @returns {Boolean} - True if the handler was added, false if it was rejected
      */
     addOnceHandler: function(eventName, handler, userData, times, priority) {
         const self = this;
@@ -80,7 +82,7 @@ $.EventSource.prototype = {
             }
             return handler(event);
         };
-        this.addHandler(eventName, onceHandler, userData, priority);
+        return this.addHandler(eventName, onceHandler, userData, priority);
     },
 
     /**
@@ -90,8 +92,15 @@ $.EventSource.prototype = {
      * @param {OpenSeadragon.EventHandler} handler - Function to call when event is triggered.
      * @param {Object} [userData=null] - Arbitrary object to be passed unchanged to the handler.
      * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
+     * @returns {Boolean} - True if the handler was added, false if it was rejected
      */
     addHandler: function ( eventName, handler, userData, priority ) {
+
+        if(Object.prototype.hasOwnProperty.call(this._rejectedEventList, eventName)){
+            $.console.error(`Error adding handler for ${eventName}. ${this._rejectedEventList[eventName]}`);
+            return false;
+        }
+
         let events = this.events[ eventName ];
         if ( !events ) {
             this.events[ eventName ] = events = [];
@@ -106,6 +115,7 @@ $.EventSource.prototype = {
                 index--;
             }
         }
+        return true;
     },
 
     /**
@@ -226,16 +236,22 @@ $.EventSource.prototype = {
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {Object} eventArgs - Event-specific data.
+     * @returns {Boolean} True if the event was fired, false if it was rejected because of rejectEventHandler(eventName)
      */
     raiseEvent: function( eventName, eventArgs ) {
         //uncomment if you want to get a log of all events
         //$.console.log( "Event fired:", eventName );
 
+        if(Object.prototype.hasOwnProperty.call(this._rejectedEventList, eventName)){
+            $.console.error(`Error adding handler for ${eventName}. ${this._rejectedEventList[eventName]}`);
+            return false;
+        }
+
         const handler = this.getHandler( eventName );
         if ( handler ) {
-            return handler( this, eventArgs || {} );
+            handler( this, eventArgs || {} );
         }
-        return undefined;
+        return true;
     },
 
     /**
@@ -249,11 +265,32 @@ $.EventSource.prototype = {
         //uncomment if you want to get a log of all events
         //$.console.log( "Awaiting event fired:", eventName );
 
-        const awaitingHandler = this.getAwaitingHandler( eventName );
-        if ( awaitingHandler ) {
-            return awaitingHandler( this, eventArgs || {} );
+        const awaitingHandler = this.getAwaitingHandler(eventName);
+        if (awaitingHandler) {
+            return awaitingHandler(this, eventArgs || {});
         }
         return $.Promise.resolve("No handler for this event registered.");
+    },
+
+    /**
+     * Set an event name as being disabled, and provide an optional error message
+     * to be printed to the console
+     * @param {String} eventName - Name of the event
+     * @param {String} [errorMessage] - Optional string to print to the console
+     * @private
+     */
+    rejectEventHandler(eventName, errorMessage = ''){
+        this._rejectedEventList[eventName] = errorMessage;
+    },
+
+    /**
+     * Explicitly allow an event handler to be added for this event type, undoing
+     * the effects of rejectEventHandler
+     * @param {String} eventName - Name of the event
+     * @private
+     */
+    allowEventHandler(eventName){
+        delete this._rejectedEventList[eventName];
     }
 };
 

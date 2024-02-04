@@ -28,6 +28,7 @@ module.exports = function(grunt) {
         coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
         sources = [
             "src/openseadragon.js",
+            "src/matrix3.js",
             "src/fullscreen.js",
             "src/eventsource.js",
             "src/mousetracker.js",
@@ -59,11 +60,14 @@ module.exports = function(grunt) {
             "src/imageloader.js",
             "src/tile.js",
             "src/overlay.js",
-            "src/drawer.js",
+            "src/drawerbase.js",
+            "src/htmldrawer.js",
+            "src/canvasdrawer.js",
+            "src/webgldrawer.js",
             "src/viewport.js",
             "src/tiledimage.js",
             "src/tilecache.js",
-            "src/world.js"
+            "src/world.js",
         ];
 
     var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +

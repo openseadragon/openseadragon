@@ -2,7 +2,7 @@
  * OpenSeadragon - Spring
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -206,7 +206,8 @@ $.Spring.prototype = {
 
     /**
      * @function
-     * @returns true if the value got updated, false otherwise
+     * @returns true if the spring is still updating its value, false if it is
+     * already at the target value.
      */
     update: function() {
         this.current.time  = $.now();
@@ -230,14 +231,13 @@ $.Spring.prototype = {
                     ( this.target.time - this.start.time )
                 );
 
-        var oldValue = this.current.value;
         if (this._exponential) {
             this.current.value = Math.exp(currentValue);
         } else {
             this.current.value = currentValue;
         }
 
-        return oldValue !== this.current.value;
+        return currentValue !== targetValue;
     },
 
     /**

@@ -2,7 +2,7 @@
  * OpenSeadragon - Navigator
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -170,9 +170,6 @@ $.Navigator = function( options ){
         style.border        = borderWidth + 'px solid ' + options.displayRegionColor;
         style.margin        = '0px';
         style.padding       = '0px';
-        //TODO: IE doesn't like this property being set
-        //try{ style.outline  = '2px auto #909'; }catch(e){/*ignore*/}
-
         style.background    = 'transparent';
 
         // We use square bracket notation on the statement below, because float is a keyword.
@@ -310,7 +307,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 this.viewport.resize( containerSize, true );
                 this.viewport.goHome(true);
                 this.oldContainerSize = containerSize;
-                this.drawer.clear();
+                this.world.update();
                 this.world.draw();
             }
         }

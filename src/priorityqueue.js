@@ -1,7 +1,7 @@
 /*
  * OpenSeadragon - Queue
  *
- * Copyright (C) 2023 OpenSeadragon contributors (modified)
+ * Copyright (C) 2024 OpenSeadragon contributors (modified)
  * Copyright (C) Google Inc., The Closure Library Authors.
  * https://github.com/google/closure-library
  *

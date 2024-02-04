@@ -16,8 +16,8 @@
             });
         },
         afterEach: function () {
-            if (viewer && viewer.close) {
-                viewer.close();
+            if (viewer){
+                viewer.destroy();
             }
 
             viewer = null;
@@ -331,8 +331,8 @@
                     height: 155
                 } ]
         } );
-        viewer.addOnceHandler('tile-drawn', function(e) {
-            assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tiled-image-drawn', function(event) {
+            assert.ok(OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
                 "Canvas should be tainted.");
             done();
         });
@@ -351,8 +351,8 @@
                     height: 155
                 } ]
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
-            assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tiled-image-drawn', function(event) {
+            assert.ok(!OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
                 "Canvas should not be tainted.");
             done();
         });
@@ -375,8 +375,8 @@
             },
             crossOriginPolicy : false
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
-            assert.ok(OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tiled-image-drawn', function(event) {
+            assert.ok(OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
                 "Canvas should be tainted.");
             done();
         });
@@ -399,8 +399,8 @@
                 crossOriginPolicy : "Anonymous"
             }
         } );
-        viewer.addOnceHandler('tile-drawn', function() {
-            assert.ok(!OpenSeadragon.isCanvasTainted(viewer.drawer.context.canvas),
+        viewer.addOnceHandler('tiled-image-drawn', function(event) {
+            assert.ok(!OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
                 "Canvas should not be tainted.");
             done();
         });

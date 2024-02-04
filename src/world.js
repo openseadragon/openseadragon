@@ -2,7 +2,7 @@
  * OpenSeadragon - World
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -265,11 +265,14 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * Updates (i.e. animates bounds of) all items.
+     * @function
+     * @param viewportChanged Whether the viewport changed, which indicates that
+     * all TiledImages need to be updated.
      */
-    update: function() {
+    update: function(viewportChanged) {
         var animated = false;
         for ( var i = 0; i < this._items.length; i++ ) {
-            animated = this._items[i].update() || animated;
+            animated = this._items[i].update(viewportChanged) || animated;
         }
 
         return animated;
@@ -279,11 +282,11 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Draws all items.
      */
     draw: function() {
-        for ( var i = 0; i < this._items.length; i++ ) {
-            this._items[i].draw();
-        }
-
+        this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
+        this._items.forEach(function(item){
+            this._needsDraw = item.setDrawn() || this._needsDraw;
+        });
     },
 
     /**

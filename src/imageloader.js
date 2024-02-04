@@ -2,7 +2,7 @@
  * OpenSeadragon - ImageLoader
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -37,6 +37,8 @@
 /**
  * @class ImageJob
  * @classdesc Handles downloading of a single image.
+ *
+ * @memberof OpenSeadragon
  * @param {Object} options - Options for this ImageJob.
  * @param {String} [options.src] - URL of image to download.
  * @param {Tile} [options.tile] - Tile that belongs the data to.
@@ -87,6 +89,7 @@ $.ImageJob.prototype = {
     /**
      * Starts the image job.
      * @method
+     * @memberof OpenSeadragon.ImageJob#
      */
     start: function() {
         this.tries++;
@@ -113,7 +116,8 @@ $.ImageJob.prototype = {
      * @param {*} data data that has been downloaded
      * @param {XMLHttpRequest} request reference to the request if used
      * @param {string} dataType data type identifier
-     *   old behavior: dataType treated as errorMessage if data is falsey value
+     *   fallback compatibility behavior: dataType treated as errorMessage if data is falsey value
+     * @memberof OpenSeadragon.ImageJob#
      */
     finish: function(data, request, dataType) {
         // old behavior, no deprecation due to possible finish calls with invalid data item (e.g. different error)

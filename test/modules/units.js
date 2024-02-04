@@ -19,8 +19,8 @@
             });
         },
         afterEach: function () {
-            if (viewer && viewer.close) {
-                viewer.close();
+            if (viewer){
+                viewer.destroy();
             }
 
             viewer = null;

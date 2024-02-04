@@ -27,6 +27,7 @@
     };
 
     var viewer = null;
+    var DONE = false;
     var OriginalLoader = OpenSeadragon.ImageLoader;
     var OriginalAjax = OpenSeadragon.makeAjaxRequest;
 
@@ -160,7 +161,7 @@
             ASSERT = null;
 
             if (viewer && viewer.close) {
-                viewer.close();
+                DONE ? viewer.destroy () : viewer.close();
             }
             viewer = null;
 
@@ -276,6 +277,7 @@
                 return "d1=a1&d2=a2###";
             },
         }, true, true);
+        DONE = true; // mark the module as completed so the viewer can be destroyed
     });
 
 })();

@@ -16,8 +16,8 @@
             });
         },
         afterEach: function () {
-            if (viewer && viewer.close) {
-                viewer.close();
+            if (viewer){
+                viewer.destroy();
             }
 
             viewer = null;
@@ -159,7 +159,7 @@
                 handlerCount++;
             });
 
-            viewer.world.draw();
+            viewer.world.update();
 
             assert.equal(handlerCount, 1, 'correct number of handlers called');
             done();
@@ -173,9 +173,9 @@
     // ----------
     QUnit.test('resetItems', function(assert) {
         var done = assert.async();
-        viewer.addHandler('tile-drawn', function updateHandler() {
-            viewer.removeHandler('tile-drawn', updateHandler);
-            assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tile-drawn');
+        viewer.addHandler('tiled-image-drawn', function updateHandler() {
+            viewer.removeHandler('tiled-image-drawn', updateHandler);
+            assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tiled-image-drawn');
             viewer.world.resetItems();
             assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after reset');
             done();
