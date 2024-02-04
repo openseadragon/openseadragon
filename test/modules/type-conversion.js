@@ -31,23 +31,23 @@
     let imageToCanvas = 0, srcToImage = 0, context2DtoImage = 0, canvasToContext2D = 0, imageToUrl = 0,
         canvasToUrl = 0;
     //set all same costs to get easy testing, know which path will be taken
-    Convertor.learn("__TEST__canvas", "__TEST__url", canvas => {
+    Convertor.learn("__TEST__canvas", "__TEST__url", (tile, canvas) => {
         canvasToUrl++;
         return canvas.toDataURL();
     }, 1, 1);
-    Convertor.learn("__TEST__image", "__TEST__url", image => {
+    Convertor.learn("__TEST__image", "__TEST__url", (tile,image) => {
         imageToUrl++;
         return image.url;
     }, 1, 1);
-    Convertor.learn("__TEST__canvas", "__TEST__context2d", canvas => {
+    Convertor.learn("__TEST__canvas", "__TEST__context2d", (tile,canvas) => {
         canvasToContext2D++;
         return canvas.getContext("2d");
     }, 1, 1);
-    Convertor.learn("__TEST__context2d", "__TEST__canvas", context2D => {
+    Convertor.learn("__TEST__context2d", "__TEST__canvas", (tile,context2D) => {
         context2DtoImage++;
         return context2D.canvas;
     }, 1, 1);
-    Convertor.learn("__TEST__image", "__TEST__canvas", image => {
+    Convertor.learn("__TEST__image", "__TEST__canvas", (tile,image) => {
         imageToCanvas++;
         const canvas = document.createElement( 'canvas' );
         canvas.width = image.width;
@@ -56,7 +56,7 @@
         context.drawImage( image, 0, 0 );
         return canvas;
     }, 1, 1);
-    Convertor.learn("__TEST__url", "__TEST__image", url => {
+    Convertor.learn("__TEST__url", "__TEST__image", (tile, url) => {
         return new Promise((resolve, reject) => {
             srcToImage++;
             const img = new Image();
@@ -68,7 +68,8 @@
 
     let canvasDestroy = 0, imageDestroy = 0, contex2DDestroy = 0, urlDestroy = 0;
     //also learn destructors
-    Convertor.learnDestroy("__TEST__canvas", () => {
+    Convertor.learnDestroy("__TEST__canvas", canvas => {
+        canvas.width = canvas.height = 0;
         canvasDestroy++;
     });
     Convertor.learnDestroy("__TEST__image", () => {
@@ -145,20 +146,20 @@
             context.drawImage( image, 0, 0 );
 
             //copy URL
-            const URL2 = await Convertor.copy(URL, "url");
+            const URL2 = await Convertor.copy(null, URL, "url");
             //we cannot check if they are not the same object, strings are immutable (and we don't copy anyway :D )
             test.equal(URL, URL2, "String copy is equal in data.");
             test.equal(typeof URL, typeof URL2, "Type of copies equals.");
             test.equal(URL.length, URL2.length, "Data length is also equal.");
 
             //copy context
-            const context2 = await Convertor.copy(context, "context2d");
+            const context2 = await Convertor.copy(null, context, "context2d");
             test.notEqual(context, context2, "Copy is not the same as original canvas.");
             test.equal(typeof context, typeof context2, "Type of copies equals.");
             test.equal(context.canvas.toDataURL(), context2.canvas.toDataURL(), "Data is equal.");
 
             //copy image
-            const image2 = await Convertor.copy(image, "image");
+            const image2 = await Convertor.copy(null, image, "image");
             test.notEqual(image, image2, "Copy is not the same as original image.");
             test.equal(typeof image, typeof image2, "Type of copies equals.");
             test.equal(image.src, image2.src, "Data is equal.");
@@ -173,7 +174,7 @@
         const done = test.async();
 
         //load image object: url -> image
-        Convertor.convert("/test/data/A.png", "__TEST__url", "__TEST__image").then(i => {
+        Convertor.convert(null, "/test/data/A.png", "__TEST__url", "__TEST__image").then(i => {
             test.equal(OpenSeadragon.type(i), "image", "Got image object after conversion.");
             test.equal(srcToImage, 1, "Conversion happened.");
 
@@ -182,14 +183,14 @@
             test.equal(urlDestroy, 1, "Url destructor called.");
 
             test.equal(imageDestroy, 0, "Image destructor not called.");
-            return Convertor.convert(i, "__TEST__image", "__TEST__canvas");
+            return Convertor.convert(null, i, "__TEST__image", "__TEST__canvas");
         }).then(c => { //path image -> canvas
             test.equal(OpenSeadragon.type(c), "canvas", "Got canvas object after conversion.");
             test.equal(srcToImage, 1, "Conversion ulr->image did not happen.");
             test.equal(imageToCanvas, 1, "Conversion image->canvas happened.");
             test.equal(urlDestroy, 1, "Url destructor not called.");
             test.equal(imageDestroy, 0, "Image destructor not called unless we ask it.");
-            return Convertor.convert(c, "__TEST__canvas", "__TEST__image");
+            return Convertor.convert(null, c, "__TEST__canvas", "__TEST__image");
         }).then(i => { //path canvas, image: canvas -> url -> image
             test.equal(OpenSeadragon.type(i), "image", "Got image object after conversion.");
             test.equal(srcToImage, 2, "Conversion ulr->image happened.");
@@ -314,7 +315,7 @@
         const done = test.async();
 
         let conversionHappened = false;
-        Convertor.learn("__TEST__url", "__TEST__longConversionProcessForTesting", value => {
+        Convertor.learn("__TEST__url", "__TEST__longConversionProcessForTesting", (tile, value) => {
             return new Promise((resolve, reject) => {
                 setTimeout(() => {
                     conversionHappened = true;
@@ -358,7 +359,7 @@
         const done = test.async();
 
         let conversionHappened = false;
-        Convertor.learn("__TEST__url", "__TEST__longConversionProcessForTesting", value => {
+        Convertor.learn("__TEST__url", "__TEST__longConversionProcessForTesting", (tile, value) => {
             return new Promise((resolve, reject) => {
                 setTimeout(() => {
                     conversionHappened = true;

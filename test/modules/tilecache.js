@@ -33,46 +33,46 @@
     // other tests will interfere
     let typeAtoB = 0, typeBtoC = 0, typeCtoA = 0, typeDtoA = 0, typeCtoE = 0;
     //set all same costs to get easy testing, know which path will be taken
-    Convertor.learn(T_A, T_B, x => {
+    Convertor.learn(T_A, T_B, (tile, x) => {
         typeAtoB++;
         return x+1;
     });
-    Convertor.learn(T_B, T_C, x => {
+    Convertor.learn(T_B, T_C, (tile, x) => {
         typeBtoC++;
         return x+1;
     });
-    Convertor.learn(T_C, T_A, x => {
+    Convertor.learn(T_C, T_A, (tile, x) => {
         typeCtoA++;
         return x+1;
     });
-    Convertor.learn(T_D, T_A, x => {
+    Convertor.learn(T_D, T_A, (tile, x) => {
         typeDtoA++;
         return x+1;
     });
-    Convertor.learn(T_C, T_E, x => {
+    Convertor.learn(T_C, T_E, (tile, x) => {
         typeCtoE++;
         return x+1;
     });
     //'Copy constructors'
     let copyA = 0, copyB = 0, copyC = 0, copyD = 0, copyE = 0;
     //also learn destructors
-    Convertor.learn(T_A, T_A,x => {
+    Convertor.learn(T_A, T_A,(tile, x) => {
         copyA++;
         return x+1;
     });
-    Convertor.learn(T_B, T_B,x => {
+    Convertor.learn(T_B, T_B,(tile, x) => {
         copyB++;
         return x+1;
     });
-    Convertor.learn(T_C, T_C,x => {
+    Convertor.learn(T_C, T_C,(tile, x) => {
         copyC++;
         return x-1;
     });
-    Convertor.learn(T_D, T_D,x => {
+    Convertor.learn(T_D, T_D,(tile, x) => {
         copyD++;
         return x+1;
     });
-    Convertor.learn(T_E, T_E,x => {
+    Convertor.learn(T_E, T_E,(tile, x) => {
         copyE++;
         return x+1;
     });

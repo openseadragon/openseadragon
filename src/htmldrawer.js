@@ -51,6 +51,8 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
     constructor(options){
         super(options);
 
+        this.declareSupportedDataFormats("image");
+
         /**
          * The HTML element (div) that this drawer uses for drawing
          * @member {Element} canvas
@@ -210,7 +212,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         //               content during animation of the container size.
 
         if ( !tile.element ) {
-            var image = tile.getImage();
+            const image = this.getCompatibleData(tile);
             if (!image) {
                 return;
             }

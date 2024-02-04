@@ -136,8 +136,9 @@
          * @returns {OpenSeadragon.Promise<?>} desired data type in promise, undefined if the cache was destroyed
          */
         getDataAs(type = this._type, copy = true) {
+            const referenceTile = this._tiles[0];
             if (this.loaded && type === this._type) {
-                return copy ? $.convertor.copy(this._data, type) : this._promise;
+                return copy ? $.convertor.copy(referenceTile, this._data, type) : this._promise;
             }
 
             return this._promise.then(data => {
@@ -146,10 +147,10 @@
                     return undefined;
                 }
                 if (type !== this._type) {
-                    return $.convertor.convert(data, this._type, type);
+                    return $.convertor.convert(referenceTile, data, this._type, type);
                 }
                 if (copy) { //convert does not copy data if same type, do explicitly
-                    return $.convertor.copy(data, type);
+                    return $.convertor.copy(referenceTile, data, type);
                 }
                 return data;
             });
@@ -158,11 +159,15 @@
         /**
          * Transform cache to desired type and get the data after conversion.
          * Does nothing if the type equals to the current type. Asynchronous.
-         * @param {string} type
+         * @param {string|[string]} type if array provided, the system will
+         *   try to optimize for the best type to convert to.
          * @return {OpenSeadragon.Promise<?>|*}
          */
         transformTo(type = this._type) {
-            if (!this.loaded || type !== this._type) {
+            if (!this.loaded ||
+                type !== this._type ||
+                (Array.isArray(type) && !type.includes(this._type))) {
+
                 if (!this.loaded) {
                     this._conversionJobQueue = this._conversionJobQueue || [];
                     let resolver = null;
@@ -173,7 +178,8 @@
                         if (this._destroyed) {
                             return;
                         }
-                        if (type !== this._type) {
+                        //must re-check types since we perform in a queue of conversion requests
+                        if (type !== this._type || (Array.isArray(type) && !type.includes(this._type))) {
                             //ensures queue gets executed after finish
                             this._convert(this._type, type);
                             this._promise.then(data => resolver(data));
@@ -351,10 +357,13 @@
 
         /**
          * Private conversion that makes sure the cache knows its data is ready
+         * @param to array or a string - allowed types
+         * @param from string - type origin
          * @private
          */
         _convert(from, to) {
             const convertor = $.convertor,
+                referenceTile = this._tiles[0],
                 conversionPath = convertor.getConversionPath(from, to);
             if (!conversionPath) {
                 $.console.error(`[OpenSeadragon.convertor.convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
@@ -372,7 +381,7 @@
                         return $.Promise.resolve(x);
                     }
                     let edge = conversionPath[i];
-                    return $.Promise.resolve(edge.transform(x)).then(
+                    return $.Promise.resolve(edge.transform(referenceTile, x)).then(
                         y => {
                             if (!y) {
                                 $.console.error(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting using %s)`, edge);
@@ -391,7 +400,8 @@
 
             this.loaded = false;
             this._data = undefined;
-            this._type = to;
+            // Read target type from the conversion path: [edge.target] = Vertex, its value=type
+            this._type = conversionPath[stepCount - 1].target.value;
             this._promise = convert(originalData, 0);
         }
     };
@@ -655,6 +665,11 @@
             //delete also the tile record
             if (deleteAtIndex !== undefined) {
                 this._tilesLoaded.splice( deleteAtIndex, 1 );
+            }
+
+            // Possible error: it can happen that unloaded tile gets to this stage. Should it even be allowed to happen?
+            if (!tile.loaded) {
+                return;
             }
 
             const tiledImage = tile.tiledImage;

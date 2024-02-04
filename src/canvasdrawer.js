@@ -50,6 +50,8 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
     constructor(options){
         super(options);
 
+        this.declareSupportedDataFormats("context2d");
+
         /**
          * The HTML element (canvas) that this drawer uses for drawing
          * @member {Element} canvas
@@ -255,26 +257,26 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      *
      */
     _drawTiles( tiledImage ) {
-        var lastDrawn =  tiledImage.getTilesToDraw().map(info => info.tile);
+        const lastDrawn =  tiledImage.getTilesToDraw().map(info => info.tile);
         if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
             return;
         }
 
-        var tile = lastDrawn[0];
-        var useSketch;
+        let tile = lastDrawn[0];
+        let useSketch;
 
         if (tile) {
             useSketch = tiledImage.opacity < 1 ||
                 (tiledImage.compositeOperation && tiledImage.compositeOperation !== 'source-over') ||
                 (!tiledImage._isBottomItem() &&
-                tiledImage.source.hasTransparency(tile.context2D, tile.getUrl(), tile.ajaxHeaders, tile.postData));
+                tiledImage.source.hasTransparency(null, tile.getUrl(), tile.ajaxHeaders, tile.postData));
         }
 
-        var sketchScale;
-        var sketchTranslate;
+        let sketchScale;
+        let sketchTranslate;
 
-        var zoom = this.viewport.getZoom(true);
-        var imageZoom = tiledImage.viewportToImageZoom(zoom);
+        const zoom = this.viewport.getZoom(true);
+        const imageZoom = tiledImage.viewportToImageZoom(zoom);
 
         if (lastDrawn.length > 1 &&
             imageZoom > tiledImage.smoothTileEdgesMinZoom &&
@@ -284,13 +286,19 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             // So we have to composite them at ~100% and scale them up together.
             // Note: Disabled on iOS devices per default as it causes a native crash
             useSketch = true;
-            sketchScale = tile.getScaleForEdgeSmoothing();
+
+            const context = tile.length && this.getCompatibleData(tile);
+            if (context) {
+                sketchScale = context.canvas.width / (tile.size.x * $.pixelDensityRatio);
+            } else {
+                sketchScale = 1;
+            }
             sketchTranslate = tile.getTranslationForEdgeSmoothing(sketchScale,
                 this._getCanvasSize(false),
                 this._getCanvasSize(true));
         }
 
-        var bounds;
+        let bounds;
         if (useSketch) {
             if (!sketchScale) {
                 // Except when edge smoothing, we only clean the part of the
@@ -337,13 +345,13 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             }
         }
 
-        var usedClip = false;
+        let usedClip = false;
         if ( tiledImage._clip ) {
             this._saveContext(useSketch);
 
-            var box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
+            let box = tiledImage.imageToViewportRectangle(tiledImage._clip, true);
             box = box.rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
-            var clipRect = this.viewportToDrawerRectangle(box);
+            let clipRect = this.viewportToDrawerRectangle(box);
             if (sketchScale) {
                 clipRect = clipRect.times(sketchScale);
             }
@@ -356,17 +364,17 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         }
 
         if (tiledImage._croppingPolygons) {
-            var self = this;
+            const self = this;
             if(!usedClip){
                 this._saveContext(useSketch);
             }
             try {
-                var polygons = tiledImage._croppingPolygons.map(function (polygon) {
+                const polygons = tiledImage._croppingPolygons.map(function (polygon) {
                     return polygon.map(function (coord) {
-                        var point = tiledImage
+                        const point = tiledImage
                             .imageToViewportCoordinates(coord.x, coord.y, true)
                             .rotate(-tiledImage.getRotation(true), tiledImage._getRotationPoint(true));
-                        var clipPoint = self.viewportCoordToDrawerCoord(point);
+                        let clipPoint = self.viewportCoordToDrawerCoord(point);
                         if (sketchScale) {
                             clipPoint = clipPoint.times(sketchScale);
                         }
@@ -384,7 +392,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         }
 
         if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
-            var placeholderRect = this.viewportToDrawerRectangle(tiledImage.getBounds(true));
+            let placeholderRect = this.viewportToDrawerRectangle(tiledImage.getBounds(true));
             if (sketchScale) {
                 placeholderRect = placeholderRect.times(sketchScale);
             }
@@ -392,7 +400,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
                 placeholderRect = placeholderRect.translate(sketchTranslate);
             }
 
-            var fillStyle = null;
+            let fillStyle;
             if ( typeof tiledImage.placeholderFillStyle === "function" ) {
                 fillStyle = tiledImage.placeholderFillStyle(tiledImage, this.context);
             }
@@ -403,19 +411,18 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             this._drawRectangle(placeholderRect, fillStyle, useSketch);
         }
 
-        var subPixelRoundingRule = determineSubPixelRoundingRule(tiledImage.subPixelRoundingForTransparency);
+        const subPixelRoundingRule = determineSubPixelRoundingRule(tiledImage.subPixelRoundingForTransparency);
 
-        var shouldRoundPositionAndSize = false;
+        let shouldRoundPositionAndSize = false;
 
         if (subPixelRoundingRule === $.SUBPIXEL_ROUNDING_OCCURRENCES.ALWAYS) {
             shouldRoundPositionAndSize = true;
         } else if (subPixelRoundingRule === $.SUBPIXEL_ROUNDING_OCCURRENCES.ONLY_AT_REST) {
-            var isAnimating = this.viewer && this.viewer.isAnimating();
-            shouldRoundPositionAndSize = !isAnimating;
+            shouldRoundPositionAndSize = !(this.viewer && this.viewer.isAnimating());
         }
 
         // Iterate over the tiles to draw, and draw them
-        for (var i = 0; i < lastDrawn.length; i++) {
+        for (let i = 0; i < lastDrawn.length; i++) {
             tile = lastDrawn[ i ];
             this._drawTile( tile, tiledImage, useSketch, sketchScale,
                 sketchTranslate, shouldRoundPositionAndSize, tiledImage.source );
@@ -499,9 +506,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         this._drawDebugInfo( tiledImage, lastDrawn );
 
         // Fire tiled-image-drawn event.
-
         this._raiseTiledImageDrawnEvent(tiledImage, lastDrawn);
-
     }
 
     /**
@@ -559,51 +564,24 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         $.console.assert(tile, '[Drawer._drawTile] tile is required');
         $.console.assert(tiledImage, '[Drawer._drawTile] drawingHandler is required');
 
-        var context = this._getContext(useSketch);
-        scale = scale || 1;
-        this._drawTileToCanvas(tile, context, tiledImage, scale, translate, shouldRoundPositionAndSize, source);
-
-    }
-
-    /**
-     * Renders the tile in a canvas-based context.
-     * @private
-     * @function
-     * @param {OpenSeadragon.Tile} tile - the tile to draw to the canvas
-     * @param {Canvas} context
-     * @param {OpenSeadragon.TiledImage} tiledImage - Method for firing the drawing event.
-     * drawingHandler({context, tile, rendered})
-     * where <code>rendered</code> is the context with the pre-drawn image.
-     * @param {Number} [scale=1] - Apply a scale to position and size
-     * @param {OpenSeadragon.Point} [translate] - A translation vector
-     * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
-     * position and size of tiles supporting alpha channel in non-transparency
-     * context.
-     * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
-     */
-    _drawTileToCanvas( tile, context, tiledImage, scale, translate, shouldRoundPositionAndSize, source) {
-
-        var position = tile.position.times($.pixelDensityRatio),
-            size     = tile.size.times($.pixelDensityRatio),
-            rendered;
-
-        if (!tile.context2D && !tile.cacheImageRecord) {
-            $.console.warn(
-                '[Drawer._drawTileToCanvas] attempting to draw tile %s when it\'s not cached',
-                tile.toString());
-            return;
-        }
-
-        rendered = tile.getCanvasContext();
-
-        if ( !tile.loaded || !rendered ){
+        if ( !tile.loaded ){
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
                 tile.toString()
             );
-
             return;
         }
+
+        const rendered = this.getCompatibleData(tile);
+        if (!rendered) {
+            return;
+        }
+
+        const context = this._getContext(useSketch);
+        scale = scale || 1;
+
+        let position = tile.position.times($.pixelDensityRatio),
+            size     = tile.size.times($.pixelDensityRatio);
 
         context.save();
         // context.globalAlpha = this.options.opacity; // this was deprecated previously and should not be applied as it is set per TiledImage
@@ -644,7 +622,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
         this._raiseTileDrawingEvent(tiledImage, context, tile, rendered);
 
-        var sourceWidth, sourceHeight;
+        let sourceWidth, sourceHeight;
         if (tile.sourceBounds) {
             sourceWidth = Math.min(tile.sourceBounds.width, rendered.canvas.width);
             sourceHeight = Math.min(tile.sourceBounds.height, rendered.canvas.height);
@@ -671,6 +649,8 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
         context.restore();
     }
+
+
 
     /**
      * Get the context of the main or sketch canvas

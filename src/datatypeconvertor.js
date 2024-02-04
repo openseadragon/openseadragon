@@ -148,13 +148,24 @@ class WeightedGraph {
 }
 
 /**
- * Node on the conversion path in OpenSeadragon.converter.getConversionPath().
+ * Edge.transform function on the conversion path in OpenSeadragon.converter.getConversionPath().
  *  It can be also conversion to undefined if used as destructor implementation.
  *
  * @callback TypeConvertor
  * @memberof OpenSeadragon
- * @param {?} data data in the input format
- * @return {?} data in the output format
+ * @param {OpenSeadragon.Tile} tile reference tile that owns the data
+ * @param {any} data data in the input format
+ * @returns {any} data in the output format
+ */
+
+/**
+ * Destructor called every time a data type is to be destroyed or converted to another type.
+ *
+ * @callback TypeDestructor
+ * @memberof OpenSeadragon
+ * @param {any} data data in the format the destructor is registered for
+ * @returns {any} can return any value that is carried over to the caller if desirable.
+ *   Note: not used by the OSD cache system.
  */
 
 /**
@@ -184,13 +195,13 @@ $.DataTypeConvertor = class {
         this.copyings = {};
 
         // Teaching OpenSeadragon built-in conversions:
-        const imageCreator = (url) => new $.Promise((resolve, reject) => {
+        const imageCreator = (tile, url) => new $.Promise((resolve, reject) => {
             const img = new Image();
             img.onerror = img.onabort = reject;
             img.onload = () => resolve(img);
             img.src = url;
         });
-        const canvasContextCreator = (imageData) => {
+        const canvasContextCreator = (tile, imageData) => {
             const canvas = document.createElement( 'canvas' );
             canvas.width = imageData.width;
             canvas.height = imageData.height;
@@ -199,15 +210,25 @@ $.DataTypeConvertor = class {
             return context;
         };
 
-        this.learn("context2d", "url", ctx => ctx.canvas.toDataURL(), 1, 2);
-        this.learn("image", "url", image => image.url);
+        this.learn("context2d", "url", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
+        this.learn("image", "url", (tile, image) => image.url);
         this.learn("image", "context2d", canvasContextCreator, 1, 1);
         this.learn("url", "image", imageCreator, 1, 1);
 
         //Copies
-        this.learn("image", "image", image => imageCreator(image.src), 1, 1);
-        this.learn("url", "url", url => url, 0, 1); //strings are immutable, no need to copy
-        this.learn("context2d", "context2d", ctx => canvasContextCreator(ctx.canvas));
+        this.learn("image", "image", (tile, image) => imageCreator(tile, image.src), 1, 1);
+        this.learn("url", "url", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
+        this.learn("context2d", "context2d", (tile, ctx) => canvasContextCreator(tile, ctx.canvas));
+
+        /**
+         * Free up canvas memory
+         * (iOS 12 or higher on 2GB RAM device has only 224MB canvas memory,
+         * and Safari keeps canvas until its height and width will be set to 0).
+         */
+        this.learnDestroy("context2d", ctx => {
+            ctx.canvas.width = 0;
+            ctx.canvas.height = 0;
+        });
     }
 
     /**
@@ -263,9 +284,9 @@ $.DataTypeConvertor = class {
      * Teach the system to convert data type 'from' -> 'to'
      * @param {string} from unique ID of the data item 'from'
      * @param {string} to unique ID of the data item 'to'
-     * @param {OpenSeadragon.TypeConvertor} callback convertor that takes type 'from', and converts to type 'to'.
-     *  Callback can return function. This function returns the data in type 'to',
-     *  it can return also the value wrapped in a Promise (returned in resolve) or it can be async function.
+     * @param {OpenSeadragon.TypeConvertor} callback convertor that takes two arguments: a tile reference, and
+     *  a data object of a type 'from'; and converts this data object to type 'to'. It can return also the value
+     *  wrapped in a Promise (returned in resolve) or it can be async function.
      * @param {Number} [costPower=0] positive cost class of the conversion, smaller or equal than 7.
      *   Should reflect the actual cost of the conversion:
      *   - if nothing must be done and only reference is retrieved (or a constant operation done),
@@ -298,7 +319,7 @@ $.DataTypeConvertor = class {
      * for example, textures loaded to GPU have to be also manually removed when not needed anymore.
      * Needs to be defined only when the created object has extra deletion process.
      * @param {string} type
-     * @param {OpenSeadragon.TypeConvertor} callback destructor, receives the object created,
+     * @param {OpenSeadragon.TypeDestructor} callback destructor, receives the object created,
      *   it is basically a type conversion to 'undefined' - thus the type.
      */
     learnDestroy(type, callback) {
@@ -312,12 +333,13 @@ $.DataTypeConvertor = class {
      * Note: conversion DOES NOT COPY data if [to] contains type 'from' (e.g., the cheapest conversion is no conversion).
      * It automatically calls destructor on immediate types, but NOT on the x and the result. You should call these
      * manually if these should be destroyed.
-     * @param {*} x data item to convert
+     * @param {OpenSeadragon.Tile} tile
+     * @param {any} data data item to convert
      * @param {string} from data item type
      * @param {string} to desired type(s)
      * @return {OpenSeadragon.Promise<?>} promise resolution with type 'to' or undefined if the conversion failed
      */
-    convert(x, from, ...to) {
+    convert(tile, data, from, ...to) {
         const conversionPath = this.getConversionPath(from, to);
         if (!conversionPath) {
             $.console.error(`[OpenSeadragon.convertor.convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
@@ -331,7 +353,7 @@ $.DataTypeConvertor = class {
                 return $.Promise.resolve(x);
             }
             let edge = conversionPath[i];
-            let y = edge.transform(x);
+            let y = edge.transform(tile, x);
             if (!y) {
                 $.console.warn(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting to %s)`, edge.target);
                 return $.Promise.resolve();
@@ -344,19 +366,20 @@ $.DataTypeConvertor = class {
             return result.then(res => step(res, i + 1));
         };
         //destroy only mid-results, but not the original value
-        return step(x, 0, false);
+        return step(data, 0, false);
     }
 
     /**
      * Destroy the data item given.
+     * @param {OpenSeadragon.Tile} tile
+     * @param {any} data data item to convert
      * @param {string} type data type
-     * @param {?} data
      * @return {OpenSeadragon.Promise<?>|undefined} promise resolution with data passed from constructor
      */
-    copy(data, type) {
+    copy(tile, data, type) {
         const copyTransform = this.copyings[type];
         if (copyTransform) {
-            const y = copyTransform(data);
+            const y = copyTransform(tile, data);
             return $.type(y) === "promise" ? y : $.Promise.resolve(y);
         }
         $.console.warn(`[OpenSeadragon.convertor.copy] is not supported with type %s`, type);
@@ -399,7 +422,7 @@ $.DataTypeConvertor = class {
         }
 
         if (Array.isArray(to)) {
-            $.console.assert(typeof to === "string" || to.length > 0, "[getConversionPath] conversion 'to' type must be defined.");
+            $.console.assert(to.length > 0, "[getConversionPath] conversion 'to' type must be defined.");
             let bestCost = Infinity;
 
             //FIXME: pre-compute all paths in 'to' array? could be efficient for multiple

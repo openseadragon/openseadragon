@@ -379,7 +379,9 @@ $.Viewer = function( options ) {
             //update tiles
             item.opacity = 0; //prevent draw
             item.maxTilesPerFrame = 50; //todo based on image size and also number of images!
-            item._updateViewport();
+
+            //TODO check if the method is used correctly
+            item._updateLevelsForViewport();
             item._needsDraw = true; //we did not draw
             item.opacity = origOpacity;
             item.maxTilesPerFrame = origMaxTiles;

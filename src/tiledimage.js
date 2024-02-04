@@ -2126,14 +2126,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
             //make sure cache data is ready for drawing, if not, request the desired format
             const cache = tile.getCache(tile.cacheKey),
-                // TODO: after-merge-aiosa dynamic type declaration from the drawer base class interface
-                requiredType = _this._drawer.useCanvas ? "context2d" : "image";
+                requiredTypes = _this.viewer.drawer.getSupportedDataFormats();
             if (!cache) {
                 $.console.warn("Tile %s not cached at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
                 resolver(tile);
-            } else if (cache.type !== requiredType) {
+            } else if (!requiredTypes.includes(cache.type)) {
                 //initiate conversion as soon as possible if incompatible with the drawer
-                cache.transformTo(requiredType).then(_ => {
+                cache.transformTo(requiredTypes).then(_ => {
                     tile.loading = false;
                     tile.loaded = true;
                     resolver(tile);

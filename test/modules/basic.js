@@ -332,9 +332,10 @@
                 } ]
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.ok(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );
@@ -352,9 +353,10 @@
                 } ]
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(!OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should not be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.notOk(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );
@@ -376,9 +378,10 @@
             crossOriginPolicy : false
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.ok(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );
@@ -400,9 +403,10 @@
             }
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(!OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should not be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.notOk(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );

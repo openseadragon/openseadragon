@@ -77,7 +77,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.container.style.textAlign = "left";
         this.container.appendChild( this.canvas );
 
-        this._checkForAPIOverrides();
+        this._checkInterfaceImplementation();
     }
 
     // protect the canvas member with a getter
@@ -96,6 +96,54 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     getType(){
         $.console.error('Drawer.getType must be implemented by child class');
         return undefined;
+    }
+
+    /**
+     * Define which data types are compatible for this drawer to work with.
+     * See default type list in OpenSeadragon.DataTypeConvertor
+     * @param formats
+     */
+    declareSupportedDataFormats(...formats) {
+        this._formats = formats;
+    }
+
+    /**
+     * Retrieve data types
+     * @return {[string]}
+     */
+    getSupportedDataFormats() {
+        if (!this._formats || this._formats.length < 1) {
+            $.console.error("A drawer must define its supported rendering data types using declareSupportedDataFormats!");
+        }
+        return this._formats;
+    }
+
+    /**
+     * Check a particular cache record is compatible.
+     * This function _MUST_ be called: if it returns a falsey
+     * value, the rendering _MUST NOT_ proceed. It should
+     * await next animation frames and check again for availability.
+     * @param {OpenSeadragon.Tile} tile
+     */
+    getCompatibleData(tile) {
+        const cache = tile.getCache(tile.cacheKey);
+        if (!cache) {
+            return null;
+        }
+
+        const formats = this.getSupportedDataFormats();
+        if (!formats.includes(cache.type)) {
+            cache.transformTo(formats.length > 1 ? formats : formats[0]);
+            return false; // type is NOT compatible
+        }
+
+        // Cache in the process of loading, no-op
+        if (!cache.loaded) {
+            return false; // cache is NOT ready
+        }
+
+        // Ensured compatible
+        return cache.data;
     }
 
     /**
@@ -146,8 +194,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      */
     minimumOverlapRequired() {
         return false;
-     }
-
+    }
 
     /**
      * @abstract
@@ -182,7 +229,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @private
      *
      */
-    _checkForAPIOverrides(){
+    _checkInterfaceImplementation(){
         if(this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement){
             throw(new Error("[drawer]._createDrawingElement must be implemented by child class"));
         }

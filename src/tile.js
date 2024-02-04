@@ -510,7 +510,7 @@ $.Tile.prototype = {
         }
 
         if (!type) {
-            if (this.tiledImage && !this.tiledImage.__typeWarningReported) {
+            if (!this.tiledImage.__typeWarningReported) {
                 $.console.warn(this, "[Tile.setCache] called without type specification. " +
                     "Automated deduction is potentially unsafe: prefer specification of data type explicitly.");
                 this.tiledImage.__typeWarningReported = true;
@@ -520,10 +520,11 @@ $.Tile.prototype = {
 
         const writesToRenderingCache = key === this.cacheKey;
         if (writesToRenderingCache && _safely) {
-            //todo after-merge-aiosa decide dynamically
-            const conversion = $.convertor.getConversionPath(type, "context2d");
+            // Need to get the supported type for rendering out of the active drawer.
+            const supportedTypes = this.tiledImage.viewer.drawer.getSupportedDataFormats();
+            const conversion = $.convertor.getConversionPath(type, supportedTypes);
             $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
-                "to render. Make sure OpenSeadragon.convertor was taught to convert type: " + type);
+                "to render. Make sure OpenSeadragon.convertor was taught to convert to (one of): " + type);
         }
 
         if (!this.__cutoff) {
