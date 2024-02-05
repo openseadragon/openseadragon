@@ -1879,7 +1879,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-<<<<<<< HEAD
      * @private
      * @inner
      * Try to find existing cache of the tile
@@ -1920,8 +1919,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * @private
      * @inner
-=======
->>>>>>> origin
      * Obtains a tile at the given location.
      * @private
      * @param {Number} x
