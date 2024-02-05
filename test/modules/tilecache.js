@@ -123,7 +123,13 @@
     QUnit.test('basics', function(assert) {
         const done = assert.async();
         const fakeViewer = {
-            raiseEvent: function() {}
+            raiseEvent: function() {},
+            drawer: {
+                // tile in safe mode inspects the supported formats upon cache set
+                getSupportedDataFormats() {
+                    return [T_A, T_B, T_C, T_D, T_E];
+                }
+            }
         };
         const fakeTiledImage0 = {
             viewer: fakeViewer,
@@ -170,7 +176,13 @@
     QUnit.test('maxImageCacheCount', function(assert) {
         const done = assert.async();
         const fakeViewer = {
-            raiseEvent: function() {}
+            raiseEvent: function() {},
+            drawer: {
+                // tile in safe mode inspects the supported formats upon cache set
+                getSupportedDataFormats() {
+                    return [T_A, T_B, T_C, T_D, T_E];
+                }
+            }
         };
         const fakeTiledImage0 = {
             viewer: fakeViewer,
@@ -218,7 +230,13 @@
     QUnit.test('Tile API: basic conversion', function(test) {
         const done = test.async();
         const fakeViewer = {
-            raiseEvent: function() {}
+            raiseEvent: function() {},
+            drawer: {
+                // tile in safe mode inspects the supported formats upon cache set
+                getSupportedDataFormats() {
+                    return [T_A, T_B, T_C, T_D, T_E];
+                }
+            }
         };
         const tileCache = new OpenSeadragon.TileCache();
         const fakeTiledImage0 = {
@@ -406,7 +424,13 @@
     QUnit.test('Tile API Cache Interaction', function(test) {
         const done = test.async();
         const fakeViewer = {
-            raiseEvent: function() {}
+            raiseEvent: function() {},
+            drawer: {
+                // tile in safe mode inspects the supported formats upon cache set
+                getSupportedDataFormats() {
+                    return [T_A, T_B, T_C, T_D, T_E];
+                }
+            }
         };
         const tileCache = new OpenSeadragon.TileCache();
         const fakeTiledImage0 = {

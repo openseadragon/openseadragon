@@ -87,10 +87,6 @@
             this._clippingContext = null;
             this._renderingCanvas = null;
 
-            // Unique type per drawer: uploads texture to unique webgl context.
-            this._dataType = `${Date.now()}_TEX_2D`;
-            this._setupTextureHandlers(this._dataType);
-
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
             this.viewer.rejectEventHandler("tile-drawing", "The WebGLDrawer does not raise the tile-drawing event");
@@ -100,6 +96,10 @@
             // the private _setupCanvases and _setupRenderer functions.
             this._setupCanvases();
             this._setupRenderer();
+
+            // Unique type per drawer: uploads texture to unique webgl context.
+            this._dataType = `${Date.now()}_TEX_2D`;
+            this._setupTextureHandlers(this._dataType);
 
             this.context = this._outputContext; // API required by tests
 
@@ -757,7 +757,6 @@
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
             this._gl = this._renderingCanvas.getContext('webgl');
-
             //make the additional canvas elements mirror size changes to the output canvas
             this.viewer.addHandler("resize", function(){
 
@@ -784,12 +783,14 @@
         }
 
         _setupTextureHandlers(thisType) {
+            const _this = this;
             const tex2DCompatibleLoader = (tile, data) => {
                 let tiledImage = tile.tiledImage;
                 //todo verify we are calling conversion just right amount of time!
                 // e.g. no upload of cpu-existing texture
+                // also check textures are really getting destroyed (it is tested, but also do this with demos)
 
-                let gl = this._gl;
+                let gl = _this._gl;
 
                 // create a gl Texture for this tile and bind the canvas with the image data
                 let texture = gl.createTexture();
@@ -798,16 +799,16 @@
                 if( overlap > 0){
                     // calculate the normalized position of the rect to actually draw
                     // discarding overlap.
-                    let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
+                    let overlapFraction = _this._calculateOverlapFraction(tile, tiledImage);
 
                     let left = tile.x === 0 ? 0 : overlapFraction.x;
                     let top = tile.y === 0 ? 0 : overlapFraction.y;
                     let right = tile.isRightMost ? 1 : 1 - overlapFraction.x;
                     let bottom = tile.isBottomMost ? 1 : 1 - overlapFraction.y;
-                    position = this._makeQuadVertexBuffer(left, right, top, bottom);
+                    position = _this._makeQuadVertexBuffer(left, right, top, bottom);
                 } else {
                     // no overlap: this texture can use the unit quad as its position data
-                    position = this._unitQuad;
+                    position = _this._unitQuad;
                 }
 
                 gl.activeTexture(gl.TEXTURE0);
@@ -848,11 +849,12 @@
 
             this.declareSupportedDataFormats(imageTexType, c2dTexType);
 
-            // We should be OK uploading any of these types.
-            $.convertor.learn("context2d", c2dTexType, tex2DCompatibleLoader, 1, 2);
-            $.convertor.learn("image", imageTexType, tex2DCompatibleLoader, 1, 2);
-            $.convertor.learn(c2dTexType, "context2d", dataRetrieval, 1, 2);
-            $.convertor.learn(imageTexType, "image", dataRetrieval, 1, 2);
+            // We should be OK uploading any of these types. The complexity is selected to be O(3n), should be
+            // more than linear pass over pixels
+            $.convertor.learn("context2d", c2dTexType, tex2DCompatibleLoader, 1, 3);
+            $.convertor.learn("image", imageTexType, tex2DCompatibleLoader, 1, 3);
+            $.convertor.learn(c2dTexType, "context2d", dataRetrieval, 1, 3);
+            $.convertor.learn(imageTexType, "image", dataRetrieval, 1, 3);
 
             $.convertor.learnDestroy(c2dTexType, tex2DCompatibleDestructor);
             $.convertor.learnDestroy(imageTexType, tex2DCompatibleDestructor);

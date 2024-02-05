@@ -352,7 +352,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean} whether the item still needs to be drawn due to blending
      */
     setDrawn: function(){
-        this._needsDraw = this._isBlending || this._wasBlending;
+        this._needsDraw = this._isBlending || this._wasBlending ||
+            (this.opacity > 0 && this._lastDrawn.length < 1);
         return this._needsDraw;
     },
 
@@ -1825,7 +1826,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if ( tile.loading ) {
             // the tile is already in the download queue
             this._tilesLoading++;
-        } else if (!loadingCoverage) {
+        } else if (!tile.loaded && !loadingCoverage) {
+            // add tile to best tiles to load only when not loaded already
             best = this._compareTiles( best, tile, this.maxTilesPerFrame );
         }
 
