@@ -1826,7 +1826,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if ( tile.loading ) {
             // the tile is already in the download queue
             this._tilesLoading++;
-        } else if (!tile.loaded && !loadingCoverage) {
+        } else if (!loadingCoverage) {
             // add tile to best tiles to load only when not loaded already
             best = this._compareTiles( best, tile, this.maxTilesPerFrame );
         }

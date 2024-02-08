@@ -127,12 +127,19 @@ class SpinnerSlider {
 }
 
 
+const switcher = new DrawerSwitcher();
+switcher.addDrawerOption("drawer");
+$("#title-drawer").html(switcher.activeName("drawer"));
+switcher.render("#title-banner");
+
 const viewer = window.viewer = new OpenSeadragon({
     id: 'openseadragon',
     prefixUrl: '/build/openseadragon/images/',
     tileSources: 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi',
-    crossOriginPolicy: 'Anonymous'
+    crossOriginPolicy: 'Anonymous',
+    drawer: switcher.activeImplementation("drawer"),
 });
+
 
 // Prevent Caman from caching the canvas because without this:
 // 1. We have a memory leak
