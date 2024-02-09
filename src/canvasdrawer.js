@@ -402,9 +402,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
             this._drawRectangle(placeholderRect, fillStyle, useSketch);
         }
-        if(!window.draw){
-            lastDrawn = [];
-        }
+
         var subPixelRoundingRule = determineSubPixelRoundingRule(tiledImage.subPixelRoundingForTransparency);
 
         var shouldRoundPositionAndSize = false;

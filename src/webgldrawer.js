@@ -242,10 +242,7 @@
                 if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
                      this._drawPlaceholder(tiledImage);
                 }
-                this._drawPlaceholder(tiledImage);
-                if(!window.draw){
-                    return;
-                }
+
                 if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
                     return;
                 }
