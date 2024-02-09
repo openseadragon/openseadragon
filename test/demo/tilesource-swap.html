@@ -64,8 +64,10 @@
                 crossOriginPolicy: 'Anonymous'
             });
 
-            viewer.addOnceHandler('canvas-click', function(event) {
-                if (event.quick) {
+            let swapped = false;
+            viewer.addHandler('canvas-click', function(event) {
+                if (event.quick && !swapped) {
+                    swapped = true;
                     var standin = viewer.world.getItemAt(0);
                     var standinBounds = standin.getBounds();
                     viewer.viewport.fitBounds(standinBounds);
