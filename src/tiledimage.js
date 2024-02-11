@@ -1885,33 +1885,26 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Tile} tile
      */
     _tryFindTileCacheRecord: function(tile) {
-        if (!tile.cacheKey) {
-            tile.cacheKey = "";
-            tile.originalCacheKey = "";
-        }
-
-        let record = this._tileCache.getCacheRecord(tile.cacheKey);
-
-        if (record) {
-            //setup without calling tile loaded event! tile cache is ready for usage,
-            tile.loading = true;
-            tile.loaded = false;
-            //set data as null, cache already has data, it does not overwrite
-            this._setTileLoaded(tile, null, null, null, record.type,
-                this.callTileLoadedWithCachedData);
-            return true;
-        }
-
         if (tile.cacheKey !== tile.originalCacheKey) {
             //we found original data: this data will be used to re-execute the pipeline
-            record = this._tileCache.getCacheRecord(tile.originalCacheKey);
+            let record = this._tileCache.getCacheRecord(tile.originalCacheKey);
             if (record) {
                 tile.loading = true;
                 tile.loaded = false;
-                //set data as null, cache already has data, it does not overwrite
-                this._setTileLoaded(tile, null, null, null, record.type);
+                this._setTileLoaded(tile, record.data, null, null, record.type);
                 return true;
             }
+        }
+
+        let record = this._tileCache.getCacheRecord(tile.cacheKey);
+        if (record) {
+            // setup without calling tile loaded event! tile cache is ready for usage,
+            tile.loading = true;
+            tile.loaded = false;
+            // we could send null as data (cache not re-created), but deprecated events access the data
+            this._setTileLoaded(tile, record.data, null, null, record.type,
+                this.callTileLoadedWithCachedData);
+            return true;
         }
         return false;
     },
@@ -2103,8 +2096,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType, withEvent = true) {
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
-        // -> reason why it is not in the constructor
-        tile.setCache(tile.cacheKey, data, dataType, false);
+        // does nothing if tile.cacheKey already present
+        tile.addCache(tile.cacheKey, data, dataType, false);
 
         let resolver = null,
             increment = 0,
@@ -2127,11 +2120,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             const cache = tile.getCache(tile.cacheKey),
                 requiredTypes = _this.viewer.drawer.getSupportedDataFormats();
             if (!cache) {
-                $.console.warn("Tile %s not cached at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
+                $.console.warn("Tile %s not cached or not loaded at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
                 resolver(tile);
             } else if (!requiredTypes.includes(cache.type)) {
                 //initiate conversion as soon as possible if incompatible with the drawer
-                cache.transformTo(requiredTypes).then(_ => {
+                cache.prepareForRendering(requiredTypes).then(cacheRef => {
+                    if (!cacheRef) {
+                        return cache.transformTo(requiredTypes);
+                    }
+                    return cacheRef;
+                }).then(_ => {
                     tile.loading = false;
                     tile.loaded = true;
                     resolver(tile);

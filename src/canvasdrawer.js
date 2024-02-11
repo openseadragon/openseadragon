@@ -47,10 +47,8 @@
  */
 
 class CanvasDrawer extends OpenSeadragon.DrawerBase{
-    constructor(options){
+    constructor(options) {
         super(options);
-
-        this.declareSupportedDataFormats("context2d");
 
         /**
          * The HTML element (canvas) that this drawer uses for drawing
@@ -71,7 +69,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
          * @memberof OpenSeadragon.CanvasDrawer#
          * @private
          */
-        this.context = this.canvas.getContext( '2d' );
+        this.context = this.canvas.getContext('2d');
 
         // Sketch canvas used to temporarily draw tiles which cannot be drawn directly
         // to the main canvas due to opacity. Lazily initialized.
@@ -98,6 +96,10 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
     getType(){
         return 'canvas';
+    }
+
+    getSupportedDataFormats() {
+        return ["context2d"];
     }
 
     /**
@@ -287,7 +289,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             // Note: Disabled on iOS devices per default as it causes a native crash
             useSketch = true;
 
-            const context = tile.length && this.getCompatibleData(tile);
+            const context = tile.length && this.getDataToDraw(tile);
             if (context) {
                 sketchScale = context.canvas.width / (tile.size.x * $.pixelDensityRatio);
             } else {
@@ -572,7 +574,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             return;
         }
 
-        const rendered = this.getCompatibleData(tile);
+        const rendered = this.getDataToDraw(tile);
         if (!rendered) {
             return;
         }

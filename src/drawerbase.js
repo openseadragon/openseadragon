@@ -34,7 +34,14 @@
 
 (function( $ ){
 
-    const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
+/**
+ * @typedef BaseDrawerOptions
+ * @memberOf OpenSeadragon
+ * @property {boolean} [detachedCache=false] specify whether the drawer should use
+ *   detached (=internal) cache object in case it has to perform type conversion
+ */
+
+const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
 /**
  * @class OpenSeadragon.DrawerBase
  * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
@@ -54,7 +61,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.viewer = options.viewer;
         this.viewport = options.viewport;
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
-        this.options = options.options || {};
+        this.options = $.extend({}, this.defaultOptions, options.options);
 
         this.container  = $.getElement( options.element );
 
@@ -80,10 +87,24 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this._checkInterfaceImplementation();
     }
 
+    /**
+     * Retrieve default options for the current drawer.
+     * The base implementation provides default shared options.
+     * Overrides should enumerate all defaults or extend from this implementation.
+     *   return $.extend({}, super.options, { ... custom drawer instance options ... });
+     * @returns {BaseDrawerOptions} common options
+     */
+    get defaultOptions() {
+        return {
+            detachedCache: false
+        };
+    }
+
     // protect the canvas member with a getter
     get canvas(){
         return this._renderingTarget;
     }
+
     get element(){
         $.console.error('Drawer.element is deprecated. Use Drawer.container instead.');
         return this.container;
@@ -99,23 +120,12 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     }
 
     /**
-     * Define which data types are compatible for this drawer to work with.
-     * See default type list in OpenSeadragon.DataTypeConvertor
-     * @param formats
-     */
-    declareSupportedDataFormats(...formats) {
-        this._formats = formats;
-    }
-
-    /**
      * Retrieve data types
+     * @abstract
      * @return {[string]}
      */
     getSupportedDataFormats() {
-        if (!this._formats || this._formats.length < 1) {
-            $.console.error("A drawer must define its supported rendering data types using declareSupportedDataFormats!");
-        }
-        return this._formats;
+        throw "Drawer.getSupportedDataFormats must define its supported rendering data types!";
     }
 
     /**
@@ -124,26 +134,15 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * value, the rendering _MUST NOT_ proceed. It should
      * await next animation frames and check again for availability.
      * @param {OpenSeadragon.Tile} tile
+     * @return {any|null|false} null if cache not available
      */
-    getCompatibleData(tile) {
+    getDataToDraw(tile) {
         const cache = tile.getCache(tile.cacheKey);
         if (!cache) {
+            $.console.warn("Attempt to draw tile %s when not cached!", tile);
             return null;
         }
-
-        const formats = this.getSupportedDataFormats();
-        if (!formats.includes(cache.type)) {
-            cache.transformTo(formats.length > 1 ? formats : formats[0]);
-            return false; // type is NOT compatible
-        }
-
-        // Cache in the process of loading, no-op
-        if (!cache.loaded) {
-            return false; // cache is NOT ready
-        }
-
-        // Ensured compatible
-        return cache.data;
+        return cache.getDataForRendering(this.getSupportedDataFormats(), this.options.detachedCache);
     }
 
     /**
@@ -230,6 +229,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      *
      */
     _checkInterfaceImplementation(){
+        // TODO: is this necessary? why not throw just in the method itself?
         if(this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement){
             throw(new Error("[drawer]._createDrawingElement must be implemented by child class"));
         }

@@ -46,7 +46,7 @@
  *      this tile failed to load? )
  * @param {String|Function} url The URL of this tile's image or a function that returns a url.
  * @param {CanvasRenderingContext2D} [context2D=undefined] The context2D of this tile if it
- *  *      is provided directly by the tile source. Deprecated: use Tile::setCache(...) instead.
+ *  *      is provided directly by the tile source. Deprecated: use Tile::addCache(...) instead.
  * @param {Boolean} loadWithAjax Whether this tile image should be loaded with an AJAX request .
  * @param {Object} ajaxHeaders The headers to send with this tile's AJAX request (if applicable).
  * @param {OpenSeadragon.Rect} sourceBounds The portion of the tile to use as the source of the
@@ -143,24 +143,10 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
             " in Tile class is deprecated. TileSource.prototype.getTileHashKey will be used.");
         cacheKey = $.TileSource.prototype.getTileHashKey(level, x, y, url, ajaxHeaders, postData);
     }
-    /**
-     * The unique main cache key for this tile. Created automatically
-     *  from the given tiledImage.source.getTileHashKey(...) implementation.
-     * @member {String} cacheKey
-     * @memberof OpenSeadragon.Tile#
-     */
-    this.cacheKey = cacheKey;
-    /**
-     * By default equal to tile.cacheKey, marks a cache associated with this tile
-     * that holds the cache original data (it was loaded with). In case you
-     * change the tile data, the tile original data should be left with the cache
-     * 'originalCacheKey' and the new, modified data should be stored in cache 'cacheKey'.
-     * This key is used in cache resolution: in case new tile data is requested, if
-     * this cache key exists in the cache it is loaded.
-     * @member {String} originalCacheKey
-     * @memberof OpenSeadragon.Tile#
-     */
-    this.originalCacheKey = this.cacheKey;
+
+    this._cKey = cacheKey || "";
+    this._ocKey = cacheKey || "";
+
     /**
      * Is this tile loaded?
      * @member {Boolean} loaded
@@ -305,6 +291,43 @@ $.Tile.prototype = {
     },
 
     /**
+     * The unique main cache key for this tile. Created automatically
+     *  from the given tiledImage.source.getTileHashKey(...) implementation.
+     * @member {String} cacheKey
+     * @memberof OpenSeadragon.Tile#
+     */
+    get cacheKey() {
+        return this._cKey;
+    },
+    set cacheKey(value) {
+        if (this._cKey !== value) {
+            let ref = this._caches[this._cKey];
+            if (ref) {
+                // make sure we free drawer internal cache
+                ref.destroyInternalCache();
+            }
+            this._cKey = value;
+        }
+    },
+
+    /**
+     * By default equal to tile.cacheKey, marks a cache associated with this tile
+     * that holds the cache original data (it was loaded with). In case you
+     * change the tile data, the tile original data should be left with the cache
+     * 'originalCacheKey' and the new, modified data should be stored in cache 'cacheKey'.
+     * This key is used in cache resolution: in case new tile data is requested, if
+     * this cache key exists in the cache it is loaded.
+     * @member {String} originalCacheKey
+     * @memberof OpenSeadragon.Tile#
+     */
+    set originalCacheKey(value) {
+        throw "Original Cache Key cannot be managed manually!";
+    },
+    get originalCacheKey() {
+        return this._ocKey;
+    },
+
+    /**
      * The Image object for this tile.
      * @member {Object} image
      * @memberof OpenSeadragon.Tile#
@@ -405,21 +428,21 @@ $.Tile.prototype = {
      * @deprecated
      */
     set cacheImageRecord(value) {
-        $.console.error("[Tile.cacheImageRecord] property has been deprecated. Use Tile::setCache.");
+        $.console.error("[Tile.cacheImageRecord] property has been deprecated. Use Tile::addCache.");
         const cache = this._caches[this.cacheKey];
 
         if (!value) {
-            this.unsetCache(this.cacheKey);
+            this.removeCache(this.cacheKey);
         } else {
             const _this = this;
-            cache.await().then(x => _this.setCache(this.cacheKey, x, cache.type, false));
+            cache.await().then(x => _this.addCache(this.cacheKey, x, cache.type, false));
         }
     },
 
     /**
      * Get the data to render for this tile
      * @param {string} type data type to require
-     * @param {boolean?} [copy=true] whether to force copy retrieval
+     * @param {boolean} [copy=true] whether to force copy retrieval
      * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
      */
     getData: function(type, copy = true) {
@@ -439,10 +462,10 @@ $.Tile.prototype = {
     /**
      * Get the original data data for this tile
      * @param {string} type data type to require
-     * @param {boolean?} [copy=this.loaded] whether to force copy retrieval
+     * @param {boolean} [copy=this.loaded] whether to force copy retrieval
      * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
      */
-    getOriginalData: function(type, copy = true) {
+    getOriginalData: function(type, copy = false) {
         if (!this.tiledImage) {
             return null; //async can access outside its lifetime
         }
@@ -457,12 +480,10 @@ $.Tile.prototype = {
     },
 
     /**
-     * Set cache data
+     * Set main cache data
      * @param {*} value
      * @param {?string} type data type to require
      * @param {boolean} [preserveOriginalData=true] if true and cacheKey === originalCacheKey,
-     * then stores the underlying data as 'original' and changes the cacheKey to point
-     * to a new data. This makes the Tile assigned to two cache objects.
      */
     setData: function(value, type, preserveOriginalData = true) {
         if (!this.tiledImage) {
@@ -473,8 +494,9 @@ $.Tile.prototype = {
             //caches equality means we have only one cache:
             // change current pointer to a new cache and create it: new tiles will
             // not arrive at this data, but at originalCacheKey state
+            // todo setting cache key makes the notification trigger ensure we do not do unnecessary stuff
             this.cacheKey = "mod://" + this.originalCacheKey;
-            return this.setCache(this.cacheKey, value, type)._promise;
+            return this.addCache(this.cacheKey, value, type)._promise;
         }
         //else overwrite cache
         const cache = this.getCache(this.cacheKey);
@@ -487,7 +509,7 @@ $.Tile.prototype = {
 
     /**
      * Read tile cache data object (CacheRecord)
-     * @param {string?} [key=this.cacheKey] cache key to read that belongs to this tile
+     * @param {string} [key=this.cacheKey] cache key to read that belongs to this tile
      * @return {OpenSeadragon.CacheRecord}
      */
     getCache: function(key = this.cacheKey) {
@@ -495,23 +517,25 @@ $.Tile.prototype = {
     },
 
     /**
+     * TODO: set cache might be misleading name since we do not update data,
+     *   this should be either changed or method renamed...
      * Set tile cache, possibly multiple with custom key
      * @param {string} key cache key, must be unique (we recommend re-using this.cacheTile
      *   value and extend it with some another unique content, by default overrides the existing
      *   main cache used for drawing, if not existing.
-     * @param {*} data data to cache - this data will be sent to the TileSource API for refinement.
+     * @param {*} data data to cache - this data will be IGNORED if cache already exists!
      * @param {?string} type data type, will be guessed if not provided
      * @param [_safely=true] private
      * @returns {OpenSeadragon.CacheRecord|null} - The cache record the tile was attached to.
      */
-    setCache: function(key, data, type = undefined, _safely = true) {
+    addCache: function(key, data, type = undefined, _safely = true) {
         if (!this.tiledImage) {
             return null; //async can access outside its lifetime
         }
 
         if (!type) {
             if (!this.tiledImage.__typeWarningReported) {
-                $.console.warn(this, "[Tile.setCache] called without type specification. " +
+                $.console.warn(this, "[Tile.addCache] called without type specification. " +
                     "Automated deduction is potentially unsafe: prefer specification of data type explicitly.");
                 this.tiledImage.__typeWarningReported = true;
             }
@@ -523,20 +547,17 @@ $.Tile.prototype = {
             // Need to get the supported type for rendering out of the active drawer.
             const supportedTypes = this.tiledImage.viewer.drawer.getSupportedDataFormats();
             const conversion = $.convertor.getConversionPath(type, supportedTypes);
-            $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
+            $.console.assert(conversion, "[Tile.addCache] data was set for the default tile cache we are unable" +
                 "to render. Make sure OpenSeadragon.convertor was taught to convert to (one of): " + type);
         }
 
-        if (!this.__cutoff) {
-            //todo consider caching this on a tiled image level..
-            this.__cutoff = this.tiledImage.source.getClosestLevel();
-        }
         const cachedItem = this.tiledImage._tileCache.cacheTile({
             data: data,
             dataType: type,
             tile: this,
             cacheKey: key,
-            cutoff: this.__cutoff,
+            //todo consider caching this on a tiled image level
+            cutoff: this.__cutoff || this.tiledImage.source.getClosestLevel(),
         });
         const havingRecord = this._caches[key];
         if (havingRecord !== cachedItem) {
@@ -561,12 +582,12 @@ $.Tile.prototype = {
      * @param {string} key cache key, required
      * @param {boolean} [freeIfUnused=true] set to false if zombie should be created
      */
-    unsetCache: function(key, freeIfUnused = true) {
+    removeCache: function(key, freeIfUnused = true) {
         if (this.cacheKey === key) {
             if (this.cacheKey !== this.originalCacheKey) {
                 this.cacheKey = this.originalCacheKey;
             } else {
-                $.console.warn("[Tile.unsetCache] trying to remove the only cache that is used to draw the tile!");
+                $.console.warn("[Tile.removeCache] trying to remove the only cache that is used to draw the tile!");
             }
         }
         if (this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused)) {
@@ -637,7 +658,7 @@ $.Tile.prototype = {
         this.imgElement = null;
         this.loaded     = false;
         this.loading    = false;
-        this.cacheKey   = this.originalCacheKey;
+        this._cKey      = this._ocKey;
     }
 };
 

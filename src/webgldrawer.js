@@ -99,11 +99,22 @@
 
             // Unique type per drawer: uploads texture to unique webgl context.
             this._dataType = `${Date.now()}_TEX_2D`;
+            this._supportedFormats = [];
             this._setupTextureHandlers(this._dataType);
 
             this.context = this._outputContext; // API required by tests
+        }
 
-       }
+        get defaultOptions() {
+            return {
+                // use detached cache: our type conversion will not collide (and does not have to preserve CPU data ref)
+                detachedCache: true
+            };
+        }
+
+        getSupportedDataFormats() {
+            return this._supportedFormats;
+        }
 
         // Public API required by all Drawer implementations
         /**
@@ -315,7 +326,7 @@
                         );
                         return;
                     }
-                    const textureInfo = this.getCompatibleData(tile);
+                    const textureInfo = this.getDataToDraw(tile, true);
                     if (!textureInfo) {
                         return;
                     }
@@ -830,8 +841,7 @@
                 // TextureInfo stored in the cache
                 return {
                     texture: texture,
-                    position: position,
-                    cpuData: data,
+                    position: position
                 };
             };
             const tex2DCompatibleDestructor = textureInfo => {
@@ -839,22 +849,16 @@
                     this._gl.deleteTexture(textureInfo.texture);
                 }
             };
-            const dataRetrieval = (tile, data) => {
-                return data.cpuData;
-            };
 
             // Differentiate type also based on type used to upload data: we can support bidirectional conversion.
             const c2dTexType = thisType + ":context2d",
                 imageTexType = thisType + ":image";
-
-            this.declareSupportedDataFormats(imageTexType, c2dTexType);
+            this._supportedFormats.push(c2dTexType, imageTexType);
 
             // We should be OK uploading any of these types. The complexity is selected to be O(3n), should be
             // more than linear pass over pixels
-            $.convertor.learn("context2d", c2dTexType, tex2DCompatibleLoader, 1, 3);
+            $.convertor.learn("context2d", c2dTexType, (t, d) => tex2DCompatibleLoader(t, d.canvas), 1, 3);
             $.convertor.learn("image", imageTexType, tex2DCompatibleLoader, 1, 3);
-            $.convertor.learn(c2dTexType, "context2d", dataRetrieval, 1, 3);
-            $.convertor.learn(imageTexType, "image", dataRetrieval, 1, 3);
 
             $.convertor.learnDestroy(c2dTexType, tex2DCompatibleDestructor);
             $.convertor.learnDestroy(imageTexType, tex2DCompatibleDestructor);

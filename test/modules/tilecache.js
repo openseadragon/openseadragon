@@ -252,15 +252,15 @@
 
         //load data
         const tile00 = createFakeTile('foo.jpg', fakeTiledImage0);
-        tile00.setCache(tile00.cacheKey, 0, T_A, false);
+        tile00.addCache(tile00.cacheKey, 0, T_A, false);
         const tile01 = createFakeTile('foo2.jpg', fakeTiledImage0);
-        tile01.setCache(tile01.cacheKey, 0, T_B, false);
+        tile01.addCache(tile01.cacheKey, 0, T_B, false);
         const tile10 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile10.setCache(tile10.cacheKey, 0, T_C, false);
+        tile10.addCache(tile10.cacheKey, 0, T_C, false);
         const tile11 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile11.setCache(tile11.cacheKey, 0, T_C, false);
+        tile11.addCache(tile11.cacheKey, 0, T_C, false);
         const tile12 = createFakeTile('foo.jpg', fakeTiledImage1);
-        tile12.setCache(tile12.cacheKey, 0, T_A, false);
+        tile12.addCache(tile12.cacheKey, 0, T_A, false);
 
         const collideGetSet = async (tile, type) => {
             const value = await tile.getData(type, false);
@@ -446,15 +446,15 @@
 
         //load data
         const tile00 = createFakeTile('foo.jpg', fakeTiledImage0);
-        tile00.setCache(tile00.cacheKey, 0, T_A, false);
+        tile00.addCache(tile00.cacheKey, 0, T_A, false);
         const tile01 = createFakeTile('foo2.jpg', fakeTiledImage0);
-        tile01.setCache(tile01.cacheKey, 0, T_B, false);
+        tile01.addCache(tile01.cacheKey, 0, T_B, false);
         const tile10 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile10.setCache(tile10.cacheKey, 0, T_C, false);
+        tile10.addCache(tile10.cacheKey, 0, T_C, false);
         const tile11 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile11.setCache(tile11.cacheKey, 0, T_C, false);
+        tile11.addCache(tile11.cacheKey, 0, T_C, false);
         const tile12 = createFakeTile('foo.jpg', fakeTiledImage1);
-        tile12.setCache(tile12.cacheKey, 0, T_A, false);
+        tile12.addCache(tile12.cacheKey, 0, T_A, false);
 
         //test set/get data in async env
         (async function() {
@@ -471,7 +471,7 @@
             test.equal(theTileKey, tile00.originalCacheKey, "Original cache key preserved.");
 
             //now add artifically another record
-            tile00.setCache("my_custom_cache", 128, T_C);
+            tile00.addCache("my_custom_cache", 128, T_C);
             test.equal(tileCache.numTilesLoaded(), 5, "We still loaded only 5 tiles.");
             test.equal(tileCache.numCachesLoaded(), 5, "The cache has now 5 items.");
             test.equal(c00.getTileCount(), 2, "The cache still has only two tiles attached.");
@@ -483,32 +483,32 @@
             test.equal(tile12.getCacheSize(), 1, "Related tile cache did not increase.");
 
             //add and delete cache nothing changes
-            tile00.setCache("my_custom_cache2", 128, T_C);
-            tile00.unsetCache("my_custom_cache2");
+            tile00.addCache("my_custom_cache2", 128, T_C);
+            tile00.removeCache("my_custom_cache2");
             test.equal(tileCache.numTilesLoaded(), 5, "We still loaded only 5 tiles.");
             test.equal(tileCache.numCachesLoaded(), 5, "The cache has now 5 items.");
             test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects.");
 
             //delete cache as a zombie
-            tile00.setCache("my_custom_cache2", 17, T_C);
+            tile00.addCache("my_custom_cache2", 17, T_C);
             //direct access shoes correct value although we set key!
             const myCustomCache2Data = tile00.getCache("my_custom_cache2").data;
             test.equal(myCustomCache2Data, 17, "Previously defined cache does not intervene.");
             test.equal(tileCache.numCachesLoaded(), 6, "The cache size is 6.");
             //keep zombie
-            tile00.unsetCache("my_custom_cache2", false);
+            tile00.removeCache("my_custom_cache2", false);
             test.equal(tileCache.numCachesLoaded(), 6, "The cache is 5 + 1 zombie, no change.");
             test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects.");
 
             //revive zombie
-            tile01.setCache("my_custom_cache2", 18, T_C);
+            tile01.addCache("my_custom_cache2", 18, T_C);
             const myCustomCache2OtherData = tile01.getCache("my_custom_cache2").data;
             test.equal(myCustomCache2OtherData, myCustomCache2Data, "Caches are equal because revived.");
             //again, keep zombie
-            tile01.unsetCache("my_custom_cache2", false);
+            tile01.removeCache("my_custom_cache2", false);
 
             //first create additional cache so zombie is not the youngest
-            tile01.setCache("some weird cache", 11, T_A);
+            tile01.addCache("some weird cache", 11, T_A);
             test.ok(tile01.cacheKey === tile01.originalCacheKey, "Custom cache does not touch tile cache keys.");
 
             //insertion aadditional cache clears the zombie first although it is not the youngest one
@@ -528,12 +528,12 @@
             test.equal(tile12.getCache().data, 42, "The value is not 43 as setData triggers cache share!");
 
             //triggers insertion - deletion of zombie cache 'my_custom_cache2'
-            tile00.setCache("trigger-max-cache-handler", 5, T_C);
+            tile00.addCache("trigger-max-cache-handler", 5, T_C);
             //reset CAP
             tileCache._maxCacheItemCount = OpenSeadragon.DEFAULT_SETTINGS.maxImageCacheCount;
 
             //try to revive zombie will fail: the zombie was deleted, we will find 18
-            tile01.setCache("my_custom_cache2", 18, T_C);
+            tile01.addCache("my_custom_cache2", 18, T_C);
             const myCustomCache2RecreatedData = tile01.getCache("my_custom_cache2").data;
             test.notEqual(myCustomCache2RecreatedData, myCustomCache2Data, "Caches are not equal because created.");
             test.equal(myCustomCache2RecreatedData, 18, "Cache data is actually as set to 18.");

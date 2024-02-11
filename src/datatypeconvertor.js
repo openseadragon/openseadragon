@@ -354,8 +354,8 @@ $.DataTypeConvertor = class {
             }
             let edge = conversionPath[i];
             let y = edge.transform(tile, x);
-            if (!y) {
-                $.console.warn(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting to %s)`, edge.target);
+            if (y === undefined) {
+                $.console.error(`[OpenSeadragon.convertor.convert] data mid result undefined value (while converting using %s)`, edge);
                 return $.Promise.resolve();
             }
             //node.value holds the type string
@@ -389,8 +389,8 @@ $.DataTypeConvertor = class {
     /**
      * Destroy the data item given.
      * @param {string} type data type
-     * @param {?} data
-     * @return {OpenSeadragon.Promise<?>|undefined} promise resolution with data passed from constructor, or undefined
+     * @param {any} data
+     * @return {OpenSeadragon.Promise<any>|undefined} promise resolution with data passed from constructor, or undefined
      *  if not such conversion exists
      */
     destroy(data, type) {

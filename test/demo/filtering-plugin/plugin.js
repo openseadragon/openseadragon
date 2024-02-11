@@ -83,14 +83,13 @@
 
             if (processors.length === 0) {
                 //restore the original data
-                const context = await tile.getOriginalData('context2d',
-                    false);
+                const context = await tile.getOriginalData('context2d', false);
                 tile.setData(context, 'context2d');
                 tile._filterIncrement = self.filterIncrement;
                 return;
             }
 
-            const contextCopy = await tile.getOriginalData('context2d');
+            const contextCopy = await tile.getOriginalData('context2d', true);
             const currentIncrement = self.filterIncrement;
             for (let i = 0; i < processors.length; i++) {
                 if (self.filterIncrement !== currentIncrement) {

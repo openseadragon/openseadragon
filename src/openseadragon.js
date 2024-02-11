@@ -761,12 +761,16 @@
   */
 
  /**
-  * @typedef {Object} DrawerOptions
+  * @typedef {Object.<string, Object>} DrawerOptions - give the renderer options (both shared - BaseDrawerOptions, and custom).
+  *   Supports arbitrary keys: you can register any drawer on the OpenSeadragon namespace, it will get automatically recognized
+  *   and its getType() implementation will define what key to specify the options with.
   * @memberof OpenSeadragon
-  * @property {Object} webgl - options if the WebGLDrawer is used. No options are currently supported.
-  * @property {Object} canvas - options if the CanvasDrawer is used. No options are currently supported.
-  * @property {Object} html - options if the HTMLDrawer is used. No options are currently supported.
-  * @property {Object} custom - options if a custom drawer is used. No options are currently supported.
+  * @property {BaseDrawerOptions} [webgl] - options if the WebGLDrawer is used.
+  * @property {BaseDrawerOptions} [canvas] - options if the CanvasDrawer is used.
+  * @property {BaseDrawerOptions} [html] - options if the HTMLDrawer is used.
+  * @property {BaseDrawerOptions} [custom] - options if a custom drawer is used.
+  *
+  * //Note: if you want to add change options for target drawer change type to {BaseDrawerOptions & MyDrawerOpts}
   */
 
 
@@ -2637,6 +2641,10 @@ function OpenSeadragon( options ){
          * keys and booleans as values.
          */
         setImageFormatsSupported: function(formats) {
+            //TODO: how to deal with this within the data pipeline?
+            // $.console.warn("setImageFormatsSupported method is deprecated. You should check that" +
+            //     " the system supports your TileSources by implementing corresponding data type convertors.");
+
             // eslint-disable-next-line no-use-before-define
             $.extend(FILEFORMATS, formats);
         },

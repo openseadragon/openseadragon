@@ -34,9 +34,12 @@
 
 (function( $ ){
 
+    const DRAWER_INTERNAL_CACHE = Symbol("DRAWER_INTERNAL_CACHE");
+
     /**
-     * Cached Data Record, the cache object.
-     * Keeps only latest object type required.
+     * @class CacheRecord
+     * @memberof OpenSeadragon
+     * @classdesc Cached Data Record, the cache object. Keeps only latest object type required.
      *
      * This class acts like the Maybe type:
      *  - it has 'loaded' flag indicating whether the tile data is ready
@@ -44,16 +47,6 @@
      *
      * Furthermore, it has a 'getData' function that returns a promise resolving
      * with the value on the desired type passed to the function.
-     *
-     * @typedef {{
-     *    destroy: function,
-     *    revive: function,
-     *    save: function,
-     *    getDataAs: function,
-     *    transformTo: function,
-     *    data: ?,
-     *    loaded: boolean
-     * }} OpenSeadragon.CacheRecord
      */
     $.CacheRecord = class {
         constructor() {
@@ -82,7 +75,7 @@
 
         /**
          * Await ongoing process so that we get cache ready on callback.
-         * @returns {null|*}
+         * @returns {Promise<any>}
          */
         await() {
             if (!this._promise) { //if not cache loaded, do not fail
@@ -128,31 +121,104 @@
 
         /**
          * Access the cache record data indirectly. Preferred way of data access. Asynchronous.
-         * @param {string?} [type=this.type]
-         * @param {boolean?} [copy=true] if false and same type is retrieved as the cache type,
+         * @param {string} [type=this.type]
+         * @param {boolean} [copy=true] if false and same type is retrieved as the cache type,
          *  copy is not performed: note that this is potentially dangerous as it might
-         *  introduce race conditions (you get a cache data direct reference you modify,
-         *  but others might also access it, for example drawers to draw the viewport).
+         *  introduce race conditions (you get a cache data direct reference you modify).
          * @returns {OpenSeadragon.Promise<?>} desired data type in promise, undefined if the cache was destroyed
          */
         getDataAs(type = this._type, copy = true) {
             const referenceTile = this._tiles[0];
-            if (this.loaded && type === this._type) {
-                return copy ? $.convertor.copy(referenceTile, this._data, type) : this._promise;
+            if (this.loaded) {
+                if (type === this._type) {
+                    return copy ? $.convertor.copy(referenceTile, this._data, type) : this._promise;
+                }
+                return this._getDataAsUnsafe(referenceTile, this._data, type, copy);
+            }
+            return this._promise.then(data => this._getDataAsUnsafe(referenceTile, data, type, copy));
+        }
+
+        _getDataAsUnsafe(referenceTile, data, type, copy) {
+            //might get destroyed in meanwhile
+            if (this._destroyed) {
+                return undefined;
+            }
+            if (type !== this._type) {
+                return $.convertor.convert(referenceTile, data, this._type, type);
+            }
+            if (copy) { //convert does not copy data if same type, do explicitly
+                return $.convertor.copy(referenceTile, data, type);
+            }
+            return data;
+        }
+
+        /**
+         * @private
+         * Access of the data by drawers, synchronous function.
+         *
+         * When drawers access data, they can choose to access this data as internal copy
+         *
+         * @param {Array<string>} supportedTypes required data (or one of) type(s)
+         * @param {boolean} keepInternalCopy if true, the cache keeps internally the drawer data
+         *   until 'setData' is called
+         * todo: keep internal copy is not configurable and always enforced -> set as option for osd?
+         * @returns {any|undefined} desired data if available, undefined if conversion must be done
+         */
+        getDataForRendering(supportedTypes, keepInternalCopy = true) {
+            if (this.loaded && supportedTypes.includes(this.type)) {
+                return this.data;
             }
 
-            return this._promise.then(data => {
-                //might get destroyed in meanwhile
-                if (this._destroyed) {
-                    return undefined;
-                }
-                if (type !== this._type) {
-                    return $.convertor.convert(referenceTile, data, this._type, type);
-                }
-                if (copy) { //convert does not copy data if same type, do explicitly
-                    return $.convertor.copy(referenceTile, data, type);
-                }
-                return data;
+            let internalCache = this[DRAWER_INTERNAL_CACHE];
+            if (keepInternalCopy && !internalCache) {
+                this.prepareForRendering(supportedTypes, keepInternalCopy);
+                return undefined;
+            }
+
+            if (internalCache) {
+                internalCache.withTemporaryTileRef(this._tiles[0]);
+            } else {
+                internalCache = this;
+            }
+
+            // Cache in the process of loading, no-op
+            if (!internalCache.loaded) {
+                return undefined;
+            }
+
+            if (!supportedTypes.includes(internalCache.type)) {
+                internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0]);
+                return undefined; // type is NOT compatible
+            }
+
+            return internalCache.data;
+        }
+
+        /**
+         * @private
+         * @param supportedTypes
+         * @param keepInternalCopy
+         * @return {OpenSeadragon.Promise<OpenSeadragon.SimpleCacheRecord|OpenSeadragon.CacheRecord>}
+         */
+        prepareForRendering(supportedTypes, keepInternalCopy = true) {
+            const referenceTile = this._tiles[0];
+            // if not internal copy and we have no data, bypass rendering
+            if (!this.loaded) {
+                return $.Promise.resolve(this);
+            }
+
+            // we can get here only if we want to render incompatible type
+            let internalCache = this[DRAWER_INTERNAL_CACHE] = new $.SimpleCacheRecord();
+            const conversionPath = $.convertor.getConversionPath(this.type, supportedTypes);
+            if (!conversionPath) {
+                $.console.error(`[getDataForRendering] Conversion conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
+                return $.Promise.resolve(this);
+            }
+            internalCache.withTemporaryTileRef(referenceTile);
+            const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
+            return $.convertor.convert(referenceTile, this.data, this.type, selectedFormat).then(data => {
+                internalCache.setDataAs(data, selectedFormat);
+                return internalCache;
             });
         }
 
@@ -161,7 +227,7 @@
          * Does nothing if the type equals to the current type. Asynchronous.
          * @param {string|[string]} type if array provided, the system will
          *   try to optimize for the best type to convert to.
-         * @return {OpenSeadragon.Promise<?>|*}
+         * @return {OpenSeadragon.Promise<?>}
          */
         transformTo(type = this._type) {
             if (!this.loaded ||
@@ -199,6 +265,18 @@
         }
 
         /**
+         * If cache ceases to be the primary one, free data
+         * @private
+         */
+        destroyInternalCache() {
+            const internal = this[DRAWER_INTERNAL_CACHE];
+            if (internal) {
+                internal.destroy();
+                delete this[DRAWER_INTERNAL_CACHE];
+            }
+        }
+
+        /**
          * Set initial state, prepare for usage.
          * Must not be called on active cache, e.g. first call destroy().
          */
@@ -219,29 +297,28 @@
             delete this._conversionJobQueue;
             this._destroyed = true;
 
-            //make sure this gets destroyed even if loaded=false
+            // make sure this gets destroyed even if loaded=false
             if (this.loaded) {
-                $.convertor.destroy(this._data, this._type);
-                this._tiles = null;
-                this._data = null;
-                this._type = null;
-                this._promise = null;
+                this._destroySelfUnsafe(this._data, this._type);
             } else {
                 const oldType = this._type;
-                this._promise.then(x => {
-                    //ensure old data destroyed
-                    $.convertor.destroy(x, oldType);
-                    //might get revived...
-                    if (!this._destroyed) {
-                        return;
-                    }
-                    this._tiles = null;
-                    this._data = null;
-                    this._type = null;
-                    this._promise = null;
-                });
+                this._promise.then(x => this._destroySelfUnsafe(x, oldType));
             }
             this.loaded = false;
+        }
+
+        _destroySelfUnsafe(data, type) {
+            // ensure old data destroyed
+            $.convertor.destroy(data, type);
+            this.destroyInternalCache();
+            // might've got revived in meanwhile if async ...
+            if (!this._destroyed) {
+                return;
+            }
+            this._tiles = null;
+            this._data = null;
+            this._type = null;
+            this._promise = null;
         }
 
         /**
@@ -342,6 +419,12 @@
                 this._type = type;
                 this._data = data;
                 this._promise = $.Promise.resolve(data);
+                const internal = this[DRAWER_INTERNAL_CACHE];
+                if (internal) {
+                    // TODO: if update will be greedy uncomment (see below)
+                    //internal.withTemporaryTileRef(this._tiles[0]);
+                    internal.setDataAs(data, type);
+                }
                 this._triggerNeedsDraw();
                 return this._promise;
             }
@@ -350,6 +433,12 @@
                 this._type = type;
                 this._data = data;
                 this._promise = $.Promise.resolve(data);
+                const internal = this[DRAWER_INTERNAL_CACHE];
+                if (internal) {
+                    // TODO: if update will be greedy uncomment (see below)
+                    //internal.withTemporaryTileRef(this._tiles[0]);
+                    internal.setDataAs(data, type);
+                }
                 this._triggerNeedsDraw();
                 return x;
             });
@@ -366,7 +455,7 @@
                 referenceTile = this._tiles[0],
                 conversionPath = convertor.getConversionPath(from, to);
             if (!conversionPath) {
-                $.console.error(`[OpenSeadragon.convertor.convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
+                $.console.error(`[CacheRecord._convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
                 return; //no-op
             }
 
@@ -381,21 +470,14 @@
                         return $.Promise.resolve(x);
                     }
                     let edge = conversionPath[i];
-                    return $.Promise.resolve(edge.transform(referenceTile, x)).then(
-                        y => {
-                            if (!y) {
-                                $.console.error(`[OpenSeadragon.convertor.convert] data mid result falsey value (while converting using %s)`, edge);
-                                //try to recover using original data, but it returns inconsistent type (the log be hopefully enough)
-                                _this._data = from;
-                                _this._type = from;
-                                _this.loaded = true;
-                                return originalData;
-                            }
-                            //node.value holds the type string
-                            convertor.destroy(x, edge.origin.value);
-                            return convert(y, i + 1);
-                        }
-                    );
+                    let y = edge.transform(referenceTile, x);
+                    if (y === undefined) {
+                        _this.loaded = false;
+                        throw `[CacheRecord._convert] data mid result undefined value (while converting using ${edge}})`;
+                    }
+                    convertor.destroy(x, edge.origin.value);
+                    const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
+                    return result.then(res => convert(res, i + 1));
                 };
 
             this.loaded = false;
@@ -403,6 +485,129 @@
             // Read target type from the conversion path: [edge.target] = Vertex, its value=type
             this._type = conversionPath[stepCount - 1].target.value;
             this._promise = convert(originalData, 0);
+        }
+    };
+
+    /**
+     * @class SimpleCacheRecord
+     * @memberof OpenSeadragon
+     * @classdesc Simple cache record without robust support for async access. Meant for internal use only.
+     *
+     * This class acts like the Maybe type:
+     *  - it has 'loaded' flag indicating whether the tile data is ready
+     *  - it has 'data' property that has value if loaded=true
+     *
+     * This class supposes synchronous access, no collision of transform calls.
+     * It also does not record tiles nor allows cache/tile sharing.
+     * @private
+     */
+    $.SimpleCacheRecord = class {
+        constructor(preferredTypes) {
+            this._data = null;
+            this._type = null;
+            this.loaded = false;
+            this.format = Array.isArray(preferredTypes) ? preferredTypes : null;
+        }
+
+        /**
+         * Sync access to the data
+         * @returns {any}
+         */
+        get data() {
+            return this._data;
+        }
+
+        /**
+         * Sync access to the current type
+         * @returns {string}
+         */
+        get type() {
+            return this._type;
+        }
+
+        /**
+         * Must be called before transformTo or setDataAs. To keep
+         * compatible api with CacheRecord where tile refs are known.
+         * @param {OpenSeadragon.Tile} referenceTile reference tile for conversion
+         */
+        withTemporaryTileRef(referenceTile) {
+            this._temporaryTileRef = referenceTile;
+        }
+
+        /**
+         * Transform cache to desired type and get the data after conversion.
+         * Does nothing if the type equals to the current type. Asynchronous.
+         * @param {string|[string]} type if array provided, the system will
+         *   try to optimize for the best type to convert to.
+         * @returns {OpenSeadragon.Promise<?>}
+         */
+        transformTo(type) {
+            $.console.assert(this._temporaryTileRef, "SimpleCacheRecord needs tile reference set before update operation!");
+            const convertor = $.convertor,
+                conversionPath = convertor.getConversionPath(this._type, type);
+            if (!conversionPath) {
+                $.console.error(`[SimpleCacheRecord.transformTo] Conversion conversion ${this._type} ---> ${type} cannot be done!`);
+                return $.Promise.resolve(); //no-op
+            }
+
+            const stepCount = conversionPath.length,
+                _this = this,
+                convert = (x, i) => {
+                    if (i >= stepCount) {
+                        _this._data = x;
+                        _this.loaded = true;
+                        _this._temporaryTileRef = null;
+                        return $.Promise.resolve(x);
+                    }
+                    let edge = conversionPath[i];
+                    try {
+                        // no test for y - less robust approach
+                        let y = edge.transform(this._temporaryTileRef, x);
+                        convertor.destroy(x, edge.origin.value);
+                        const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
+                        return result.then(res => convert(res, i + 1));
+                    } catch (e) {
+                        _this.loaded = false;
+                        _this._temporaryTileRef = null;
+                        throw e;
+                    }
+                };
+
+            this.loaded = false;
+            // Read target type from the conversion path: [edge.target] = Vertex, its value=type
+            this._type = conversionPath[stepCount - 1].target.value;
+            const promise = convert(this._data, 0);
+            this._data = undefined;
+            return promise;
+        }
+
+        /**
+         * Free all the data and call data destructors if defined.
+         */
+        destroy() {
+            $.convertor.destroy(this._data, this._type);
+            this._data = null;
+            this._type = null;
+        }
+
+        /**
+         * Safely overwrite the cache data and return the old data
+         * @private
+         */
+        setDataAs(data, type) {
+            // no check for state, users must ensure compatibility manually
+            $.convertor.destroy(this._data, this._data);
+            this._type = type;
+            this._data = data;
+            this.loaded = true;
+            // TODO: if done greedily, we transform each plugin set call
+            //  pros: we can show midresults
+            //  cons: unecessary work
+            //  might be solved by introducing explicit tile update pipeline (already attemps)
+            //   --> flag that knows which update is last
+            // if (this.format && !this.format.includes(type)) {
+            //     this.transformTo(this.format);
+            // }
         }
     };
 
