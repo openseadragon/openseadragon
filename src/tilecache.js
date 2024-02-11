@@ -128,14 +128,13 @@
          * @returns {OpenSeadragon.Promise<?>} desired data type in promise, undefined if the cache was destroyed
          */
         getDataAs(type = this._type, copy = true) {
-            const referenceTile = this._tiles[0];
             if (this.loaded) {
                 if (type === this._type) {
-                    return copy ? $.convertor.copy(referenceTile, this._data, type) : this._promise;
+                    return copy ? $.convertor.copy(this._tRef, this._data, type) : this._promise;
                 }
-                return this._getDataAsUnsafe(referenceTile, this._data, type, copy);
+                return this._getDataAsUnsafe(this._tRef, this._data, type, copy);
             }
-            return this._promise.then(data => this._getDataAsUnsafe(referenceTile, data, type, copy));
+            return this._promise.then(data => this._getDataAsUnsafe(this._tRef, data, type, copy));
         }
 
         _getDataAsUnsafe(referenceTile, data, type, copy) {
@@ -161,7 +160,6 @@
          * @param {Array<string>} supportedTypes required data (or one of) type(s)
          * @param {boolean} keepInternalCopy if true, the cache keeps internally the drawer data
          *   until 'setData' is called
-         * todo: keep internal copy is not configurable and always enforced -> set as option for osd?
          * @returns {any|undefined} desired data if available, undefined if conversion must be done
          */
         getDataForRendering(supportedTypes, keepInternalCopy = true) {
@@ -176,7 +174,7 @@
             }
 
             if (internalCache) {
-                internalCache.withTemporaryTileRef(this._tiles[0]);
+                internalCache.withTileReference(this._tRef);
             } else {
                 internalCache = this;
             }
@@ -201,7 +199,6 @@
          * @return {OpenSeadragon.Promise<OpenSeadragon.SimpleCacheRecord|OpenSeadragon.CacheRecord>}
          */
         prepareForRendering(supportedTypes, keepInternalCopy = true) {
-            const referenceTile = this._tiles[0];
             // if not internal copy and we have no data, bypass rendering
             if (!this.loaded) {
                 return $.Promise.resolve(this);
@@ -214,9 +211,9 @@
                 $.console.error(`[getDataForRendering] Conversion conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
                 return $.Promise.resolve(this);
             }
-            internalCache.withTemporaryTileRef(referenceTile);
+            internalCache.withTileReference(this._tRef);
             const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
-            return $.convertor.convert(referenceTile, this.data, this.type, selectedFormat).then(data => {
+            return $.convertor.convert(this._tRef, this.data, this.type, selectedFormat).then(data => {
                 internalCache.setDataAs(data, selectedFormat);
                 return internalCache;
             });
@@ -277,6 +274,16 @@
         }
 
         /**
+         * Conversion requires tile references:
+         * keep the most 'up to date' ref here. It is called and managed automatically.
+         * @param {OpenSeadragon.Tile} ref
+         * @private
+         */
+        withTileReference(ref) {
+            this._tRef = ref;
+        }
+
+        /**
          * Set initial state, prepare for usage.
          * Must not be called on active cache, e.g. first call destroy().
          */
@@ -318,6 +325,7 @@
             this._tiles = null;
             this._data = null;
             this._type = null;
+            this._tRef = null;
             this._promise = null;
         }
 
@@ -359,6 +367,10 @@
             for (let i = 0; i < this._tiles.length; i++) {
                 if (this._tiles[i] === tile) {
                     this._tiles.splice(i, 1);
+                    if (this._tRef === tile) {
+                        // keep fresh ref
+                        this._tRef = this._tiles[i - 1];
+                    }
                     return true;
                 }
             }
@@ -422,7 +434,7 @@
                 const internal = this[DRAWER_INTERNAL_CACHE];
                 if (internal) {
                     // TODO: if update will be greedy uncomment (see below)
-                    //internal.withTemporaryTileRef(this._tiles[0]);
+                    //internal.withTileReference(this._tRef);
                     internal.setDataAs(data, type);
                 }
                 this._triggerNeedsDraw();
@@ -436,7 +448,7 @@
                 const internal = this[DRAWER_INTERNAL_CACHE];
                 if (internal) {
                     // TODO: if update will be greedy uncomment (see below)
-                    //internal.withTemporaryTileRef(this._tiles[0]);
+                    //internal.withTileReference(this._tRef);
                     internal.setDataAs(data, type);
                 }
                 this._triggerNeedsDraw();
@@ -452,7 +464,6 @@
          */
         _convert(from, to) {
             const convertor = $.convertor,
-                referenceTile = this._tiles[0],
                 conversionPath = convertor.getConversionPath(from, to);
             if (!conversionPath) {
                 $.console.error(`[CacheRecord._convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
@@ -470,7 +481,7 @@
                         return $.Promise.resolve(x);
                     }
                     let edge = conversionPath[i];
-                    let y = edge.transform(referenceTile, x);
+                    let y = edge.transform(_this._tRef, x);
                     if (y === undefined) {
                         _this.loaded = false;
                         throw `[CacheRecord._convert] data mid result undefined value (while converting using ${edge}})`;
@@ -530,7 +541,7 @@
          * compatible api with CacheRecord where tile refs are known.
          * @param {OpenSeadragon.Tile} referenceTile reference tile for conversion
          */
-        withTemporaryTileRef(referenceTile) {
+        withTileReference(referenceTile) {
             this._temporaryTileRef = referenceTile;
         }
 
@@ -727,9 +738,12 @@
                     for ( let i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
                         prevTile = this._tilesLoaded[ i ];
 
-                        if ( prevTile.level <= cutoff || prevTile.beingDrawn ) {
+                        if ( prevTile.level <= cutoff ||
+                            prevTile.beingDrawn ||
+                            prevTile.loading ) {
                             continue;
-                        } else if ( !worstTile ) {
+                        }
+                        if ( !worstTile ) {
                             worstTile       = prevTile;
                             worstTileIndex  = i;
                             continue;

@@ -513,12 +513,14 @@ $.Tile.prototype = {
      * @return {OpenSeadragon.CacheRecord}
      */
     getCache: function(key = this.cacheKey) {
-        return this._caches[key];
+        const cache = this._caches[key];
+        if (cache) {
+            cache.withTileReference(this);
+        }
+        return cache;
     },
 
     /**
-     * TODO: set cache might be misleading name since we do not update data,
-     *   this should be either changed or method renamed...
      * Set tile cache, possibly multiple with custom key
      * @param {string} key cache key, must be unique (we recommend re-using this.cacheTile
      *   value and extend it with some another unique content, by default overrides the existing
@@ -600,6 +602,7 @@ $.Tile.prototype = {
     /**
      * Get the ratio between current and original size.
      * @function
+     * @deprecated
      * @returns {number}
      */
     getScaleForEdgeSmoothing: function() {

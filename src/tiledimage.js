@@ -2045,7 +2045,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     _onTileLoad: function( tile, time, data, errorMsg, tileRequest, dataType ) {
         //data is set to null on error by image loader, allow custom falsey values (e.g. 0)
-        if ( data === null ) {
+        if ( data === null || data === undefined ) {
             $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.getUrl(), errorMsg );
             /**
              * Triggered when a tile fails to load.
@@ -2095,6 +2095,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {?Boolean} [withEvent=true] do not trigger event if true
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType, withEvent = true) {
+        const originalDelete = tile.unload;
+        tile.unload = (function () {
+            throw `Cannot unload tile while being loaded!`;
+        });
+
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // does nothing if tile.cacheKey already present
         tile.addCache(tile.cacheKey, data, dataType, false);
@@ -2124,17 +2129,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 resolver(tile);
             } else if (!requiredTypes.includes(cache.type)) {
                 //initiate conversion as soon as possible if incompatible with the drawer
-                cache.prepareForRendering(requiredTypes).then(cacheRef => {
+                cache.prepareForRendering(requiredTypes, _this.viewer.drawer.options.detachedCache).then(cacheRef => {
                     if (!cacheRef) {
                         return cache.transformTo(requiredTypes);
                     }
                     return cacheRef;
                 }).then(_ => {
+                    tile.unload = originalDelete;
                     tile.loading = false;
                     tile.loaded = true;
                     resolver(tile);
                 });
             } else {
+                tile.unload = originalDelete;
                 tile.loading = false;
                 tile.loaded = true;
                 resolver(tile);
