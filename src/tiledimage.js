@@ -1456,7 +1456,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     lowestLevel
                 );
                 _this._isBlending = _this._isBlending || tileIsBlending;
-                _this._needsDraw = _this._needsDraw || tileIsBlending || this._wasBlending;
+                _this._needsDraw = _this._needsDraw || tileIsBlending || _this._wasBlending;
             }
         }
 
