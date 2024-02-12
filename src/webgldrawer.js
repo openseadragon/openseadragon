@@ -158,6 +158,16 @@
             // set our webgl context reference to null to enable garbage collection
             this._gl = null;
 
+            if(this._backupCanvasDrawer){
+                this._backupCanvasDrawer.destroy();
+                this._backupCanvasDrawer = null;
+            }
+
+            this.container.removeChild(this.canvas);
+            if(this.viewer.drawer === this){
+                this.viewer.drawer = null;
+            }
+
             // set our destroyed flag to true
             this._destroyed = true;
         }
@@ -355,6 +365,15 @@
                         let tileContext = tile.getCanvasContext();
 
                         let textureInfo = tileContext ? this._TextureMap.get(tileContext.canvas) : null;
+                        if(!textureInfo){
+                            // tile was not processed in the tile-ready event (this can happen
+                            // if this drawer was created after the tile was downloaded)
+                            this._tileReadyHandler({tile: tile, tiledImage: tiledImage});
+
+                            // retry getting textureInfo
+                            textureInfo = tileContext ? this._TextureMap.get(tileContext.canvas) : null;
+                        }
+
                         if(textureInfo){
                             this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
                         } else {
@@ -840,11 +859,18 @@
         _tileReadyHandler(event){
             let tile = event.tile;
             let tiledImage = event.tiledImage;
+
+            // If a tiledImage is already known to be tainted, don't try to upload any
+            // textures to webgl, because they won't be used even if it succeeds
+            if(tiledImage.isTainted()){
+                return;
+            }
+
             let tileContext = tile.getCanvasContext();
             let canvas = tileContext && tileContext.canvas;
             // if the tile doesn't provide a canvas, or is tainted by cross-origin
             // data, marked the TiledImage as tainted so the canvas drawer can be
-            // used instead, and return immediately - data cannot be uploaded to webgl
+            // used instead, and return immediately - tainted data cannot be uploaded to webgl
             if(!canvas || $.isCanvasTainted(canvas)){
                 const wasTainted = tiledImage.isTainted();
                 if(!wasTainted){
