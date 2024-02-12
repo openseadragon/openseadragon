@@ -93,8 +93,10 @@
             this._backupCanvasDrawer = null;
 
             // Add listeners for events that require modifying the scene or camera
-            this.viewer.addHandler("tile-ready", ev => this._tileReadyHandler(ev));
-            this.viewer.addHandler("image-unloaded", ev => this._imageUnloadedHandler(ev));
+            this._boundToTileReady = ev => this._tileReadyHandler(ev);
+            this._boundToImageUnloaded = ev => this._imageUnloadedHandler(ev);
+            this.viewer.addHandler("tile-ready", this._boundToTileReady);
+            this.viewer.addHandler("image-unloaded", this._boundToImageUnloaded);
 
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
@@ -154,6 +156,10 @@
             if(ext){
                 ext.loseContext();
             }
+
+            // unbind our event listeners from the viewer
+            this.viewer.removeHandler("tile-ready", this._boundToTileReady);
+            this.viewer.removeHandler("image-unloaded", this._boundToImageUnloaded);
 
             // set our webgl context reference to null to enable garbage collection
             this._gl = null;
