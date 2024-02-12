@@ -126,7 +126,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      * Destroy the drawer (unload current loaded tiles)
      */
     destroy() {
-        this.canvas.innerHTML = "";
+        this.container.removeChild(this.canvas);
     }
 
     /**
