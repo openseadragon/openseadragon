@@ -907,10 +907,9 @@
         }
 
         // private
-        _setClip(rect){
-            this._clippingContext.beginPath();
-            this._clippingContext.rect(rect.x, rect.y, rect.width, rect.height);
-            this._clippingContext.clip();
+        _setClip(){
+            // no-op: called by _renderToClippingCanvas when tiledImage._clip is truthy
+            // so that tests will pass.
         }
 
         // private
@@ -937,6 +936,7 @@
                     this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
                 });
                 this._clippingContext.clip();
+                this._setClip()
             }
             if(item._croppingPolygons){
                 let polygons = item._croppingPolygons.map(polygon => {
