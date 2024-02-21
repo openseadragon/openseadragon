@@ -917,6 +917,12 @@
 
             this._clippingContext.clearRect(0, 0, this._clippingCanvas.width, this._clippingCanvas.height);
             this._clippingContext.save();
+            if(this.viewer.viewport.getFlip()){
+                const point = new $.Point(this.canvas.width / 2, this.canvas.height / 2);
+                this._clippingContext.translate(point.x, 0);
+                this._clippingContext.scale(-1, 1);
+                this._clippingContext.translate(-point.x, 0);
+            }
 
             if(item._clip){
                 const polygon = [
@@ -936,7 +942,7 @@
                     this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
                 });
                 this._clippingContext.clip();
-                this._setClip()
+                this._setClip();
             }
             if(item._croppingPolygons){
                 let polygons = item._croppingPolygons.map(polygon => {
@@ -954,6 +960,13 @@
                     });
                 });
                 this._clippingContext.clip();
+            }
+
+            if(this.viewer.viewport.getFlip()){
+                const point = new $.Point(this.canvas.width / 2, this.canvas.height / 2);
+                this._clippingContext.translate(point.x, 0);
+                this._clippingContext.scale(-1, 1);
+                this._clippingContext.translate(-point.x, 0);
             }
 
             this._clippingContext.drawImage(this._renderingCanvas, 0, 0);
