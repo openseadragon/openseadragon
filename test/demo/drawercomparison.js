@@ -49,7 +49,7 @@ let viewer2 = window.viewer2 = OpenSeadragon({
     minZoomImageRatio:0.01,
     maxZoomPixelRatio:100,
     smoothTileEdgesMinZoom:1.1,
-    // crossOriginPolicy: 'Anonymous',
+    crossOriginPolicy: 'Anonymous',
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
     drawer:drawer2,
