@@ -231,11 +231,7 @@
          */
         _getBackupCanvasDrawer(){
             if(!this._backupCanvasDrawer){
-                this._backupCanvasDrawer = new $.CanvasDrawer({
-                    viewer: this.viewer,
-                    viewport: this.viewport,
-                    element: this.container,
-                });
+                this._backupCanvasDrawer = this.viewer.requestDrawer('canvas', false);
                 this._backupCanvasDrawer.canvas.style.setProperty('visibility', 'hidden');
             }
 
@@ -882,6 +878,7 @@
                 if(!wasTainted){
                     tiledImage.setTainted(true);
                     $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
+                    this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
                 }
                 return;
             }

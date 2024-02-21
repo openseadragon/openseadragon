@@ -280,6 +280,37 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         });
     }
 
+    /**
+     * Called by implementations to fire the drawer-error event
+     * @private
+     */
+    _raiseDrawerErrorEvent(tiledImage, errorMessage){
+        if(!this.viewer) {
+            return;
+        }
+
+        /**
+        *  Raised when a tiled image is drawn to the canvas. Used internally for testing.
+        *  The update-viewport event is preferred if you want to know when a frame has been drawn.
+        *
+        * @event drawer-error
+        * @memberof OpenSeadragon.Viewer
+        * @type {object}
+        * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+        * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+        * @property {OpenSeadragon.DrawerBase} drawer - The drawer that raised the error.
+        * @property {String} error - A message describing the error.
+        * @property {?Object} userData - Arbitrary subscriber-defined object.
+        * @private
+        */
+        this.viewer.raiseEvent( 'drawer-error', {
+            tiledImage: tiledImage,
+            drawer: this,
+            error: errorMessage,
+        });
+    }
+
+
 };
 
 }( OpenSeadragon ));

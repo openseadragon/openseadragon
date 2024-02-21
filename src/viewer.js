@@ -456,7 +456,7 @@ $.Viewer = function( options ) {
 
     this.drawer = null;
     for (const drawerCandidate of drawerCandidates){
-        let success = this.setDrawer(drawerCandidate, false);
+        let success = this.requestDrawer(drawerCandidate, true, false);
         if(success){
             break;
         }
@@ -929,19 +929,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Set the drawer for this viewer, as a supported string or drawer constructor.
-     * @param {String | OpenSeadragon.DrawerBase} drawerCandidate The type of drawer to try to construct
-     * @param { Boolean } [redrawImmediately] Whether to immediately draw a new frame. Default = true.
+     * Request a drawer for this viewer, as a supported string or drawer constructor.
+     * @param {String | OpenSeadragon.DrawerBase} drawerCandidate The type of drawer to try to construct.
+     * @param { Boolean } [mainDrawer] Whether to use this as the viewer's main drawer. Default = true.
+     * @param { Boolean } [redrawImmediately] Whether to immediately draw a new frame. Only used if mainDrawer = true. Default = true.
      * @param { Object } [drawerOptions] Options for this drawer. If falsey, defaults to viewer.drawerOptions
      * for this viewer type. See {@link OpenSeadragon.Options}.
-     * @returns {Boolean} whether the drawer was created successfully
+     * @returns {Object | Boolean} The drawer that was created, or false if the requestd drawer is not supported
      */
-    setDrawer(drawerCandidate, redrawImmediately = true, drawerOptions = null){
+    requestDrawer(drawerCandidate, mainDrawer = true, redrawImmediately = true, drawerOptions = null){
         const oldDrawer = this.drawer;
 
         let Drawer = null;
 
-        //if inherits from a drawer base, use it
+        //if the candidate inherits from a drawer base, use it
         if (drawerCandidate && drawerCandidate.prototype instanceof $.DrawerBase) {
             Drawer = drawerCandidate;
             drawerCandidate = 'custom';
@@ -957,12 +958,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (Drawer && Drawer.isSupported()) {
 
             // first destroy the previous drawer
-            if(oldDrawer){
+            if(oldDrawer && mainDrawer){
                 oldDrawer.destroy();
             }
 
             // create the new drawer
-            this.drawer = new Drawer({
+            const newDrawer = new Drawer({
                 viewer:             this,
                 viewport:           this.viewport,
                 element:            this.canvas,
@@ -970,10 +971,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 options:            drawerOptions || this.drawerOptions[drawerCandidate],
             });
 
-            if(redrawImmediately){
-                this.forceRedraw();
+            if(mainDrawer){
+                this.drawer = newDrawer;
+                if(redrawImmediately){
+                    this.forceRedraw();
+                }
             }
-            return true;
+
+            return newDrawer;
         }
 
         return false;
