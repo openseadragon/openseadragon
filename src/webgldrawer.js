@@ -287,6 +287,10 @@
                 } else {
                     let tilesToDraw = tiledImage.getTilesToDraw();
 
+                    if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
+                        this._drawPlaceholder(tiledImage);
+                    }
+
                     if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
                         return;
                     }
@@ -1155,6 +1159,30 @@
             }
 
             context.restore();
+        }
+
+        _drawPlaceholder(tiledImage){
+
+            const bounds = tiledImage.getBounds(true);
+            const rect = this.viewportToDrawerRectangle(tiledImage.getBounds(true));
+            const context = this._outputContext;
+
+            let fillStyle;
+            if ( typeof tiledImage.placeholderFillStyle === "function" ) {
+                fillStyle = tiledImage.placeholderFillStyle(tiledImage, context);
+            }
+            else {
+                fillStyle = tiledImage.placeholderFillStyle;
+            }
+
+            this._offsetForRotation({degrees: this.viewer.viewport.getRotation(true)});
+            context.fillStyle = fillStyle;
+            context.translate(rect.x, rect.y);
+            context.rotate(Math.PI / 180 * bounds.degrees);
+            context.translate(-rect.x, -rect.y);
+            context.fillRect(rect.x, rect.y, rect.width, rect.height);
+            this._restoreRotationChanges();
+
         }
 
         // private

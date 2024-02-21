@@ -261,7 +261,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     draw: function() {
         this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
-        this._items.forEach(function(item){
+        this._items.forEach((item) => {
             this._needsDraw = item.setDrawn() || this._needsDraw;
         });
     },
