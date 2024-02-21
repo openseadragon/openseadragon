@@ -920,9 +920,23 @@
             this._clippingContext.save();
 
             if(item._clip){
-                var box = item.imageToViewportRectangle(item._clip, true);
-                var rect = this.viewportToDrawerRectangle(box);
-                this._setClip(rect);
+                const polygon = [
+                    {x: item._clip.x, y: item._clip.y},
+                    {x: item._clip.x + item._clip.width, y: item._clip.y},
+                    {x: item._clip.x + item._clip.width, y: item._clip.y + item._clip.height},
+                    {x: item._clip.x, y: item._clip.y + item._clip.height},
+                ];
+                let clipPoints = polygon.map(coord => {
+                    let point = item.imageToViewportCoordinates(coord.x, coord.y, true)
+                        .rotate(this.viewer.viewport.getRotation(true), this.viewer.viewport.getCenter(true));
+                    let clipPoint = this.viewportCoordToDrawerCoord(point);
+                    return clipPoint;
+                });
+                this._clippingContext.beginPath();
+                clipPoints.forEach( (coord, i) => {
+                    this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
+                });
+                this._clippingContext.clip();
             }
             if(item._croppingPolygons){
                 let polygons = item._croppingPolygons.map(polygon => {
@@ -934,7 +948,7 @@
                     });
                 });
                 this._clippingContext.beginPath();
-                polygons.forEach(polygon => {
+                polygons.forEach((polygon) => {
                     polygon.forEach( (coord, i) => {
                         this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
                     });
