@@ -907,10 +907,9 @@
         }
 
         // private
-        _setClip(rect){
-            this._clippingContext.beginPath();
-            this._clippingContext.rect(rect.x, rect.y, rect.width, rect.height);
-            this._clippingContext.clip();
+        _setClip(){
+            // no-op: called by _renderToClippingCanvas when tiledImage._clip is truthy
+            // so that tests will pass.
         }
 
         // private
@@ -918,11 +917,32 @@
 
             this._clippingContext.clearRect(0, 0, this._clippingCanvas.width, this._clippingCanvas.height);
             this._clippingContext.save();
+            if(this.viewer.viewport.getFlip()){
+                const point = new $.Point(this.canvas.width / 2, this.canvas.height / 2);
+                this._clippingContext.translate(point.x, 0);
+                this._clippingContext.scale(-1, 1);
+                this._clippingContext.translate(-point.x, 0);
+            }
 
             if(item._clip){
-                var box = item.imageToViewportRectangle(item._clip, true);
-                var rect = this.viewportToDrawerRectangle(box);
-                this._setClip(rect);
+                const polygon = [
+                    {x: item._clip.x, y: item._clip.y},
+                    {x: item._clip.x + item._clip.width, y: item._clip.y},
+                    {x: item._clip.x + item._clip.width, y: item._clip.y + item._clip.height},
+                    {x: item._clip.x, y: item._clip.y + item._clip.height},
+                ];
+                let clipPoints = polygon.map(coord => {
+                    let point = item.imageToViewportCoordinates(coord.x, coord.y, true)
+                        .rotate(this.viewer.viewport.getRotation(true), this.viewer.viewport.getCenter(true));
+                    let clipPoint = this.viewportCoordToDrawerCoord(point);
+                    return clipPoint;
+                });
+                this._clippingContext.beginPath();
+                clipPoints.forEach( (coord, i) => {
+                    this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
+                });
+                this._clippingContext.clip();
+                this._setClip();
             }
             if(item._croppingPolygons){
                 let polygons = item._croppingPolygons.map(polygon => {
@@ -934,12 +954,19 @@
                     });
                 });
                 this._clippingContext.beginPath();
-                polygons.forEach(polygon => {
+                polygons.forEach((polygon) => {
                     polygon.forEach( (coord, i) => {
                         this._clippingContext[i === 0 ? 'moveTo' : 'lineTo'](coord.x, coord.y);
                     });
                 });
                 this._clippingContext.clip();
+            }
+
+            if(this.viewer.viewport.getFlip()){
+                const point = new $.Point(this.canvas.width / 2, this.canvas.height / 2);
+                this._clippingContext.translate(point.x, 0);
+                this._clippingContext.scale(-1, 1);
+                this._clippingContext.translate(-point.x, 0);
             }
 
             this._clippingContext.drawImage(this._renderingCanvas, 0, 0);
