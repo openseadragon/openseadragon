@@ -231,7 +231,7 @@
          */
         _getBackupCanvasDrawer(){
             if(!this._backupCanvasDrawer){
-                this._backupCanvasDrawer = this.viewer.requestDrawer('canvas', false);
+                this._backupCanvasDrawer = this.viewer.requestDrawer('canvas', {mainDrawer: false});
                 this._backupCanvasDrawer.canvas.style.setProperty('visibility', 'hidden');
             }
 

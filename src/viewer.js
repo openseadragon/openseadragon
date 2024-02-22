@@ -456,7 +456,7 @@ $.Viewer = function( options ) {
 
     this.drawer = null;
     for (const drawerCandidate of drawerCandidates){
-        let success = this.requestDrawer(drawerCandidate, true, false);
+        let success = this.requestDrawer(drawerCandidate, {mainDrawer: true, redrawImmediately: false});
         if(success){
             break;
         }
@@ -931,13 +931,24 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Request a drawer for this viewer, as a supported string or drawer constructor.
      * @param {String | OpenSeadragon.DrawerBase} drawerCandidate The type of drawer to try to construct.
-     * @param { Boolean } [mainDrawer] Whether to use this as the viewer's main drawer. Default = true.
-     * @param { Boolean } [redrawImmediately] Whether to immediately draw a new frame. Only used if mainDrawer = true. Default = true.
-     * @param { Object } [drawerOptions] Options for this drawer. If falsey, defaults to viewer.drawerOptions
+     * @param { Object } options
+     * @param { Boolean } [options.mainDrawer] Whether to use this as the viewer's main drawer. Default = true.
+     * @param { Boolean } [options.redrawImmediately] Whether to immediately draw a new frame. Only used if options.mainDrawer = true. Default = true.
+     * @param { Object } [options.drawerOptions] Options for this drawer. Defaults to viewer.drawerOptions.
      * for this viewer type. See {@link OpenSeadragon.Options}.
-     * @returns {Object | Boolean} The drawer that was created, or false if the requestd drawer is not supported
+     * @returns {Object | Boolean} The drawer that was created, or false if the requested drawer is not supported
      */
-    requestDrawer(drawerCandidate, mainDrawer = true, redrawImmediately = true, drawerOptions = null){
+    requestDrawer(drawerCandidate, options){
+        const defaultOpts = {
+            mainDrawer: true,
+            redrawImmediately: true,
+            drawerOptions: null
+        };
+        options = $.extend(true, defaultOpts, options);
+        const mainDrawer = options.mainDrawer;
+        const redrawImmediately = options.redrawImmediately;
+        const drawerOptions = options.drawerOptions;
+
         const oldDrawer = this.drawer;
 
         let Drawer = null;
