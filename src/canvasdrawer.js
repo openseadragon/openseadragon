@@ -139,6 +139,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         this.canvas.height = 1;
         this.sketchCanvas = null;
         this.sketchContext = null;
+        this.container.removeChild(this.canvas);
     }
 
     /**

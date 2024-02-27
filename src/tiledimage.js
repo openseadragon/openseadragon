@@ -166,6 +166,7 @@ $.TiledImage = function( options ) {
         _lastDrawn:     [],    // array of tiles that were last fetched by the drawer
         _isBlending:    false, // Are any tiles still being blended?
         _wasBlending:   false, // Were any tiles blending before the last draw?
+        _isTainted:     false, // Has a Tile been found with tainted data?
         //configurable settings
         springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
         animationTime:                     $.DEFAULT_SETTINGS.animationTime,
@@ -324,6 +325,25 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     setDrawn: function(){
         this._needsDraw = this._isBlending || this._wasBlending;
         return this._needsDraw;
+    },
+
+    /**
+     * Set the internal _isTainted flag for this TiledImage. Lazy loaded - not
+     * checked each time a Tile is loaded, but can be set if a consumer of the
+     * tiles (e.g. a Drawer) discovers a Tile to have tainted data so that further
+     * checks are not needed and alternative rendering strategies can be used.
+     * @private
+     */
+    setTainted(isTainted){
+        this._isTainted = isTainted;
+    },
+
+    /**
+     * @private
+     * @returns {Boolean} whether the TiledImage has been marked as tainted
+     */
+    isTainted(){
+        return this._isTainted;
     },
 
     /**
