@@ -159,7 +159,8 @@ $.TiledImage = function( options ) {
         loadingCoverage: {},   // A '3d' dictionary [level][x][y] --> Boolean; shows what areas are loaded or are being loaded/blended.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
-        _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
+        _needsDraw:     true,  // Does the tiledImage need to be drawn again?
+        _needsUpdate:   true,  // Does the tiledImage need to update the viewport again?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
         _tilesToDraw:   [],    // info about the tiles currently in the viewport, two deep: array[level][tile]
@@ -298,13 +299,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         let scaleUpdated = this._scaleSpring.update();
         let degreesUpdated = this._degreesSpring.update();
 
-        let updated = (xUpdated || yUpdated || scaleUpdated || degreesUpdated);
+        let updated = (xUpdated || yUpdated || scaleUpdated || degreesUpdated || this._needsUpdate);
 
         if (updated || viewportChanged || !this._fullyLoaded){
             let fullyLoadedFlag = this._updateLevelsForViewport();
             this._setFullyLoaded(fullyLoadedFlag);
         }
 
+        this._needsUpdate = false;
 
         if (updated) {
             this._updateForScale();
@@ -697,6 +699,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._xSpring.resetTo(position.x);
             this._ySpring.resetTo(position.y);
             this._needsDraw = true;
+            this._needsUpdate = true;
         } else {
             if (sameTarget) {
                 return;
@@ -705,6 +708,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._xSpring.springTo(position.x);
             this._ySpring.springTo(position.y);
             this._needsDraw = true;
+            this._needsUpdate = true;
         }
 
         if (!sameTarget) {
@@ -1034,6 +1038,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._degreesSpring.springTo(degrees);
         }
         this._needsDraw = true;
+        this._needsUpdate = true;
         this._raiseBoundsChange();
     },
 
@@ -1232,6 +1237,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._scaleSpring.resetTo(scale);
             this._updateForScale();
             this._needsDraw = true;
+            this._needsUpdate = true;
         } else {
             if (sameTarget) {
                 return;
@@ -1240,6 +1246,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._scaleSpring.springTo(scale);
             this._updateForScale();
             this._needsDraw = true;
+            this._needsUpdate = true;
         }
 
         if (!sameTarget) {
