@@ -55,7 +55,8 @@
  * @param {Object} options
  *      You can either specify a URL, or literally define the TileSource (by specifying
  *      width, height, tileSize, tileOverlap, minLevel, and maxLevel). For the former,
- *      the extending class is expected to implement 'getImageInfo' and 'configure'.
+ *      the extending class is expected to implement 'supports' and 'configure'.
+ *      Note that _in this case, the child class of getImageInfo() is ignored!_
  *      For the latter, the construction is assumed to occur through
  *      the extending classes implementation of 'configure'.
  * @param {String} [options.url]
@@ -72,6 +73,7 @@
  * @param {Boolean} [options.splitHashDataForPost]
  *      First occurrence of '#' in the options.url is used to split URL
  *      and the latter part is treated as POST data (applies to getImageInfo(...))
+ *      Does not work if getImageInfo() is overridden and used (see the options description)
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
  * @param {Number} [options.height]
@@ -176,6 +178,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
 
+    // TODO potentially buggy behavior: what if .url is used by child class before it calls super constructor?
+    //  this can happen if old JS class definition is used
     if( 'string' === $.type( arguments[ 0 ] ) ){
         this.url = arguments[0];
     }
@@ -431,6 +435,12 @@ $.TileSource.prototype = {
     /**
      * Responsible for retrieving, and caching the
      * image metadata pertinent to this TileSources implementation.
+     * There are three scenarios of opening a tile source:
+     * 1) if it is a string parseable as XML or JSON, the string is converted to an object
+     * 2) if it is a string, then
+     *   internally, this method
+     * else
+     *
      * @function
      * @param {String} url
      * @throws {Error}
@@ -560,7 +570,7 @@ $.TileSource.prototype = {
                      * @property {String} message
                      * @property {String} source
                      * @property {String} postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-                     *      see TileSource::getPostData) or null
+                     *      see TileSource::getTilePostData) or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
@@ -777,7 +787,7 @@ $.TileSource.prototype = {
      * @param {Boolean} [context.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
      * @param {String} [context.crossOriginPolicy] - CORS policy to use for downloads
      * @param {?String|?Object} [context.postData] - HTTP POST data (usually but not necessarily
-     *   in k=v&k2=v2... form, see TileSource::getPostData) or null
+     *   in k=v&k2=v2... form, see TileSource::getTilePostData) or null
      * @param {*} [context.userData] - Empty object to attach your own data and helper variables to.
      * @param {Function} [context.finish] - Should be called unless abort() was executed upon successful
      *   data retrieval.

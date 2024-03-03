@@ -106,7 +106,7 @@
          */
         setDataAs(data, type) {
             //allow set data with destroyed state, destroys the data if necessary
-            $.console.assert(data !== undefined, "[CacheRecord.setDataAs] needs valid data to set!");
+            $.console.assert(data !== undefined && data !== null, "[CacheRecord.setDataAs] needs valid data to set!");
             if (this._conversionJobQueue) {
                 //delay saving if ongiong conversion, these were registered first
                 let resolver = null;
@@ -412,7 +412,7 @@
 
         _triggerNeedsDraw() {
             for (let tile of this._tiles) {
-                tile.tiledImage._needsDraw = true;
+                tile.tiledImage.redraw();
             }
         }
 

@@ -2383,7 +2383,7 @@ function OpenSeadragon( options ){
          * @param {Object} options.headers - headers to add to the AJAX request
          * @param {String} options.responseType - the response type of the AJAX request
          * @param {String} options.postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-         *      see TileSource::getPostData), GET method used if null
+         *      see TileSource::getTilePostData), GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}
@@ -2697,7 +2697,7 @@ function OpenSeadragon( options ){
 
         //@private, runs tile update event
         invalidateTile: function(tile, image, tStamp, viewer, i = -1) {
-            console.log(i, "tile: process", tile);
+            //console.log(i, "tile: process", tile);
 
             //todo consider also ability to cut execution of ongoing event if outdated by providing comparison timestamp
             viewer.raiseEventAwaiting('tile-needs-update', {

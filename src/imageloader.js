@@ -48,7 +48,7 @@
  * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
- *      see TileSource::getPostData) or null
+ *      see TileSource::getTilePostData) or null
  * @param {Function} [options.callback] - Called once image has been downloaded.
  * @param {Function} [options.abort] - Called when this image job is aborted.
  * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
@@ -193,7 +193,7 @@ $.ImageLoader.prototype = {
      * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,
-     *      see TileSource::getPostData) or null
+     *      see TileSource::getTilePostData) or null
      * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
      *      requests.
      * @param {Function} [options.callback] - Called once image has been downloaded.

@@ -252,15 +252,15 @@
 
         //load data
         const tile00 = createFakeTile('foo.jpg', fakeTiledImage0);
-        tile00.addCache(tile00.cacheKey, 0, T_A, false);
+        tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
         const tile01 = createFakeTile('foo2.jpg', fakeTiledImage0);
-        tile01.addCache(tile01.cacheKey, 0, T_B, false);
+        tile01.addCache(tile01.cacheKey, 0, T_B, false, false);
         const tile10 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile10.addCache(tile10.cacheKey, 0, T_C, false);
+        tile10.addCache(tile10.cacheKey, 0, T_C, false, false);
         const tile11 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile11.addCache(tile11.cacheKey, 0, T_C, false);
+        tile11.addCache(tile11.cacheKey, 0, T_C, false, false);
         const tile12 = createFakeTile('foo.jpg', fakeTiledImage1);
-        tile12.addCache(tile12.cacheKey, 0, T_A, false);
+        tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
 
         const collideGetSet = async (tile, type) => {
             const value = await tile.getData(type, false);
@@ -446,15 +446,15 @@
 
         //load data
         const tile00 = createFakeTile('foo.jpg', fakeTiledImage0);
-        tile00.addCache(tile00.cacheKey, 0, T_A, false);
+        tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
         const tile01 = createFakeTile('foo2.jpg', fakeTiledImage0);
-        tile01.addCache(tile01.cacheKey, 0, T_B, false);
+        tile01.addCache(tile01.cacheKey, 0, T_B, false, false);
         const tile10 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile10.addCache(tile10.cacheKey, 0, T_C, false);
+        tile10.addCache(tile10.cacheKey, 0, T_C, false, false);
         const tile11 = createFakeTile('foo3.jpg', fakeTiledImage1);
-        tile11.addCache(tile11.cacheKey, 0, T_C, false);
+        tile11.addCache(tile11.cacheKey, 0, T_C, false, false);
         const tile12 = createFakeTile('foo.jpg', fakeTiledImage1);
-        tile12.addCache(tile12.cacheKey, 0, T_A, false);
+        tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
 
         //test set/get data in async env
         (async function() {

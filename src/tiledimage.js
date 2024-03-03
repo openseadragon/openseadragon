@@ -2095,14 +2095,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {?Boolean} [withEvent=true] do not trigger event if true
      */
     _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType, withEvent = true) {
-        const originalDelete = tile.unload;
-        tile.unload = (function () {
-            throw `Cannot unload tile while being loaded!`;
-        });
-
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // does nothing if tile.cacheKey already present
-        tile.addCache(tile.cacheKey, data, dataType, false);
+        tile.addCache(tile.cacheKey, data, dataType, false, false);
 
         let resolver = null,
             increment = 0,
@@ -2135,13 +2130,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     }
                     return cacheRef;
                 }).then(_ => {
-                    tile.unload = originalDelete;
                     tile.loading = false;
                     tile.loaded = true;
                     resolver(tile);
                 });
             } else {
-                tile.unload = originalDelete;
                 tile.loading = false;
                 tile.loaded = true;
                 resolver(tile);
