@@ -212,7 +212,7 @@ $.Spring.prototype = {
     update: function() {
         this.current.time  = $.now();
 
-        var startValue, targetValue;
+        let startValue, targetValue;
         if (this._exponential) {
             startValue = this.start._logValue;
             targetValue = this.target._logValue;
@@ -221,23 +221,25 @@ $.Spring.prototype = {
             targetValue = this.target.value;
         }
 
-        var currentValue = (this.current.time >= this.target.time) ?
-            targetValue :
-            startValue +
-                ( targetValue - startValue ) *
-                transform(
-                    this.springStiffness,
-                    ( this.current.time - this.start.time ) /
-                    ( this.target.time - this.start.time )
-                );
-
-        if (this._exponential) {
-            this.current.value = Math.exp(currentValue);
+        if(this.current.time >= this.target.time){
+            this.current.value = this.target.value;
         } else {
-            this.current.value = currentValue;
+            let currentValue = startValue +
+                    ( targetValue - startValue ) *
+                    transform(
+                        this.springStiffness,
+                        ( this.current.time - this.start.time ) /
+                        ( this.target.time - this.start.time )
+                    );
+
+            if (this._exponential) {
+                this.current.value = Math.exp(currentValue);
+            } else {
+                this.current.value = currentValue;
+            }
         }
 
-        return currentValue !== targetValue;
+        return this.current.value !== this.target.value;
     },
 
     /**

@@ -473,35 +473,13 @@ $.Viewer = function( options ) {
 
 
     this.drawer = null;
-    for (let i = 0; i < drawerCandidates.length; i++) {
-
-        let drawerCandidate = drawerCandidates[i];
-        let Drawer = null;
-
-        //if inherits from a drawer base, use it
-        if (drawerCandidate && drawerCandidate.prototype instanceof $.DrawerBase) {
-            Drawer = drawerCandidate;
-            drawerCandidate = 'custom';
-        } else if (typeof drawerCandidate === "string") {
-            Drawer = $.determineDrawer(drawerCandidate);
-        } else {
-            $.console.warn('Unsupported drawer! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.');
-            continue;
-        }
-
-        // if the drawer is supported, create it and break the loop
-        if (Drawer && Drawer.isSupported()) {
-            this.drawer = new Drawer({
-                viewer:             this,
-                viewport:           this.viewport,
-                element:            this.canvas,
-                debugGridColor:     this.debugGridColor,
-                options:            this.drawerOptions[drawerCandidate],
-            });
-
+    for (const drawerCandidate of drawerCandidates){
+        let success = this.requestDrawer(drawerCandidate, {mainDrawer: true, redrawImmediately: false});
+        if(success){
             break;
         }
     }
+
     if (!this.drawer){
         $.console.error('No drawer could be created!');
         throw('Error with creating the selected drawer(s)');
@@ -966,6 +944,73 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.raiseEvent( 'destroy' );
 
         this.removeAllHandlers();
+    },
+
+    /**
+     * Request a drawer for this viewer, as a supported string or drawer constructor.
+     * @param {String | OpenSeadragon.DrawerBase} drawerCandidate The type of drawer to try to construct.
+     * @param { Object } options
+     * @param { Boolean } [options.mainDrawer] Whether to use this as the viewer's main drawer. Default = true.
+     * @param { Boolean } [options.redrawImmediately] Whether to immediately draw a new frame. Only used if options.mainDrawer = true. Default = true.
+     * @param { Object } [options.drawerOptions] Options for this drawer. Defaults to viewer.drawerOptions.
+     * for this viewer type. See {@link OpenSeadragon.Options}.
+     * @returns {Object | Boolean} The drawer that was created, or false if the requested drawer is not supported
+     */
+    requestDrawer(drawerCandidate, options){
+        const defaultOpts = {
+            mainDrawer: true,
+            redrawImmediately: true,
+            drawerOptions: null
+        };
+        options = $.extend(true, defaultOpts, options);
+        const mainDrawer = options.mainDrawer;
+        const redrawImmediately = options.redrawImmediately;
+        const drawerOptions = options.drawerOptions;
+
+        const oldDrawer = this.drawer;
+
+        let Drawer = null;
+
+        //if the candidate inherits from a drawer base, use it
+        if (drawerCandidate && drawerCandidate.prototype instanceof $.DrawerBase) {
+            Drawer = drawerCandidate;
+            drawerCandidate = 'custom';
+        } else if (typeof drawerCandidate === "string") {
+            Drawer = $.determineDrawer(drawerCandidate);
+        }
+
+        if(!Drawer){
+            $.console.warn('Unsupported drawer! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.');
+        }
+
+        // if the drawer is supported, create it and return true
+        if (Drawer && Drawer.isSupported()) {
+
+            // first destroy the previous drawer
+            if(oldDrawer && mainDrawer){
+                oldDrawer.destroy();
+            }
+
+            // create the new drawer
+            const newDrawer = new Drawer({
+                viewer:             this,
+                viewport:           this.viewport,
+                element:            this.canvas,
+                debugGridColor:     this.debugGridColor,
+                options:            drawerOptions || this.drawerOptions[drawerCandidate],
+            });
+
+            if(mainDrawer){
+                this.drawer = newDrawer;
+                if(redrawImmediately){
+                    this.forceRedraw();
+                }
+            }
+
+            return newDrawer;
+        }
+
+        return false;
     },
 
     /**

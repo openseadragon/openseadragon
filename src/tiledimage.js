@@ -161,14 +161,16 @@ $.TiledImage = function( options ) {
         loadingCoverage: {},   // A '3d' dictionary [level][x][y] --> Boolean; shows what areas are loaded or are being loaded/blended.
         lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
-        _needsDraw:     true,  // Does the tiledImage need to update the viewport again?
-        _hasOpaqueTile: false, // Do we have even one fully opaque tile?
+        _needsDraw:     true,  // Does the tiledImage need to be drawn again?
+        _needsUpdate:   true,  // Does the tiledImage need to update the viewport again?
+        _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
         _zombieCache:   false, // Allow cache to stay in memory upon deletion.
         _tilesToDraw:   [],    // info about the tiles currently in the viewport, two deep: array[level][tile]
         _lastDrawn:     [],    // array of tiles that were last fetched by the drawer
         _isBlending:    false, // Are any tiles still being blended?
         _wasBlending:   false, // Were any tiles blending before the last draw?
+        _isTainted:     false, // Has a Tile been found with tainted data?
         //configurable settings
         springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
         animationTime:                     $.DEFAULT_SETTINGS.animationTime,
@@ -327,13 +329,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         let scaleUpdated = this._scaleSpring.update();
         let degreesUpdated = this._degreesSpring.update();
 
-        let updated = (xUpdated || yUpdated || scaleUpdated || degreesUpdated);
+        let updated = (xUpdated || yUpdated || scaleUpdated || degreesUpdated || this._needsUpdate);
 
         if (updated || viewportChanged || !this._fullyLoaded){
             let fullyLoadedFlag = this._updateLevelsForViewport();
             this._setFullyLoaded(fullyLoadedFlag);
         }
 
+        this._needsUpdate = false;
 
         if (updated) {
             this._updateForScale();
@@ -355,6 +358,25 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._needsDraw = this._isBlending || this._wasBlending ||
             (this.opacity > 0 && this._lastDrawn.length < 1);
         return this._needsDraw;
+    },
+
+    /**
+     * Set the internal _isTainted flag for this TiledImage. Lazy loaded - not
+     * checked each time a Tile is loaded, but can be set if a consumer of the
+     * tiles (e.g. a Drawer) discovers a Tile to have tainted data so that further
+     * checks are not needed and alternative rendering strategies can be used.
+     * @private
+     */
+    setTainted(isTainted){
+        this._isTainted = isTainted;
+    },
+
+    /**
+     * @private
+     * @returns {Boolean} whether the TiledImage has been marked as tainted
+     */
+    isTainted(){
+        return this._isTainted;
     },
 
     /**
@@ -705,6 +727,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._xSpring.resetTo(position.x);
             this._ySpring.resetTo(position.y);
             this._needsDraw = true;
+            this._needsUpdate = true;
         } else {
             if (sameTarget) {
                 return;
@@ -713,6 +736,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._xSpring.springTo(position.x);
             this._ySpring.springTo(position.y);
             this._needsDraw = true;
+            this._needsUpdate = true;
         }
 
         if (!sameTarget) {
@@ -1042,6 +1066,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._degreesSpring.springTo(degrees);
         }
         this._needsDraw = true;
+        this._needsUpdate = true;
         this._raiseBoundsChange();
     },
 
@@ -1252,6 +1277,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._scaleSpring.resetTo(scale);
             this._updateForScale();
             this._needsDraw = true;
+            this._needsUpdate = true;
         } else {
             if (sameTarget) {
                 return;
@@ -1260,6 +1286,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._scaleSpring.springTo(scale);
             this._updateForScale();
             this._needsDraw = true;
+            this._needsUpdate = true;
         }
 
         if (!sameTarget) {
@@ -1492,7 +1519,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     lowestLevel
                 );
                 _this._isBlending = _this._isBlending || tileIsBlending;
-                _this._needsDraw = _this._needsDraw || tileIsBlending || this._wasBlending;
+                _this._needsDraw = _this._needsDraw || tileIsBlending || _this._wasBlending;
             }
         }
 
