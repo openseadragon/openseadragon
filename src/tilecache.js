@@ -132,23 +132,33 @@
                 if (type === this._type) {
                     return copy ? $.convertor.copy(this._tRef, this._data, type) : this._promise;
                 }
-                return this._getDataAsUnsafe(this._tRef, this._data, type, copy);
+                return this._transformDataIfNeeded(this._tRef, this._data, type, copy) || this._promise;
             }
-            return this._promise.then(data => this._getDataAsUnsafe(this._tRef, data, type, copy));
+            return this._promise.then(data => this._transformDataIfNeeded(this._tRef, data, type, copy) || data);
         }
 
-        _getDataAsUnsafe(referenceTile, data, type, copy) {
+        _transformDataIfNeeded(referenceTile, data, type, copy) {
             //might get destroyed in meanwhile
             if (this._destroyed) {
-                return undefined;
+                return $.Promise.resolve();
             }
+
+            let result;
             if (type !== this._type) {
-                return $.convertor.convert(referenceTile, data, this._type, type);
+                result = $.convertor.convert(referenceTile, data, this._type, type);
+            } else if (copy) { //convert does not copy data if same type, do explicitly
+                result = $.convertor.copy(referenceTile, data, type);
             }
-            if (copy) { //convert does not copy data if same type, do explicitly
-                return $.convertor.copy(referenceTile, data, type);
+            if (result) {
+                return result.then(finalData => {
+                    if (this._destroyed) {
+                        $.convertor.destroy(finalData, type);
+                        return undefined;
+                    }
+                    return finalData;
+                });
             }
-            return data;
+            return false; // no conversion needed, parent function returns item as-is
         }
 
         /**

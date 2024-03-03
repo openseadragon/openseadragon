@@ -2145,13 +2145,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
             //make sure cache data is ready for drawing, if not, request the desired format
             const cache = tile.getCache(tile.cacheKey),
-                requiredTypes = _this.viewer.drawer.getSupportedDataFormats();
+                requiredTypes = _this._drawer.getSupportedDataFormats();
             if (!cache) {
                 $.console.warn("Tile %s not cached or not loaded at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
                 resolver(tile);
             } else if (!requiredTypes.includes(cache.type)) {
                 //initiate conversion as soon as possible if incompatible with the drawer
-                cache.prepareForRendering(requiredTypes, _this.viewer.drawer.options.detachedCache).then(cacheRef => {
+                cache.prepareForRendering(requiredTypes, _this._drawer.options.detachedCache).then(cacheRef => {
                     if (!cacheRef) {
                         return cache.transformTo(requiredTypes);
                     }

@@ -133,11 +133,13 @@
         };
         const fakeTiledImage0 = {
             viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype
+            source: OpenSeadragon.TileSource.prototype,
+            redraw: function() {}
         };
         const fakeTiledImage1 = {
             viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype
+            source: OpenSeadragon.TileSource.prototype,
+            redraw: function() {}
         };
 
         const tile0 = createFakeTile('foo.jpg', fakeTiledImage0);
@@ -186,7 +188,8 @@
         };
         const fakeTiledImage0 = {
             viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype
+            source: OpenSeadragon.TileSource.prototype,
+            draw: function() {}
         };
 
         const tile0 = createFakeTile('different.jpg', fakeTiledImage0);
@@ -242,12 +245,14 @@
         const fakeTiledImage0 = {
             viewer: fakeViewer,
             source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache
+            _tileCache: tileCache,
+            redraw: function() {}
         };
         const fakeTiledImage1 = {
             viewer: fakeViewer,
             source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache
+            _tileCache: tileCache,
+            redraw: function() {}
         };
 
         //load data
@@ -436,12 +441,14 @@
         const fakeTiledImage0 = {
             viewer: fakeViewer,
             source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache
+            _tileCache: tileCache,
+            redraw: function() {}
         };
         const fakeTiledImage1 = {
             viewer: fakeViewer,
             source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache
+            _tileCache: tileCache,
+            redraw: function() {}
         };
 
         //load data

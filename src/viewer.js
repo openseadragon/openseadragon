@@ -543,6 +543,7 @@ $.Viewer = function( options ) {
 
     // Open initial tilesources
     if (this.tileSources) {
+        console.log(this);
         this.open( this.tileSources );
     }
 
@@ -962,6 +963,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             redrawImmediately: true,
             drawerOptions: null
         };
+        console.debug("RESUEST DRAWER ", options.mainDrawer);
         options = $.extend(true, defaultOpts, options);
         const mainDrawer = options.mainDrawer;
         const redrawImmediately = options.redrawImmediately;

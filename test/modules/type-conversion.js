@@ -214,7 +214,9 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {};
+        dummyTile.tiledImage = {
+            redraw: function () {}
+        };
         const cache = new OpenSeadragon.CacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
 
@@ -263,7 +265,9 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {};
+        dummyTile.tiledImage = {
+            redraw: function () {}
+        };
         const cache = new OpenSeadragon.CacheRecord();
         cache.testGetSet = async function(type) {
             const value = await cache.getDataAs(type, false);
@@ -331,19 +335,20 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {};
+        dummyTile.tiledImage = {
+            redraw: function () {}
+        };
         const cache = new OpenSeadragon.CacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
         cache.getDataAs("__TEST__longConversionProcessForTesting").then(convertedData => {
-            test.equal(longConversionDestroy, 0, "Copy not destroyed.");
+            test.equal(longConversionDestroy, 1, "Copy already destroyed.");
             test.notOk(cache.loaded, "Cache was destroyed.");
             test.equal(cache.data, undefined, "Already destroyed cache does not return data.");
             test.equal(urlDestroy, 1, "Url was destroyed.");
-            test.notOk(conversionHappened, "Nothing happened since before us the cache was deleted.");
-
+            test.ok(conversionHappened, "Conversion was fired.");
             //destruction will likely happen after we finish current async callback
             setTimeout(async () => {
-                test.notOk(conversionHappened, "Still no conversion.");
+                test.equal(longConversionDestroy, 1, "Copy destroyed.");
                 done();
             }, 25);
         });
@@ -375,7 +380,9 @@
         const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
         const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
             undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {};
+        dummyTile.tiledImage = {
+            redraw: function () {}
+        };
         const cache = new OpenSeadragon.CacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
         cache.transformTo("__TEST__longConversionProcessForTesting").then(_ => {
