@@ -300,7 +300,7 @@
   * @property {Number} [rotationIncrement=90]
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
-  * @property {Number} [maxTilesPerFrame=1]
+  * @property {Number} [maxTilesPerFrame=10]
   *     The number of tiles loaded per frame. As the frame rate of the client's machine is usually high (e.g., 50 fps),
   *     one tile per frame should be a good choice. However, for large screens or lower frame rates, the number of
   *     loaded tiles per frame can be adjusted here. Reasonable values might be 2 or 3 tiles per frame.
@@ -1329,7 +1329,7 @@ function OpenSeadragon( options ){
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
             rotationIncrement:      90,
-            maxTilesPerFrame:       1,
+            maxTilesPerFrame:       10,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
@@ -2651,7 +2651,7 @@ function OpenSeadragon( options ){
 
 
         //@private, runs non-invasive update of all tiles given in the list
-        invalidateTilesLater: function(tileList, tStamp, viewer, batch = 999) {
+        invalidateTilesLater: function(tileList, tStamp, viewer, batch = $.DEFAULT_SETTINGS.maxTilesPerFrame) {
             let i = 0;
             let interval = setInterval(() => {
                 let tile = tileList[i];
@@ -2660,13 +2660,11 @@ function OpenSeadragon( options ){
                 }
 
                 if (i >= tileList.length) {
-                    console.log(":::::::::::::::::::::::::::::end");
                     clearInterval(interval);
                     return;
                 }
                 const tiledImage = tile.tiledImage;
                 if (tiledImage.invalidatedAt > tStamp) {
-                    console.log(":::::::::::::::::::::::::::::end");
                     clearInterval(interval);
                     return;
                 }
@@ -2674,7 +2672,6 @@ function OpenSeadragon( options ){
                 for (; i < tileList.length; i++) {
                     const tile = tileList[i];
                     if (!tile.loaded) {
-                        console.log("skipping tile: not loaded", tile);
                         continue;
                     }
 
@@ -2692,7 +2689,7 @@ function OpenSeadragon( options ){
                         break;
                     }
                 }
-            }, 5); //how to select the delay...?? todo: just try out
+            });
         },
 
         //@private, runs tile update event
@@ -2704,7 +2701,6 @@ function OpenSeadragon( options ){
                 tile: tile,
                 tiledImage: image,
             }).then(() => {
-                //TODO IF NOT CACHE ERRO
                 const newCache = tile.getCache();
                 if (newCache) {
                     newCache._updateStamp = tStamp;

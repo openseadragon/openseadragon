@@ -132,13 +132,30 @@ switcher.addDrawerOption("drawer");
 $("#title-drawer").html(switcher.activeName("drawer"));
 switcher.render("#title-banner");
 
+const url = new URL(window.location);
+const targetSource = url.searchParams.get("image") || Object.values(sources)[0];
 const viewer = window.viewer = new OpenSeadragon({
     id: 'openseadragon',
     prefixUrl: '/build/openseadragon/images/',
-    tileSources: 'https://openseadragon.github.io/example-images/highsmith/highsmith.dzi',
+    tileSources: targetSource,
     crossOriginPolicy: 'Anonymous',
     drawer: switcher.activeImplementation("drawer"),
 });
+
+const sources = {
+    'Highsmith': "https://openseadragon.github.io/example-images/highsmith/highsmith.dzi",
+    'Rainbow Grid': "../../data/testpattern.dzi",
+    'Leaves': "../../data/iiif_2_0_sizes/info.json",
+    "Duomo":"https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+}
+$("#image-select")
+    .html(Object.entries(sources).map(([k, v]) =>
+        `<option value="${v}" ${targetSource === v ? "selected" : ""}>${k}</option>`).join("\n"))
+    .on('change', e => {
+        url.searchParams.set('image', e.target.value);
+        window.history.pushState(null, '', url.toString());
+        viewer.addTiledImage({tileSource: e.target.value, index: 0, replace: true});
+    });
 
 
 // Prevent Caman from caching the canvas because without this:

@@ -370,23 +370,6 @@ $.Viewer = function( options ) {
 
         THIS[ _this.hash ].forceRedraw = true;
 
-        //if we are not throttling
-        if (_this.imageLoader.canAcceptNewJob()) {
-            //todo small hack, we could make this builtin speedup more sophisticated, breaks tests --> commented out
-            const item = event.item;
-            const origOpacity = item.opacity;
-            const origMaxTiles = item.maxTilesPerFrame;
-            //update tiles
-            item.opacity = 0; //prevent draw
-            item.maxTilesPerFrame = 50; //todo based on image size and also number of images!
-
-            //TODO check if the method is used correctly
-            item._updateLevelsForViewport();
-            item._needsDraw = true; //we did not draw
-            item.opacity = origOpacity;
-            item.maxTilesPerFrame = origMaxTiles;
-        }
-
         if (!_this._updateRequestId) {
             _this._updateRequestId = scheduleUpdate( _this, updateMulti );
         }
@@ -543,7 +526,6 @@ $.Viewer = function( options ) {
 
     // Open initial tilesources
     if (this.tileSources) {
-        console.log(this);
         this.open( this.tileSources );
     }
 
@@ -963,7 +945,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             redrawImmediately: true,
             drawerOptions: null
         };
-        console.debug("RESUEST DRAWER ", options.mainDrawer);
         options = $.extend(true, defaultOpts, options);
         const mainDrawer = options.mainDrawer;
         const redrawImmediately = options.redrawImmediately;

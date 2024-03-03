@@ -301,9 +301,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (viewportOnly) {
             return;
         }
-        //else update all tiles at some point, but by priority of access time
+
         const tiles = this.tileCache.getLoadedTilesFor(this);
-        tiles.sort((a, b) => a.lastTouchTime - b.lastTouchTime);
         $.invalidateTilesLater(tiles, tStamp, this.viewer);
     },
 
@@ -2042,6 +2041,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _loadTile: function(tile, time ) {
         var _this = this;
         tile.loading = true;
+        tile.tiledImage = this;
         this._imageLoader.addJob({
             src: tile.getUrl(),
             tile: tile,

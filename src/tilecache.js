@@ -195,7 +195,8 @@
             }
 
             if (!supportedTypes.includes(internalCache.type)) {
-                internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0]);
+                internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
+                    .then(() => this._triggerNeedsDraw);
                 return undefined; // type is NOT compatible
             }
 
@@ -421,8 +422,8 @@
         }
 
         _triggerNeedsDraw() {
-            for (let tile of this._tiles) {
-                tile.tiledImage.redraw();
+            if (this._tiles.length > 0) {
+                this._tiles[0].tiledImage.redraw();
             }
         }
 
@@ -617,7 +618,7 @@
          */
         setDataAs(data, type) {
             // no check for state, users must ensure compatibility manually
-            $.convertor.destroy(this._data, this._data);
+            $.convertor.destroy(this._data, this._type);
             this._type = type;
             this._data = data;
             this.loaded = true;
