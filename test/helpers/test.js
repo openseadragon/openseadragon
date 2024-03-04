@@ -180,14 +180,36 @@
             }
         };
 
+    // OSD has circular references, if a console log tries to serialize
+    // certain object, remove these references from a clone (do not delete prop
+    // on the original object).
+    // NOTE: this does not work if someone replaces the original class with
+    // a mock object! Try to mock functions only, or ensure mock objects
+    // do not hold circular references.
+    const circularOSDReferences = {
+        'Tile': 'tiledImage',
+        'World': 'viewer',
+        'DrawerBase': ['viewer', 'viewport'],
+        'CanvasDrawer': ['viewer', 'viewport'],
+        'WebGLDrawer': ['viewer', 'viewport'],
+        'TiledImage': ['viewer', '_drawer'],
+    };
     for ( var i in testLog ) {
         if ( testLog.hasOwnProperty( i ) && testLog[i].push ) {
-            //Tile.tiledImage creates circular reference, copy object to avoid and allow JSON serialization
-            const tileCircularStructureReplacer = function (key, value) {
-                if (value instanceof OpenSeadragon.Tile) {
-                    var instance = {};
-                    Object.assign(instance, value);
-                    delete value.tiledImage;
+            // Circular reference removal
+            const osdCircularStructureReplacer = function (key, value) {
+                for (let ClassType in circularOSDReferences) {
+                    if (value instanceof OpenSeadragon[ClassType]) {
+                        const instance = {};
+                        Object.assign(instance, value);
+
+                        let circProps = circularOSDReferences[ClassType];
+                        if (!Array.isArray(circProps)) circProps = [circProps];
+                        for (let prop of circProps) {
+                            instance[prop] = '__circular_reference__';
+                        }
+                        return instance;
+                    }
                 }
                 return value;
             };
@@ -195,7 +217,7 @@
             testConsole[i] = ( function ( arr ) {
                 return function () {
                     var args = Array.prototype.slice.call( arguments, 0 ); // Coerce to true Array
-                    arr.push( JSON.stringify( args, tileCircularStructureReplacer ) ); // Store as JSON to avoid tedious array-equality tests
+                    arr.push( JSON.stringify( args, osdCircularStructureReplacer ) ); // Store as JSON to avoid tedious array-equality tests
                 };
             } )( testLog[i] );
 

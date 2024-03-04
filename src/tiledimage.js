@@ -2107,8 +2107,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         this._setTileLoaded(tile, data, null, tileRequest, dataType);
-
-        //TODO aiosa missing timeout might damage the cache system
     },
 
     /**

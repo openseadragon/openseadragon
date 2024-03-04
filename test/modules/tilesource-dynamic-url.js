@@ -8,7 +8,7 @@
     var DYNAMIC_URL = "";
     var viewer = null;
     var OriginalAjax = OpenSeadragon.makeAjaxRequest;
-    var OriginalTile = OpenSeadragon.Tile;
+    var OriginalTileGetUrl = OpenSeadragon.Tile.prototype.getUrl;
     // These variables allow tracking when the first request for data has finished
     var firstUrlPromise = null;
     var isFirstUrlPromiseResolved = false;
@@ -115,22 +115,15 @@
                 return request;
             };
 
-            // Override Tile to ensure getUrl is called successfully.
-            var Tile = function(...params) {
-                OriginalTile.apply(this, params);
-            };
-
-            OpenSeadragon.extend( Tile.prototype, OpenSeadragon.Tile.prototype, {
-                getUrl: function() {
-                    // if ASSERT is still truthy, call ASSERT.ok. If the viewer
-                    // has already been destroyed and ASSERT has set to null, ignore this
-                    if(ASSERT){
-                        ASSERT.ok(true, 'Tile.getUrl called');
-                    }
-                    return OriginalTile.prototype.getUrl.apply(this);
+            // Override Tile::getUrl to ensure getUrl is called successfully.
+            OpenSeadragon.Tile.prototype.getUrl = function () {
+                // if ASSERT is still truthy, call ASSERT.ok. If the viewer
+                // has already been destroyed and ASSERT has set to null, ignore this
+                if (ASSERT) {
+                    ASSERT.ok(true, 'Tile.getUrl called');
                 }
-            });
-            OpenSeadragon.Tile = Tile;
+                return OriginalTileGetUrl.apply(this, arguments);
+            };
         },
 
         afterEach: function () {
@@ -143,7 +136,7 @@
             viewer = null;
 
             OpenSeadragon.makeAjaxRequest = OriginalAjax;
-            OpenSeadragon.Tile = OriginalTile;
+            OpenSeadragon.Tile.prototype.getUrl = OriginalTileGetUrl;
         }
     });
 
