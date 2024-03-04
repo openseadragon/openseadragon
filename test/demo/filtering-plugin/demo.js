@@ -131,7 +131,12 @@ const switcher = new DrawerSwitcher();
 switcher.addDrawerOption("drawer");
 $("#title-drawer").html(switcher.activeName("drawer"));
 switcher.render("#title-banner");
-
+const sources = {
+    'Highsmith': "https://openseadragon.github.io/example-images/highsmith/highsmith.dzi",
+    'Rainbow Grid': "../../data/testpattern.dzi",
+    'Leaves': "../../data/iiif_2_0_sizes/info.json",
+    "Duomo":"https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+}
 const url = new URL(window.location);
 const targetSource = url.searchParams.get("image") || Object.values(sources)[0];
 const viewer = window.viewer = new OpenSeadragon({
@@ -142,12 +147,6 @@ const viewer = window.viewer = new OpenSeadragon({
     drawer: switcher.activeImplementation("drawer"),
 });
 
-const sources = {
-    'Highsmith': "https://openseadragon.github.io/example-images/highsmith/highsmith.dzi",
-    'Rainbow Grid': "../../data/testpattern.dzi",
-    'Leaves': "../../data/iiif_2_0_sizes/info.json",
-    "Duomo":"https://openseadragon.github.io/example-images/duomo/duomo.dzi",
-}
 $("#image-select")
     .html(Object.entries(sources).map(([k, v]) =>
         `<option value="${v}" ${targetSource === v ? "selected" : ""}>${k}</option>`).join("\n"))
@@ -770,5 +769,19 @@ function updateFilters() {
             processors: filters
         }
     });
+}
+
+window.debugCache = function () {
+    for (let cacheKey in viewer.tileCache._cachesLoaded) {
+        let cache = viewer.tileCache._cachesLoaded[cacheKey];
+        if (!cache.loaded) {
+            console.log(cacheKey, "skipping...");
+        }
+        if (cache.type === "context2d") {
+            console.log(cacheKey, cache.data.canvas.width, cache.data.canvas.height);
+        } else {
+            console.log(cacheKey, cache.data);
+        }
+    }
 }
 

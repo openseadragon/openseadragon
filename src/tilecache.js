@@ -167,19 +167,20 @@
          *
          * When drawers access data, they can choose to access this data as internal copy
          *
-         * @param {Array<string>} supportedTypes required data (or one of) type(s)
-         * @param {boolean} keepInternalCopy if true, the cache keeps internally the drawer data
+         * @param {OpenSeadragon.DrawerBase} drawer
          *   until 'setData' is called
          * @returns {any|undefined} desired data if available, undefined if conversion must be done
          */
-        getDataForRendering(supportedTypes, keepInternalCopy = true) {
+        getDataForRendering(drawer) {
+            const supportedTypes = drawer.getSupportedDataFormats(),
+                keepInternalCopy = drawer.options.usePrivateCache;
             if (this.loaded && supportedTypes.includes(this.type)) {
                 return this.data;
             }
 
             let internalCache = this[DRAWER_INTERNAL_CACHE];
             if (keepInternalCopy && !internalCache) {
-                this.prepareForRendering(supportedTypes, keepInternalCopy);
+                this.prepareForRendering(supportedTypes, keepInternalCopy).then(() => this._triggerNeedsDraw);
                 return undefined;
             }
 
@@ -191,6 +192,7 @@
 
             // Cache in the process of loading, no-op
             if (!internalCache.loaded) {
+                this._triggerNeedsDraw();
                 return undefined;
             }
 
@@ -204,6 +206,7 @@
         }
 
         /**
+         * Should not be called if cache type is already among supported types
          * @private
          * @param supportedTypes
          * @param keepInternalCopy
@@ -213,6 +216,10 @@
             // if not internal copy and we have no data, bypass rendering
             if (!this.loaded) {
                 return $.Promise.resolve(this);
+            }
+
+            if (!keepInternalCopy) {
+                return this.transformTo(supportedTypes);
             }
 
             // we can get here only if we want to render incompatible type
@@ -423,7 +430,7 @@
 
         _triggerNeedsDraw() {
             if (this._tiles.length > 0) {
-                this._tiles[0].tiledImage.redraw();
+                this._tiles[0].tiledImage.viewer.forceRedraw();
             }
         }
 

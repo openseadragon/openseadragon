@@ -2660,11 +2660,13 @@ function OpenSeadragon( options ){
                 }
 
                 if (i >= tileList.length) {
+                    viewer.forceRedraw();
                     clearInterval(interval);
                     return;
                 }
                 const tiledImage = tile.tiledImage;
                 if (tiledImage.invalidatedAt > tStamp) {
+                    viewer.forceRedraw();
                     clearInterval(interval);
                     return;
                 }

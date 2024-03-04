@@ -37,7 +37,7 @@
 /**
  * @typedef BaseDrawerOptions
  * @memberOf OpenSeadragon
- * @property {boolean} [detachedCache=false] specify whether the drawer should use
+ * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
  *   detached (=internal) cache object in case it has to perform type conversion
  */
 
@@ -96,7 +96,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      */
     get defaultOptions() {
         return {
-            detachedCache: false
+            usePrivateCache: false
         };
     }
 
@@ -142,7 +142,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
             $.console.warn("Attempt to draw tile %s when not cached!", tile);
             return null;
         }
-        return cache.getDataForRendering(this.getSupportedDataFormats(), this.options.detachedCache);
+        return cache.getDataForRendering(this);
     }
 
     /**

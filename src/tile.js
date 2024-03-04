@@ -472,9 +472,11 @@ $.Tile.prototype = {
      * Get the original data data for this tile
      * @param {string} type data type to require
      * @param {boolean} [copy=this.loaded] whether to force copy retrieval
+     *   note that if you do not copy the data and save the data to a different cache,
+     *   its destruction will also delete this original data which will likely cause issues
      * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
      */
-    getOriginalData: function(type, copy = false) {
+    getOriginalData: function(type, copy = true) {
         if (!this.tiledImage) {
             return null; //async can access outside its lifetime
         }

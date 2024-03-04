@@ -109,7 +109,7 @@
         get defaultOptions() {
             return {
                 // use detached cache: our type conversion will not collide (and does not have to preserve CPU data ref)
-                detachedCache: true
+                usePrivateCache: true
             };
         }
 

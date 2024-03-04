@@ -302,7 +302,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return;
         }
 
-        const tiles = this.tileCache.getLoadedTilesFor(this);
+        const tiles = this._tileCache.getLoadedTilesFor(this);
         $.invalidateTilesLater(tiles, tStamp, this.viewer);
     },
 
@@ -2149,7 +2149,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 resolver(tile);
             } else if (!requiredTypes.includes(cache.type)) {
                 //initiate conversion as soon as possible if incompatible with the drawer
-                cache.prepareForRendering(requiredTypes, _this._drawer.options.detachedCache).then(cacheRef => {
+                cache.prepareForRendering(requiredTypes, _this._drawer.options.usePrivateCache).then(cacheRef => {
                     if (!cacheRef) {
                         return cache.transformTo(requiredTypes);
                     }

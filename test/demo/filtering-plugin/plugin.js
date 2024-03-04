@@ -83,7 +83,7 @@
 
             if (processors.length === 0) {
                 //restore the original data
-                const context = await tile.getOriginalData('context2d', false);
+                const context = await tile.getOriginalData('context2d', true);
                 tile.setData(context, 'context2d');
                 tile._filterIncrement = self.filterIncrement;
                 return;
@@ -117,7 +117,6 @@
         }
         instance.filterIncrement++;
         instance.viewer.world.invalidateItems();
-        instance.viewer.forceRedraw();
     }
 
     function getFiltersProcessors(instance, item) {
