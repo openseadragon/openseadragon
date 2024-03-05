@@ -309,6 +309,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 this.oldContainerSize = containerSize;
                 this.world.update();
                 this.world.draw();
+                this.update(this.viewer.viewport);
             }
         }
     },
