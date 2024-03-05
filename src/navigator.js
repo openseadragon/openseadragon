@@ -356,7 +356,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     /**
      * Used to update the navigator minimap's viewport rectangle when a change in the viewer's viewport occurs.
      * @function
-     * @param {OpenSeadragon.Viewport} viewport The viewport this navigator is tracking.
+     * @param {OpenSeadragon.Viewport} [viewport] The viewport to display. Default: the viewport this navigator is tracking.
      */
     update: function( viewport ) {
 
@@ -366,6 +366,10 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
             bounds,
             topleft,
             bottomright;
+
+        if(!viewport){
+            viewport = this.viewer.viewport;
+        }
 
         viewerSize = $.getElementSize( this.viewer.element );
         if ( this._resizeWithViewer && viewerSize.x && viewerSize.y && !viewerSize.equals( this.oldViewerSize ) ) {
