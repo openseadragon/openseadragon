@@ -356,7 +356,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     /**
      * Used to update the navigator minimap's viewport rectangle when a change in the viewer's viewport occurs.
      * @function
-     * @param {OpenSeadragon.Viewport} The viewport this navigator is tracking.
+     * @param {OpenSeadragon.Viewport} viewport The viewport this navigator is tracking.
      */
     update: function( viewport ) {
 
