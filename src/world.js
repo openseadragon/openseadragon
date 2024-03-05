@@ -69,6 +69,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Add the specified item.
      * @param {OpenSeadragon.TiledImage} item - The item to add.
+     * @param {Object} options - Options affecting insertion.
      * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.World.event:metrics-change
@@ -232,6 +233,23 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
+     * Forces the system consider all tiles across all tiled images
+     * as outdated, and fire tile update event on relevant tiles
+     * Detailed description is available within the 'tile-needs-update'
+     * event.
+     */
+    invalidateItems: function () {
+        const updatedAt = $.now();
+        $.__updated = updatedAt;
+        for ( let i = 0; i < this._items.length; i++ ) {
+            this._items[i].invalidate(true, updatedAt);
+        }
+
+        const tiles = this.viewer.tileCache.getLoadedTilesFor(true);
+        $.invalidateTilesLater(tiles, updatedAt, this.viewer);
+    },
+
+    /**
      * Clears all tiles and triggers updates for all items.
      */
     resetItems: function() {
@@ -261,9 +279,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     draw: function() {
         this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
-        this._items.forEach((item) => {
+        for (let item of this._items) {
             this._needsDraw = item.setDrawn() || this._needsDraw;
-        });
+        }
     },
 
     /**

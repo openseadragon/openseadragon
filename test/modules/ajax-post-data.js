@@ -81,7 +81,7 @@
 
                 tileExists: function ( level, x, y ) {
                     return true;
-                }
+                },
             });
 
             var Loader = function(options) {
@@ -97,7 +97,9 @@
                         OriginalLoader.prototype.addJob.apply(this, [options]);
                     } else {
                         //no ajax means we would wait for invalid image link to load, close - passed
-                        viewer.close();
+                        setTimeout(() => {
+                            viewer.close();
+                        });
                     }
                 }
             });
@@ -139,7 +141,9 @@
                 //first AJAX firing is the image info getter, second is the first tile request: can exit
                 ajaxCounter++;
                 if (ajaxCounter > 1) {
-                    viewer.close();
+                    setTimeout(() => {
+                        viewer.close();
+                    });
                     return null;
                 }
 
@@ -184,33 +188,34 @@
         });
 
         var failHandler = function (event) {
-            testPostData(event.postData, "event: 'open-failed'");
-            viewer.removeHandler('open-failed', failHandler);
-            viewer.close();
+            ASSERT.ok(false, 'Open-failed shoud not be called. We have custom function of fetching the data that succeeds.');
         };
         viewer.addHandler('open-failed', failHandler);
 
-        var readyHandler = function (event) {
-            //relies on Tilesource contructor extending itself with options object
-            testPostData(event.postData, "event: 'ready'");
-            viewer.removeHandler('ready', readyHandler);
-        };
-        viewer.addHandler('ready', readyHandler);
-
-
+        var openHandlerCalled = false;
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
-            ASSERT.ok(true, 'Open event was sent');
+            openHandlerCalled = true;
+        };
+
+        var readyHandler = function (event) {
+            testPostData(event.item.source.getTilePostData(0, 0, 0), "event: 'add-item'");
+            viewer.world.removeHandler('add-item', readyHandler);
             viewer.addHandler('close', closeHandler);
-            viewer.world.draw();
         };
 
         var closeHandler = function(event) {
+            ASSERT.ok(openHandlerCalled, 'Open event was sent.');
+
             viewer.removeHandler('close', closeHandler);
             $('#example').empty();
             ASSERT.ok(true, 'Close event was sent');
             timeWatcher.done();
         };
+
+        //make sure we call add-item before the system default 0 priority, it fires download on tiles and removes
+        // which calls internally viewer.close
+        viewer.world.addHandler('add-item', readyHandler, null, Infinity);
         viewer.addHandler('open', openHandler);
     };
 

@@ -49,7 +49,15 @@
                 loadTilesWithAjax: true,
                 ajaxHeaders: {
                     'X-Viewer-Header': 'ViewerHeaderValue'
-                }
+                },
+                // TODO: this test proves that tile cacheKey does not change
+                //  with headers change, which by default are part of the key,
+                //  but we cannot automatically update them since users might
+                //  manually change it long before... or can we? The tile gets
+                //  reloaded, so user code should get re-executed. IMHO,
+                //  with tile propagation the best would be throw away old tile
+                //  and start anew
+                callTileLoadedWithCachedData: true
             });
         },
         afterEach: function() {

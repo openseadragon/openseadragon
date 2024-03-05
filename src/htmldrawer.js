@@ -85,6 +85,10 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         return 'html';
     }
 
+    getSupportedDataFormats() {
+        return ["image"];
+    }
+
     /**
      * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
      */
@@ -198,13 +202,6 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
 
         let container = this.canvas;
 
-        if (!tile.cacheImageRecord) {
-            $.console.warn(
-                '[Drawer._drawTileToHTML] attempting to draw tile %s when it\'s not cached',
-                tile.toString());
-            return;
-        }
-
         if ( !tile.loaded ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
@@ -217,7 +214,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         //               content during animation of the container size.
 
         if ( !tile.element ) {
-            var image = tile.getImage();
+            const image = this.getDataToDraw(tile);
             if (!image) {
                 return;
             }

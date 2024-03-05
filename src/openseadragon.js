@@ -300,7 +300,7 @@
   * @property {Number} [rotationIncrement=90]
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
-  * @property {Number} [maxTilesPerFrame=1]
+  * @property {Number} [maxTilesPerFrame=10]
   *     The number of tiles loaded per frame. As the frame rate of the client's machine is usually high (e.g., 50 fps),
   *     one tile per frame should be a good choice. However, for large screens or lower frame rates, the number of
   *     loaded tiles per frame can be adjusted here. Reasonable values might be 2 or 3 tiles per frame.
@@ -717,6 +717,12 @@
   *     NOTE: passing POST data from URL by this feature only supports string values, however,
   *     TileSource can send any data using POST as long as the header is correct
   *     (@see OpenSeadragon.TileSource.prototype.getTilePostData)
+  *
+  * @property {Boolean} [callTileLoadedWithCachedData=false]
+  *     tile-loaded event is called only for tiles that downloaded new data or
+  *     their data is stored in the original form in a suplementary cache object.
+  *     Caches that render directly from re-used cache does not trigger this event again,
+  *     as possible modifications would be applied twice.
   */
 
  /**
@@ -755,12 +761,16 @@
   */
 
  /**
-  * @typedef {Object} DrawerOptions
+  * @typedef {Object.<string, Object>} DrawerOptions - give the renderer options (both shared - BaseDrawerOptions, and custom).
+  *   Supports arbitrary keys: you can register any drawer on the OpenSeadragon namespace, it will get automatically recognized
+  *   and its getType() implementation will define what key to specify the options with.
   * @memberof OpenSeadragon
-  * @property {Object} webgl - options if the WebGLDrawer is used. No options are currently supported.
-  * @property {Object} canvas - options if the CanvasDrawer is used. No options are currently supported.
-  * @property {Object} html - options if the HTMLDrawer is used. No options are currently supported.
-  * @property {Object} custom - options if a custom drawer is used. No options are currently supported.
+  * @property {BaseDrawerOptions} [webgl] - options if the WebGLDrawer is used.
+  * @property {BaseDrawerOptions} [canvas] - options if the CanvasDrawer is used.
+  * @property {BaseDrawerOptions} [html] - options if the HTMLDrawer is used.
+  * @property {BaseDrawerOptions} [custom] - options if a custom drawer is used.
+  *
+  * //Note: if you want to add change options for target drawer change type to {BaseDrawerOptions & MyDrawerOpts}
   */
 
 
@@ -858,16 +868,20 @@ function OpenSeadragon( options ){
      * @private
      */
     var class2type = {
-            '[object Boolean]':       'boolean',
-            '[object Number]':        'number',
-            '[object String]':        'string',
-            '[object Function]':      'function',
-            '[object AsyncFunction]': 'function',
-            '[object Promise]':       'promise',
-            '[object Array]':         'array',
-            '[object Date]':          'date',
-            '[object RegExp]':        'regexp',
-            '[object Object]':        'object'
+            '[object Boolean]':                  'boolean',
+            '[object Number]':                   'number',
+            '[object String]':                   'string',
+            '[object Function]':                 'function',
+            '[object AsyncFunction]':            'function',
+            '[object Promise]':                  'promise',
+            '[object Array]':                    'array',
+            '[object Date]':                     'date',
+            '[object RegExp]':                   'regexp',
+            '[object Object]':                   'object',
+            '[object HTMLUnknownElement]':       'dom-node',
+            '[object HTMLImageElement]':         'image',
+            '[object HTMLCanvasElement]':        'canvas',
+            '[object CanvasRenderingContext2D]': 'context2d'
         },
         // Save a reference to some core methods
         toString    = Object.prototype.toString,
@@ -1223,6 +1237,7 @@ function OpenSeadragon( options ){
             loadTilesWithAjax:      false,
             ajaxHeaders:            {},
             splitHashDataForPost:   false,
+            callTileLoadedWithCachedData: false,
 
             //PAN AND ZOOM SETTINGS AND CONSTRAINTS
             panHorizontal:          true,
@@ -1314,7 +1329,7 @@ function OpenSeadragon( options ){
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
             rotationIncrement:      90,
-            maxTilesPerFrame:       1,
+            maxTilesPerFrame:       10,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE
@@ -2287,29 +2302,6 @@ function OpenSeadragon( options ){
             event.stopPropagation();
         },
 
-        // Deprecated
-        createCallback: function( object, method ) {
-            //TODO: This pattern is painful to use and debug.  It's much cleaner
-            //      to use pinning plus anonymous functions.  Get rid of this
-            //      pattern!
-            console.error('The createCallback function is deprecated and will be removed in future versions. Please use alternativeFunction instead.');
-            var initialArgs = [],
-                i;
-            for ( i = 2; i < arguments.length; i++ ) {
-                initialArgs.push( arguments[ i ] );
-            }
-
-            return function() {
-                var args = initialArgs.concat( [] ),
-                    i;
-                for ( i = 0; i < arguments.length; i++ ) {
-                    args.push( arguments[ i ] );
-                }
-
-                return method.apply( object, args );
-            };
-        },
-
 
         /**
          * Retrieves the value of a url parameter from the window.location string.
@@ -2391,7 +2383,7 @@ function OpenSeadragon( options ){
          * @param {Object} options.headers - headers to add to the AJAX request
          * @param {String} options.responseType - the response type of the AJAX request
          * @param {String} options.postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-         *      see TileSource::getPostData), GET method used if null
+         *      see TileSource::getTilePostData), GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}
@@ -2404,6 +2396,7 @@ function OpenSeadragon( options ){
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
+            // FIXME ^ are we ready to drop legacy support? since we abandoned old ES...
             if( $.isPlainObject( url ) ){
                 onSuccess = url.success;
                 onError = url.error;
@@ -2648,10 +2641,76 @@ function OpenSeadragon( options ){
          * keys and booleans as values.
          */
         setImageFormatsSupported: function(formats) {
+            //TODO: how to deal with this within the data pipeline?
+            // $.console.warn("setImageFormatsSupported method is deprecated. You should check that" +
+            //     " the system supports your TileSources by implementing corresponding data type convertors.");
+
             // eslint-disable-next-line no-use-before-define
             $.extend(FILEFORMATS, formats);
-        }
+        },
 
+
+        //@private, runs non-invasive update of all tiles given in the list
+        invalidateTilesLater: function(tileList, tStamp, viewer, batch = $.DEFAULT_SETTINGS.maxTilesPerFrame) {
+            let i = 0;
+            let interval = setInterval(() => {
+                let tile = tileList[i];
+                while (tile && !tile.loaded) {
+                    tile = tileList[i++];
+                }
+
+                if (i >= tileList.length) {
+                    viewer.forceRedraw();
+                    clearInterval(interval);
+                    return;
+                }
+                const tiledImage = tile.tiledImage;
+                if (tiledImage.invalidatedAt > tStamp) {
+                    viewer.forceRedraw();
+                    clearInterval(interval);
+                    return;
+                }
+                let count = 1;
+                for (; i < tileList.length; i++) {
+                    const tile = tileList[i];
+                    if (!tile.loaded) {
+                        continue;
+                    }
+
+                    const tileCache = tile.getCache();
+                    if (tileCache._updateStamp >= tStamp) {
+                        continue;
+                    }
+                    // prevents other tiles sharing the cache (~the key) from event
+                    //todo works unless the cache key CHANGES by plugins
+                    // - either prevent
+                    // - or ...?
+                    tileCache._updateStamp = tStamp;
+                    $.invalidateTile(tile, tile.tiledImage, tStamp, viewer, i);
+                    if (++count > batch) {
+                        break;
+                    }
+                }
+            });
+        },
+
+        //@private, runs tile update event
+        invalidateTile: function(tile, image, tStamp, viewer, i = -1) {
+            //console.log(i, "tile: process", tile);
+
+            //todo consider also ability to cut execution of ongoing event if outdated by providing comparison timestamp
+            viewer.raiseEventAwaiting('tile-needs-update', {
+                tile: tile,
+                tiledImage: image,
+            }).then(() => {
+                const newCache = tile.getCache();
+                if (newCache) {
+                    newCache._updateStamp = tStamp;
+                } else {
+                    $.console.error("After an update, the tile %s has not cache data! Check handlers on 'tile-needs-update' event!", tile);
+                }
+            });
+        }
     });
 
 
@@ -2912,6 +2971,24 @@ function OpenSeadragon( options ){
         }
     }
 
+    /**
+     * Promise proxy in OpenSeadragon, can be removed once IE11 support is dropped
+     * @type {PromiseConstructor}
+     */
+    $.Promise = (function () {
+        if (window.Promise) {
+            return window.Promise;
+        }
+        const promise = function () {};
+        //TODO consider supplying promise API via callbacks/polyfill
+        promise.prototype.then =
+            promise.prototype.catch =
+                promise.prototype.finally =
+                    promise.all = promise.race = function () {
+            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        };
+        return promise;
+    })();
 }(OpenSeadragon));
 
 
