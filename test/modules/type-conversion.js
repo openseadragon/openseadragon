@@ -210,14 +210,8 @@
 
     QUnit.test('Data Convertors via Cache object: testing conversion & destruction', function (test) {
         const done = test.async();
-
-        const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
-        const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
-            undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {
-            redraw: function () {}
-        };
-        const cache = new OpenSeadragon.CacheRecord();
+        const dummyTile = MockSeadragon.getTile("", MockSeadragon.getTiledImage(), {cacheKey: "key"});
+        const cache = MockSeadragon.getCacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
 
         //load image object: url -> image
@@ -262,18 +256,14 @@
     QUnit.test('Data Convertors via Cache object: testing set/get', function (test) {
         const done = test.async();
 
-        const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
-        const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
-            undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {
-            redraw: function () {}
-        };
-        const cache = new OpenSeadragon.CacheRecord();
-        cache.testGetSet = async function(type) {
-            const value = await cache.getDataAs(type, false);
-            await cache.setDataAs(value, type);
-            return value;
-        }
+        const dummyTile = MockSeadragon.getTile("", MockSeadragon.getTiledImage(), {cacheKey: "key"});
+        const cache = MockSeadragon.getCacheRecord({
+            testGetSet: async function(type) {
+                const value = await cache.getDataAs(type, false);
+                await cache.setDataAs(value, type);
+                return value;
+            }
+        });
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
 
         //load image object: url -> image
@@ -332,13 +322,8 @@
             longConversionDestroy++;
         });
 
-        const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
-        const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
-            undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {
-            redraw: function () {}
-        };
-        const cache = new OpenSeadragon.CacheRecord();
+        const dummyTile = MockSeadragon.getTile("", MockSeadragon.getTiledImage(), {cacheKey: "key"});
+        const cache = MockSeadragon.getCacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
         cache.getDataAs("__TEST__longConversionProcessForTesting").then(convertedData => {
             test.equal(longConversionDestroy, 1, "Copy already destroyed.");
@@ -377,13 +362,8 @@
             destructionHappened = true;
         });
 
-        const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
-        const dummyTile = new OpenSeadragon.Tile(0, 0, 0, dummyRect, true, "",
-            undefined, true, null, dummyRect, "", "key");
-        dummyTile.tiledImage = {
-            redraw: function () {}
-        };
-        const cache = new OpenSeadragon.CacheRecord();
+        const dummyTile = MockSeadragon.getTile("", MockSeadragon.getTiledImage(), {cacheKey: "key"});
+        const cache = MockSeadragon.getCacheRecord();
         cache.addTile(dummyTile, "/test/data/A.png", "__TEST__url");
         cache.transformTo("__TEST__longConversionProcessForTesting").then(_ => {
             test.ok(conversionHappened, "Interrupted conversion finished.");

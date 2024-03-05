@@ -598,8 +598,8 @@ $.Tile.prototype = {
             ref.destroyInternalCache();
         }
         this._cKey = value;
-        // when key changes the image probably needs re-render
-        this.tiledImage.redraw();
+        // we do not trigger redraw, this is handled within cache
+        // as drawers request data for drawing
     },
 
     /**

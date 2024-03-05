@@ -558,17 +558,17 @@
     });
 
     QUnit.test('_getCornerTiles without wrapping', function(assert) {
-        var tiledImageMock = {
+        var tiledImageMock = MockSeadragon.getTiledImage(null, {
             wrapHorizontal: false,
             wrapVertical: false,
-            source: new OpenSeadragon.TileSource({
+            source: MockSeadragon.getTileSource({
                 width: 1500,
                 height: 1000,
                 tileWidth: 200,
                 tileHeight: 150,
                 tileOverlap: 1,
-            }),
-        };
+            })
+        });
         var _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
         function assertCornerTiles(topLeftBound, bottomRightBound,
@@ -606,17 +606,13 @@
     });
 
     QUnit.test('_getCornerTiles with horizontal wrapping', function(assert) {
-        var tiledImageMock = {
+        var tiledImageMock = MockSeadragon.getTiledImage(null, {
             wrapHorizontal: true,
             wrapVertical: false,
-            source: new OpenSeadragon.TileSource({
-                width: 1500,
-                height: 1000,
-                tileWidth: 200,
-                tileHeight: 150,
-                tileOverlap: 1,
-            }),
-        };
+            source: MockSeadragon.getTileSource({
+                tileOverlap: 1
+            })
+        });
         var _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
         function assertCornerTiles(topLeftBound, bottomRightBound,
@@ -653,17 +649,13 @@
     });
 
     QUnit.test('_getCornerTiles with vertical wrapping', function(assert) {
-        var tiledImageMock = {
+        var tiledImageMock = MockSeadragon.getTiledImage(null, {
             wrapHorizontal: false,
             wrapVertical: true,
-            source: new OpenSeadragon.TileSource({
-                width: 1500,
-                height: 1000,
-                tileWidth: 200,
-                tileHeight: 150,
-                tileOverlap: 1,
-            }),
-        };
+            source: MockSeadragon.getTileSource({
+                tileOverlap: 1
+            })
+        });
         var _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
         function assertCornerTiles(topLeftBound, bottomRightBound,

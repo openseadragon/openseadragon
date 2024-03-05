@@ -18,17 +18,6 @@
         }, 20);
     }
 
-    function createFakeTile(url, tiledImage, loading=false, loaded=true) {
-        const dummyRect = new OpenSeadragon.Rect(0, 0, 0, 0, 0);
-        //default cutoof = 0 --> use level 1 to not to keep caches from unloading (cutoff = navigator data, kept in cache)
-        const dummyTile = new OpenSeadragon.Tile(1, 0, 0, dummyRect, true, url,
-            undefined, true, null, dummyRect, null, url);
-        dummyTile.tiledImage = tiledImage;
-        dummyTile.loading = loading;
-        dummyTile.loaded = loaded;
-        return dummyTile;
-    }
-
     // Replace conversion with our own system and test: __TEST__ prefix must be used, otherwise
     // other tests will interfere
     let typeAtoB = 0, typeBtoC = 0, typeCtoA = 0, typeDtoA = 0, typeCtoE = 0;
@@ -122,28 +111,19 @@
     // TODO: this used to be async
     QUnit.test('basics', function(assert) {
         const done = assert.async();
-        const fakeViewer = {
-            raiseEvent: function() {},
-            drawer: {
+        const fakeViewer = MockSeadragon.getViewer(
+            MockSeadragon.getDrawer({
                 // tile in safe mode inspects the supported formats upon cache set
                 getSupportedDataFormats() {
                     return [T_A, T_B, T_C, T_D, T_E];
                 }
-            }
-        };
-        const fakeTiledImage0 = {
-            viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype,
-            redraw: function() {}
-        };
-        const fakeTiledImage1 = {
-            viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype,
-            redraw: function() {}
-        };
+            })
+        );
+        const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
+        const fakeTiledImage1 = MockSeadragon.getTiledImage(fakeViewer);
 
-        const tile0 = createFakeTile('foo.jpg', fakeTiledImage0);
-        const tile1 = createFakeTile('foo.jpg', fakeTiledImage1);
+        const tile0 = MockSeadragon.getTile('foo.jpg', fakeTiledImage0);
+        const tile1 = MockSeadragon.getTile('foo.jpg', fakeTiledImage1);
 
         const cache = new OpenSeadragon.TileCache();
         assert.equal(cache.numTilesLoaded(), 0, 'no tiles to begin with');
@@ -177,24 +157,18 @@
     // ----------
     QUnit.test('maxImageCacheCount', function(assert) {
         const done = assert.async();
-        const fakeViewer = {
-            raiseEvent: function() {},
-            drawer: {
+        const fakeViewer = MockSeadragon.getViewer(
+            MockSeadragon.getDrawer({
                 // tile in safe mode inspects the supported formats upon cache set
                 getSupportedDataFormats() {
                     return [T_A, T_B, T_C, T_D, T_E];
                 }
-            }
-        };
-        const fakeTiledImage0 = {
-            viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype,
-            draw: function() {}
-        };
-
-        const tile0 = createFakeTile('different.jpg', fakeTiledImage0);
-        const tile1 = createFakeTile('same.jpg', fakeTiledImage0);
-        const tile2 = createFakeTile('same.jpg', fakeTiledImage0);
+            })
+        );
+        const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
+        const tile0 = MockSeadragon.getTile('different.jpg', fakeTiledImage0);
+        const tile1 = MockSeadragon.getTile('same.jpg', fakeTiledImage0);
+        const tile2 = MockSeadragon.getTile('same.jpg', fakeTiledImage0);
 
         const cache = new OpenSeadragon.TileCache({
             maxImageCacheCount: 1
@@ -232,39 +206,28 @@
     //Tile API and cache interaction
     QUnit.test('Tile API: basic conversion', function(test) {
         const done = test.async();
-        const fakeViewer = {
-            raiseEvent: function() {},
-            drawer: {
+        const fakeViewer = MockSeadragon.getViewer(
+            MockSeadragon.getDrawer({
                 // tile in safe mode inspects the supported formats upon cache set
                 getSupportedDataFormats() {
                     return [T_A, T_B, T_C, T_D, T_E];
                 }
-            }
-        };
-        const tileCache = new OpenSeadragon.TileCache();
-        const fakeTiledImage0 = {
-            viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache,
-            redraw: function() {}
-        };
-        const fakeTiledImage1 = {
-            viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache,
-            redraw: function() {}
-        };
+            })
+        );
+        const tileCache = fakeViewer.tileCache;
+        const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
+        const fakeTiledImage1 = MockSeadragon.getTiledImage(fakeViewer);
 
         //load data
-        const tile00 = createFakeTile('foo.jpg', fakeTiledImage0);
+        const tile00 = MockSeadragon.getTile('foo.jpg', fakeTiledImage0);
         tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
-        const tile01 = createFakeTile('foo2.jpg', fakeTiledImage0);
+        const tile01 = MockSeadragon.getTile('foo2.jpg', fakeTiledImage0);
         tile01.addCache(tile01.cacheKey, 0, T_B, false, false);
-        const tile10 = createFakeTile('foo3.jpg', fakeTiledImage1);
+        const tile10 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
         tile10.addCache(tile10.cacheKey, 0, T_C, false, false);
-        const tile11 = createFakeTile('foo3.jpg', fakeTiledImage1);
+        const tile11 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
         tile11.addCache(tile11.cacheKey, 0, T_C, false, false);
-        const tile12 = createFakeTile('foo.jpg', fakeTiledImage1);
+        const tile12 = MockSeadragon.getTile('foo.jpg', fakeTiledImage1);
         tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
 
         const collideGetSet = async (tile, type) => {
@@ -428,39 +391,28 @@
     //Tile API and cache interaction
     QUnit.test('Tile API Cache Interaction', function(test) {
         const done = test.async();
-        const fakeViewer = {
-            raiseEvent: function() {},
-            drawer: {
+        const fakeViewer = MockSeadragon.getViewer(
+            MockSeadragon.getDrawer({
                 // tile in safe mode inspects the supported formats upon cache set
                 getSupportedDataFormats() {
                     return [T_A, T_B, T_C, T_D, T_E];
                 }
-            }
-        };
-        const tileCache = new OpenSeadragon.TileCache();
-        const fakeTiledImage0 = {
-            viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache,
-            redraw: function() {}
-        };
-        const fakeTiledImage1 = {
-            viewer: fakeViewer,
-            source: OpenSeadragon.TileSource.prototype,
-            _tileCache: tileCache,
-            redraw: function() {}
-        };
+            })
+        );
+        const tileCache = fakeViewer.tileCache;
+        const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
+        const fakeTiledImage1 = MockSeadragon.getTiledImage(fakeViewer);
 
         //load data
-        const tile00 = createFakeTile('foo.jpg', fakeTiledImage0);
+        const tile00 = MockSeadragon.getTile('foo.jpg', fakeTiledImage0);
         tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
-        const tile01 = createFakeTile('foo2.jpg', fakeTiledImage0);
+        const tile01 = MockSeadragon.getTile('foo2.jpg', fakeTiledImage0);
         tile01.addCache(tile01.cacheKey, 0, T_B, false, false);
-        const tile10 = createFakeTile('foo3.jpg', fakeTiledImage1);
+        const tile10 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
         tile10.addCache(tile10.cacheKey, 0, T_C, false, false);
-        const tile11 = createFakeTile('foo3.jpg', fakeTiledImage1);
+        const tile11 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
         tile11.addCache(tile11.cacheKey, 0, T_C, false, false);
-        const tile12 = createFakeTile('foo.jpg', fakeTiledImage1);
+        const tile12 = MockSeadragon.getTile('foo.jpg', fakeTiledImage1);
         tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
 
         //test set/get data in async env

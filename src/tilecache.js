@@ -180,7 +180,8 @@
 
             let internalCache = this[DRAWER_INTERNAL_CACHE];
             if (keepInternalCopy && !internalCache) {
-                this.prepareForRendering(supportedTypes, keepInternalCopy).then(() => this._triggerNeedsDraw);
+                this.prepareForRendering(supportedTypes, keepInternalCopy)
+                    .then(() => this._triggerNeedsDraw());
                 return undefined;
             }
 
@@ -198,7 +199,7 @@
 
             if (!supportedTypes.includes(internalCache.type)) {
                 internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
-                    .then(() => this._triggerNeedsDraw);
+                    .then(() => this._triggerNeedsDraw());
                 return undefined; // type is NOT compatible
             }
 

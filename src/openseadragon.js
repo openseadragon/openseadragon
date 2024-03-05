@@ -2707,7 +2707,7 @@ function OpenSeadragon( options ){
                 if (newCache) {
                     newCache._updateStamp = tStamp;
                 } else {
-                    $.console.error("After an update, the tile %s has not cache data! Check handlers on 'tile-needs-update' evemt!", tile);
+                    $.console.error("After an update, the tile %s has not cache data! Check handlers on 'tile-needs-update' event!", tile);
                 }
             });
         }
