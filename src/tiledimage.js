@@ -1299,6 +1299,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ))
         );
 
+        if (!highestLevel) {
+            highestLevel = 0;
+        }
+
         // Calculations for the interval of levels to draw
         // can return invalid intervals; fix that here if necessary
         highestLevel = Math.max(highestLevel, this.source.minLevel || 0);
