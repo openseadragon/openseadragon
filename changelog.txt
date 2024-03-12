@@ -5,7 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * BREAKING CHANGE: Dropped support for IE11 (#2300, #2361 @AndrewADev)
 * DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
-* The viewer now uses WebGL when available (#2310, #2462, #2466, #2468, #2469, #2472, #2478 @pearcetm, @Aiosa, @thec0keman)
+* The viewer now uses WebGL when available (#2310, #2462, #2466, #2468, #2469, #2472, #2478, #2488, #2492 @pearcetm, @Aiosa, @thec0keman)
 * Added webp to supported image formats (#2455 @BeebBenjamin)
 * Introduced maxTilesPerFrame option to allow loading more tiles simultaneously (#2387 @jetic83)
 * Now when creating a viewer or navigator, we leave its position style alone if possible (#2393 @VIRAT9358)
@@ -17,6 +17,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: dragToPan gesture could not be disabled when flickEnabled was activated (#2464 @jonasengelmann)
 * Fixed: placeholderFillStyle didn't work properly when the image was rotated (#2469 @pearcetm)
 * Fixed: Sometimes exponential springs wouldn't ever settle (#2469 @pearcetm)
+* Fixed: The navigator wouldn't update its tracking rectangle when the navigator was resized (#2491 @pearcetm)
 
 4.1.0:
 

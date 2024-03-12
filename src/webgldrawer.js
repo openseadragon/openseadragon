@@ -897,19 +897,32 @@
                 let texture = gl.createTexture();
                 let position;
                 let overlap = tiledImage.source.tileOverlap;
+
+                // deal with tiles where there is padding, i.e. the pixel data doesn't take up the entire provided canvas
+                let sourceWidthFraction, sourceHeightFraction;
+                if (tile.sourceBounds) {
+                    sourceWidthFraction = Math.min(tile.sourceBounds.width, canvas.width) / canvas.width;
+                    sourceHeightFraction = Math.min(tile.sourceBounds.height, canvas.height) / canvas.height;
+                } else {
+                    sourceWidthFraction = 1;
+                    sourceHeightFraction = 1;
+                }
+
                 if( overlap > 0){
                     // calculate the normalized position of the rect to actually draw
                     // discarding overlap.
                     let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
 
-                    let left = tile.x === 0 ? 0 : overlapFraction.x;
-                    let top = tile.y === 0 ? 0 : overlapFraction.y;
-                    let right = tile.isRightMost ? 1 : 1 - overlapFraction.x;
-                    let bottom = tile.isBottomMost ? 1 : 1 - overlapFraction.y;
+                    let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
+                    let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
+                    let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
+                    let bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
                     position = this._makeQuadVertexBuffer(left, right, top, bottom);
-                } else {
-                    // no overlap: this texture can use the unit quad as its position data
+                } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
+                    // no overlap and no padding: this texture can use the unit quad as its position data
                     position = this._unitQuad;
+                } else {
+                    position = this._makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
                 }
 
                 let textureInfo = {
