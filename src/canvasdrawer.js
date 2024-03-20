@@ -845,7 +845,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
     // private
     _drawDebugInfoOnTile(tile, count, i, tiledImage) {
 
-        var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
+        var colorIndex = tile.level % this.debugGridColor.length;
         var context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
