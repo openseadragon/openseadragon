@@ -1,6 +1,10 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+4.1.1:
+
+* Fixed: Strange behavior if IIIF sizes were not in ascending order (#2416 @lutzhelm)
+
 4.1.0:
 
 * NEW BEHAVIOR: When `navigatorRotate` is false, while the navigator image doesn't rotate, the red outline now does (#2356 @lcl45)
