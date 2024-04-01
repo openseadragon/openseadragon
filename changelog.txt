@@ -12,12 +12,15 @@ OPENSEADRAGON CHANGELOG
 * Test improvements (#2382 @AndrewADev)
 * MouseTracker options documentation fixes (#2389 @msalsbery)
 * Fixed: Sometimes if the viewport was flipped and the user zoomed in far enough, it would flip back (#2364 @SebDelile)
-* Fixed: Strange behavior if IIIF sizes were not in ascending order (#2416 @lutzhelm)
 * Fixed: Two-finger tap on a Mac trackpad would zoom you out (#2431 @cavenel)
 * Fixed: dragToPan gesture could not be disabled when flickEnabled was activated (#2464 @jonasengelmann)
 * Fixed: placeholderFillStyle didn't work properly when the image was rotated (#2469 @pearcetm)
 * Fixed: Sometimes exponential springs wouldn't ever settle (#2469 @pearcetm)
 * Fixed: The navigator wouldn't update its tracking rectangle when the navigator was resized (#2491 @pearcetm)
+
+4.1.1:
+
+* Fixed: Strange behavior if IIIF sizes were not in ascending order (#2416 @lutzhelm)
 
 4.1.0:
 
