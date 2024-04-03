@@ -1711,7 +1711,7 @@ $.Viewport.prototype = {
      * 1 means original image size, 0.5 half size...
      * Viewport zoom: ratio of the displayed image's width to viewport's width.
      * 1 means identical width, 2 means image's width is twice the viewport's width...
-     * Note: not accurate with multi-image.
+     * Note: not accurate with multi-image; use [TiledImage.imageToViewportZoom] for the specific image of interest.
      * @function
      * @param {Number} imageZoom The image zoom
      * target zoom.
@@ -1723,7 +1723,7 @@ $.Viewport.prototype = {
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
                     $.console.error('[Viewport.imageToViewportZoom] is not accurate ' +
-                        'with multi-image.');
+                        'with multi-image. Instead, use [TiledImage.imageToViewportZoom] for the specific image of interest');
                 }
             } else if (count === 1) {
                 // It is better to use TiledImage.imageToViewportZoom
