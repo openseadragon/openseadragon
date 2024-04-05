@@ -1789,7 +1789,41 @@ $.Viewport.prototype = {
        */
       this.viewer.raiseEvent('flip', {flipped: state});
       return this;
-    }
+    },
+
+    /**
+     * Gets current max zoom pixel ratio
+     * @function
+     * @returns {Number} Max zoom pixel ratio
+     */
+    getMaxZoomPixelRatio: function() {
+        return this.maxZoomPixelRatio;
+    },
+
+    /**
+     * Sets max zoom pixel ratio
+     * @function
+     * @param {Number} ratio - Max zoom pixel ratio
+     * @param {Boolean} [applyConstraints=true] - Apply constraints after setting ratio;
+     * Takes effect only if current zoom is greater than set max zoom pixel ratio
+     * @param {Boolean} [immediately=false] - Whether to animate to new zoom
+     */
+    setMaxZoomPixelRatio: function(ratio, applyConstraints = true, immediately = false) {
+
+        $.console.assert(!isNaN(ratio), "[Viewport.setMaxZoomPixelRatio] ratio must be a number");
+
+        if (isNaN(ratio)) {
+            return;
+        }
+
+        this.maxZoomPixelRatio = ratio;
+
+        if (applyConstraints) {
+            if (this.getZoom() > this.getMaxZoom()) {
+                this.applyConstraints(immediately);
+            }
+        }
+    },
 
 };
 
