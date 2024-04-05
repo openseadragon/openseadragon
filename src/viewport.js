@@ -1804,13 +1804,11 @@ $.Viewport.prototype = {
      * Sets max zoom pixel ratio
      * @function
      * @param {Number} ratio - Max zoom pixel ratio
-     * @param {Boolean} [constraints=false] - Apply constraints after setting ratio;
+     * @param {Boolean} [applyConstraints=true] - Apply constraints after setting ratio;
      * Takes effect only if current zoom is greater than set max zoom pixel ratio
      * @param {Boolean} [immediately=false] - Whether to animate to new zoom
      */
-    setMaxZoomPixelRatio: function(ratio, constraints, immediately) {
-        constraints = constraints || false;
-        immediately = immediately || false;
+    setMaxZoomPixelRatio: function(ratio, applyConstraints = true, immediately = false) {
 
         $.console.assert(!isNaN(ratio), "[Viewport.setMaxZoomPixelRatio] ratio must be a number");
 
@@ -1820,7 +1818,7 @@ $.Viewport.prototype = {
 
         this.maxZoomPixelRatio = ratio;
 
-        if (constraints) {
+        if (applyConstraints) {
             if (this.getZoom() > this.getMaxZoom()) {
                 this.applyConstraints(immediately);
             }
