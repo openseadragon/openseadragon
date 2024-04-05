@@ -243,7 +243,7 @@
         /*
          * FIXME: following https://iiif.io/api/image/3.0/#47-canonical-uri-syntax and
          * https://iiif.io/api/image/2.1/#canonical-uri-syntax, I'd expect 'max' to be required to
-         * be served by a level 0 compliant service instead of 'w,h', 'full' instead of 'w,' respectivley.
+         * be served by a level 0 compliant service instead of 'w,h', 'full' instead of 'w,' respectively.
          */
         //assert.equal(levelsVersion3[1].url, 'http://example.com/identifier/full/max/0/default.jpg');
     });

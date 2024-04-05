@@ -2198,7 +2198,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @param {function} [onDraw] - If supplied the callback is called when the overlay
-     *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
+     *      needs to be drawn. It is the responsibility of the callback to do any drawing/positioning.
      *      It is passed position, size and element.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:add-overlay

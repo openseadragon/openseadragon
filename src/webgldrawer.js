@@ -351,7 +351,7 @@
                         // This can apparently happen on some systems if too many WebGL contexts have been created
                         // in which case maxTextures can be null, leading to out of bounds errors with the array.
                         // For example, when viewers were created and not destroyed in the test suite, this error
-                        // occured in the TravisCI tests, though it did not happen when testing locally either in
+                        // occurred in the TravisCI tests, though it did not happen when testing locally either in
                         // a browser or on the command line via grunt test.
 
                         throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen

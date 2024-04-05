@@ -569,13 +569,13 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Responsible determining if a the particular TileSource supports the
+     * Responsible for determining if the particular TileSource supports the
      * data format ( and allowed to apply logic against the url the data was
      * loaded from, if any ). Overriding implementations are expected to do
      * something smart with data and / or url to determine support.  Also
-     * understand that iteration order of TileSources is not guarunteed so
+     * understand that iteration order of TileSources is not guaranteed so
      * please make sure your data or url is expressive enough to ensure a simple
-     * and sufficient mechanisim for clear determination.
+     * and sufficient mechanism for clear determination.
      * @function
      * @param {String|Object|Array|Document} data
      * @param {String} url - the url the data was loaded
@@ -776,7 +776,7 @@ $.TileSource.prototype = {
         };
 
         // Load the tile with an AJAX request if the loadWithAjax option is
-        // set. Otherwise load the image by setting the source proprety of the image object.
+        // set. Otherwise load the image by setting the source property of the image object.
         if (context.loadWithAjax) {
             dataStore.request = $.makeAjaxRequest({
                 url: context.src,
