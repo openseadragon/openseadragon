@@ -25,7 +25,7 @@ authors:
     description: Homepage
   - type: url
     value: 'https://github.com/openseadragon/openseadragon'
-    description: "Repository"
+    description: Repository
 repository-code: 'https://github.com/openseadragon/openseadragon'
 url: 'https://openseadragon.github.io/'
 abstract: "An open-source, web-based viewer for high-resolution zoomable images, implemented in pure JavaScript, for desktop and mobile."
