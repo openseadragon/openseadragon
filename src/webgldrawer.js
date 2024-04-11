@@ -1071,7 +1071,7 @@
             this._clippingContext.restore();
         }
 
-            /**
+        /**
          * Set rotations for viewport & tiledImage
          * @private
          * @param {OpenSeadragon.TiledImage} tiledImage
@@ -1248,7 +1248,6 @@
         /**
          * Get the canvas center
          * @private
-         * @param {Boolean} sketch If set to true return the center point of the sketch canvas
          * @returns {OpenSeadragon.Point} The center point of the canvas
          */
         _getCanvasCenter() {
