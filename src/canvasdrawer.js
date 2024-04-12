@@ -80,6 +80,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         // Canvas default is "true", so this will only be changed if user specifies "false" in the options or via setImageSmoothinEnabled.
         this._imageSmoothingEnabled = true;
 
+        this._viewportFlipped = false;
 
         // Since the tile-drawn and tile-drawing events are fired by this drawer, make sure handlers can be added for them
         this.viewer.allowEventHandler("tile-drawn");
@@ -115,7 +116,10 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      */
     draw(tiledImages) {
         this._prepareNewFrame(); // prepare to draw a new frame
-
+        if(this.viewer.viewport.getFlip() !== this._viewportFlipped){
+            this._flip();
+            this._viewportFlipped = !this._viewportFlipped;
+        }
         for(const tiledImage of tiledImages){
             if (tiledImage.opacity !== 0) {
                 this._drawTiles(tiledImage);
@@ -300,13 +304,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
                     tiledImage.getClippedBounds(true))
                     .getIntegerBoundingBox();
 
-                if(this.viewer.viewport.getFlip()) {
-                    if (this.viewport.getRotation(true) % 360 !== 0 ||
-                        tiledImage.getRotation(true) % 360 !== 0) {
-                        bounds.x = this.viewer.container.clientWidth - (bounds.x + bounds.width);
-                    }
-                }
-
                 bounds = bounds.times($.pixelDensityRatio);
             }
             this._clear(true, bounds);
@@ -315,27 +312,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         // When scaling, we must rotate only when blending the sketch canvas to
         // avoid interpolation
         if (!sketchScale) {
-            if (this.viewport.getRotation(true) % 360 !== 0) {
-                this._offsetForRotation({
-                    degrees: this.viewport.getRotation(true),
-                    useSketch: useSketch
-                });
-            }
-            if (tiledImage.getRotation(true) % 360 !== 0) {
-                this._offsetForRotation({
-                    degrees: tiledImage.getRotation(true),
-                    point: this.viewport.pixelFromPointNoRotate(
-                        tiledImage._getRotationPoint(true), true),
-                    useSketch: useSketch
-                });
-            }
-
-            if (this.viewport.getRotation(true) % 360 === 0 &&
-                tiledImage.getRotation(true) % 360 === 0) {
-                if(this.viewer.viewport.getFlip()) {
-                    this._flip();
-                }
-            }
+            this._setRotations(tiledImage, useSketch);
         }
 
         var usedClip = false;
@@ -456,20 +433,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
         if (useSketch) {
             if (sketchScale) {
-                if (this.viewport.getRotation(true) % 360 !== 0) {
-                    this._offsetForRotation({
-                        degrees: this.viewport.getRotation(true),
-                        useSketch: false
-                    });
-                }
-                if (tiledImage.getRotation(true) % 360 !== 0) {
-                    this._offsetForRotation({
-                        degrees: tiledImage.getRotation(true),
-                        point: this.viewport.pixelFromPointNoRotate(
-                            tiledImage._getRotationPoint(true), true),
-                        useSketch: false
-                    });
-                }
+                this._setRotations(tiledImage);
             }
             this.blendSketch({
                 opacity: tiledImage.opacity,
@@ -484,15 +448,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
                 }
                 if (this.viewport.getRotation(true) % 360 !== 0) {
                     this._restoreRotationChanges(false);
-                }
-            }
-        }
-
-        if (!sketchScale) {
-            if (this.viewport.getRotation(true) % 360 === 0 &&
-                tiledImage.getRotation(true) % 360 === 0) {
-                if(this.viewer.viewport.getFlip()) {
-                    this._flip();
                 }
             }
         }
@@ -607,7 +562,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         }
 
         context.save();
-        // context.globalAlpha = this.options.opacity; // this was deprecated previously and should not be applied as it is set per TiledImage
 
         if (typeof scale === 'number' && scale !== 1) {
             // draw tile at a different scale
@@ -853,21 +807,10 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         context.strokeStyle = this.debugGridColor[colorIndex];
         context.fillStyle = this.debugGridColor[colorIndex];
 
-        if (this.viewport.getRotation(true) % 360 !== 0 ) {
-            this._offsetForRotation({degrees: this.viewport.getRotation(true)});
-        }
-        if (tiledImage.getRotation(true) % 360 !== 0) {
-            this._offsetForRotation({
-                degrees: tiledImage.getRotation(true),
-                point: tiledImage.viewport.pixelFromPointNoRotate(
-                    tiledImage._getRotationPoint(true), true)
-            });
-        }
-        if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
-            tiledImage.getRotation(true) % 360 === 0) {
-            if(tiledImage._drawer.viewer.viewport.getFlip()) {
-                tiledImage._drawer._flip();
-            }
+        this._setRotations(tiledImage);
+
+        if(this._viewportFlipped){
+            this._flip({point: tile.position.plus(tile.size.divide(2))});
         }
 
         context.strokeRect(
@@ -882,7 +825,8 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
         // Rotate the text the right way around.
         context.translate( tileCenterX, tileCenterY );
-        context.rotate( Math.PI / 180 * -this.viewport.getRotation(true) );
+        const angleInDegrees = this.viewport.getRotation(true);
+        context.rotate( Math.PI / 180 * -angleInDegrees );
         context.translate( -tileCenterX, -tileCenterY );
 
         if( tile.x === 0 && tile.y === 0 ){
@@ -935,13 +879,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             this._restoreRotationChanges();
         }
 
-        if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
-            tiledImage.getRotation(true) % 360 === 0) {
-            if(tiledImage._drawer.viewer.viewport.getFlip()) {
-                tiledImage._drawer._flip();
-            }
-        }
-
         context.restore();
     }
 
@@ -972,6 +909,33 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
     }
 
+    /**
+     * Set rotations for viewport & tiledImage
+     * @private
+     * @param {OpenSeadragon.TiledImage} tiledImage
+     * @param {Boolean} [useSketch=false]
+     */
+    _setRotations(tiledImage, useSketch = false) {
+        var saveContext = false;
+        if (this.viewport.getRotation(true) % 360 !== 0) {
+            this._offsetForRotation({
+                degrees: this.viewport.getRotation(true),
+                useSketch: useSketch,
+                saveContext: saveContext
+            });
+            saveContext = false;
+        }
+        if (tiledImage.getRotation(true) % 360 !== 0) {
+            this._offsetForRotation({
+                degrees: tiledImage.getRotation(true),
+                point: this.viewport.pixelFromPointNoRotate(
+                    tiledImage._getRotationPoint(true), true),
+                useSketch: useSketch,
+                saveContext: saveContext
+            });
+        }
+    }
+
     // private
     _offsetForRotation(options) {
         var point = options.point ?
@@ -982,26 +946,21 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         context.save();
 
         context.translate(point.x, point.y);
-        if(this.viewer.viewport.flipped){
-          context.rotate(Math.PI / 180 * -options.degrees);
-          context.scale(-1, 1);
-        } else{
-          context.rotate(Math.PI / 180 * options.degrees);
-        }
+        context.rotate(Math.PI / 180 * options.degrees);
         context.translate(-point.x, -point.y);
     }
 
     // private
     _flip(options) {
-      options = options || {};
-      var point = options.point ?
+        options = options || {};
+        var point = options.point ?
         options.point.times($.pixelDensityRatio) :
         this._getCanvasCenter();
-      var context = this._getContext(options.useSketch);
+        var context = this._getContext(options.useSketch);
 
-      context.translate(point.x, 0);
-      context.scale(-1, 1);
-      context.translate(-point.x, 0);
+        context.translate(point.x, 0);
+        context.scale(-1, 1);
+        context.translate(-point.x, 0);
     }
 
     // private
