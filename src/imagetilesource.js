@@ -2,7 +2,7 @@
  * OpenSeadragon - ImageTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -42,8 +42,8 @@
      * 1. viewer.open({type: 'image', url: fooUrl});
      * 2. viewer.open(new OpenSeadragon.ImageTileSource({url: fooUrl}));
      *
-     * With the first syntax, the crossOriginPolicy, ajaxWithCredentials and
-     * useCanvas options are inherited from the viewer if they are not
+     * With the first syntax, the crossOriginPolicy and ajaxWithCredentials
+     * options are inherited from the viewer if they are not
      * specified directly in the options object.
      *
      * @memberof OpenSeadragon
@@ -58,16 +58,13 @@
      * domains.
      * @param {String|Boolean} [options.ajaxWithCredentials=false] Whether to set
      * the withCredentials XHR flag for AJAX requests (when loading tile sources).
-     * @param {Boolean} [options.useCanvas=true] Set to false to prevent any use
-     * of the canvas API.
      */
     $.ImageTileSource = function (options) {
 
         options = $.extend({
             buildPyramid: true,
             crossOriginPolicy: false,
-            ajaxWithCredentials: false,
-            useCanvas: true
+            ajaxWithCredentials: false
         }, options);
         $.TileSource.apply(this, [options]);
 
@@ -198,9 +195,11 @@
         /**
          * Destroys ImageTileSource
          * @function
+         * @param {OpenSeadragon.Viewer} viewer the viewer that is calling
+         * destroy on the ImageTileSource
          */
-        destroy: function () {
-            this._freeupCanvasMemory();
+        destroy: function (viewer) {
+            this._freeupCanvasMemory(viewer);
         },
 
         // private
@@ -214,7 +213,7 @@
                     height:  this._image.naturalHeight
                 }];
 
-            if (!this.buildPyramid || !$.supportsCanvas || !this.useCanvas) {
+            if (!this.buildPyramid || !$.supportsCanvas) {
                 // We don't need the image anymore. Allows it to be GC.
                 delete this._image;
                 return levels;
@@ -270,11 +269,26 @@
          * and Safari keeps canvas until its height and width will be set to 0).
          * @function
          */
-        _freeupCanvasMemory: function () {
+        _freeupCanvasMemory: function (viewer) {
             for (var i = 0; i < this.levels.length; i++) {
                 if(this.levels[i].context2D){
                     this.levels[i].context2D.canvas.height = 0;
                     this.levels[i].context2D.canvas.width = 0;
+
+                    if(viewer){
+                        /**
+                        * Triggered when an image has just been unloaded
+                        *
+                        * @event image-unloaded
+                        * @memberof OpenSeadragon.Viewer
+                        * @type {object}
+                        * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
+                        */
+                        viewer.raiseEvent("image-unloaded", {
+                            context2D: this.levels[i].context2D
+                        });
+                    }
+
                 }
             }
         },

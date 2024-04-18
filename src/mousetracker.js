@@ -2,7 +2,7 @@
  * OpenSeadragon - MouseTracker
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -357,7 +357,7 @@
         getActivePointersListByType: function ( type ) {
             var delegate = THIS[ this.hash ],
                 i,
-                len = delegate.activePointersLists.length,
+                len = delegate ? delegate.activePointersLists.length : 0,
                 list;
 
             for ( i = 0; i < len; i++ ) {
@@ -367,7 +367,9 @@
             }
 
             list = new $.MouseTracker.GesturePointList( type );
-            delegate.activePointersLists.push( list );
+            if(delegate){
+                delegate.activePointersLists.push( list );
+            }
             return list;
         },
 
@@ -2070,7 +2072,7 @@
         //   y-index scrolling.
         // event.deltaMode: 0=pixel, 1=line, 2=page
         // TODO: Deltas in pixel mode should be accumulated then a scroll value computed after $.DEFAULT_SETTINGS.pixelsPerWheelLine threshold reached
-        nDelta = event.deltaY < 0 ? 1 : -1;
+        nDelta = event.deltaY ? (event.deltaY < 0 ? 1 : -1) : 0;
 
         eventInfo = {
             originalEvent: event,

@@ -32,17 +32,18 @@
                 type: 'legacy-image-pyramid',
                 levels: [
                     {
-                        url: 'http://openseadragon.github.io/example-images/duomo/duomo_files/8/0_0.jpg',
+                        url: 'https://openseadragon.github.io/example-images/duomo/duomo_files/8/0_0.jpg',
                         width: 218,
                         height: 160
                     }
-                ]
+                ],
+                degrees: 30,
             };
 
             var duomo = {
                 Image: {
                     xmlns: 'http://schemas.microsoft.com/deepzoom/2008',
-                    Url: 'http://openseadragon.github.io/example-images/duomo/duomo_files/',
+                    Url: 'https://openseadragon.github.io/example-images/duomo/duomo_files/',
                     Format: 'jpg',
                     Overlap: '2',
                     TileSize: '256',
@@ -59,11 +60,14 @@
                 tileSources: duomoStandin,
                 minZoomImageRatio: 0.1,
                 defaultZoomLevel: 0.1,
-                zoomPerClick: 1
+                zoomPerClick: 1,
+                crossOriginPolicy: 'Anonymous'
             });
 
+            let swapped = false;
             viewer.addHandler('canvas-click', function(event) {
-                if (event.quick) {
+                if (event.quick && !swapped) {
+                    swapped = true;
                     var standin = viewer.world.getItemAt(0);
                     var standinBounds = standin.getBounds();
                     viewer.viewport.fitBounds(standinBounds);
@@ -76,16 +80,13 @@
                         index: 0, // Add the new image below the stand-in.
                         success: function(event) {
                             var fullImage = event.item;
-
-                            // The changeover will look better if we wait for the first tile to be drawn.
+                            // The changeover will look better if we wait for the first draw after the changeover.
                             var tileDrawnHandler = function(event) {
-                                if (event.tiledImage === fullImage) {
-                                    viewer.removeHandler('tile-drawn', tileDrawnHandler);
+                                    viewer.removeHandler('update-viewport', tileDrawnHandler);
                                     viewer.world.removeItem(standin);
-                                }
                             };
 
-                            viewer.addHandler('tile-drawn', tileDrawnHandler);
+                            viewer.addHandler('update-viewport', tileDrawnHandler);
                         }
                     });
                 }

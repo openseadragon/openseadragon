@@ -2,7 +2,7 @@
  * OpenSeadragon - Tile
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -81,6 +81,12 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.bounds  = bounds;
+    /**
+     * Where this tile fits, in normalized coordinates, after positioning
+     * @member {OpenSeadragon.Rect} positionedBounds
+     * @memberof OpenSeadragon.Tile#
+     */
+    this.positionedBounds  = new OpenSeadragon.Rect(bounds.x, bounds.y, bounds.width, bounds.height);
     /**
      * The portion of the tile to use as the source of the drawing operation, in pixels. Note that
      * this only works when drawing with canvas; when drawing with HTML the entire tile is always used.
@@ -275,64 +281,6 @@ $.Tile.prototype = {
     },
 
     /**
-     * Renders the tile in an html container.
-     * @function
-     * @param {Element} container
-     */
-    drawHTML: function( container ) {
-        if (!this.cacheImageRecord) {
-            $.console.warn(
-                '[Tile.drawHTML] attempting to draw tile %s when it\'s not cached',
-                this.toString());
-            return;
-        }
-
-        if ( !this.loaded ) {
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
-            return;
-        }
-
-        //EXPERIMENTAL - trying to figure out how to scale the container
-        //               content during animation of the container size.
-
-        if ( !this.element ) {
-            var image = this.getImage();
-            if (!image) {
-                return;
-            }
-
-            this.element                              = $.makeNeutralElement( "div" );
-            this.imgElement                           = image.cloneNode();
-            this.imgElement.style.msInterpolationMode = "nearest-neighbor";
-            this.imgElement.style.width               = "100%";
-            this.imgElement.style.height              = "100%";
-
-            this.style                     = this.element.style;
-            this.style.position            = "absolute";
-        }
-        if ( this.element.parentNode !== container ) {
-            container.appendChild( this.element );
-        }
-        if ( this.imgElement.parentNode !== this.element ) {
-            this.element.appendChild( this.imgElement );
-        }
-
-        this.style.top     = this.position.y + "px";
-        this.style.left    = this.position.x + "px";
-        this.style.height  = this.size.y + "px";
-        this.style.width   = this.size.x + "px";
-
-        if (this.flipped) {
-            this.style.transform = "scaleX(-1)";
-        }
-
-        $.setElementOpacity( this.element, this.opacity );
-    },
-
-    /**
      * The Image object for this tile.
      * @member {Object} image
      * @memberof OpenSeadragon.Tile#
@@ -382,114 +330,7 @@ $.Tile.prototype = {
      * @returns {CanvasRenderingContext2D}
      */
     getCanvasContext: function() {
-        return this.context2D || this.cacheImageRecord.getRenderedContext();
-    },
-
-    /**
-     * Renders the tile in a canvas-based context.
-     * @function
-     * @param {Canvas} context
-     * @param {Function} drawingHandler - Method for firing the drawing event.
-     * drawingHandler({context, tile, rendered})
-     * where <code>rendered</code> is the context with the pre-drawn image.
-     * @param {Number} [scale=1] - Apply a scale to position and size
-     * @param {OpenSeadragon.Point} [translate] - A translation vector
-     * @param {Boolean} [shouldRoundPositionAndSize] - Tells whether to round
-     * position and size of tiles supporting alpha channel in non-transparency
-     * context.
-     * @param {OpenSeadragon.TileSource} source - The source specification of the tile.
-     */
-    drawCanvas: function( context, drawingHandler, scale, translate, shouldRoundPositionAndSize, source) {
-
-        var position = this.position.times($.pixelDensityRatio),
-            size     = this.size.times($.pixelDensityRatio),
-            rendered;
-
-        if (!this.context2D && !this.cacheImageRecord) {
-            $.console.warn(
-                '[Tile.drawCanvas] attempting to draw tile %s when it\'s not cached',
-                this.toString());
-            return;
-        }
-
-        rendered = this.getCanvasContext();
-
-        if ( !this.loaded || !rendered ){
-            $.console.warn(
-                "Attempting to draw tile %s when it's not yet loaded.",
-                this.toString()
-            );
-
-            return;
-        }
-
-        context.save();
-        context.globalAlpha = this.opacity;
-
-        if (typeof scale === 'number' && scale !== 1) {
-            // draw tile at a different scale
-            position = position.times(scale);
-            size = size.times(scale);
-        }
-
-        if (translate instanceof $.Point) {
-            // shift tile position slightly
-            position = position.plus(translate);
-        }
-
-        //if we are supposed to be rendering fully opaque rectangle,
-        //ie its done fading or fading is turned off, and if we are drawing
-        //an image with an alpha channel, then the only way
-        //to avoid seeing the tile underneath is to clear the rectangle
-        if (context.globalAlpha === 1 && this.hasTransparency) {
-            if (shouldRoundPositionAndSize) {
-                // Round to the nearest whole pixel so we don't get seams from overlap.
-                position.x = Math.round(position.x);
-                position.y = Math.round(position.y);
-                size.x = Math.round(size.x);
-                size.y = Math.round(size.y);
-            }
-
-            //clearing only the inside of the rectangle occupied
-            //by the png prevents edge flikering
-            context.clearRect(
-                position.x,
-                position.y,
-                size.x,
-                size.y
-            );
-        }
-
-        // This gives the application a chance to make image manipulation
-        // changes as we are rendering the image
-        drawingHandler({context: context, tile: this, rendered: rendered});
-
-        var sourceWidth, sourceHeight;
-        if (this.sourceBounds) {
-            sourceWidth = Math.min(this.sourceBounds.width, rendered.canvas.width);
-            sourceHeight = Math.min(this.sourceBounds.height, rendered.canvas.height);
-        } else {
-            sourceWidth = rendered.canvas.width;
-            sourceHeight = rendered.canvas.height;
-        }
-
-        context.translate(position.x + size.x / 2, 0);
-        if (this.flipped) {
-            context.scale(-1, 1);
-        }
-        context.drawImage(
-            rendered.canvas,
-            0,
-            0,
-            sourceWidth,
-            sourceHeight,
-            -size.x / 2,
-            position.y,
-            size.x,
-            size.y
-        );
-
-        context.restore();
+        return this.context2D || (this.cacheImageRecord && this.cacheImageRecord.getRenderedContext());
     },
 
     /**

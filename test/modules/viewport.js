@@ -21,8 +21,8 @@
             });
         },
         afterEach: function () {
-            if (viewer && viewer.close) {
-                viewer.close();
+            if (viewer){
+                viewer.destroy();
             }
 
             viewer = null;
@@ -80,6 +80,9 @@
                     springStiffness: SPRING_STIFFNESS
                 };
 
+                if (viewer){
+                    viewer.destroy();
+                }
                 viewerConfig[config.property] = level;
                 viewer = OpenSeadragon(viewerConfig);
                 viewer.addOnceHandler('open', openHandler);
@@ -96,6 +99,10 @@
         };
 
         viewerConfig[config.property] = level;
+
+        if (viewer){
+            viewer.destroy();
+        }
         viewer = OpenSeadragon(viewerConfig);
         viewer.addOnceHandler('open', openHandler);
         viewer.open(DZI_PATH);
@@ -372,6 +379,9 @@
             );
             i++;
             if (i < testZoomLevels.length) {
+                if (viewer){
+                    viewer.destroy();
+                }
                 viewer = OpenSeadragon({
                     id: VIEWER_ID,
                     prefixUrl: PREFIX_URL,
@@ -385,6 +395,9 @@
                 done();
             }
         };
+        if (viewer){
+            viewer.destroy();
+        }
         viewer = OpenSeadragon({
             id: VIEWER_ID,
             prefixUrl: PREFIX_URL,
@@ -1387,6 +1400,27 @@
 
           viewport.setFlip(false);
           assert.deepEqual(viewport.getFlip(), false, "Unsetting flip state variable, viewport should be false again");
+
+          done();
+      };
+      viewer.addHandler('open', openHandler);
+      viewer.open(DZI_PATH);
+    });
+
+    QUnit.test('setMaxZoomPixelRatio', function(assert) {
+      var done = assert.async();
+      var openHandler = function(event) {
+          viewer.removeHandler('open', openHandler);
+          var viewport = viewer.viewport;
+
+          for (var i = 0; i < testZoomLevels.length; i++) {
+              viewport.setMaxZoomPixelRatio(testZoomLevels[i])
+              assert.equal(viewport.getMaxZoomPixelRatio(), testZoomLevels[i], "Max zoom pixel ratio is set correctly.");
+          }
+
+          viewport.zoomTo(viewport.getMaxZoom())
+          viewport.setMaxZoomPixelRatio(testZoomLevels[0], true)
+          assert.equal(viewport.getZoom(), viewport.getMaxZoom(), "Zoom should be adjusted to max zoom level.");
 
           done();
       };

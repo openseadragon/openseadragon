@@ -25,10 +25,10 @@
         },
 
         afterEach: function () {
-            if (viewer1 && viewer1.destroy) {
+            if (viewer1){
                 viewer1.destroy();
             }
-            if (viewer2 && viewer2.destroy) {
+            if (viewer2){
                 viewer2.destroy();
             }
             viewer1 = viewer2 = null;

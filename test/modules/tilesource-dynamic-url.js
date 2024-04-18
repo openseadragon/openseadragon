@@ -4,6 +4,7 @@
 
 (function() {
     var ASSERT = null;
+    var done = null;
     var DYNAMIC_URL = "";
     var viewer = null;
     var OriginalAjax = OpenSeadragon.makeAjaxRequest;
@@ -16,9 +17,10 @@
     /**
      * Set up shared variables for test
      */
-    var configure = function(assert, url) {
+    var configure = function(assert, url, assertAsyncDone) {
         ASSERT = assert;
         DYNAMIC_URL = url;
+        done = assertAsyncDone;
         firstUrlPromise = new Promise(resolve => {
             firstUrlPromiseResolver = () => {
                 isFirstUrlPromiseResolved = true;
@@ -94,6 +96,7 @@
                     // Otherwise close viewer
                     if (isFirstUrlPromiseResolved) {
                         viewer.close();
+                        done();
                     } else {
                         firstUrlPromiseResolver();
                     }
@@ -119,7 +122,11 @@
 
             OpenSeadragon.extend( Tile.prototype, OpenSeadragon.Tile.prototype, {
                 getUrl: function() {
-                    ASSERT.ok(true, 'Tile.getUrl called');
+                    // if ASSERT is still truthy, call ASSERT.ok. If the viewer
+                    // has already been destroyed and ASSERT has set to null, ignore this
+                    if(ASSERT){
+                        ASSERT.ok(true, 'Tile.getUrl called');
+                    }
                     return OriginalTile.prototype.getUrl.apply(this);
                 }
             });
@@ -129,9 +136,10 @@
         afterEach: function () {
             ASSERT = null;
 
-            if (viewer && viewer.close) {
-                viewer.close();
+            if (viewer){
+                viewer.destroy();
             }
+
             viewer = null;
 
             OpenSeadragon.makeAjaxRequest = OriginalAjax;
@@ -188,11 +196,12 @@
 
     // ----------
     QUnit.test('TileSource.getTileUrl supports returning a function', function(assert) {
-        configure(assert, 'dynamicUrl');
+        const done = assert.async();
+        configure(assert, 'dynamicUrl', done);
         const viewer = testUrlCall('dynamicUrl');
         firstUrlPromise.then(() => {
             // after querying with first dynamic url, update the url and trigger new request
-            DYNAMIC_URL = 'dyanmicUrl2';
+            DYNAMIC_URL = 'dynamicUrl2';
             delete viewer.world.getItemAt(0).tilesMatrix[1][0][0];
         })
     });

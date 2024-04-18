@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -88,6 +88,21 @@ $.Viewer = function( options ) {
         $.extend( true, options, options.config );
         delete options.config;
     }
+
+    // Move deprecated drawer options from the base options object into a sub-object
+    // This is an array to make it easy to add additional properties to convert to
+    // drawer options later if it makes sense to set at the drawer level rather than
+    // per tiled image (for example, subPixelRoundingForTransparency).
+    let drawerOptionList = [
+            'useCanvas', // deprecated
+        ];
+    options.drawerOptions = Object.assign({},
+        drawerOptionList.reduce((drawerOptions, option) => {
+            drawerOptions[option] = options[option];
+            delete options[option];
+            return drawerOptions;
+        }, {}),
+        options.drawerOptions);
 
     //Public properties
     //Allow the options object to override global defaults
@@ -197,6 +212,7 @@ $.Viewer = function( options ) {
         // the previous viewer with the same hash and now want to recreate it.
         $.console.warn("Hash " + this.hash + " has already been used.");
     }
+
 
     //Private state properties
     THIS[ this.hash ] = {
@@ -418,13 +434,41 @@ $.Viewer = function( options ) {
         maxImageCacheCount: this.maxImageCacheCount
     });
 
-    // Create the drawer
-    this.drawer = new $.Drawer({
-        viewer:             this,
-        viewport:           this.viewport,
-        element:            this.canvas,
-        debugGridColor:     this.debugGridColor
-    });
+    //Create the drawer based on selected options
+    if (Object.prototype.hasOwnProperty.call(this.drawerOptions, 'useCanvas') ){
+        $.console.error('useCanvas is deprecated, use the "drawer" option to indicate preferred drawer(s)');
+
+        // for backwards compatibility, use HTMLDrawer if useCanvas is defined and is falsey
+        if (!this.drawerOptions.useCanvas){
+            this.drawer = $.HTMLDrawer;
+        }
+
+        delete this.drawerOptions.useCanvas;
+    }
+    let drawerCandidates = Array.isArray(this.drawer) ? this.drawer : [this.drawer];
+    if (drawerCandidates.length === 0){
+        // if an empty array was passed in, throw a warning and use the defaults
+        // note: if the drawer option is not specified, the defaults will already be set so this won't apply
+        drawerCandidates = [$.DEFAULT_SETTINGS.drawer].flat(); // ensure it is a list
+        $.console.warn('No valid drawers were selected. Using the default value.');
+    }
+
+
+    this.drawer = null;
+    for (const drawerCandidate of drawerCandidates){
+        let success = this.requestDrawer(drawerCandidate, {mainDrawer: true, redrawImmediately: false});
+        if(success){
+            break;
+        }
+    }
+
+    if (!this.drawer){
+        $.console.error('No drawer could be created!');
+        throw('Error with creating the selected drawer(s)');
+    }
+
+    // Pass the imageSmoothingEnabled option along to the drawer
+    this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
 
     // Overlay container
     this.overlaysContainer    = $.makeNeutralElement( "div" );
@@ -470,6 +514,7 @@ $.Viewer = function( options ) {
             displayRegionColor: this.navigatorDisplayRegionColor,
             crossOriginPolicy: this.crossOriginPolicy,
             animationTime:     this.animationTime,
+            drawer:            this.drawer.getType(),
         });
     }
 
@@ -495,11 +540,6 @@ $.Viewer = function( options ) {
     $.requestAnimationFrame( function(){
         beginControlsAutoHide( _this );
     } );
-
-    // Initial canvas options
-    if ( this.imageSmoothingEnabled !== undefined && !this.imageSmoothingEnabled){
-        this.drawer.setImageSmoothingEnabled(this.imageSmoothingEnabled);
-    }
 
     // Register the viewer
     $._viewers.set(this.element, this);
@@ -889,6 +929,73 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Request a drawer for this viewer, as a supported string or drawer constructor.
+     * @param {String | OpenSeadragon.DrawerBase} drawerCandidate The type of drawer to try to construct.
+     * @param { Object } options
+     * @param { Boolean } [options.mainDrawer] Whether to use this as the viewer's main drawer. Default = true.
+     * @param { Boolean } [options.redrawImmediately] Whether to immediately draw a new frame. Only used if options.mainDrawer = true. Default = true.
+     * @param { Object } [options.drawerOptions] Options for this drawer. Defaults to viewer.drawerOptions.
+     * for this viewer type. See {@link OpenSeadragon.Options}.
+     * @returns {Object | Boolean} The drawer that was created, or false if the requested drawer is not supported
+     */
+    requestDrawer(drawerCandidate, options){
+        const defaultOpts = {
+            mainDrawer: true,
+            redrawImmediately: true,
+            drawerOptions: null
+        };
+        options = $.extend(true, defaultOpts, options);
+        const mainDrawer = options.mainDrawer;
+        const redrawImmediately = options.redrawImmediately;
+        const drawerOptions = options.drawerOptions;
+
+        const oldDrawer = this.drawer;
+
+        let Drawer = null;
+
+        //if the candidate inherits from a drawer base, use it
+        if (drawerCandidate && drawerCandidate.prototype instanceof $.DrawerBase) {
+            Drawer = drawerCandidate;
+            drawerCandidate = 'custom';
+        } else if (typeof drawerCandidate === "string") {
+            Drawer = $.determineDrawer(drawerCandidate);
+        }
+
+        if(!Drawer){
+            $.console.warn('Unsupported drawer! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.');
+        }
+
+        // if the drawer is supported, create it and return true
+        if (Drawer && Drawer.isSupported()) {
+
+            // first destroy the previous drawer
+            if(oldDrawer && mainDrawer){
+                oldDrawer.destroy();
+            }
+
+            // create the new drawer
+            const newDrawer = new Drawer({
+                viewer:             this,
+                viewport:           this.viewport,
+                element:            this.canvas,
+                debugGridColor:     this.debugGridColor,
+                options:            drawerOptions || this.drawerOptions[drawerCandidate],
+            });
+
+            if(mainDrawer){
+                this.drawer = newDrawer;
+                if(redrawImmediately){
+                    this.forceRedraw();
+                }
+            }
+
+            return newDrawer;
+        }
+
+        return false;
+    },
+
+    /**
      * @function
      * @returns {Boolean}
      */
@@ -1040,7 +1147,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Boolean}
      */
     isFullPage: function () {
-        return THIS[ this.hash ].fullPage;
+        return THIS[this.hash] && THIS[ this.hash ].fullPage;
     },
 
 
@@ -1087,7 +1194,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        if ( fullPage ) {
+        if ( fullPage && this.element ) {
 
             this.elementSize = $.getElementSize( this.element );
             this.pageScroll = $.getPageScroll();
@@ -2108,7 +2215,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      viewport which the location coordinates will be treated as relative
      *      to.
      * @param {function} [onDraw] - If supplied the callback is called when the overlay
-     *      needs to be drawn. It it the responsibility of the callback to do any drawing/positioning.
+     *      needs to be drawn. It is the responsibility of the callback to do any drawing/positioning.
      *      It is passed position, size and element.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:add-overlay
@@ -2579,7 +2686,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 ajaxHeaders: imgOptions.ajaxHeaders ?
                     imgOptions.ajaxHeaders : viewer.ajaxHeaders,
                 splitHashDataForPost: viewer.splitHashDataForPost,
-                useCanvas: viewer.useCanvas,
                 success: function( event ) {
                     successCallback( event.tileSource );
                 }
@@ -2596,9 +2702,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             }
             if (tileSource.ajaxWithCredentials === undefined) {
                 tileSource.ajaxWithCredentials = viewer.ajaxWithCredentials;
-            }
-            if (tileSource.useCanvas === undefined) {
-                tileSource.useCanvas = viewer.useCanvas;
             }
 
             if ( $.isFunction( tileSource.getTileUrl ) ) {
@@ -3202,10 +3305,11 @@ function onCanvasDragEnd( event ) {
      */
      this.raiseEvent('canvas-drag-end', canvasDragEndEventArgs);
 
-     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
     if (!canvasDragEndEventArgs.preventDefaultAction && this.viewport) {
         if ( !THIS[ this.hash ].draggingToZoom &&
+            gestureSettings.dragToPan &&
             gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
             var amplitudeX = 0;
@@ -3732,7 +3836,7 @@ function updateOnce( viewer ) {
 
 
     var viewportChange = viewer.viewport.update();
-    var animated = viewer.world.update() || viewportChange;
+    var animated = viewer.world.update(viewportChange) || viewportChange;
 
     if (viewportChange) {
         /**
@@ -3823,7 +3927,6 @@ function updateOnce( viewer ) {
 
 function drawWorld( viewer ) {
     viewer.imageLoader.clear();
-    viewer.drawer.clear();
     viewer.world.draw();
 
     /**
@@ -3976,5 +4079,23 @@ function onRotateRight() {
 function onFlip() {
    this.viewport.toggleFlip();
 }
+
+/**
+ * Find drawer
+ */
+$.determineDrawer = function( id ){
+    for (let property in OpenSeadragon) {
+        const drawer = OpenSeadragon[ property ],
+            proto = drawer.prototype;
+        if( proto &&
+            proto instanceof OpenSeadragon.DrawerBase &&
+            $.isFunction( proto.getType ) &&
+            proto.getType.call( drawer ) === id
+        ){
+            return drawer;
+        }
+    }
+    return null;
+};
 
 }( OpenSeadragon ));

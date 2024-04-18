@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Drawer Comparison Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <script type="text/javascript" src='../lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js'></script>
+    <link rel="stylesheet" href="../lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/stats.js/17/Stats.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script> -->
+
+    <script type="module" src="./drawerperformance.js"></script>
+    <style type="text/css">
+        .content{
+            max-width:960px;
+            margin: 0 auto;
+        }
+        #drawer{
+            height:800px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+
+        <h2>Compare performance of drawer implementations</h2>
+        <div>
+            <label>Select a drawer: </label>
+            <select id="select-drawer">
+
+            </select>
+            <label>Num images: </label>
+            <input id="input-number" type="number" value="1" min="1" step="1">
+            <button id="create-drawer">Create drawer</button>
+        </div>
+        <div id="drawer"></div>
+
+
+    </div>
+
+
+
+</body>
+</html>
+

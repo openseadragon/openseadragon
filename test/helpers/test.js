@@ -1,4 +1,4 @@
-/* global $, Util */
+/* global $, QUnit, Util */
 
 (function () {
 
@@ -146,8 +146,14 @@
             obj0[member0]();
             assert.equal(called, true, 'called through for ' + member0);
             assert.equal(errored, true, 'errored for ' + member0);
-        }
+        },
     };
+
+    // Log the name of the currently running test when it starts. Uses console.log rather than
+    // $.console.log so that the message is printed even after the $.console is diverted (see below).
+    QUnit.testStart((details) => {
+        console.log(`Starting test ${details.module}.${details.name}`);
+    });
 
     /*
     Test console log capture

@@ -2,7 +2,7 @@
  * OpenSeadragon - IIIFTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -145,7 +145,7 @@ $.IIIFTileSource = function( options ){
     if( this.sizes ) {
         var sizeLength = this.sizes.length;
         if ( (sizeLength === options.maxLevel) || (sizeLength === options.maxLevel + 1) ) {
-            this.levelSizes = this.sizes;
+            this.levelSizes = this.sizes.slice().sort(( size1, size2 ) => size1.width - size2.width);
             // Need to take into account that the list may or may not include the full resolution size
             if( sizeLength === options.maxLevel ) {
                 this.levelSizes.push( {width: this.width, height: this.height} );
