@@ -117,7 +117,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         if(this.viewer.viewport.getFlip() !== this._viewportFlipped){
             this._flip();
         }
-        console.log('draw', this._viewportFlipped);
         for(const tiledImage of tiledImages){
             if (tiledImage.opacity !== 0) {
                 this._drawTiles(tiledImage);
@@ -187,6 +186,10 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         context.restore();
     }
 
+    /**
+     * Test whether the current context is flipped or not
+     * @private
+     */
     get _viewportFlipped(){
         return this.context.getTransform().a < 0;
     }
@@ -963,7 +966,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         context.translate(point.x, 0);
         context.scale(-1, 1);
         context.translate(-point.x, 0);
-        console.log('flipped');
     }
 
     // private
