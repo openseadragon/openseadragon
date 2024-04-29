@@ -80,8 +80,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         // Canvas default is "true", so this will only be changed if user specifies "false" in the options or via setImageSmoothinEnabled.
         this._imageSmoothingEnabled = true;
 
-        this._viewportFlipped = false;
-
         // Since the tile-drawn and tile-drawing events are fired by this drawer, make sure handlers can be added for them
         this.viewer.allowEventHandler("tile-drawn");
         this.viewer.allowEventHandler("tile-drawing");
@@ -118,7 +116,6 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         this._prepareNewFrame(); // prepare to draw a new frame
         if(this.viewer.viewport.getFlip() !== this._viewportFlipped){
             this._flip();
-            this._viewportFlipped = !this._viewportFlipped;
         }
         for(const tiledImage of tiledImages){
             if (tiledImage.opacity !== 0) {
@@ -187,6 +184,14 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         );
 
         context.restore();
+    }
+
+    /**
+     * Test whether the current context is flipped or not
+     * @private
+     */
+    get _viewportFlipped(){
+        return this.context.getTransform().a < 0;
     }
 
     /**
