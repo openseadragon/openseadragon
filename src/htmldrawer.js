@@ -86,11 +86,13 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
     }
 
     /**
+     * @param {TiledImage} tiledImage the tiled image that is calling the function
      * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+     * @private
      */
-    minimumOverlapRequired() {
+    minimumOverlapRequired(tiledImage) {
         return true;
-     }
+    }
 
     /**
      * create the HTML element (e.g. canvas, div) that the image will be drawn into

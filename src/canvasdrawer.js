@@ -144,10 +144,12 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
     }
 
     /**
+     * @param {TiledImage} tiledImage the tiled image that is calling the function
      * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+     * @private
      */
-    minimumOverlapRequired() {
-       return true;
+    minimumOverlapRequired(tiledImage) {
+        return true;
     }
 
 

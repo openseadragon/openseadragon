@@ -1706,7 +1706,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tileCenter = positionT.plus( sizeT.divide( 2 ) ),
             tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
-        if(this.viewer.drawer.minimumOverlapRequired()){
+        if(this.viewer.drawer.minimumOverlapRequired(this)){
             if ( !overlap ) {
                 sizeC = sizeC.plus( new $.Point(1, 1));
             }
