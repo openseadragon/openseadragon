@@ -21,6 +21,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Sometimes exponential springs wouldn't ever settle (#2469 @pearcetm)
 * Fixed: The navigator wouldn't update its tracking rectangle when the navigator was resized (#2491 @pearcetm)
 * Fixed: The drawer would improperly crop when the viewport was flipped and a tiled image was rotated (#2511 @pearcetm, @eug-L)
+* Fixed: Flipped viewport caused image to be flipped again when going fullscreen or resizing (#2518 @pearcetm)
 
 4.1.1:
 
