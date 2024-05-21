@@ -1651,8 +1651,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
 
                 var result = this._updateTile(
-                    haveDrawn,
                     drawLevel,
+                    haveDrawn,
                     flippedX, y,
                     level,
                     levelVisibility,
