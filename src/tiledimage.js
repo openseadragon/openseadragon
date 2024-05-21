@@ -1651,8 +1651,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
 
                 var result = this._updateTile(
-                    drawLevel,
                     haveDrawn,
+                    drawLevel,
                     flippedX, y,
                     level,
                     levelVisibility,
@@ -2183,9 +2183,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 return -1;
             }
             if (a.visibility === b.visibility) {
+                // sort by smallest squared distance
                 return (a.squaredDistance - b.squaredDistance);
             } else {
-                return (a.visibility - b.visibility);
+                // sort by largest visibility value
+                return (b.visibility - a.visibility);
             }
         });
     },
