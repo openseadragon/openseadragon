@@ -1651,8 +1651,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
 
                 var result = this._updateTile(
-                    drawLevel,
                     haveDrawn,
+                    drawLevel,
                     flippedX, y,
                     level,
                     levelVisibility,
@@ -1784,15 +1784,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (tile.loaded && tile.opacity === 1){
             this._setCoverage( this.coverage, level, x, y, true );
         }
-        if ( haveDrawn && !drawTile ) {
+        if ( drawTile && !haveDrawn ) {
             if ( this._isCovered( this.coverage, level, x, y ) ) {
                 this._setCoverage( this.coverage, level, x, y, true );
             } else {
-                drawTile = true;
+                haveDrawn = true;
             }
         }
 
-        if ( !drawTile ) {
+        if ( !haveDrawn ) {
             return {
                 bestTiles: best,
                 tile: tile
