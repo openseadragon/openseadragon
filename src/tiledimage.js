@@ -72,18 +72,18 @@
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Set to draw at proportional opacity. If zero, images will not draw.
  * @param {Boolean} [options.preload=false] - Set true to load even when the image is hidden by zero opacity.
- * @param {String} [options.compositeOperation] - How the image is composited onto other images; see compositeOperation in {@link OpenSeadragon.Options} for possible
- values.
-    * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
-    * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
-    * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
-    * @param {Boolean} [options.ajaxWithCredentials] - See {@link OpenSeadragon.Options}.
-    * @param {Boolean} [options.loadTilesWithAjax]
-    *      Whether to load tile data using AJAX requests.
-    *      Defaults to the setting in {@link OpenSeadragon.Options}.
-    * @param {Object} [options.ajaxHeaders={}]
-    *      A set of headers to include when making tile AJAX requests.
-    */
+ * @param {String} [options.compositeOperation] - How the image is composited onto other images;
+ * see compositeOperation in {@link OpenSeadragon.Options} for possible values.
+ * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
+ * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
+ * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.ajaxWithCredentials] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.loadTilesWithAjax]
+ *      Whether to load tile data using AJAX requests.
+ *      Defaults to the setting in {@link OpenSeadragon.Options}.
+ * @param {Object} [options.ajaxHeaders={}]
+ *      A set of headers to include when making tile AJAX requests.
+ */
 $.TiledImage = function( options ) {
     this._initialized = false;
     /**
@@ -1081,7 +1081,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // _tilesToDraw might have been updated by the update; refresh it
         tileArray = this._tilesToDraw.flat();
 
-            // mark the tiles as being drawn, so that they won't be discarded from
+        // mark the tiles as being drawn, so that they won't be discarded from
         // the tileCache
         tileArray.forEach(tileInfo => {
             tileInfo.tile.beingDrawn = true;
@@ -1359,6 +1359,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // We are iterating from highest resolution to lowest resolution
         // Once a level fully covers the viewport the loop is halted and
         // lower-resolution levels are skipped
+        let useLevel = false;
         for (let i = 0; i < levelList.length; i++) {
             let level = levelList[i];
 
@@ -1366,6 +1367,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 this.source.getPixelRatio(level),
                 true
             ).x * this._scaleSpring.current.value;
+
+            // make sure we skip levels until currentRenderPixelRatio becomes >= minPixelRatio
+            // but always use the last level in the list so we draw something
+            if (i === levelList.length - 1 || currentRenderPixelRatio >= this.minPixelRatio ) {
+                useLevel = true;
+            } else if (!useLevel) {
+                continue;
+            }
 
             var targetRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(level),
