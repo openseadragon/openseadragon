@@ -1407,4 +1407,25 @@
       viewer.open(DZI_PATH);
     });
 
+    QUnit.test('setMaxZoomPixelRatio', function(assert) {
+      var done = assert.async();
+      var openHandler = function(event) {
+          viewer.removeHandler('open', openHandler);
+          var viewport = viewer.viewport;
+
+          for (var i = 0; i < testZoomLevels.length; i++) {
+              viewport.setMaxZoomPixelRatio(testZoomLevels[i])
+              assert.equal(viewport.getMaxZoomPixelRatio(), testZoomLevels[i], "Max zoom pixel ratio is set correctly.");
+          }
+
+          viewport.zoomTo(viewport.getMaxZoom())
+          viewport.setMaxZoomPixelRatio(testZoomLevels[0], true)
+          assert.equal(viewport.getZoom(), viewport.getMaxZoom(), "Zoom should be adjusted to max zoom level.");
+
+          done();
+      };
+      viewer.addHandler('open', openHandler);
+      viewer.open(DZI_PATH);
+    });
+
 })();

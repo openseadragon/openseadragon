@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+title: OpenSeadragon
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+authors:
+  - given-names: Ian
+    family-names: Gilman
+    email: ian@iangilman.com
+  - given-names: Aseem
+    family-names: Kishore
+  - given-names: Chris
+    family-names: Thatcher
+  - given-names: Mark
+    family-names: Salsbery
+  - given-names: Antoine
+    family-names: Vandecreme
+  - given-names: Thomas
+    family-names: Pearce
+identifiers:
+  - type: url
+    value: https://openseadragon.github.io/
+    description: Homepage
+  - type: url
+    value: https://github.com/openseadragon/openseadragon
+    description: Repository
+repository-code: https://github.com/openseadragon/openseadragon
+url: https://openseadragon.github.io/
+abstract: "An open-source, web-based viewer for high-resolution zoomable images, implemented in pure JavaScript, for desktop and mobile."
+keywords:
+  - javascript
+  - image
+  - zooming
+  - viewer
+  - image-viewer
+  - high-resolution
+  - iiif
+license: BSD-3-Clause
+version: 4.1.1
+date-released: 2024-04-01

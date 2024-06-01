@@ -188,10 +188,11 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     }
 
     /**
+     * @param {TiledImage} tiledImage the tiled image that is calling the function
      * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
      * @private
      */
-    minimumOverlapRequired() {
+    minimumOverlapRequired(tiledImage) {
         return false;
     }
 

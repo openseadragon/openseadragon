@@ -207,6 +207,16 @@
         }
 
         /**
+         * @param {TiledImage} tiledImage the tiled image that is calling the function
+         * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+         * @private
+         */
+        minimumOverlapRequired(tiledImage) {
+            // return true if the tiled image is tainted, since the backup canvas drawer will be used.
+            return tiledImage.isTainted();
+        }
+
+        /**
         * create the HTML element (canvas in this case) that the image will be drawn into
         * @private
         * @returns {Element} the canvas to draw into
@@ -347,7 +357,7 @@
                         // This can apparently happen on some systems if too many WebGL contexts have been created
                         // in which case maxTextures can be null, leading to out of bounds errors with the array.
                         // For example, when viewers were created and not destroyed in the test suite, this error
-                        // occured in the TravisCI tests, though it did not happen when testing locally either in
+                        // occurred in the TravisCI tests, though it did not happen when testing locally either in
                         // a browser or on the command line via grunt test.
 
                         throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
@@ -513,10 +523,14 @@
             }
             this._outputContext.restore();
             if(tiledImage.debugMode){
-                let colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
-                let strokeStyle = this.debugGridColor[colorIndex];
-                let fillStyle = this.debugGridColor[colorIndex];
-                this._drawDebugInfo(tilesToDraw, tiledImage, strokeStyle, fillStyle);
+                const flipped = this.viewer.viewport.getFlip();
+                if(flipped){
+                    this._flip();
+                }
+                this._drawDebugInfo(tilesToDraw, tiledImage, flipped);
+                if(flipped){
+                    this._flip();
+                }
             }
 
 
@@ -998,32 +1012,64 @@
             this._clippingContext.restore();
         }
 
+        /**
+         * Set rotations for viewport & tiledImage
+         * @private
+         * @param {OpenSeadragon.TiledImage} tiledImage
+         */
+        _setRotations(tiledImage) {
+            var saveContext = false;
+            if (this.viewport.getRotation(true) % 360 !== 0) {
+                this._offsetForRotation({
+                    degrees: this.viewport.getRotation(true),
+                    saveContext: saveContext
+                });
+                saveContext = false;
+            }
+            if (tiledImage.getRotation(true) % 360 !== 0) {
+                this._offsetForRotation({
+                    degrees: tiledImage.getRotation(true),
+                    point: this.viewport.pixelFromPointNoRotate(
+                        tiledImage._getRotationPoint(true), true),
+                    saveContext: saveContext
+                });
+            }
+        }
+
         // private
         _offsetForRotation(options) {
             var point = options.point ?
                 options.point.times($.pixelDensityRatio) :
-                new $.Point(this._outputCanvas.width / 2, this._outputCanvas.height / 2);
+                this._getCanvasCenter();
 
             var context = this._outputContext;
             context.save();
 
             context.translate(point.x, point.y);
-            if(this.viewport.flipped){
-                context.rotate(Math.PI / 180 * -options.degrees);
-                context.scale(-1, 1);
-            } else{
-                context.rotate(Math.PI / 180 * options.degrees);
-            }
+            context.rotate(Math.PI / 180 * options.degrees);
             context.translate(-point.x, -point.y);
         }
 
         // private
-        _drawDebugInfo( tilesToDraw, tiledImage, stroke, fill ) {
+        _flip(options) {
+            options = options || {};
+            var point = options.point ?
+            options.point.times($.pixelDensityRatio) :
+            this._getCanvasCenter();
+            var context = this._outputContext;
+
+            context.translate(point.x, 0);
+            context.scale(-1, 1);
+            context.translate(-point.x, 0);
+        }
+
+        // private
+        _drawDebugInfo( tilesToDraw, tiledImage, flipped ) {
 
             for ( var i = tilesToDraw.length - 1; i >= 0; i-- ) {
                 var tile = tilesToDraw[ i ].tile;
                 try {
-                    this._drawDebugInfoOnTile(tile, tilesToDraw.length, i, tiledImage, stroke, fill);
+                    this._drawDebugInfoOnTile(tile, tilesToDraw.length, i, tiledImage, flipped);
                 } catch(e) {
                     $.console.error(e);
                 }
@@ -1031,30 +1077,20 @@
         }
 
         // private
-        _drawDebugInfoOnTile(tile, count, i, tiledImage, stroke, fill) {
+        _drawDebugInfoOnTile(tile, count, i, tiledImage, flipped) {
 
-            var context = this._outputContext;
+            var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
+            var context = this.context;
             context.save();
             context.lineWidth = 2 * $.pixelDensityRatio;
             context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
-            context.strokeStyle = stroke;
-            context.fillStyle = fill;
+            context.strokeStyle = this.debugGridColor[colorIndex];
+            context.fillStyle = this.debugGridColor[colorIndex];
 
-            if (this.viewport.getRotation(true) % 360 !== 0 ) {
-                this._offsetForRotation({degrees: this.viewport.getRotation(true)});
-            }
-            if (tiledImage.getRotation(true) % 360 !== 0) {
-                this._offsetForRotation({
-                    degrees: tiledImage.getRotation(true),
-                    point: tiledImage.viewport.pixelFromPointNoRotate(
-                        tiledImage._getRotationPoint(true), true)
-                });
-            }
-            if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
-                tiledImage.getRotation(true) % 360 === 0) {
-                if(tiledImage._drawer.viewer.viewport.getFlip()) {
-                    tiledImage._drawer._flip();
-                }
+            this._setRotations(tiledImage);
+
+            if(flipped){
+                this._flip({point: tile.position.plus(tile.size.divide(2))});
             }
 
             context.strokeRect(
@@ -1069,7 +1105,8 @@
 
             // Rotate the text the right way around.
             context.translate( tileCenterX, tileCenterY );
-            context.rotate( Math.PI / 180 * -this.viewport.getRotation(true) );
+            const angleInDegrees = this.viewport.getRotation(true);
+            context.rotate( Math.PI / 180 * -angleInDegrees );
             context.translate( -tileCenterX, -tileCenterY );
 
             if( tile.x === 0 && tile.y === 0 ){
@@ -1122,13 +1159,6 @@
                 this._restoreRotationChanges();
             }
 
-            if (tiledImage.viewport.getRotation(true) % 360 === 0 &&
-                tiledImage.getRotation(true) % 360 === 0) {
-                if(tiledImage._drawer.viewer.viewport.getFlip()) {
-                    tiledImage._drawer._flip();
-                }
-            }
-
             context.restore();
         }
 
@@ -1154,6 +1184,15 @@
             context.fillRect(rect.x, rect.y, rect.width, rect.height);
             this._restoreRotationChanges();
 
+        }
+
+        /**
+         * Get the canvas center
+         * @private
+         * @returns {OpenSeadragon.Point} The center point of the canvas
+         */
+        _getCanvasCenter() {
+            return new $.Point(this.canvas.width / 2, this.canvas.height / 2);
         }
 
         // private

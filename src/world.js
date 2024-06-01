@@ -277,11 +277,14 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Draws all items.
      */
     draw: function() {
-        this.viewer.drawer.draw(this._items);
-        this._needsDraw = false;
-        for (let item of this._items) {
-            this._needsDraw = item.setDrawn() || this._needsDraw;
-        }
+        return new $.Promise((resolve) => {
+            this.viewer.drawer.draw(this._items);
+            this._needsDraw = false;
+            for (let item of this._items) {
+                this._needsDraw = item.setDrawn() || this._needsDraw;
+            }
+            resolve();
+        });
     },
 
     /**
