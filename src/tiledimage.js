@@ -2042,7 +2042,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var _this = this;
         tile.loading = true;
         tile.tiledImage = this;
-        this._imageLoader.addJob({
+        if (!this._imageLoader.addJob({
             src: tile.getUrl(),
             tile: tile,
             source: this.source,
@@ -2057,7 +2057,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             abort: function() {
                 tile.loading = false;
             }
-        });
+        })) {
+            /**
+             * Triggered if tile load job was added to a full queue.
+             * This allows to react upon e.g. network not being able to serve the tiles fast enough.
+             * @event job-queue-full
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Tile} tile - The tile that failed to load.
+             * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image the tile belongs to.
+             * @property {number} time - The time in milliseconds when the tile load began.
+             */
+            this.viewer.raiseEvent("job-queue-full", {
+                tile: tile,
+                tiledImage: this,
+                time: time,
+            });
+        }
     },
 
     /**

@@ -198,6 +198,7 @@ $.ImageLoader.prototype = {
      *      requests.
      * @param {Function} [options.callback] - Called once image has been downloaded.
      * @param {Function} [options.abort] - Called when this image job is aborted.
+     * @returns {boolean} true if job was immediatelly started, false if queued
      */
     addJob: function(options) {
         if (!options.source) {
@@ -229,10 +230,10 @@ $.ImageLoader.prototype = {
         if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
             newJob.start();
             this.jobsInProgress++;
+            return true;
         }
-        else {
-            this.jobQueue.push( newJob );
-        }
+        this.jobQueue.push( newJob );
+        return false;
     },
 
     /**
