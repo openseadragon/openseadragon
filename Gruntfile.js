@@ -49,6 +49,8 @@ module.exports = function(grunt) {
             "src/legacytilesource.js",
             "src/imagetilesource.js",
             "src/tilesourcecollection.js",
+            "src/priorityqueue.js",
+            "src/datatypeconvertor.js",
             "src/button.js",
             "src/buttongroup.js",
             "src/rectangle.js",
@@ -194,7 +196,12 @@ module.exports = function(grunt) {
             server: {
                 options: {
                     port: 8000,
-                    base: "."
+                    base: {
+                        path: ".",
+                        options: {
+                            stylesheet: 'style.css'
+                        }
+                    }
                 }
             }
         },

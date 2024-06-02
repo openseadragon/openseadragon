@@ -1,0 +1,81 @@
+/*
+ * Modified and maintained by the OpenSeadragon Community.
+ *
+ * This software was orignally developed at the National Institute of Standards and
+ * Technology by employees of the Federal Government. NIST assumes
+ * no responsibility whatsoever for its use by other parties, and makes no
+ * guarantees, expressed or implied, about its quality, reliability, or
+ * any other characteristic.
+ */
+.demo {
+    line-height: normal;
+}
+
+.demo h3 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#openseadragon {
+    width: 100%;
+    height: 700px;
+    background-color: black;
+}
+
+.wdzt-table-layout {
+    display: table;
+}
+
+.wdzt-row-layout {
+    display: table-row;
+}
+
+.wdzt-cell-layout {
+    display: table-cell;
+}
+
+.wdzt-full-width {
+    width: 100%;
+}
+
+.wdzt-menu-slider {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.column-2 {
+    width: 50%;
+    vertical-align: top;
+    padding: 3px;
+}
+
+#available {
+    list-style-type: none;
+}
+
+ul {
+    padding: 0;
+    border: 1px solid black;
+    min-height: 25px;
+}
+
+li {
+    padding: 3px;
+}
+
+#selected {
+    list-style-type: none;
+}
+
+.button {
+    cursor: pointer;
+    vertical-align: text-top;
+}
+
+.filterLabel {
+    min-width: 120px;
+}
+
+#selected .filterLabel {
+    cursor: move;
+}

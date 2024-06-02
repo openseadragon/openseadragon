@@ -223,50 +223,50 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    // TODO: can this be enabled without breaking tests due to lack of short-duration user interaction?
-    // QUnit.test('FullScreen', function(assert) {
-    //     const done = assert.async();
-    //     if (!OpenSeadragon.supportsFullScreen) {
-    //         assert.expect(0);
-    //         done();
-    //         return;
-    //     }
+    QUnit.test('FullScreen', function(assert) {
+        if (!OpenSeadragon.supportsFullScreen) {
+            const done = assert.async();
+            assert.expect(0);
+            done();
+            return;
+        }
+        var timeWatcher = Util.timeWatcher(assert, 7000);
 
-    //     viewer.addHandler('open', function () {
-    //         assert.ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
+        viewer.addHandler('open', function () {
+            assert.ok(!OpenSeadragon.isFullScreen(), 'Started out not fullscreen');
 
-    //         const checkEnteringPreFullScreen = (event) => {
-    //             viewer.removeHandler('pre-full-screen', checkEnteringPreFullScreen);
-    //             assert.ok(event.fullScreen, 'Switching to fullscreen');
-    //             assert.ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
-    //         };
+            const checkEnteringPreFullScreen = (event) => {
+                viewer.removeHandler('pre-full-screen', checkEnteringPreFullScreen);
+                assert.ok(event.fullScreen, 'Switching to fullscreen');
+                assert.ok(!OpenSeadragon.isFullScreen(), 'Not yet fullscreen');
+            };
 
-    //         const checkExitingFullScreen = (event) => {
-    //             viewer.removeHandler('full-screen', checkExitingFullScreen);
-    //             assert.ok(!event.fullScreen, 'Disabling fullscreen');
-    //             assert.ok(!OpenSeadragon.isFullScreen(), 'Fullscreen disabled');
-    //             done();
-    //         }
+            const checkExitingFullScreen = (event) => {
+                viewer.removeHandler('full-screen', checkExitingFullScreen);
+                assert.ok(!event.fullScreen, 'Disabling fullscreen');
+                assert.ok(!OpenSeadragon.isFullScreen(), 'Fullscreen disabled');
+                timeWatcher.done();
+            }
 
-    //         // The 'new' headless mode allows us to enter fullscreen, so verify
-    //         // that we see the correct values returned. We will then close out
-    //         // of fullscreen to check the same values when exiting.
-    //         const checkAcquiredFullScreen = (event) => {
-    //             viewer.removeHandler('full-screen', checkAcquiredFullScreen);
-    //             viewer.addHandler('full-screen', checkExitingFullScreen);
-    //             assert.ok(event.fullScreen, 'Acquired fullscreen');
-    //             assert.ok(OpenSeadragon.isFullScreen(), 'Fullscreen enabled');
-    //             viewer.setFullScreen(false);
-    //         };
+            // The 'new' headless mode allows us to enter fullscreen, so verify
+            // that we see the correct values returned. We will then close out
+            // of fullscreen to check the same values when exiting.
+            const checkAcquiredFullScreen = (event) => {
+                viewer.removeHandler('full-screen', checkAcquiredFullScreen);
+                viewer.addHandler('full-screen', checkExitingFullScreen);
+                assert.ok(event.fullScreen, 'Acquired fullscreen');
+                assert.ok(OpenSeadragon.isFullScreen(), 'Fullscreen enabled. Note: this test might fail ' +
+                    'because fullscreen might be blocked by your browser - not a trusted event!');
+                viewer.setFullScreen(false);
+            };
 
+            viewer.addHandler('pre-full-screen', checkEnteringPreFullScreen);
+            viewer.addHandler('full-screen', checkAcquiredFullScreen);
+            viewer.setFullScreen(true);
+        });
 
-    //         viewer.addHandler('pre-full-screen', checkEnteringPreFullScreen);
-    //         viewer.addHandler('full-screen', checkAcquiredFullScreen);
-    //         viewer.setFullScreen(true);
-    //     });
-
-    //     viewer.open('/test/data/testpattern.dzi');
-    // });
+        viewer.open('/test/data/testpattern.dzi');
+    });
 
     QUnit.test('Close', function(assert) {
         var done = assert.async();
@@ -332,9 +332,10 @@
                 } ]
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.ok(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );
@@ -352,9 +353,10 @@
                 } ]
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(!OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should not be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.notOk(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );
@@ -376,9 +378,10 @@
             crossOriginPolicy : false
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.ok(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );
@@ -400,9 +403,10 @@
             }
         } );
         viewer.addOnceHandler('tiled-image-drawn', function(event) {
-            assert.ok(!OpenSeadragon.isCanvasTainted(event.tiles[0].getCanvasContext().canvas),
-                "Canvas should not be tainted.");
-            done();
+            event.tiles[0].getCache().getDataAs("context2d", false).then(context =>
+                assert.notOk(OpenSeadragon.isCanvasTainted(context.canvas),
+                    "Canvas should be tainted.")
+            ).then(done);
         });
 
     } );
