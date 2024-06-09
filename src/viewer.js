@@ -517,6 +517,7 @@ $.Viewer = function( options ) {
             drawer:            this.drawer.getType(),
             loadTilesWithAjax: this.loadTilesWithAjax,
             ajaxHeaders:       this.ajaxHeaders,
+            ajaxWithCredentials: this.ajaxWithCredentials,
         });
     }
 
