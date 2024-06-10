@@ -22,6 +22,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: The navigator wouldn't update its tracking rectangle when the navigator was resized (#2491 @pearcetm)
 * Fixed: The drawer would improperly crop when the viewport was flipped and a tiled image was rotated (#2511 @pearcetm, @eug-L)
 * Fixed: Flipped viewport caused image to be flipped again when going fullscreen or resizing (#2518 @pearcetm)
+* Fixed: Viewer ajax options (loadTilesWithAjax, ajaxHeaders, and ajaxWithCredentials) weren't being propogated to the navigator. (#2539 @eug-L)
 
 4.1.1:
 
