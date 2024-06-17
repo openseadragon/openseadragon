@@ -2631,6 +2631,7 @@ function OpenSeadragon( options ){
          * Preexisting formats that are not being updated are left unchanged.
          * By default, the defined formats are
          * <pre><code>{
+         *      avif: true,
          *      bmp:  false,
          *      jpeg: true,
          *      jpg:  true,
@@ -2698,6 +2699,7 @@ function OpenSeadragon( options ){
 
 
     var FILEFORMATS = {
+            avif: true,
             bmp:  false,
             jpeg: true,
             jpg:  true,
