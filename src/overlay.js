@@ -261,7 +261,6 @@
             var size = this.size = positionAndSize.size;
             var rotate;
             var scale = "";
-            
             if (viewport.flipped){
                 rotate = -positionAndSize.rotate;
                 scale = " scaleX(-1)";
