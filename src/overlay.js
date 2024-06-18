@@ -261,7 +261,7 @@
             var size = this.size = positionAndSize.size;
             var rotate;
             var scale = "";
-
+            
             if (viewport.flipped){
                 rotate = -positionAndSize.rotate;
                 scale = " scaleX(-1)";
@@ -269,7 +269,6 @@
             else {
                 rotate = positionAndSize.rotate;
             }
-
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
             if (this.onDraw) {
@@ -320,11 +319,9 @@
                     var rect = new $.Rect(position.x, position.y, size.x, size.y);
                     var boundingBox = this._getBoundingBox(rect, viewport.getRotation(true));
                     position = boundingBox.getTopLeft();
-                 
                     if (viewport.flipped){
                         position.x = (viewport.getContainerSize().x - position.x);
                     }
-
                     size = boundingBox.getSize();
                 } else {
                     rotate = viewport.getRotation(true);
