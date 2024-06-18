@@ -320,8 +320,7 @@
                     var rect = new $.Rect(position.x, position.y, size.x, size.y);
                     var boundingBox = this._getBoundingBox(rect, viewport.getRotation(true));
                     position = boundingBox.getTopLeft();
-                    position = boundingBox.getTopLeft();
-
+                 
                     if (viewport.flipped){
                         position.x = (viewport.getContainerSize().x - position.x);
                     }
