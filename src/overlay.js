@@ -259,7 +259,16 @@
 
             var position = positionAndSize.position;
             var size = this.size = positionAndSize.size;
-            var rotate = positionAndSize.rotate;
+            var rotate;
+            var scale = "";
+
+            if (viewport.flipped){
+                rotate = -positionAndSize.rotate;
+                scale = " scaleX(-1)";
+            }
+            else {
+                rotate = positionAndSize.rotate;
+            }
 
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
@@ -282,7 +291,10 @@
                 if (transformOriginProp && transformProp) {
                     if (rotate) {
                         style[transformOriginProp] = this._getTransformOrigin();
-                        style[transformProp] = "rotate(" + rotate + "deg)";
+                        style[transformProp] = "rotate(" + rotate + "deg)" + scale;
+                    } else if (!rotate && viewport.flipped) {
+                        style[transformOriginProp] = this._getTransformOrigin();
+                        style[transformProp] = "scaleX(-1)";
                     } else {
                         style[transformOriginProp] = "";
                         style[transformProp] = "";
@@ -308,12 +320,21 @@
                     var rect = new $.Rect(position.x, position.y, size.x, size.y);
                     var boundingBox = this._getBoundingBox(rect, viewport.getRotation(true));
                     position = boundingBox.getTopLeft();
+                    position = boundingBox.getTopLeft();
+
+                    if (viewport.flipped){
+                        position.x = (viewport.getContainerSize().x - position.x);
+                    }
+
                     size = boundingBox.getSize();
                 } else {
                     rotate = viewport.getRotation(true);
                 }
             }
 
+            if (viewport.flipped) {
+                position.x = (viewport.getContainerSize().x - position.x);
+            }
             return {
                 position: position,
                 size: size,
