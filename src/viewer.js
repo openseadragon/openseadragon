@@ -515,6 +515,9 @@ $.Viewer = function( options ) {
             crossOriginPolicy: this.crossOriginPolicy,
             animationTime:     this.animationTime,
             drawer:            this.drawer.getType(),
+            loadTilesWithAjax: this.loadTilesWithAjax,
+            ajaxHeaders:       this.ajaxHeaders,
+            ajaxWithCredentials: this.ajaxWithCredentials,
         });
     }
 

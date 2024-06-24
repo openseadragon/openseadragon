@@ -194,11 +194,7 @@ $.Control.prototype = {
      * @param {Number} opactiy - a value between 1 and 0 inclusively.
      */
     setOpacity: function( opacity ) {
-        if ( this.element[ $.SIGNAL ] && $.Browser.vendor === $.BROWSERS.IE ) {
-            $.setElementOpacity( this.element, opacity, true );
-        } else {
-            $.setElementOpacity( this.wrapper, opacity, true );
-        }
+        $.setElementOpacity( this.wrapper, opacity, true );
     }
 };
 

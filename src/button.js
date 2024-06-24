@@ -167,13 +167,6 @@ $.Button = function( options ) {
         this.imgDown.style.visibility  =
             "hidden";
 
-        if ($.Browser.vendor === $.BROWSERS.FIREFOX && $.Browser.version < 3) {
-            this.imgGroup.style.top =
-            this.imgHover.style.top =
-            this.imgDown.style.top  =
-                "";
-        }
-
         this.element.appendChild( this.imgRest );
         this.element.appendChild( this.imgGroup );
         this.element.appendChild( this.imgHover );

@@ -1,4 +1,4 @@
-(function($, undefined) {
+(function($) {
 
     /**
      * Plugin to force OpenSeadragon to use the legacy mouse pointer event model
