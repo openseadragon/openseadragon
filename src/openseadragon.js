@@ -2343,43 +2343,18 @@ function OpenSeadragon( options ){
         /**
          * Create an XHR object
          * @private
-         * @param {type} [local] If set to true, the XHR will be file: protocol
-         * compatible if possible (but may raise a warning in the browser).
+         * @param {type} [local] Deprecated. Ignored (IE/ActiveXObject file protocol no longer supported).
          * @returns {XMLHttpRequest}
          */
-        createAjaxRequest: function( local ) {
-            // IE11 does not support window.ActiveXObject so we just try to
-            // create one to see if it is supported.
-            // See: http://msdn.microsoft.com/en-us/library/ie/dn423948%28v=vs.85%29.aspx
-            var supportActiveX;
-            try {
-                /* global ActiveXObject:true */
-                supportActiveX = !!new ActiveXObject( "Microsoft.XMLHTTP" );
-            } catch( e ) {
-                supportActiveX = false;
-            }
-
-            if ( supportActiveX ) {
-                if ( window.XMLHttpRequest ) {
-                    $.createAjaxRequest = function( local ) {
-                        if ( local ) {
-                            return new ActiveXObject( "Microsoft.XMLHTTP" );
-                        }
-                        return new XMLHttpRequest();
-                    };
-                } else {
-                    $.createAjaxRequest = function() {
-                        return new ActiveXObject( "Microsoft.XMLHTTP" );
-                    };
-                }
-            } else if ( window.XMLHttpRequest ) {
+        createAjaxRequest: function() {
+            if ( window.XMLHttpRequest ) {
                 $.createAjaxRequest = function() {
                     return new XMLHttpRequest();
                 };
+                return new XMLHttpRequest();
             } else {
                 throw new Error( "Browser doesn't support XMLHttpRequest." );
             }
-            return $.createAjaxRequest( local );
         },
 
         /**
@@ -2415,7 +2390,7 @@ function OpenSeadragon( options ){
             }
 
             var protocol = $.getUrlProtocol( url );
-            var request = $.createAjaxRequest( protocol === "file:" );
+            var request = $.createAjaxRequest();
 
             if ( !$.isFunction( onSuccess ) ) {
                 throw new Error( "makeAjaxRequest requires a success callback" );
@@ -2584,17 +2559,6 @@ function OpenSeadragon( options ){
                     return xmlDoc;
                 };
 
-            } else if ( window.ActiveXObject ) {
-
-                $.parseXml = function( string ) {
-                    var xmlDoc = null;
-
-                    xmlDoc = new ActiveXObject( "Microsoft.XMLDOM" );
-                    xmlDoc.async = false;
-                    xmlDoc.loadXML( string );
-                    return xmlDoc;
-                };
-
             } else {
                 throw new Error( "Browser doesn't support XML DOM." );
             }
@@ -2721,6 +2685,10 @@ function OpenSeadragon( options ){
         //console.error( 'appVersion: ' + navigator.appVersion );
         //console.error( 'userAgent: ' + navigator.userAgent );
 
+        //TODO navigator.appName is deprecated. Should be 'Netscape' for all browsers
+        //  but could be dropped at any time
+        //  See https://developer.mozilla.org/en-US/docs/Web/API/Navigator/appName
+        //      https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent
         switch( navigator.appName ){
             case "Microsoft Internet Explorer":
                 if( !!window.attachEvent &&
@@ -2806,8 +2774,8 @@ function OpenSeadragon( options ){
         //determine if this browser supports element.style.opacity
         $.Browser.opacity = true;
 
-        if ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version < 11 ) {
-            $.console.error('Internet Explorer versions < 11 are not supported by OpenSeadragon');
+        if ( $.Browser.vendor === $.BROWSERS.IE ) {
+            $.console.error('Internet Explorer is not supported by OpenSeadragon');
         }
     })();
 

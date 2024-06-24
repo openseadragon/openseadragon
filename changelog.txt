@@ -3,7 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 5.0.0: (in progress...)
 
-* BREAKING CHANGE: Dropped support for IE11 (#2300, #2361 @AndrewADev)
+* BREAKING CHANGE: Dropped support for IE11 (#2300, #2361, #2553 @AndrewADev, @msalsbery)
 * DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
 * The viewer now uses WebGL when available (#2310, #2462, #2466, #2468, #2469, #2472, #2478, #2488, #2492, #2521, #2537 @pearcetm, @Aiosa, @thec0keman)
 * Added webp to supported image formats (#2455 @BeebBenjamin)
