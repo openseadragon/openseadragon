@@ -287,12 +287,15 @@
                 var transformProp = $.getCssPropertyWithVendorPrefix(
                     'transform');
                 if (transformOriginProp && transformProp) {
-                    if (rotate) {
+                    if (rotate && !viewport.flipped) {
                         style[transformOriginProp] = this._getTransformOrigin();
-                        style[transformProp] = "rotate(" + rotate + "deg)" + scale;
+                        style[transformProp] = "rotate(" + rotate + "deg)";
                     } else if (!rotate && viewport.flipped) {
                         style[transformOriginProp] = this._getTransformOrigin();
-                        style[transformProp] = "scaleX(-1)";
+                        style[transformProp] = scale;
+                    } else if (rotate && viewport.flipped){
+                        style[transformOriginProp] = this._getTransformOrigin();
+                        style[transformProp] = "rotate(" + rotate + "deg)" + scale;
                     } else {
                         style[transformOriginProp] = "";
                         style[transformProp] = "";
@@ -318,9 +321,6 @@
                     var rect = new $.Rect(position.x, position.y, size.x, size.y);
                     var boundingBox = this._getBoundingBox(rect, viewport.getRotation(true));
                     position = boundingBox.getTopLeft();
-                    if (viewport.flipped){
-                        position.x = (viewport.getContainerSize().x - position.x);
-                    }
                     size = boundingBox.getSize();
                 } else {
                     rotate = viewport.getRotation(true);
