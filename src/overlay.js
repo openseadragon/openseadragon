@@ -2,7 +2,7 @@
  * OpenSeadragon - Overlay
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2023 OpenSeadragon contributors
+ * Copyright (C) 2010-2024 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -242,6 +242,9 @@
          */
         drawHTML: function(container, viewport) {
             var element = this.element;
+            var text = document.createElement('div');
+            text.textContent = element.textContent;
+            element.textContent = "";
             if (element.parentNode !== container) {
                 //save the source parent for later if we need it
                 element.prevElementParent = element.parentNode;
@@ -274,6 +277,7 @@
                 this.onDraw(position, size, this.element);
             } else {
                 var style = this.style;
+                var textStyle = text.style;
                 style.left = position.x + "px";
                 style.top = position.y + "px";
                 if (this.width !== null) {
@@ -291,9 +295,11 @@
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = "rotate(" + rotate + "deg)";
                     } else if (!rotate && viewport.flipped) {
+                        textStyle[transformProp] = "scaleX(-1)";
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = scale;
                     } else if (rotate && viewport.flipped){
+                        textStyle[transformProp] = "scaleX(-1)";
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = "rotate(" + rotate + "deg)" + scale;
                     } else {
@@ -302,6 +308,7 @@
                     }
                 }
                 style.display = 'block';
+                element.appendChild(text);
             }
         },
 
