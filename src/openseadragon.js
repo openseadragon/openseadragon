@@ -230,6 +230,9 @@
   * @property {Boolean} [flipped=false]
   *     Initial flip state.
   *
+  * @property {Boolean} [overlayContentFlipped=false]
+  *     Initial overlay content flip state.
+  *
   * @property {Number} [minZoomLevel=null]
   *
   * @property {Number} [maxZoomLevel=null]
@@ -1337,6 +1340,7 @@ function OpenSeadragon( options ){
 
             // INITIAL FLIP STATE
             flipped:                    false,
+            overlayContentFlipped:      false,
 
             // APPEARANCE
             opacity:                           1,

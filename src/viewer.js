@@ -397,6 +397,7 @@ $.Viewer = function( options ) {
         viewer:                     this,
         degrees:                    this.degrees,
         flipped:                    this.flipped,
+        overlayContentFlipped:      this.overlayContentFlipped,
         navigatorRotate:            this.navigatorRotate,
         homeFillsViewer:            this.homeFillsViewer,
         margins:                    this.viewportMargins,

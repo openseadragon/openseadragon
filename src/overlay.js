@@ -129,6 +129,7 @@
         }
 
         this.element = options.element;
+        this.element.innerHTML = "<div>" + this.element.innerHTML + "</div>";
         this.style = options.element.style;
         this._init(options);
     };
@@ -242,9 +243,6 @@
          */
         drawHTML: function(container, viewport) {
             var element = this.element;
-            var text = document.createElement('div');
-            text.textContent = element.textContent;
-            element.textContent = "";
             if (element.parentNode !== container) {
                 //save the source parent for later if we need it
                 element.prevElementParent = element.parentNode;
@@ -257,27 +255,23 @@
                 // least one direction when this.checkResize is set to false.
                 this.size = $.getElementSize(element);
             }
-
             var positionAndSize = this._getOverlayPositionAndSize(viewport);
-
             var position = positionAndSize.position;
             var size = this.size = positionAndSize.size;
-            var rotate;
-            var scale = "";
-            if (viewport.flipped){
-                rotate = -positionAndSize.rotate;
-                scale = " scaleX(-1)";
+            var outerScale = "";
+            if (viewport.overlayContentFlipped) {
+                outerScale = viewport.flipped ? " scaleX(-1)" : " scaleX(1)";
             }
-            else {
-                rotate = positionAndSize.rotate;
-            }
+            var rotate = viewport.flipped ? -positionAndSize.rotate : positionAndSize.rotate;
+            var scale = viewport.flipped ? " scaleX(-1)" : "";
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
             if (this.onDraw) {
                 this.onDraw(position, size, this.element);
             } else {
                 var style = this.style;
-                var textStyle = text.style;
+                var outerElement = element.firstChild;
+                var outerStyle = outerElement.style;
                 style.left = position.x + "px";
                 style.top = position.y + "px";
                 if (this.width !== null) {
@@ -292,23 +286,24 @@
                     'transform');
                 if (transformOriginProp && transformProp) {
                     if (rotate && !viewport.flipped) {
+                        outerStyle[transformProp] = "";
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = "rotate(" + rotate + "deg)";
                     } else if (!rotate && viewport.flipped) {
-                        textStyle[transformProp] = "scaleX(-1)";
+                        outerStyle[transformProp] = outerScale;
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = scale;
                     } else if (rotate && viewport.flipped){
-                        textStyle[transformProp] = "scaleX(-1)";
+                        outerStyle[transformProp] = outerScale;
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = "rotate(" + rotate + "deg)" + scale;
                     } else {
+                        outerStyle[transformProp] = "";
                         style[transformOriginProp] = "";
                         style[transformProp] = "";
                     }
                 }
                 style.display = 'block';
-                element.appendChild(text);
             }
         },
 
