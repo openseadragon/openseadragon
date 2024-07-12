@@ -270,8 +270,8 @@
                 this.onDraw(position, size, this.element);
             } else {
                 var style = this.style;
-                var outerElement = element.firstChild;
-                var outerStyle = outerElement.style;
+                var innerElement = element.firstChild;
+                var innerStyle = innerElement.style;
                 style.left = position.x + "px";
                 style.top = position.y + "px";
                 if (this.width !== null) {
@@ -286,19 +286,19 @@
                     'transform');
                 if (transformOriginProp && transformProp) {
                     if (rotate && !viewport.flipped) {
-                        outerStyle[transformProp] = "";
+                        innerStyle[transformProp] = "";
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = "rotate(" + rotate + "deg)";
                     } else if (!rotate && viewport.flipped) {
-                        outerStyle[transformProp] = outerScale;
+                        innerStyle[transformProp] = outerScale;
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = scale;
                     } else if (rotate && viewport.flipped){
-                        outerStyle[transformProp] = outerScale;
+                        innerStyle[transformProp] = outerScale;
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = "rotate(" + rotate + "deg)" + scale;
                     } else {
-                        outerStyle[transformProp] = "";
+                        innerStyle[transformProp] = "";
                         style[transformOriginProp] = "";
                         style[transformProp] = "";
                     }
