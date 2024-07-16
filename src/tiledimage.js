@@ -2076,6 +2076,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                  * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
                  * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
                  * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
+                 * @private
                  */
                 _this.viewer.raiseEvent("tile-ready", {
                     tile: tile,

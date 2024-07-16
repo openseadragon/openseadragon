@@ -270,6 +270,7 @@ $.TileCache.prototype = {
                  * @memberof OpenSeadragon.Viewer
                  * @type {object}
                  * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
+                 * @private
                  */
                 tiledImage.viewer.raiseEvent("image-unloaded", {
                     context2D: context2D,
