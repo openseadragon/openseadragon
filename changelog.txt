@@ -11,6 +11,8 @@ OPENSEADRAGON CHANGELOG
 * Introduced maxTilesPerFrame option to allow loading more tiles simultaneously (#2387 @jetic83)
 * Now when creating a viewer or navigator, we leave its position style alone if possible (#2393 @VIRAT9358)
 * Added getter & setter for Viewport.maxZoomPixelRatio (#2506 @eug-L)
+* Overlays are now positioned properly when the viewport is flipped (#2546 @BeebBenjamin)
+* Added overlayPreserveContentDirection option to keep overlays readable when viewport is flipped (#2546 @BeebBenjamin)
 * Test improvements (#2382 @AndrewADev)
 * MouseTracker options documentation fixes (#2389 @msalsbery)
 * Improved documentation and error message for Viewport.imageToViewportZoom (#2505 @eug-L)
