@@ -230,10 +230,10 @@
   * @property {Boolean} [flipped=false]
   *     Initial flip state.
   *
-  * @property {Boolean} [overlayFlipReversal=true]
+  * @property {Boolean} [overlayPreserveContentDirection=true]
   *     When the viewport is flipped (by pressing 'f'), the overlay is flipped using ScaleX.
   *     Normally, this setting (default true) keeps the overlay's content readable by flipping it back.
-  *     To make the content flip with the overlay, set overlayFlipReversal to false.
+  *     To make the content flip with the overlay, set overlayPreserveContentDirection to false.
   *
   * @property {Number} [minZoomLevel=null]
   *
@@ -1341,8 +1341,8 @@ function OpenSeadragon( options ){
             degrees:                    0,
 
             // INITIAL FLIP STATE
-            flipped:                    false,
-            overlayFlipReversal:        true,
+            flipped:                          false,
+            overlayPreserveContentDirection:  true,
 
             // APPEARANCE
             opacity:                           1,

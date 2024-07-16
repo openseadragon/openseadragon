@@ -259,7 +259,7 @@
             var position = positionAndSize.position;
             var size = this.size = positionAndSize.size;
             var outerScale = "";
-            if (viewport.overlayContentFlipped) {
+            if (viewport.overlayPreserveContentDirection) {
                 outerScale = viewport.flipped ? " scaleX(-1)" : " scaleX(1)";
             }
             var rotate = viewport.flipped ? -positionAndSize.rotate : positionAndSize.rotate;
