@@ -283,6 +283,7 @@
                         * @memberof OpenSeadragon.Viewer
                         * @type {object}
                         * @property {CanvasRenderingContext2D} context2D - The context that is being unloaded
+                        * @private
                         */
                         viewer.raiseEvent("image-unloaded", {
                             context2D: this.levels[i].context2D
