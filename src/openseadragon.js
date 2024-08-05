@@ -1069,8 +1069,9 @@ function OpenSeadragon( options ){
     /**
      * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density,
      * clamped to a minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
-     * @member {Number} pixelDensityRatio
+     * @function getCurrentPixelDensityRatio
      * @memberof OpenSeadragon
+     * @returns {Number}
      */
     $.getCurrentPixelDensityRatio = function() {
         if ( $.supportsCanvas ) {
@@ -1088,6 +1089,8 @@ function OpenSeadragon( options ){
     };
 
     /**
+     * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density,
+     * clamped to a minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
      * @member {Number} pixelDensityRatio
      * @memberof OpenSeadragon
      */
