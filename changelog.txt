@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+5.0.1: (in progress...)
+
 5.0.0:
 
 * BREAKING CHANGE: Dropped support for IE11 (#2300, #2361, #2553 @AndrewADev, @msalsbery)
