@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-5.0.0: (in progress...)
+5.0.0:
 
 * BREAKING CHANGE: Dropped support for IE11 (#2300, #2361, #2553 @AndrewADev, @msalsbery)
 * DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
