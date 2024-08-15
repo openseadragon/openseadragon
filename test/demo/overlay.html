@@ -26,7 +26,8 @@
             prefixUrl: "../../build/openseadragon/images/",
             tileSources: "../data/testpattern.dzi",
             minZoomImageRatio: 0,
-            maxZoomPixelRatio: 10
+            maxZoomPixelRatio: 10,
+            overlayPreserveContentDirection: true  // Change this to false to test overlay content flipping
         });
 
         viewer.addHandler("open", function(event) {
@@ -40,6 +41,19 @@
                 element: elt,
                 location: new OpenSeadragon.Rect(0.21, 0.21, 0.099, 0.099),
                 rotationMode: OpenSeadragon.OverlayRotationMode.BOUNDING_BOX
+            });
+
+            // test with image of letter B to see that images flip too
+            elt = document.createElement("div");
+            elt.className = "runtime-overlay";
+            elt.style.outline = "1px solid blue";
+            elt.style.height = "100px";
+            elt.innerHTML = "<div><img src='../data/BBlue.png' width='100%' height='100%'/></div>"
+            viewer.addOverlay({
+                element: elt,
+                location: new OpenSeadragon.Point(0.0, 0.0),
+                width: 0.1,
+                height: 0.1
             });
 
             elt = document.createElement("div");

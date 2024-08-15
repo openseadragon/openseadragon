@@ -1,19 +1,25 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-5.0.0: (in progress...)
+5.0.1: (in progress...)
 
-* BREAKING CHANGE: Dropped support for IE11 (#2300, #2361 @AndrewADev)
+5.0.0:
+
+* BREAKING CHANGE: Dropped support for IE11 (#2300, #2361, #2553 @AndrewADev, @msalsbery)
 * DEPRECATION: The OpenSeadragon.createCallback function is no longer recommended (#2367 @akansjain)
-* The viewer now uses WebGL when available (#2310, #2462, #2466, #2468, #2469, #2472, #2478, #2488, #2492 @pearcetm, @Aiosa, @thec0keman)
+* The viewer now uses WebGL when available (#2310, #2462, #2466, #2468, #2469, #2472, #2478, #2488, #2492, #2521, #2537, #2557, #2558 @pearcetm, @Aiosa, @thec0keman)
 * Added webp to supported image formats (#2455 @BeebBenjamin)
+* Added avif to supported image formats (#2544 @msalsbery)
 * Introduced maxTilesPerFrame option to allow loading more tiles simultaneously (#2387 @jetic83)
 * Now when creating a viewer or navigator, we leave its position style alone if possible (#2393 @VIRAT9358)
 * Added getter & setter for Viewport.maxZoomPixelRatio (#2506 @eug-L)
+* Overlays are now positioned properly when the viewport is flipped (#2546 @BeebBenjamin)
+* Added overlayPreserveContentDirection option to keep overlays readable when viewport is flipped (#2546 @BeebBenjamin)
 * Test improvements (#2382 @AndrewADev)
 * MouseTracker options documentation fixes (#2389 @msalsbery)
 * Improved documentation and error message for Viewport.imageToViewportZoom (#2505 @eug-L)
 * Fixed documentation typos (#2507 @frameflare)
+* Additional documentation fixes (#2563 @msalsbery)
 * Fixed: Sometimes if the viewport was flipped and the user zoomed in far enough, it would flip back (#2364 @SebDelile)
 * Fixed: Two-finger tap on a Mac trackpad would zoom you out (#2431 @cavenel)
 * Fixed: dragToPan gesture could not be disabled when flickEnabled was activated (#2464 @jonasengelmann)
@@ -22,6 +28,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: The navigator wouldn't update its tracking rectangle when the navigator was resized (#2491 @pearcetm)
 * Fixed: The drawer would improperly crop when the viewport was flipped and a tiled image was rotated (#2511 @pearcetm, @eug-L)
 * Fixed: Flipped viewport caused image to be flipped again when going fullscreen or resizing (#2518 @pearcetm)
+* Fixed: Viewer ajax options (loadTilesWithAjax, ajaxHeaders, and ajaxWithCredentials) weren't being propogated to the navigator. (#2539 @eug-L)
 
 4.1.1:
 

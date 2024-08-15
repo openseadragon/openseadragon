@@ -191,7 +191,7 @@
             let canvasElement = document.createElement( 'canvas' );
             let webglContext = $.isFunction( canvasElement.getContext ) &&
                         canvasElement.getContext( 'webgl' );
-            let ext = webglContext.getExtension('WEBGL_lose_context');
+            let ext = webglContext && webglContext.getExtension('WEBGL_lose_context');
             if(ext){
                 ext.loseContext();
             }

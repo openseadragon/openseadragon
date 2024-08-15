@@ -178,7 +178,6 @@ $.Navigator = function( options ){
         style['float']      = 'left'; //Webkit
 
         style.cssFloat      = 'left'; //Firefox
-        style.styleFloat    = 'left'; //IE
         style.zIndex        = 999999999;
         style.cursor        = 'default';
         style.boxSizing     = 'content-box';

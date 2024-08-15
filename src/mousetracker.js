@@ -1116,10 +1116,9 @@
     /**
      * Detect available mouse wheel event name.
      */
-    $.MouseTracker.wheelEventName = ( $.Browser.vendor === $.BROWSERS.IE && $.Browser.version > 8 ) ||
-                                                ( 'onwheel' in document.createElement( 'div' ) ) ? 'wheel' : // Modern browsers support 'wheel'
-                                    document.onmousewheel !== undefined ? 'mousewheel' :                     // Webkit and IE support at least 'mousewheel'
-                                    'DOMMouseScroll';                                                        // Assume old Firefox
+    $.MouseTracker.wheelEventName = ( 'onwheel' in document.createElement( 'div' ) ) ? 'wheel' : // Modern browsers support 'wheel'
+                                    document.onmousewheel !== undefined ? 'mousewheel' :         // Webkit (and unsupported IE) support at least 'mousewheel'
+                                    'DOMMouseScroll';                                            // Assume old Firefox (deprecated)
 
     /**
      * Detect browser pointer device event model(s) and build appropriate list of events to subscribe to.
@@ -1132,7 +1131,7 @@
     }
 
     if ( window.PointerEvent ) {
-        // IE11 and other W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
+        // W3C Pointer Event implementations (see http://www.w3.org/TR/pointerevents)
         $.MouseTracker.havePointerEvents = true;
         $.MouseTracker.subscribeEvents.push( "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
         // Pointer events capture support
@@ -1671,7 +1670,6 @@
 
     /**
      * Gets a W3C Pointer Events model compatible pointer type string from a DOM pointer event.
-     * IE10 used a long integer value, but the W3C specification (and IE11+) use a string "mouse", "touch", "pen", etc.
      *
      * Note: Called for both pointer events and legacy mouse events
      *         ($.MouseTracker.havePointerEvents determines which)
@@ -1679,14 +1677,7 @@
      * @inner
      */
     function getPointerType( event ) {
-        if ( $.MouseTracker.havePointerEvents ) {
-            // Note: IE pointer events bug - sends invalid pointerType on lostpointercapture events
-            //    and possibly other events. We rely on sane, valid property values in DOM events, so for
-            //    IE, when the pointerType is missing, we'll default to 'mouse'...should be right most of the time
-            return event.pointerType || (( $.Browser.vendor === $.BROWSERS.IE ) ? 'mouse' : '');
-        } else {
-            return 'mouse';
-        }
+        return $.MouseTracker.havePointerEvents && event.pointerType ? event.pointerType : 'mouse';
     }
 
 
@@ -2554,15 +2545,14 @@
         };
 
         // Most browsers implicitly capture touch pointer events
-        // Note no IE versions have element.hasPointerCapture() so no implicit
-        //    pointer capture possible
+        // Note no IE versions (unsupported) have element.hasPointerCapture() so
+        //    no implicit pointer capture possible
         // var implicitlyCaptured = ($.MouseTracker.havePointerEvents &&
         //                         event.target.hasPointerCapture &&
         //                         $.Browser.vendor !== $.BROWSERS.IE) ?
         //                         event.target.hasPointerCapture(event.pointerId) : false;
         var implicitlyCaptured = $.MouseTracker.havePointerEvents &&
-                                gPoint.type === 'touch' &&
-                                $.Browser.vendor !== $.BROWSERS.IE;
+                                gPoint.type === 'touch';
 
         //$.console.log('pointerdown ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 

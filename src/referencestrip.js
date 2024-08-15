@@ -193,7 +193,6 @@ $.ReferenceStrip = function ( options ) {
         element.style.display       = 'inline';
         element.style['float']      = 'left'; //Webkit
         element.style.cssFloat      = 'left'; //Firefox
-        element.style.styleFloat    = 'left'; //IE
         element.style.padding       = '2px';
         $.setElementTouchActionNone( element );
         $.setElementPointerEventsNone( element );
