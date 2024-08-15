@@ -233,6 +233,8 @@ $.TiledImage = function( options ) {
     this._ownAjaxHeaders = {};
     this.setAjaxHeaders(ajaxHeaders, false);
     this._initialized = true;
+    this.invalidatedAt = 0;
+    this.invalidatedFinishAt = 0;
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{

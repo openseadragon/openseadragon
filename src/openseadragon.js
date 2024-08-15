@@ -2651,66 +2651,50 @@ function OpenSeadragon( options ){
 
 
         //@private, runs non-invasive update of all tiles given in the list
-        invalidateTilesLater: function(tileList, tStamp, viewer, batch = $.DEFAULT_SETTINGS.maxTilesPerFrame) {
-            let i = 0;
-            let interval = setInterval(() => {
-                let tile = tileList[i];
-                while (tile && !tile.loaded) {
-                    tile = tileList[i++];
+        invalidateTilesLater: function(tileList, tStamp, viewer) {
+            if (tileList.length < 1) {
+                return;
+            }
+
+            function finish () {
+                const tile = tileList[0];
+                const tiledImage = tile.tiledImage;
+                tiledImage.invalidatedFinishAt = tiledImage.invalidatedAt;
+                for (let tile of tileList) {
+                    tile.render();
+                }
+                viewer.forceRedraw();
+            }
+
+            $.Promise.all(tileList.map(tile => {
+                if (!tile.loaded) {
+                    return undefined;
                 }
 
-                if (i >= tileList.length) {
-                    viewer.forceRedraw();
-                    clearInterval(interval);
-                    return;
-                }
                 const tiledImage = tile.tiledImage;
                 if (tiledImage.invalidatedAt > tStamp) {
-                    viewer.forceRedraw();
-                    clearInterval(interval);
-                    return;
+                    return undefined;
                 }
-                let count = 1;
-                for (; i < tileList.length; i++) {
-                    const tile = tileList[i];
-                    if (!tile.loaded) {
-                        continue;
-                    }
 
-                    const tileCache = tile.getCache();
-                    if (tileCache._updateStamp >= tStamp) {
-                        continue;
-                    }
-                    // prevents other tiles sharing the cache (~the key) from event
-                    //todo works unless the cache key CHANGES by plugins
-                    // - either prevent
-                    // - or ...?
-                    tileCache._updateStamp = tStamp;
-                    $.invalidateTile(tile, tile.tiledImage, tStamp, viewer, i);
-                    if (++count > batch) {
-                        break;
-                    }
+                const tileCache = tile.getCache();
+                if (tileCache._updateStamp >= tStamp) {
+                    return undefined;
                 }
-            });
+                tileCache._updateStamp = tStamp;
+                return viewer.raiseEventAwaiting('tile-needs-update', {
+                    tile: tile,
+                    tiledImage: tile.tiledImage,
+                }).then(() => {
+                    // TODO: check that the user has finished tile update and if not, rename cache key or throw
+                    const newCache = tile.getCache();
+                    if (newCache) {
+                        newCache._updateStamp = tStamp;
+                    } else {
+                        $.console.error("After an update, the tile %s has not cache data! Check handlers on 'tile-needs-update' event!", tile);
+                    }
+                });
+            })).catch(finish).then(finish);
         },
-
-        //@private, runs tile update event
-        invalidateTile: function(tile, image, tStamp, viewer, i = -1) {
-            //console.log(i, "tile: process", tile);
-
-            //todo consider also ability to cut execution of ongoing event if outdated by providing comparison timestamp
-            viewer.raiseEventAwaiting('tile-needs-update', {
-                tile: tile,
-                tiledImage: image,
-            }).then(() => {
-                const newCache = tile.getCache();
-                if (newCache) {
-                    newCache._updateStamp = tStamp;
-                } else {
-                    $.console.error("After an update, the tile %s has not cache data! Check handlers on 'tile-needs-update' event!", tile);
-                }
-            });
-        }
     });
 
 
@@ -2976,18 +2960,85 @@ function OpenSeadragon( options ){
      * @type {PromiseConstructor}
      */
     $.Promise = (function () {
-        if (window.Promise) {
-            return window.Promise;
-        }
-        const promise = function () {};
-        //TODO consider supplying promise API via callbacks/polyfill
-        promise.prototype.then =
-            promise.prototype.catch =
-                promise.prototype.finally =
-                    promise.all = promise.race = function () {
-            throw "OpenSeadragon needs promises API. Your browser do not support promises. You can add polyfill.js to import promises.";
+        return class {
+            constructor(handler) {
+                this._error = false;
+                this.__value = undefined;
+
+                try {
+                    handler(
+                        (value) => {
+                            this._value = value;
+                        },
+                        (error) => {
+                            this._value = error;
+                            this._error = true;
+                        }
+                    );
+                } catch (e) {
+                    this._value = e;
+                    this._error = true;
+                }
+            }
+
+            then(handler) {
+                if (!this._error) {
+                    try {
+                        this._value = handler(this._value);
+                    } catch (e) {
+                        this._value = e;
+                        this._error = true;
+                    }
+                }
+                return this;
+            }
+
+            catch(handler) {
+                if (this._error) {
+                    try {
+                        this._value = handler(this._value);
+                        this._error = false;
+                    } catch (e) {
+                        this._value = e;
+                        this._error = true;
+                    }
+                }
+                return this;
+            }
+
+            get _value() {
+                return this.__value;
+            }
+            set _value(val) {
+                if (val && val.constructor === this.constructor) {
+                    val = val._value; //unwrap
+                }
+                this.__value = val;
+            }
+
+            static resolve(value) {
+                return new this((resolve) => resolve(value));
+            }
+
+            static reject(error) {
+                return new this((_, reject) => reject(error));
+            }
+
+            static all(functions) {
+                return functions.map(fn => new this(fn));
+            }
+
+            static race(functions) {
+                if (functions.length < 1) {
+                    return undefined;
+                }
+                return new this(functions[0]);
+            }
         };
-        return promise;
+        // if (window.Promise) {
+        //     return window.Promise;
+        // }
+        // todo let users chose sync/async
     })();
 }(OpenSeadragon));
 
