@@ -129,6 +129,7 @@
         }
 
         this.element = options.element;
+        this.element.innerHTML = "<div>" + this.element.innerHTML + "</div>";
         this.style = options.element.style;
         this._init(options);
     };
@@ -254,19 +255,23 @@
                 // least one direction when this.checkResize is set to false.
                 this.size = $.getElementSize(element);
             }
-
             var positionAndSize = this._getOverlayPositionAndSize(viewport);
-
             var position = positionAndSize.position;
             var size = this.size = positionAndSize.size;
-            var rotate = positionAndSize.rotate;
-
+            var outerScale = "";
+            if (viewport.overlayPreserveContentDirection) {
+                outerScale = viewport.flipped ? " scaleX(-1)" : " scaleX(1)";
+            }
+            var rotate = viewport.flipped ? -positionAndSize.rotate : positionAndSize.rotate;
+            var scale = viewport.flipped ? " scaleX(-1)" : "";
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
             if (this.onDraw) {
                 this.onDraw(position, size, this.element);
             } else {
                 var style = this.style;
+                var innerElement = element.firstChild;
+                var innerStyle = innerElement.style;
                 style.left = position.x + "px";
                 style.top = position.y + "px";
                 if (this.width !== null) {
@@ -280,10 +285,20 @@
                 var transformProp = $.getCssPropertyWithVendorPrefix(
                     'transform');
                 if (transformOriginProp && transformProp) {
-                    if (rotate) {
+                    if (rotate && !viewport.flipped) {
+                        innerStyle[transformProp] = "";
                         style[transformOriginProp] = this._getTransformOrigin();
                         style[transformProp] = "rotate(" + rotate + "deg)";
+                    } else if (!rotate && viewport.flipped) {
+                        innerStyle[transformProp] = outerScale;
+                        style[transformOriginProp] = this._getTransformOrigin();
+                        style[transformProp] = scale;
+                    } else if (rotate && viewport.flipped){
+                        innerStyle[transformProp] = outerScale;
+                        style[transformOriginProp] = this._getTransformOrigin();
+                        style[transformProp] = "rotate(" + rotate + "deg)" + scale;
                     } else {
+                        innerStyle[transformProp] = "";
                         style[transformOriginProp] = "";
                         style[transformProp] = "";
                     }
@@ -314,6 +329,9 @@
                 }
             }
 
+            if (viewport.flipped) {
+                position.x = (viewport.getContainerSize().x - position.x);
+            }
             return {
                 position: position,
                 size: size,

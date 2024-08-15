@@ -249,9 +249,11 @@ $.ImageTileSource = class extends $.TileSource {
         return levels.reverse();
     }
 
+
     _createContext2D(data, w, h) {
         const canvas = document.createElement("canvas"),
             context = canvas.getContext("2d");
+
 
         canvas.width = w;
         canvas.height = h;
