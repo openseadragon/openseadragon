@@ -160,6 +160,7 @@
             // unbind our event listeners from the viewer
             this.viewer.removeHandler("tile-ready", this._boundToTileReady);
             this.viewer.removeHandler("image-unloaded", this._boundToImageUnloaded);
+            this.viewer.removeHandler("resize", this._resizeHandler);
 
             // set our webgl context reference to null to enable garbage collection
             this._gl = null;
@@ -839,8 +840,7 @@
 
             this._gl = this._renderingCanvas.getContext('webgl');
 
-            //make the additional canvas elements mirror size changes to the output canvas
-            this.viewer.addHandler("resize", function(){
+            this._resizeHandler = function(){
 
                 if(_this._outputCanvas !== _this.viewer.drawer.canvas){
                     _this._outputCanvas.style.width = _this.viewer.drawer.canvas.clientWidth + 'px';
@@ -861,7 +861,10 @@
 
                 // important - update the size of the rendering viewport!
                 _this._resizeRenderer();
-            });
+            };
+
+            //make the additional canvas elements mirror size changes to the output canvas
+            this.viewer.addHandler("resize", this._resizeHandler);
         }
 
         // private
