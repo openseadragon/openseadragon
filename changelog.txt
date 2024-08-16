@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 5.0.1: (in progress...)
 
+* Fixed: If you switched from WebGL drawer to canvas drawer, it didn't clean up properly (#2570 @pearcetm)
+
 5.0.0:
 
 * BREAKING CHANGE: Dropped support for IE11 (#2300, #2361, #2553 @AndrewADev, @msalsbery)
