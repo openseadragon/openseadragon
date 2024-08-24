@@ -46,6 +46,8 @@
     },
     "scripts": {
         "test": "grunt test",
-        "prepare": "grunt build"
+        "prepare": "grunt build",
+        "build": "grunt build",
+        "dev": "grunt connect watch"
     }
 }

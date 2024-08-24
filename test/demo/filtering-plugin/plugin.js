@@ -55,7 +55,7 @@
         this.viewer = options.viewer;
 
         this.viewer.addHandler('tile-loaded', tileLoadedHandler);
-        this.viewer.addHandler('tile-needs-update', tileUpdateHandler);
+        this.viewer.addHandler('tile-invalidated', tileUpdateHandler);
 
         // filterIncrement allows to determine whether a tile contains the
         // latest filters results.
@@ -82,14 +82,11 @@
             const processors = getFiltersProcessors(self, tiledImage);
 
             if (processors.length === 0) {
-                //restore the original data
-                const context = await tile.getOriginalData('context2d', true);
-                tile.setData(context, 'context2d');
                 tile._filterIncrement = self.filterIncrement;
                 return;
             }
 
-            const contextCopy = await tile.getOriginalData('context2d', true);
+            const contextCopy = await tile.getData('context2d');
             const currentIncrement = self.filterIncrement;
             for (let i = 0; i < processors.length; i++) {
                 if (self.filterIncrement !== currentIncrement) {
@@ -97,6 +94,7 @@
                 }
                 await processors[i](contextCopy);
             }
+
             tile._filterIncrement = self.filterIncrement;
             await tile.setData(contextCopy, 'context2d');
         }
@@ -116,7 +114,7 @@
                 filter.processors : [filter.processors];
         }
         instance.filterIncrement++;
-        instance.viewer.world.invalidateItems();
+        instance.viewer.requestInvalidate();
     }
 
     function getFiltersProcessors(instance, item) {

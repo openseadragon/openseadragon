@@ -726,6 +726,8 @@ $.TileSource.prototype = {
      * particularly if you want to use empty TiledImage with client-side derived data
      * only. The default tile-cache key is then called "" - an empty string.
      *
+     * todo AIOSA: provide another hash function that maps data onto tiles 1:1 (e.g sobel) or 1:m (vignetting)
+     *
      * Note: default behaviour does not take into account post data.
      * @param {Number} level tile level it was fetched with
      * @param {Number} x x-coordinate in the pyramid level

@@ -188,6 +188,7 @@
     // do not hold circular references.
     const circularOSDReferences = {
         'Tile': 'tiledImage',
+        'CacheRecord': ['_tRef', '_tiles'],
         'World': 'viewer',
         'DrawerBase': ['viewer', 'viewport'],
         'CanvasDrawer': ['viewer', 'viewport'],

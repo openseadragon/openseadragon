@@ -33,6 +33,7 @@
  */
 
 (function( $ ){
+let _workingCacheIdDealer = 0;
 
 /**
  * @class Tile
@@ -267,14 +268,26 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     this.tiledImage = null;
     /**
      * Array of cached tile data associated with the tile.
-     * @member {Object} _caches
+     * @member {Object}
      * @private
      */
     this._caches = {};
     /**
+     * Static Working Cache key to keep cached object (for swapping) when executing modifications.
+     * Uses unique ID to prevent sharing between other tiles:
+     *   - if some tile initiates processing, all other tiles usually are skipped if they share the data
+     *   - if someone tries to bypass sharing and process all tiles that share data, working caches would collide
+     * Note that $.now() is not sufficient, there might be tile created in the same millisecond.
+     * @member {String}
      * @private
      */
-    this._cacheSize = 0;
+    this._wcKey = `w${_workingCacheIdDealer++}://` + this.originalCacheKey;
+    /**
+     * Processing flag, exempt the tile from removal when there are ongoing updates
+     * @member {Boolean}
+     * @private
+     */
+    this.processing = false;
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -449,70 +462,135 @@ $.Tile.prototype = {
     },
 
     /**
-     * Get the data to render for this tile
+     * Get the data to render for this tile. If no conversion is necessary, get a reference. Else, get a copy
+     * of the data as desired type. This means that data modification _might_ be reflected on the tile, but
+     * it is not guaranteed. Use tile.setData() to ensure changes are reflected.
      * @param {string} type data type to require
-     * @param {boolean} [copy=true] whether to force copy retrieval
-     * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
+     * @return {OpenSeadragon.Promise<*>} data in the desired type, or resolved promise with udnefined if the
+     *   associated cache object is out of its lifespan
      */
-    getData: function(type, copy = true) {
+    getData: function(type) {
         if (!this.tiledImage) {
-            return null; //async can access outside its lifetime
+            return $.Promise.resolve(); //async can access outside its lifetime
         }
 
+        $.console.assert("TIle.getData requires type argument! got '%s'.", type);
+
         //we return the data synchronously immediatelly (undefined if conversion happens)
-        const cache = this.getCache(this.cacheKey);
+        const cache = this.getCache(this._wcKey);
         if (!cache) {
-            $.console.error("[Tile::getData] There is no cache available for tile with key " + this.cacheKey);
-            return undefined;
+            const targetCopyKey = this.__restore ? this.originalCacheKey : this.cacheKey;
+            const origCache = this.getCache(targetCopyKey);
+            if (!origCache) {
+                $.console.error("[Tile::getData] There is no cache available for tile with key %s", targetCopyKey);
+            }
+
+            //todo consider calling addCache with callback, which can avoid creating data item only to just discard it
+            //  in case we addCache with existing key and the current tile just gets attached as a reference
+            //  .. or explicitly check that such cache does not exist globally (now checking only locally)
+            return origCache.getDataAs(type, true).then(data => {
+                return this.addCache(this._wcKey, data, type, false, false).await();
+            });
         }
-        return cache.getDataAs(type, copy);
+        return cache.getDataAs(type, false);
     },
 
     /**
-     * Get the original data data for this tile
-     * @param {string} type data type to require
-     * @param {boolean} [copy=this.loaded] whether to force copy retrieval
-     *   note that if you do not copy the data and save the data to a different cache,
-     *   its destruction will also delete this original data which will likely cause issues
-     * @return {*|undefined} data in the desired type, or undefined if a conversion is ongoing
+     * Restore the original data data for this tile
+     * @param {boolean} freeIfUnused if true, restoration frees cache along the way of the tile lifecycle
      */
-    getOriginalData: function(type, copy = true) {
+    restore: function(freeIfUnused = true) {
         if (!this.tiledImage) {
-            return null; //async can access outside its lifetime
+            return; //async context can access the tile outside its lifetime
         }
 
-        //we return the data synchronously immediatelly (undefined if conversion happens)
-        const cache = this.getCache(this.originalCacheKey);
-        if (!cache) {
-            $.console.error("[Tile::getData] There is no cache available for tile with key " + this.originalCacheKey);
-            return undefined;
+        if (this.originalCacheKey !== this.cacheKey) {
+            this.__restoreRequestedFree = freeIfUnused;
+            this.__restore = true;
         }
-        return cache.getDataAs(type, copy);
     },
 
     /**
      * Set main cache data
      * @param {*} value
      * @param {?string} type data type to require
-     * @param {boolean} [preserveOriginalData=true] if true and cacheKey === originalCacheKey,
+     * @return {OpenSeadragon.Promise<*>}
      */
-    setData: function(value, type, preserveOriginalData = true) {
+    setData: function(value, type) {
         if (!this.tiledImage) {
-            return null; //async can access outside its lifetime
+            return null; //async context can access the tile outside its lifetime
         }
 
-        if (preserveOriginalData && this.cacheKey === this.originalCacheKey) {
-            //caches equality means we have only one cache:
-            // create new cache record with main cache key changed to 'mod'
-            return this.addCache("mod://" + this.originalCacheKey, value, type, true)._promise;
-        }
-        //else overwrite cache
-        const cache = this.getCache(this.cacheKey);
+        const cache = this.getCache(this._wcKey);
         if (!cache) {
-            $.console.error("[Tile::setData] There is no cache available for tile with key " + this.cacheKey);
+            $.console.error("[Tile::setData] You cannot set data without calling tile.getData()! The working cache is not initialized!");
             return $.Promise.resolve();
         }
         return cache.setDataAs(value, type);
+    },
+
+
+    /**
+     * Optimizazion: prepare target cache for subsequent use in rendering, and perform updateRenderTarget()
+     * @private
+     */
+    updateRenderTargetWithDataTransform: function (drawerId, supportedFormats, usePrivateCache) {
+        // Now, if working cache exists, we set main cache to the working cache --> prepare
+        const cache = this.getCache(this._wcKey);
+        if (cache) {
+            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache, this.processing);
+        }
+
+        // If we requested restore, perform now
+        if (this.__restore) {
+            const cache = this.getCache(this.originalCacheKey);
+
+            this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
+                this, cache
+            );
+            this.__restore = false;
+            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache, this.processing);
+        }
+
+        return null;
+    },
+
+    /**
+     * Resolves render target: changes might've been made to the rendering pipeline:
+     *  - working cache is set: make sure main cache will be replaced
+     *  - working cache is unset: make sure main cache either gets updated to original data or stays (based on this.__restore)
+     * @private
+     * @return
+     */
+    updateRenderTarget: function () {
+        // TODO we probably need to create timestamp and check if current update stamp is the one saved on the cache,
+        //   if yes, then the update has been performed (and update all tiles asociated to the same cache at once)
+        //   since we cannot ensure all tiles are called with the update (e.g. zombies)
+        // Check if we asked for restore, and make sure we set it to false since we update the whole cache state
+        const requestedRestore = this.__restore;
+        this.__restore = false;
+
+        //TODO IMPLEMENT LOCKING AND IGNORE PIPELINE OUT OF THESE CALLS
+
+        // Now, if working cache exists, we set main cache to the working cache, since it has been updated
+        const cache = this.getCache(this._wcKey);
+        if (cache) {
+            let newCacheKey = this.cacheKey === this.originalCacheKey ? "mod://" + this.originalCacheKey : this.cacheKey;
+            this.tiledImage._tileCache.consumeCache({
+                tile: this,
+                victimKey: this._wcKey,
+                consumerKey: newCacheKey
+            });
+            this.cacheKey = newCacheKey;
+            return;
+        }
+        // If we requested restore, perform now
+        if (requestedRestore) {
+            this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
+                this, this.getCache(this.originalCacheKey)
+            );
+        }
+        // Else no work to be done
     },
 
     /**
@@ -572,9 +650,6 @@ $.Tile.prototype = {
         });
         const havingRecord = this._caches[key];
         if (havingRecord !== cachedItem) {
-            if (!havingRecord) {
-                this._cacheSize++;
-            }
             this._caches[key] = cachedItem;
         }
 
@@ -607,7 +682,7 @@ $.Tile.prototype = {
      * @returns {number} number of caches
      */
     getCacheSize: function() {
-        return this._cacheSize;
+        return Object.values(this._caches).length;
     },
 
     /**
@@ -646,7 +721,6 @@ $.Tile.prototype = {
         }
         if (this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused)) {
             //if we managed to free tile from record, we are sure we decreased cache count
-            this._cacheSize--;
             delete this._caches[key];
         }
     },
@@ -695,6 +769,30 @@ $.Tile.prototype = {
     },
 
     /**
+     * Reflect that a cache object was renamed. Called internally from TileCache.
+     * Do NOT call manually.
+     * @function
+     * @private
+     */
+    reflectCacheRenamed: function (oldKey, newKey) {
+        let cache = this._caches[oldKey];
+        if (!cache) {
+            return;  // nothing to fix
+        }
+        // Do update via private refs, old key no longer exists in cache
+        if (oldKey === this._ocKey) {
+            this._ocKey = newKey;
+        }
+        if (oldKey === this._cKey) {
+            this._cKey = newKey;
+        }
+        // Working key is never updated, it will be invalidated (but do not dereference cache, just fix the pointers)
+        this._caches[newKey] = cache;
+        cache.AAA = true;
+        delete this._caches[oldKey];
+    },
+
+    /**
      * Removes tile from its container.
      * @function
      */
@@ -707,7 +805,7 @@ $.Tile.prototype = {
             this.element.parentNode.removeChild( this.element );
         }
         this.tiledImage = null;
-        this._caches    = [];
+        this._caches    = {};
         this._cacheSize = 0;
         this.element    = null;
         this.imgElement = null;

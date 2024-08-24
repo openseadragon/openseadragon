@@ -196,6 +196,9 @@ $.DataTypeConvertor = class {
 
         // Teaching OpenSeadragon built-in conversions:
         const imageCreator = (tile, url) => new $.Promise((resolve, reject) => {
+            if (!$.supportsAsync) {
+                throw "Not supported in sync mode!";
+            }
             const img = new Image();
             img.onerror = img.onabort = reject;
             img.onload = () => resolve(img);
@@ -342,7 +345,7 @@ $.DataTypeConvertor = class {
     convert(tile, data, from, ...to) {
         const conversionPath = this.getConversionPath(from, to);
         if (!conversionPath) {
-            $.console.error(`[OpenSeadragon.convertor.convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
+            $.console.error(`[OpenSeadragon.convertor.convert] Conversion ${from} ---> ${to} cannot be done!`);
             return $.Promise.resolve();
         }
 

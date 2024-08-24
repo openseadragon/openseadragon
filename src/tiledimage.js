@@ -83,8 +83,6 @@
  *      Defaults to the setting in {@link OpenSeadragon.Options}.
  * @param {Object} [options.ajaxHeaders={}]
  *      A set of headers to include when making tile AJAX requests.
- * @param {Boolean} [options.callTileLoadedWithCachedData]
- *      Invoke tile-loded event for also for tiles loaded from cache if true.
  */
 $.TiledImage = function( options ) {
     this._initialized = false;
@@ -192,7 +190,6 @@ $.TiledImage = function( options ) {
         compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
         subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency,
         maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame,
-        callTileLoadedWithCachedData:      $.DEFAULT_SETTINGS.callTileLoadedWithCachedData
     }, options );
 
     this._preload = this.preload;
@@ -233,8 +230,7 @@ $.TiledImage = function( options ) {
     this._ownAjaxHeaders = {};
     this.setAjaxHeaders(ajaxHeaders, false);
     this._initialized = true;
-    this.invalidatedAt = 0;
-    this.invalidatedFinishAt = 0;
+    // this.invalidatedAt = 0;
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -286,26 +282,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     /**
      * Forces the system consider all tiles in this tiled image
      * as outdated, and fire tile update event on relevant tiles
-     * Detailed description is available within the 'tile-needs-update'
-     * event. TODO: consider re-using update function instead?
+     * Detailed description is available within the 'tile-invalidated'
+     * event.
      * @param {boolean} [viewportOnly=false] optionally invalidate only viewport-visible tiles if true
      * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      */
-    invalidate: function (viewportOnly, tStamp) {
+    requestInvalidate: function (viewportOnly, tStamp, restoreTiles = true) {
         tStamp = tStamp || $.now();
-        this.invalidatedAt = tStamp; //todo document, or remove by something nicer
-
-        //always invalidate active tiles
-        for (let tile of this.lastDrawn) {
-            $.invalidateTile(tile, this, tStamp, this.viewer);
-        }
-        //if not called from world or not desired, avoid update of offscreen data
-        if (viewportOnly) {
-            return;
-        }
-
-        const tiles = this._tileCache.getLoadedTilesFor(this);
-        $.invalidateTilesLater(tiles, tStamp, this.viewer);
+        // this.invalidatedAt = tStamp; //todo document, or remove by something nicer
+        const tiles = viewportOnly ? this._lastDrawn.map(x => x.tile) : this._tileCache.getLoadedTilesFor(this);
+        this.viewer.world.requestTileInvalidateEvent(tiles, tStamp, restoreTiles);
     },
 
     /**
@@ -1821,11 +1808,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             levelVisibility
         );
 
-        if (!tile.loaded && !tile.loading) {
-            // Tile was created or its data removed: check whether cache has the data.
-            // this method sets tile.loading=true if data available, which prevents
-            // job creation later on
-            this._tryFindTileCacheRecord(tile);
+        // Try-find will populate tile with data if equal tile exists in system
+        if (!tile.loaded && !tile.loading && this._tryFindTileCacheRecord(tile)) {
+            loadingCoverage = true;
         }
 
         if ( tile.loading ) {
@@ -1890,28 +1875,33 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Tile} tile
      */
     _tryFindTileCacheRecord: function(tile) {
-        if (tile.cacheKey !== tile.originalCacheKey) {
-            //we found original data: this data will be used to re-execute the pipeline
-            let record = this._tileCache.getCacheRecord(tile.originalCacheKey);
-            if (record) {
-                tile.loading = true;
-                tile.loaded = false;
-                this._setTileLoaded(tile, record.data, null, null, record.type);
-                return true;
-            }
+        let record = this._tileCache.getCacheRecord(tile.cacheKey);
+
+        if (!record) {
+            return false;
         }
 
-        let record = this._tileCache.getCacheRecord(tile.cacheKey);
-        if (record) {
-            // setup without calling tile loaded event! tile cache is ready for usage,
-            tile.loading = true;
-            tile.loaded = false;
-            // we could send null as data (cache not re-created), but deprecated events access the data
-            this._setTileLoaded(tile, record.data, null, null, record.type,
-                this.callTileLoadedWithCachedData);
-            return true;
+        // if we find existing record, check the original data of existing tile of this record
+        let baseTile = record._tiles[0];
+        if (!baseTile) {
+            // we are unable to setup the tile, this might be a bug somewhere else
+            return false;
         }
-        return false;
+
+        // Setup tile manually, data can be null -> we already have existing cache to share, share also caches
+        tile.tiledImage = this;
+        tile.addCache(baseTile.originalCacheKey, null, record.type, false, false);
+        if (baseTile.cacheKey !== baseTile.originalCacheKey) {
+            tile.addCache(baseTile.cacheKey, null, record.type, true, false);
+        }
+
+        tile.hasTransparency = tile.hasTransparency || this.source.hasTransparency(
+            undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
+        );
+
+        tile.loading = false;
+        tile.loaded = true;
+        return true;
     },
 
     /**
@@ -2112,9 +2102,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {?Number} cutoff ignored, @deprecated
      * @param {?XMLHttpRequest} tileRequest
      * @param {?String} [dataType=undefined] data type, derived automatically if not set
-     * @param {?Boolean} [withEvent=true] do not trigger event if true
      */
-    _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType, withEvent = true) {
+    _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType) {
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // does nothing if tile.cacheKey already present
         tile.addCache(tile.cacheKey, data, dataType, false, false);
@@ -2136,6 +2125,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tile.hasTransparency = tile.hasTransparency || _this.source.hasTransparency(
                 undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
             );
+            tile.updateRenderTarget();
             //make sure cache data is ready for drawing, if not, request the desired format
             const cache = tile.getCache(tile.cacheKey),
                 requiredTypes = _this._drawer.getSupportedDataFormats();
@@ -2144,7 +2134,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 resolver(tile);
             } else if (!requiredTypes.includes(cache.type)) {
                 //initiate conversion as soon as possible if incompatible with the drawer
-                cache.prepareForRendering(requiredTypes, _this._drawer.options.usePrivateCache).then(cacheRef => {
+                cache.prepareForRendering(_this._drawer.getId(), requiredTypes, _this._drawer.options.usePrivateCache).then(cacheRef => {
                     if (!cacheRef) {
                         return cache.transformTo(requiredTypes);
                     }
@@ -2171,10 +2161,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         const fallbackCompletion = getCompletionCallback();
-        if (!withEvent) {
-            fallbackCompletion();
-            return;
-        }
 
         /**
          * Triggered when a tile has just been loaded in memory. That means that the

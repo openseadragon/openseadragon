@@ -58,6 +58,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
         $.console.assert( options.element, "[Drawer] options.element is required" );
 
+        this._id = this.getType() + $.now();
         this.viewer = options.viewer;
         this.viewport = options.viewport;
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
@@ -111,6 +112,14 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     }
 
     /**
+     * Get unique drawer ID
+     * @return {string}
+     */
+    getId() {
+        return this._id;
+    }
+
+    /**
      * @abstract
      * @returns {String | undefined} What type of drawer this is. Must be overridden by extending classes.
      */
@@ -142,7 +151,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
             $.console.warn("Attempt to draw tile %s when not cached!", tile);
             return null;
         }
-        return cache.getDataForRendering(this);
+        return cache.getDataForRendering(this, tile);
     }
 
     /**

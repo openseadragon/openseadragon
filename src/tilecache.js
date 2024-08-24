@@ -121,20 +121,20 @@
 
         /**
          * Access the cache record data indirectly. Preferred way of data access. Asynchronous.
-         * @param {string} [type=this.type]
+         * @param {string} [type=undefined]
          * @param {boolean} [copy=true] if false and same type is retrieved as the cache type,
          *  copy is not performed: note that this is potentially dangerous as it might
          *  introduce race conditions (you get a cache data direct reference you modify).
          * @returns {OpenSeadragon.Promise<?>} desired data type in promise, undefined if the cache was destroyed
          */
-        getDataAs(type = this._type, copy = true) {
+        getDataAs(type = undefined, copy = true) {
             if (this.loaded) {
                 if (type === this._type) {
-                    return copy ? $.convertor.copy(this._tRef, this._data, type) : this._promise;
+                    return copy ? $.convertor.copy(this._tRef, this._data, type || this._type) : this._promise;
                 }
-                return this._transformDataIfNeeded(this._tRef, this._data, type, copy) || this._promise;
+                return this._transformDataIfNeeded(this._tRef, this._data, type || this._type, copy) || this._promise;
             }
-            return this._promise.then(data => this._transformDataIfNeeded(this._tRef, data, type, copy) || data);
+            return this._promise.then(data => this._transformDataIfNeeded(this._tRef, data, type || this._type, copy) || data);
         }
 
         _transformDataIfNeeded(referenceTile, data, type, copy) {
@@ -178,9 +178,18 @@
                 return this.data;
             }
 
+            if (this._destroyed) {
+                $.console.error("Attempt to draw tile with destroyed main cache!");
+                return undefined;
+            }
+
             let internalCache = this[DRAWER_INTERNAL_CACHE];
+            internalCache = internalCache && internalCache[drawer.getId()];
             if (keepInternalCopy && !internalCache) {
-                this.prepareForRendering(supportedTypes, keepInternalCopy)
+                $.console.warn("Attempt to render tile that is not prepared with drawer requesting " +
+                    "internal cache! This might introduce artifacts.");
+
+                this.prepareForRendering(drawer.getId(), supportedTypes, keepInternalCopy)
                     .then(() => this._triggerNeedsDraw());
                 return undefined;
             }
@@ -198,24 +207,40 @@
             }
 
             if (!supportedTypes.includes(internalCache.type)) {
+                $.console.warn("Attempt to render tile that is not prepared for current drawer supported format: " +
+                    "the preparation should've happened after tile processing has finished.");
+
                 internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
                     .then(() => this._triggerNeedsDraw());
                 return undefined; // type is NOT compatible
             }
-
             return internalCache.data;
         }
 
         /**
          * Should not be called if cache type is already among supported types
          * @private
+         * @param drawerId
          * @param supportedTypes
          * @param keepInternalCopy
+         * @param _shareTileUpdateStamp private param, updates render target (swap cache memory) for tiles that come
+         *   from the same tstamp batch
          * @return {OpenSeadragon.Promise<OpenSeadragon.SimpleCacheRecord|OpenSeadragon.CacheRecord>}
          */
-        prepareForRendering(supportedTypes, keepInternalCopy = true) {
-            // if not internal copy and we have no data, bypass rendering
-            if (!this.loaded) {
+        prepareForRendering(drawerId, supportedTypes, keepInternalCopy = true, _shareTileUpdateStamp = null) {
+
+            // Locked update of render target,
+            if (_shareTileUpdateStamp) {
+                for (let tile of this._tiles) {
+                    if (tile.processing === _shareTileUpdateStamp) {
+                        tile.updateRenderTarget();
+                    }
+                }
+            }
+
+
+            // if not internal copy and we have no data, or we are ready to render, exit
+            if (!this.loaded || supportedTypes.includes(this.type)) {
                 return $.Promise.resolve(this);
             }
 
@@ -224,57 +249,71 @@
             }
 
             // we can get here only if we want to render incompatible type
-            let internalCache = this[DRAWER_INTERNAL_CACHE] = new $.SimpleCacheRecord();
+            let internalCache = this[DRAWER_INTERNAL_CACHE];
+            if (!internalCache) {
+                internalCache = this[DRAWER_INTERNAL_CACHE] = {};
+            }
+
+            internalCache = internalCache[drawerId];
+            if (internalCache) {
+                // already done
+                return $.Promise.resolve(this);
+            } else {
+                internalCache = this[DRAWER_INTERNAL_CACHE][drawerId] = new $.SimpleCacheRecord();
+            }
             const conversionPath = $.convertor.getConversionPath(this.type, supportedTypes);
             if (!conversionPath) {
-                $.console.error(`[getDataForRendering] Conversion conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
+                $.console.error(`[getDataForRendering] Conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
                 return $.Promise.resolve(this);
             }
             internalCache.withTileReference(this._tRef);
             const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
             return $.convertor.convert(this._tRef, this.data, this.type, selectedFormat).then(data => {
                 internalCache.setDataAs(data, selectedFormat);
-                return internalCache;
+                return this;
             });
         }
 
         /**
          * Transform cache to desired type and get the data after conversion.
          * Does nothing if the type equals to the current type. Asynchronous.
+         * Transformation is LAZY, meaning conversions are performed only to
+         * match the last conversion request target type.
          * @param {string|[string]} type if array provided, the system will
          *   try to optimize for the best type to convert to.
          * @return {OpenSeadragon.Promise<?>}
          */
         transformTo(type = this._type) {
-            if (!this.loaded ||
-                type !== this._type ||
-                (Array.isArray(type) && !type.includes(this._type))) {
+            if (!this.loaded) {
+                this._conversionJobQueue = this._conversionJobQueue || [];
+                let resolver = null;
+                const promise = new $.Promise((resolve, reject) => {
+                    resolver = resolve;
+                });
 
-                if (!this.loaded) {
-                    this._conversionJobQueue = this._conversionJobQueue || [];
-                    let resolver = null;
-                    const promise = new $.Promise((resolve, reject) => {
-                        resolver = resolve;
-                    });
-                    this._conversionJobQueue.push(() => {
-                        if (this._destroyed) {
-                            return;
-                        }
-                        //must re-check types since we perform in a queue of conversion requests
-                        if (type !== this._type || (Array.isArray(type) && !type.includes(this._type))) {
-                            //ensures queue gets executed after finish
-                            this._convert(this._type, type);
-                            this._promise.then(data => resolver(data));
-                        } else {
-                            //must ensure manually, but after current promise finished, we won't wait for the following job
-                            this._promise.then(data => {
-                                this._checkAwaitsConvert();
-                                return resolver(data);
-                            });
-                        }
-                    });
-                    return promise;
-                }
+                // Todo consider submitting only single tranform job to queue: any other transform calls will have
+                //  no effect, the last one decides the target format
+                this._conversionJobQueue.push(() => {
+                    if (this._destroyed) {
+                        return;
+                    }
+                    //must re-check types since we perform in a queue of conversion requests
+                    if (type !== this._type || (Array.isArray(type) && !type.includes(this._type))) {
+                        //ensures queue gets executed after finish
+                        this._convert(this._type, type);
+                        this._promise.then(data => resolver(data));
+                    } else {
+                        //must ensure manually, but after current promise finished, we won't wait for the following job
+                        this._promise.then(data => {
+                            this._checkAwaitsConvert();
+                            return resolver(data);
+                        });
+                    }
+                });
+                return promise;
+            }
+
+            if (type !== this._type || (Array.isArray(type) && !type.includes(this._type))) {
                 this._convert(this._type, type);
             }
             return this._promise;
@@ -287,7 +326,9 @@
         destroyInternalCache() {
             const internal = this[DRAWER_INTERNAL_CACHE];
             if (internal) {
-                internal.destroy();
+                for (let iCache in internal) {
+                    internal[iCache].destroy();
+                }
                 delete this[DRAWER_INTERNAL_CACHE];
             }
         }
@@ -360,18 +401,16 @@
             }
             $.console.assert(tile, '[CacheRecord.addTile] tile is required');
 
-            //allow overriding the cache - existing tile or different type
-            if (this._tiles.includes(tile)) {
-                this.removeTile(tile);
-
-            } else if (!this.loaded) {
+            // first come first served, data for existing tiles is NOT overridden
+            if (this._tiles.length < 1) {
                 this._type = type;
                 this._promise = $.Promise.resolve(data);
                 this._data = data;
                 this.loaded = true;
+                this._tiles.push(tile);
+            } else if (!this._tiles.includes(tile)) {
+                this._tiles.push(tile);
             }
-            //else pass: the tile data type will silently change as it inherits this cache
-            this._tiles.push(tile);
         }
 
         /**
@@ -446,32 +485,44 @@
                 return $.Promise.resolve();
             }
             if (this.loaded) {
+                // No-op if attempt to replace with the same object
+                if (this._data === data && this._type === type) {
+                    return this._promise;
+                }
                 $.convertor.destroy(this._data, this._type);
                 this._type = type;
                 this._data = data;
                 this._promise = $.Promise.resolve(data);
                 const internal = this[DRAWER_INTERNAL_CACHE];
                 if (internal) {
-                    // TODO: if update will be greedy uncomment (see below)
-                    //internal.withTileReference(this._tRef);
-                    internal.setDataAs(data, type);
+                    for (let iCache in internal) {
+                        // TODO: if update will be greedy uncomment (see below)
+                        //internal[iCache].withTileReference(this._tRef);
+                        internal[iCache].setDataAs(data, type);
+                    }
                 }
                 this._triggerNeedsDraw();
                 return this._promise;
             }
-            return this._promise.then(x => {
-                $.convertor.destroy(x, this._type);
+            return this._promise.then(() => {
+                // No-op if attempt to replace with the same object
+                if (this._data === data && this._type === type) {
+                    return this._data;
+                }
+                $.convertor.destroy(this._data, this._type);
                 this._type = type;
                 this._data = data;
                 this._promise = $.Promise.resolve(data);
                 const internal = this[DRAWER_INTERNAL_CACHE];
                 if (internal) {
-                    // TODO: if update will be greedy uncomment (see below)
-                    //internal.withTileReference(this._tRef);
-                    internal.setDataAs(data, type);
+                    for (let iCache in internal) {
+                        // TODO: if update will be greedy uncomment (see below)
+                        //internal[iCache].withTileReference(this._tRef);
+                        internal[iCache].setDataAs(data, type);
+                    }
                 }
                 this._triggerNeedsDraw();
-                return x;
+                return this._data;
             });
         }
 
@@ -485,7 +536,7 @@
             const convertor = $.convertor,
                 conversionPath = convertor.getConversionPath(from, to);
             if (!conversionPath) {
-                $.console.error(`[CacheRecord._convert] Conversion conversion ${from} ---> ${to} cannot be done!`);
+                $.console.error(`[CacheRecord._convert] Conversion ${from} ---> ${to} cannot be done!`);
                 return; //no-op
             }
 
@@ -576,7 +627,7 @@
             const convertor = $.convertor,
                 conversionPath = convertor.getConversionPath(this._type, type);
             if (!conversionPath) {
-                $.console.error(`[SimpleCacheRecord.transformTo] Conversion conversion ${this._type} ---> ${type} cannot be done!`);
+                $.console.error(`[SimpleCacheRecord.transformTo] Conversion ${this._type} ---> ${type} cannot be done!`);
                 return $.Promise.resolve(); //no-op
             }
 
@@ -630,14 +681,6 @@
             this._type = type;
             this._data = data;
             this.loaded = true;
-            // TODO: if done greedily, we transform each plugin set call
-            //  pros: we can show midresults
-            //  cons: unecessary work
-            //  might be solved by introducing explicit tile update pipeline (already attemps)
-            //   --> flag that knows which update is last
-            // if (this.format && !this.format.includes(type)) {
-            //     this.transformTo(this.format);
-            // }
         }
     };
 
@@ -685,7 +728,7 @@
          * the number of images below that number. Note, as well, that even the number of images
          * may temporarily surpass that number, but should eventually come back down to the max specified.
          * @private
-         * @param {Object} options - Tile info.
+         * @param {Object} options - Cache creation parameters.
          * @param {OpenSeadragon.Tile} options.tile - The tile to cache.
          * @param {?String} [options.cacheKey=undefined] - Cache Key to use. Defaults to options.tile.cacheKey
          * @param {String} options.tile.cacheKey - The unique key used to identify this tile in the cache.
@@ -704,9 +747,13 @@
             $.console.assert( theTile, "[TileCache.cacheTile] options.tile is required" );
             $.console.assert( theTile.cacheKey, "[TileCache.cacheTile] options.tile.cacheKey is required" );
 
-            let cutoff = options.cutoff || 0,
-                insertionIndex = this._tilesLoaded.length,
-                cacheKey = options.cacheKey || theTile.cacheKey;
+            if (options.image instanceof Image) {
+                $.console.warn("[TileCache.cacheTile] options.image is deprecated!" );
+                options.data = options.image;
+                options.dataType = "image";
+            }
+
+            let cacheKey = options.cacheKey || theTile.cacheKey;
 
             let cacheRecord = this._cachesLoaded[cacheKey] || this._zombiesLoaded[cacheKey];
             if (!cacheRecord) {
@@ -717,8 +764,8 @@
                 }
 
                 //allow anything but undefined, null, false (other values mean the data was set, for example '0')
-                $.console.assert( options.data !== undefined && options.data !== null && options.data !== false,
-                    "[TileCache.cacheTile] options.data is required to create an CacheRecord" );
+                const validData = options.data !== undefined && options.data !== null && options.data !== false;
+                $.console.assert( validData, "[TileCache.cacheTile] options.data is required to create an CacheRecord" );
                 cacheRecord = this._cachesLoaded[cacheKey] = new $.CacheRecord();
                 this._cachesLoadedCount++;
             } else if (cacheRecord._destroyed) {
@@ -738,9 +785,151 @@
                 theTile.tiledImage._needsDraw = true;
             }
 
+            this._freeOldRecordRoutine(theTile, options.cutoff || 0);
+            return cacheRecord;
+        }
+
+        /**
+         * Changes cache key
+         * @private
+         * @param {Object} options - Cache creation parameters.
+         * @param {String} options.oldCacheKey - Current key
+         * @param {String} options.newCacheKey - New key to set
+         * @return {OpenSeadragon.CacheRecord | null}
+         */
+        renameCache( options ) {
+            let originalCache = this._cachesLoaded[options.oldCacheKey];
+            const newKey = options.newCacheKey,
+                oldKey = options.oldCacheKey;
+
+            if (!originalCache) {
+                originalCache = this._zombiesLoaded[oldKey];
+                $.console.assert( originalCache, "[TileCache.renameCache] oldCacheKey must reference existing cache!" );
+                if (this._zombiesLoaded[newKey]) {
+                    $.console.error("Cannot rename zombie cache %s to %s: the target cache is occupied!",
+                        oldKey, newKey);
+                    return null;
+                }
+                this._zombiesLoaded[newKey] = originalCache;
+                delete this._zombiesLoaded[oldKey];
+            } else if (this._cachesLoaded[newKey]) {
+                $.console.error("Cannot rename cache %s to %s: the target cache is occupied!",
+                    oldKey, newKey);
+                return null; // do not remove, we perform additional fixes on caches later on when swap occurred
+            } else {
+                this._cachesLoaded[newKey] = originalCache;
+                delete this._cachesLoaded[oldKey];
+            }
+
+            for (let tile of originalCache._tiles) {
+                tile.reflectCacheRenamed(oldKey, newKey);
+            }
+
+            // do not call free old record routine, we did not increase cache size
+            return originalCache;
+        }
+
+        /**
+         * Reads a cache if it exists and creates a new copy of a target, different cache if it does not
+         * @private
+         * @param {Object} options
+         * @param {OpenSeadragon.Tile} options.tile - The tile to own ot add record for the cache.
+         * @param {String} options.copyTargetKey - The unique key used to identify this tile in the cache.
+         * @param {String} options.newCacheKey - The unique key the copy will be created for.
+         * @param {String} [options.desiredType=undefined] - For optimization purposes, the desired type. Can
+         *   be ignored.
+         * @param {Number} [options.cutoff=0] - If adding this tile goes over the cache max count, this
+         *   function will release an old tile. The cutoff option specifies a tile level at or below which
+         *   tiles will not be released.
+         * @returns {OpenSeadragon.Promise<OpenSeadragon.CacheRecord>} - New record.
+         */
+        cloneCache(options) {
+            const theTile = options.tile;
+            const cacheKey = options.copyTargetKey;
+            //todo consider zombie drop support and custom queue for working cache items only
+            const cacheRecord = this._cachesLoaded[cacheKey] || this._zombiesLoaded[cacheKey];
+            $.console.assert(cacheRecord, "[TileCache.cloneCache] attempt to clone non-existent cache %s!", cacheKey);
+            $.console.assert(!this._cachesLoaded[options.newCacheKey],
+                "[TileCache.cloneCache] attempt to copy clone to existing cache %s!", options.newCacheKey);
+
+            const desiredType = options.desiredType || undefined;
+            return cacheRecord.getDataAs(desiredType, true).then(data => {
+                let newRecord = this._cachesLoaded[options.newCacheKey] = new $.CacheRecord();
+                newRecord.addTile(theTile, data, cacheRecord.type);
+                this._cachesLoadedCount++;
+                this._freeOldRecordRoutine(theTile, options.cutoff || 0);
+                return newRecord;
+            });
+        }
+
+        /**
+         * Consume cache by another cache
+         * @private
+         * @param {Object} options
+         * @param {OpenSeadragon.Tile} options.tile - The tile to own ot add record for the cache.
+         * @param {String} options.victimKey - Cache that will be erased. In fact, the victim _replaces_ consumer,
+         *   inheriting its tiles and key.
+         * @param {String} options.consumerKey - The cache that consumes the victim. In fact, it gets destroyed and
+         *   replaced by victim, which inherits all its metadata.
+         * @param {}
+         */
+        consumeCache(options) {
+            const victim = this._cachesLoaded[options.victimKey],
+                tile = options.tile;
+            if (!victim || (!tile.loaded && !tile.loading)) {
+                $.console.warn("Attempt to consume non-existent cache: this is probably a bug!");
+                return;
+            }
+            const consumer = this._cachesLoaded[options.consumerKey];
+            let tiles = [...tile.getCache()._tiles];
+
+            if (consumer) {
+                // We need to avoid costly conversions: replace consumer.
+                // unloadCacheForTile() will modify the array, iterate over a copy
+                const iterateTiles = [...consumer._tiles];
+                for (let tile of iterateTiles) {
+                    this.unloadCacheForTile(tile, options.consumerKey, true);
+                }
+            }
+            // Just swap victim to become new consumer
+            const resultCache = this.renameCache({
+                oldCacheKey: options.victimKey,
+                newCacheKey: options.consumerKey
+            });
+
+            if (resultCache) {
+                // Only one cache got working item, other caches were idle: update cache: add the new cache
+                // we can add since we removed above with unloadCacheForTile()
+                for (let tile of tiles) {
+                    if (tile !== options.tile && tile.loaded) {
+                        tile.addCache(options.consumerKey, resultCache.data, resultCache.type, true, false);
+                    }
+                }
+            }
+        }
+
+        /**
+         * @private
+         * This method ensures other tiles are restored if one of the tiles
+         * was requested restore().
+         * @param tile
+         * @param originalCache
+         */
+        restoreTilesThatShareOriginalCache(tile, originalCache) {
+            for (let t of originalCache._tiles) {
+                // todo a bit dirty, touching tile privates
+                this.unloadCacheForTile(t, t.cacheKey, t.__restoreRequestedFree);
+                delete t._caches[t.cacheKey];
+                t.cacheKey = t.originalCacheKey;
+            }
+        }
+
+        _freeOldRecordRoutine(theTile, cutoff) {
+            let insertionIndex = this._tilesLoaded.length,
+                worstTileIndex = -1;
+
             // Note that just because we're unloading a tile doesn't necessarily mean
             // we're unloading its cache records. With repeated calls it should sort itself out, though.
-            let worstTileIndex = -1;
             if ( this._cachesLoadedCount + this._zombiesLoadedCount > this._maxCacheItemCount ) {
                 //prefer zombie deletion, faster, better
                 if (this._zombiesLoadedCount > 0) {
@@ -759,7 +948,8 @@
 
                         if ( prevTile.level <= cutoff ||
                             prevTile.beingDrawn ||
-                            prevTile.loading ) {
+                            prevTile.loading ||
+                            prevTile.processing ) {
                             continue;
                         }
                         if ( !worstTile ) {
@@ -793,8 +983,6 @@
                 //tile is already recorded, do not add tile, but remove the tile at insertion index
                 this._tilesLoaded.splice(insertionIndex, 1);
             }
-
-            return cacheRecord;
         }
 
         /**

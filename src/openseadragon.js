@@ -1081,6 +1081,14 @@ function OpenSeadragon( options ){
     }());
 
     /**
+     * If true, OpenSeadragon uses async execution, else it uses synchronous execution.
+     * Note that disabling async means no plugins that use Promises / async will work with OSD.
+     * @member {boolean}
+     * @memberof OpenSeadragon
+     */
+    $.supportsAsync = true;
+
+    /**
      * A ratio comparing the device screen's pixel density to the canvas's backing store pixel density,
      * clamped to a minimum of 1. Defaults to 1 if canvas isn't supported by the browser.
      * @function getCurrentPixelDensityRatio
@@ -2622,53 +2630,6 @@ function OpenSeadragon( options ){
             // eslint-disable-next-line no-use-before-define
             $.extend(FILEFORMATS, formats);
         },
-
-
-        //@private, runs non-invasive update of all tiles given in the list
-        invalidateTilesLater: function(tileList, tStamp, viewer) {
-            if (tileList.length < 1) {
-                return;
-            }
-
-            function finish () {
-                const tile = tileList[0];
-                const tiledImage = tile.tiledImage;
-                tiledImage.invalidatedFinishAt = tiledImage.invalidatedAt;
-                for (let tile of tileList) {
-                    tile.render();
-                }
-                viewer.forceRedraw();
-            }
-
-            $.Promise.all(tileList.map(tile => {
-                if (!tile.loaded) {
-                    return undefined;
-                }
-
-                const tiledImage = tile.tiledImage;
-                if (tiledImage.invalidatedAt > tStamp) {
-                    return undefined;
-                }
-
-                const tileCache = tile.getCache();
-                if (tileCache._updateStamp >= tStamp) {
-                    return undefined;
-                }
-                tileCache._updateStamp = tStamp;
-                return viewer.raiseEventAwaiting('tile-needs-update', {
-                    tile: tile,
-                    tiledImage: tile.tiledImage,
-                }).then(() => {
-                    // TODO: check that the user has finished tile update and if not, rename cache key or throw
-                    const newCache = tile.getCache();
-                    if (newCache) {
-                        newCache._updateStamp = tStamp;
-                    } else {
-                        $.console.error("After an update, the tile %s has not cache data! Check handlers on 'tile-needs-update' event!", tile);
-                    }
-                });
-            })).catch(finish).then(finish);
-        },
     });
 
 
@@ -2935,90 +2896,97 @@ function OpenSeadragon( options ){
     }
 
     /**
-     * Promise proxy in OpenSeadragon, can be removed once IE11 support is dropped
+     * Promise proxy in OpenSeadragon, enables $.supportsAsync feature.
      * @type {PromiseConstructor}
      */
-    $.Promise = (function () {
-        return class {
-            constructor(handler) {
-                this._error = false;
-                this.__value = undefined;
+    $.Promise = window["Promise"] && $.supportsAsync ? window["Promise"] : class {
+        constructor(handler) {
+            this._error = false;
+            this.__value = undefined;
 
-                try {
-                    handler(
-                        (value) => {
-                            this._value = value;
-                        },
-                        (error) => {
-                            this._value = error;
-                            this._error = true;
+            try {
+                // Make sure to unwrap all nested promises!
+                handler(
+                    (value) => {
+                        while (value instanceof $.Promise) {
+                            value = value._value;
                         }
-                    );
+                        this._value = value;
+                    },
+                    (error) => {
+                        while (error instanceof $.Promise) {
+                            error = error._value;
+                        }
+                        this._value = error;
+                        this._error = true;
+                    }
+                );
+            } catch (e) {
+                this._value = e;
+                this._error = true;
+            }
+        }
+
+        then(handler) {
+            if (!this._error) {
+                try {
+                    this._value = handler(this._value);
                 } catch (e) {
                     this._value = e;
                     this._error = true;
                 }
             }
+            return this;
+        }
 
-            then(handler) {
-                if (!this._error) {
-                    try {
-                        this._value = handler(this._value);
-                    } catch (e) {
-                        this._value = e;
-                        this._error = true;
-                    }
+        catch(handler) {
+            if (this._error) {
+                try {
+                    this._value = handler(this._value);
+                    this._error = false;
+                } catch (e) {
+                    this._value = e;
+                    this._error = true;
                 }
-                return this;
             }
+            return this;
+        }
 
-            catch(handler) {
-                if (this._error) {
-                    try {
-                        this._value = handler(this._value);
-                        this._error = false;
-                    } catch (e) {
-                        this._value = e;
-                        this._error = true;
-                    }
-                }
-                return this;
+        get _value() {
+            return this.__value;
+        }
+        set _value(val) {
+            if (val && val.constructor === this.constructor) {
+                val = val._value; //unwrap
             }
+            this.__value = val;
+        }
 
-            get _value() {
-                return this.__value;
-            }
-            set _value(val) {
-                if (val && val.constructor === this.constructor) {
-                    val = val._value; //unwrap
-                }
-                this.__value = val;
-            }
+        static resolve(value) {
+            return new this((resolve) => resolve(value));
+        }
 
-            static resolve(value) {
-                return new this((resolve) => resolve(value));
-            }
+        static reject(error) {
+            return new this((_, reject) => reject(error));
+        }
 
-            static reject(error) {
-                return new this((_, reject) => reject(error));
-            }
+        static all(functions) {
+            return new this((resolve) => {
+                // no async support, just execute them
+                return resolve(functions.map(fn => fn()));
+            });
+        }
 
-            static all(functions) {
-                return functions.map(fn => new this(fn));
+        static race(functions) {
+            if (functions.length < 1) {
+                return this.resolve();
             }
-
-            static race(functions) {
-                if (functions.length < 1) {
-                    return undefined;
-                }
-                return new this(functions[0]);
-            }
-        };
-        // if (window.Promise) {
-        //     return window.Promise;
-        // }
-        // todo let users chose sync/async
-    })();
+            // no async support, just execute the first
+            return new this((resolve) => {
+                return resolve(functions[0]());
+            });
+        }
+    };
 }(OpenSeadragon));
 
 

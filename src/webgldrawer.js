@@ -99,7 +99,7 @@
             this._setupRenderer();
 
             // Unique type per drawer: uploads texture to unique webgl context.
-            this._dataType = `${Date.now()}_TEX_2D`;
+            this._dataType = `${this.getId()}_TEX_2D`;
             this._supportedFormats = [];
             this._setupTextureHandlers(this._dataType);
 

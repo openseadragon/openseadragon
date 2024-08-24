@@ -145,6 +145,11 @@ const viewer = window.viewer = new OpenSeadragon({
     tileSources: targetSource,
     crossOriginPolicy: 'Anonymous',
     drawer: switcher.activeImplementation("drawer"),
+    showNavigator: true,
+    wrapHorizontal: true,
+    gestureSettingsMouse: {
+        clickToZoom:  false
+    }
 });
 
 $("#image-select")
@@ -785,3 +790,55 @@ window.debugCache = function () {
     }
 }
 
+
+// Monitoring of tiles:
+let monitoredTile = null;
+async function updateCanvas(node, tile, targetCacheKey) {
+    const data = await tile.getCache(targetCacheKey)?.getDataAs('context2d', true);
+    if (!data) {
+        const text = document.createElement("span");
+        text.innerHTML = targetCacheKey + "<br> empty";
+        node.replaceChildren(text);
+    } else {
+        node.replaceChildren(data.canvas);
+    }
+}
+async function processTile(tile) {
+    console.log("Selected tile", tile);
+    await Promise.all([
+        updateCanvas(document.getElementById("tile-original"), tile, tile.originalCacheKey),
+        updateCanvas(document.getElementById("tile-working"), tile, tile._wcKey),
+        updateCanvas(document.getElementById("tile-main"), tile, tile.cacheKey),
+    ]);
+}
+viewer.addHandler('tile-invalidated', async event => {
+    if (event.tile === monitoredTile) {
+        await processTile(monitoredTile);
+    }
+}, null, -Infinity); // as a last handler
+
+// When testing code, you can call in OSD $.debugTile(message,  tile) and it will log only for selected tiles on the canvas
+OpenSeadragon.debugTile = function (msg, t) {
+    if (monitoredTile && monitoredTile.x === t.x && monitoredTile.y === t.y && monitoredTile.level === t.level) {
+        console.log(msg, t);
+    }
+}
+
+viewer.addHandler("canvas-release", e => {
+    const tiledImage = viewer.world.getItemAt(viewer.world.getItemCount()-1);
+    if (!tiledImage) {
+        monitoredTile = null;
+        return;
+    }
+
+    const position = viewer.viewport.windowToViewportCoordinates(e.position);
+
+    let tiles = tiledImage._lastDrawn;
+    for (let i = 0; i < tiles.length; i++) {
+        if (tiles[i].tile.bounds.containsPoint(position)) {
+            monitoredTile = tiles[i].tile;
+            return processTile(monitoredTile);
+        }
+    }
+    monitoredTile = null;
+});
