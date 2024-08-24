@@ -54,8 +54,8 @@
         const self = this;
         this.viewer = options.viewer;
 
-        this.viewer.addHandler('tile-loaded', tileLoadedHandler);
-        this.viewer.addHandler('tile-invalidated', tileUpdateHandler);
+        this.viewer.addHandler('tile-loaded', applyFilters);
+        this.viewer.addHandler('tile-invalidated', applyFilters);
 
         // filterIncrement allows to determine whether a tile contains the
         // latest filters results.
@@ -63,26 +63,12 @@
 
         setOptions(this, options);
 
-        async function tileLoadedHandler(event) {
-            await applyFilters(event.tile, event.tiledImage);
-        }
-
-        function tileUpdateHandler(event) {
-            const tile = event.tile;
-            const incrementCount = tile._filterIncrement;
-            if (incrementCount === self.filterIncrement) {
-                //we _know_ we have up-to-date data to render
-                return;
-            }
-            //go async otherwise
-            return applyFilters(tile, event.tiledImage);
-        }
-
-        async function applyFilters(tile, tiledImage) {
-            const processors = getFiltersProcessors(self, tiledImage);
+        async function applyFilters(e) {
+            const tile = e.tile,
+                tiledImage = e.tiledImage,
+                processors = getFiltersProcessors(self, tiledImage);
 
             if (processors.length === 0) {
-                tile._filterIncrement = self.filterIncrement;
                 return;
             }
 

@@ -321,7 +321,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         });
 
         $.Promise.all(tileList.map(tile => {
-            tile.AAAAAAA = new Date().toISOString();
             if (restoreTiles) {
                 tile.restore();
             }
