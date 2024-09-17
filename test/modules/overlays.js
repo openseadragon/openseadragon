@@ -263,9 +263,9 @@
             var zoom = viewport.viewportToImageZoom(viewport.getZoom(true));
             var expectedWidth = 124 * zoom;
             var expectedHeight = 132 * zoom;
-            Util.assessNumericValue(assert, $("#overlay-wrapper-overlay").width(), expectedWidth, epsilon,
+            Util.assessNumericValue(assert, $("#overlay").width(), expectedWidth, epsilon,
                 "Width mismatch " + contextMessage);
-            Util.assessNumericValue(assert, $("#overlay-wrapper-overlay").height(), expectedHeight, epsilon,
+            Util.assessNumericValue(assert, $("#overlay").height(), expectedHeight, epsilon,
                 "Height mismatch " + contextMessage);
 
 
@@ -277,9 +277,9 @@
             Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
                 "Fixed overlay Y position mismatch " + contextMessage);
 
-            Util.assessNumericValue(assert, $("#overlay-wrapper-fixed-overlay").width(), 70, epsilon,
+            Util.assessNumericValue(assert, $("#fixed-overlay").width(), 70, epsilon,
                 "Fixed overlay width mismatch " + contextMessage);
-            Util.assessNumericValue(assert, $("#overlay-wrapper-fixed-overlay").height(), 60, epsilon,
+            Util.assessNumericValue(assert, $("#fixed-overlay").height(), 60, epsilon,
                 "Fixed overlay height mismatch " + contextMessage);
         }
 
@@ -334,9 +334,9 @@
 
             var expectedSize = viewport.deltaPixelsFromPoints(
                 new OpenSeadragon.Point(0.5, 0.1));
-            Util.assessNumericValue(assert, $("#overlay-wrapper-overlay").width(), expectedSize.x, epsilon,
+            Util.assessNumericValue(assert, $("#overlay").width(), expectedSize.x, epsilon,
                 "Width mismatch " + contextMessage);
-            Util.assessNumericValue(assert, $("#overlay-wrapper-overlay").height(), expectedSize.y, epsilon,
+            Util.assessNumericValue(assert, $("#overlay").height(), expectedSize.y, epsilon,
                 "Height mismatch " + contextMessage);
 
 
@@ -348,9 +348,9 @@
             Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
                 "Fixed overlay Y position mismatch " + contextMessage);
 
-            Util.assessNumericValue(assert, $("#overlay-wrapper-fixed-overlay").width(), 70, epsilon,
+            Util.assessNumericValue(assert, $("#fixed-overlay").width(), 70, epsilon,
                 "Fixed overlay width mismatch " + contextMessage);
-            Util.assessNumericValue(assert, $("#overlay-wrapper-fixed-overlay").height(), 60, epsilon,
+            Util.assessNumericValue(assert, $("#fixed-overlay").height(), 60, epsilon,
                 "Fixed overlay height mismatch " + contextMessage);
         }
 
@@ -492,8 +492,8 @@
             checkFixedOverlayPosition(new OpenSeadragon.Point(-35, -30),
                 "with overlay of size 70,60.");
 
-            $("#overlay-wrapper-fixed-overlay").width(50);
-            $("#overlay-wrapper-fixed-overlay").height(40);
+            $("#fixed-overlay").width(50);
+            $("#fixed-overlay").height(40);
 
             // The resizing of the overlays is not detected by the viewer's loop.
             viewer.forceRedraw();
@@ -503,8 +503,8 @@
                     "with overlay of size 50,40.");
 
                 // Restore original size
-                $("#overlay-wrapper-fixed-overlay").width(70);
-                $("#overlay-wrapper-fixed-overlay").height(60);
+                $("#fixed-overlay").width(70);
+                $("#fixed-overlay").height(60);
 
                 done();
             }, 100);
@@ -547,8 +547,8 @@
             checkFixedOverlayPosition(new OpenSeadragon.Point(-35, -30),
                 "with overlay of size 70,60.");
 
-            $("#overlay-wrapper-fixed-overlay").width(50);
-            $("#overlay-wrapper-fixed-overlay").height(40);
+            $("#fixed-overlay").width(50);
+            $("#fixed-overlay").height(40);
 
             // The resizing of the overlays is not detected by the viewer's loop.
             viewer.forceRedraw();
@@ -558,8 +558,8 @@
                     "with overlay of size 50,40.");
 
                 // Restore original size
-                $("#overlay-wrapper-fixed-overlay").width(70);
-                $("#overlay-wrapper-fixed-overlay").height(60);
+                $("#fixed-overlay").width(70);
+                $("#fixed-overlay").height(60);
 
                 done();
             }, 100);
