@@ -138,11 +138,6 @@
             this.elementWrapper.id = "overlay-wrapper";
         }
 
-        const overlayStyles = window.getComputedStyle(this.element);
-
-        for (let style of overlayStyles) {
-            this.elementWrapper.style[style] = overlayStyles.getPropertyValue(style);
-        }
         this.style = this.elementWrapper.style;
         this._init(options);
     };
