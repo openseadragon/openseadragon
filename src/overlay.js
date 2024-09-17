@@ -283,11 +283,9 @@
                 style.left = position.x + "px";
                 style.top = position.y + "px";
                 if (this.width !== null) {
-                    style.width = size.x + "px";
                     innerStyle.width = size.x + "px";
                 }
                 if (this.height !== null) {
-                    style.height = size.y + "px";
                     innerStyle.height = size.y + "px";
                 }
                 var transformOriginProp = $.getCssPropertyWithVendorPrefix(
