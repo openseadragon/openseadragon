@@ -254,10 +254,10 @@
 
             var expPosition = viewport.imageToViewerElementCoordinates(
                 new OpenSeadragon.Point(13, 120));
-            var actPosition = $("#overlay-wrapper-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Y position mismatch " + contextMessage);
 
             var zoom = viewport.viewportToImageZoom(viewport.getZoom(true));
@@ -271,10 +271,10 @@
 
             expPosition = viewport.imageToViewerElementCoordinates(
                 new OpenSeadragon.Point(400, 500));
-            actPosition = $("#overlay-wrapper-fixed-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+            actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true);;
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Fixed overlay Y position mismatch " + contextMessage);
 
             Util.assessNumericValue(assert, $("#fixed-overlay").width(), 70, epsilon,
@@ -326,10 +326,10 @@
 
             var expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.2, 0.1));
-            var actPosition = $("#overlay-wrapper-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Y position mismatch " + contextMessage);
 
             var expectedSize = viewport.deltaPixelsFromPoints(
@@ -342,10 +342,10 @@
 
             expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.6));
-            actPosition = $("#overlay-wrapper-fixed-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+            actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true);
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Fixed overlay Y position mismatch " + contextMessage);
 
             Util.assessNumericValue(assert, $("#fixed-overlay").width(), 70, epsilon,
@@ -402,10 +402,10 @@
 
             var expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.2, 0.1));
-            var actPosition = $("#overlay-wrapper-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Y position mismatch " + contextMessage);
         }
 
@@ -415,10 +415,11 @@
             var expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.6))
                 .plus(expectedOffset);
-            var actPosition = $("#overlay-wrapper-fixed-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+
+            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Fixed overlay Y position mismatch " + contextMessage);
         }
 
@@ -481,10 +482,10 @@
             var expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.6))
                 .plus(expectedOffset);
-            var actPosition = $("#overlay-wrapper-fixed-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Fixed overlay Y position mismatch " + contextMessage);
         }
 
@@ -536,10 +537,10 @@
             var expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.6))
                 .plus(expectedOffset);
-            var actPosition = $("#overlay-wrapper-fixed-overlay").position();
-            Util.assessNumericValue(assert, actPosition.left, expPosition.x, epsilon,
+            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
+            Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
-            Util.assessNumericValue(assert, actPosition.top, expPosition.y, epsilon,
+            Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Fixed overlay Y position mismatch " + contextMessage);
         }
 
@@ -783,16 +784,16 @@
         viewer.addOnceHandler('open', function() {
             var viewport = viewer.viewport;
 
-            var $overlay = $("#overlay-wrapper-fully-scaled-overlay");
+            var $overlay = $("#fully-scaled-overlay");
             var expectedSize = viewport.deltaPixelsFromPointsNoRotate(
                 new OpenSeadragon.Point(1, 1));
             var expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(1, 1))
                 .minus(expectedSize);
-            var actualPosition = $overlay.position();
-            Util.assessNumericValue(assert, actualPosition.left, expectedPosition.x, epsilon,
+            var actualPosition = viewport.pixelFromPoint(viewer.getOverlayById("fully-scaled-overlay").position, true).minus(expectedSize);
+            Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Scaled overlay position.x should adjust to rotation.");
-            Util.assessNumericValue(assert, actualPosition.top, expectedPosition.y, epsilon,
+            Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Scaled overlay position.y should adjust to rotation.");
 
             var actualWidth = $overlay.width();
@@ -834,7 +835,7 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var $overlay = $("#overlay-wrapper-horizontally-scaled-overlay");
+            var $overlay = $("#horizontally-scaled-overlay");
             var notScaledWidth = 100;
             var notScaledHeight = 100;
             $overlay.get(0).style.height = notScaledHeight + "px";
@@ -851,10 +852,10 @@
             var expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.5))
                 .minus(new OpenSeadragon.Point(expectedWidth / 2, notScaledHeight / 2));
-            var actualPosition = $overlay.position();
-            Util.assessNumericValue(assert, actualPosition.left, expectedPosition.x, epsilon,
+            var actualPosition = viewport.pixelFromPoint(viewer.getOverlayById("horizontally-scaled-overlay").position, true).minus(new OpenSeadragon.Point(expectedWidth / 2, notScaledHeight / 2));
+            Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Horizontally scaled overlay position.x should adjust to rotation.");
-            Util.assessNumericValue(assert, actualPosition.top, expectedPosition.y, epsilon,
+            Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Horizontally scaled overlay position.y should adjust to rotation.");
 
             var actualWidth = $overlay.width();
@@ -897,7 +898,7 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var $overlay = $("#overlay-wrapper-vertically-scaled-overlay");
+            var $overlay = $("#vertically-scaled-overlay");
             var notScaledWidth = 100;
             var notScaledHeight = 100;
             $overlay.get(0).style.width = notScaledWidth + "px";
@@ -914,10 +915,10 @@
             var expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0, 0.5))
                 .minus(new OpenSeadragon.Point(0, expectedHeight / 2));
-            var actualPosition = $overlay.position();
-            Util.assessNumericValue(assert, actualPosition.left, expectedPosition.x, epsilon,
+            var actualPosition= viewport.pixelFromPoint(viewer.getOverlayById("vertically-scaled-overlay").position).minus(new OpenSeadragon.Point(0, expectedHeight / 2));
+            Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Vertically scaled overlay position.x should adjust to rotation.");
-            Util.assessNumericValue(assert, actualPosition.top, expectedPosition.y, epsilon,
+            Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Vertically scaled overlay position.y should adjust to rotation.");
 
             var actualWidth = $overlay.width();
@@ -959,7 +960,7 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var $overlay = $("#overlay-wrapper-not-scaled-overlay");
+            var $overlay = $("#not-scaled-overlay");
             var notScaledWidth = 100;
             var notScaledHeight = 100;
             $overlay.get(0).style.width = notScaledWidth + "px";
@@ -975,10 +976,10 @@
             var expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(1, 0))
                 .minus(new OpenSeadragon.Point(notScaledWidth, 0));
-            var actualPosition = $overlay.position();
-            Util.assessNumericValue(assert, actualPosition.left, expectedPosition.x, epsilon,
+            var actualPosition= viewport.pixelFromPoint(viewer.getOverlayById("not-scaled-overlay").position).minus(new OpenSeadragon.Point(notScaledWidth, 0));
+            Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Not scaled overlay position.x should adjust to rotation.");
-            Util.assessNumericValue(assert, actualPosition.top, expectedPosition.y, epsilon,
+            Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Not scaled overlay position.y should adjust to rotation.");
 
             var actualWidth = $overlay.width();
@@ -1024,7 +1025,7 @@
         viewer.addOnceHandler('open', function() {
             var viewport = viewer.viewport;
 
-            var $overlay = $("#overlay-wrapper-fully-scaled-overlay");
+            var $overlay = $("#fully-scaled-overlay");
             var expectedRect = viewport.viewportToViewerElementRectangle(
                 new OpenSeadragon.Rect(0, 0, 1, 1)).getBoundingBox();
             var actualPosition = $overlay.position();
@@ -1104,14 +1105,14 @@
 
         viewer.addOnceHandler('open', function() {
             var viewport = viewer.viewport;
-            var $overlay = $("#overlay-wrapper-fully-scaled-overlay");
+            var $overlay = $("#fully-scaled-overlay");
             var expectedSize = viewport.deltaPixelsFromPointsNoRotate(
                 new OpenSeadragon.Point(1, 1));
             var expectedPosition = viewport.pixelFromPoint(
                 new OpenSeadragon.Point(1, 1))
                 .minus(expectedSize);
             // We can't rely on jQuery.position with transforms.
-            var actualStyle = $overlay.get(0).style;
+            var actualStyle= viewer.getOverlayById("fully-scaled-overlay").style;
             var left = Number(actualStyle.left.replace("px", ""));
             var top = Number(actualStyle.top.replace("px", ""));
             Util.assessNumericValue(assert, left, expectedPosition.x, epsilon,
