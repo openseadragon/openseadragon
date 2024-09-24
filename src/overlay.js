@@ -128,9 +128,17 @@
             };
         }
 
+        this.elementWrapper = document.createElement('div');
         this.element = options.element;
-        this.element.innerHTML = "<div>" + this.element.innerHTML + "</div>";
-        this.style = options.element.style;
+        this.elementWrapper.appendChild(this.element);
+
+        if (this.element.id) {
+            this.elementWrapper.id = "overlay-wrapper-" + this.element.id;
+        } else {
+            this.elementWrapper.id = "overlay-wrapper";
+        }
+
+        this.style = this.elementWrapper.style;
         this._init(options);
     };
 
@@ -197,7 +205,7 @@
          * @function
          */
         destroy: function() {
-            var element = this.element;
+            var element = this.elementWrapper;
             var style = this.style;
 
             if (element.parentNode) {
@@ -242,7 +250,7 @@
          * @param {Element} container
          */
         drawHTML: function(container, viewport) {
-            var element = this.element;
+            var element = this.elementWrapper;
             if (element.parentNode !== container) {
                 //save the source parent for later if we need it
                 element.prevElementParent = element.parentNode;
@@ -253,7 +261,7 @@
                 this.style.position = "absolute";
                 // this.size is used by overlays which don't get scaled in at
                 // least one direction when this.checkResize is set to false.
-                this.size = $.getElementSize(element);
+                this.size = $.getElementSize(this.elementWrapper);
             }
             var positionAndSize = this._getOverlayPositionAndSize(viewport);
             var position = positionAndSize.position;
@@ -270,15 +278,15 @@
                 this.onDraw(position, size, this.element);
             } else {
                 var style = this.style;
-                var innerElement = element.firstChild;
-                var innerStyle = innerElement.style;
+                var innerStyle = this.element.style;
+                innerStyle.display = "block";
                 style.left = position.x + "px";
                 style.top = position.y + "px";
                 if (this.width !== null) {
-                    style.width = size.x + "px";
+                    innerStyle.width = size.x + "px";
                 }
                 if (this.height !== null) {
-                    style.height = size.y + "px";
+                    innerStyle.height = size.y + "px";
                 }
                 var transformOriginProp = $.getCssPropertyWithVendorPrefix(
                     'transformOrigin');
@@ -303,7 +311,7 @@
                         style[transformProp] = "";
                     }
                 }
-                style.display = 'block';
+                style.display = 'flex';
             }
         },
 
@@ -355,7 +363,7 @@
             }
             if (this.checkResize &&
                 (this.width === null || this.height === null)) {
-                var eltSize = this.size = $.getElementSize(this.element);
+                var eltSize = this.size = $.getElementSize(this.elementWrapper);
                 if (this.width === null) {
                     width = eltSize.x;
                 }
