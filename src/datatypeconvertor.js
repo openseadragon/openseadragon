@@ -373,7 +373,7 @@ $.DataTypeConvertor = class {
     }
 
     /**
-     * Destroy the data item given.
+     * Copy the data item given.
      * @param {OpenSeadragon.Tile} tile
      * @param {any} data data item to convert
      * @param {string} type data type

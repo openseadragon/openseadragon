@@ -17,12 +17,6 @@
     if (!$) {
         throw new Error('OpenSeadragon is missing.');
     }
-    // Requires OpenSeadragon >=2.1
-    if (!$.version || $.version.major < 2 ||
-        $.version.major === 2 && $.version.minor < 1) {
-        throw new Error(
-            'Filtering plugin requires OpenSeadragon version >= 2.1');
-    }
 
     $.Viewer.prototype.setFilterOptions = function(options) {
         if (!this.filterPluginInstance) {
@@ -81,7 +75,6 @@
                 await processors[i](contextCopy);
             }
 
-            tile._filterIncrement = self.filterIncrement;
             await tile.setData(contextCopy, 'context2d');
         }
     };

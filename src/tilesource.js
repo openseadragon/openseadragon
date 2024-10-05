@@ -436,10 +436,11 @@ $.TileSource.prototype = {
      * Responsible for retrieving, and caching the
      * image metadata pertinent to this TileSources implementation.
      * There are three scenarios of opening a tile source:
-     * 1) if it is a string parseable as XML or JSON, the string is converted to an object
-     * 2) if it is a string, then
-     *   internally, this method
-     * else
+     * This method is only called by OSD if the TileSource configuration is a non-parseable string (~url).
+     *
+     * The string can contain a hash `#` symbol, followed by
+     * key=value arguments. If this is the case, this method sends this
+     * data as a POST body.
      *
      * @function
      * @param {String} url
