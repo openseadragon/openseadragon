@@ -303,6 +303,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._tileCache.clearTilesFor(this);
         this.lastResetTime = $.now();
         this._needsDraw = true;
+        this._fullyLoaded = false;
     },
 
     /**
