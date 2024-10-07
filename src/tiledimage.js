@@ -878,6 +878,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._clip = null;
         }
 
+        this._needsUpdate = true;
         this._needsDraw = true;
         /**
          * Raised when the TiledImage's clip is changed.
