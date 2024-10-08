@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!--
+    This software was developed at the National Institute of Standards and
+Technology by employees of the Federal Government in the course of
+their official duties. Pursuant to title 17 Section 105 of the United
+States Code this software is not subject to copyright protection and is
+in the public domain. This software is an experimental system. NIST assumes
+no responsibility whatsoever for its use by other parties, and makes no
+guarantees, expressed or implied, about its quality, reliability, or
+any other characteristic. We would appreciate acknowledgement if the
+    software is used.
+-->
+<html>
+<head>
+    <meta charset="UTF-8">
+
+    <title>OpenSeadragon Filtering</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script type="text/javascript" src='../../../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../../../lib/jquery-1.9.1.min.js'></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+<section class="home home-title">
+    <h1>OpenSeadragon filtering plugin demo.</h1>
+</section>
+
+<section class="home-about">
+    <p>
+        Demo of the OpenSeadragon filtering plugin.
+        Code and documentation are available on
+        <a href="https://github.com/usnistgov/OpenSeadragonFiltering">GitHub</a>.
+    </p>
+    <p>
+        Add/remove filters to visualize the effects.
+    </p>
+</section>
+
+<section class="demo">
+    <div class="wdzt-table-layout wdzt-full-width">
+        <div class="wdzt-row-layout">
+            <div class="wdzt-cell-layout column-2">
+                <div id="openseadragon"></div>
+            </div>
+            <div class="wdzt-cell-layout column-2">
+                <h3>Available filters</h3>
+                <ul id="available">
+                </ul>
+
+                <h3>Selected filters</h3>
+                <ul id="selected"></ul>
+
+                <p>Drag and drop the selected filters to set their order.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="site-footer">
+    <div class="section-container">
+        <div class="section-content">
+            This plugin and demo are maintained by the
+            <a href="http://www.nist.gov/itl/ssd/is/">Information System Group</a>
+            within the
+            <a href="http://www.nist.gov/itl/ssd/">Software and Systems Division</a>.
+        </div>
+    </div>
+</footer>
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
+<script src="demo-bundle.js" charset="utf-8"></script>
+
+</body>
+</html>
