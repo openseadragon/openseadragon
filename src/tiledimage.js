@@ -923,13 +923,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.flipped = flip;
     },
 
-    get flipped(){
+    get flipped() {
         return this._flipped;
     },
-    set flipped(flipped){
+    set flipped(flipped) {
         let changed = this._flipped !== !!flipped;
         this._flipped = !!flipped;
-        if(changed){
+        if (changed && this._initialized) {
             this.update(true);
             this._needsDraw = true;
             this._raiseBoundsChange();

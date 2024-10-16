@@ -120,6 +120,9 @@ $.ImageJob.prototype = {
      * @memberof OpenSeadragon.ImageJob#
      */
     finish: function(data, request, dataType) {
+        if (!this.jobId) {
+            return;
+        }
         // old behavior, no deprecation due to possible finish calls with invalid data item (e.g. different error)
         if (data === null || data === undefined || data === false) {
             this.fail(dataType || "[downloadTileStart->finish()] Retrieved data is invalid!", request);
@@ -151,6 +154,7 @@ $.ImageJob.prototype = {
 
         if (this.jobId) {
             window.clearTimeout(this.jobId);
+            this.jobId = null;
         }
 
         this.callback(this);
