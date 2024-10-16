@@ -75,7 +75,7 @@
 
         /**
          * Await ongoing process so that we get cache ready on callback.
-         * @returns {Promise<any>}
+         * @returns {OpenSeadragon.Promise<?>}
          */
         await() {
             if (!this._promise) { //if not cache loaded, do not fail
@@ -403,9 +403,24 @@
 
             // first come first served, data for existing tiles is NOT overridden
             if (this._tiles.length < 1) {
+                // Since we IGNORE new data if already initialized, we support 'data getter'
+                if (typeof data === 'function') {
+                    data = data();
+                }
+
+                // If we receive async callback, we consume the async state
+                if (data instanceof $.Promise) {
+                    this._promise = data.then(d => {
+                        this._data = d;
+                        return d;
+                    });
+                    this._data = null;
+                } else {
+                    this._promise = $.Promise.resolve(data);
+                    this._data = data;
+                }
+
                 this._type = type;
-                this._promise = $.Promise.resolve(data);
-                this._data = data;
                 this.loaded = true;
                 this._tiles.push(tile);
             } else if (!this._tiles.includes(tile)) {
@@ -734,7 +749,8 @@
          * @param {String} options.tile.cacheKey - The unique key used to identify this tile in the cache.
          *   Used if options.cacheKey not set.
          * @param {Image} options.image - The image of the tile to cache. Deprecated.
-         * @param {*} options.data - The data of the tile to cache.
+         * @param {*} options.data - The data of the tile to cache. If `typeof data === 'function'` holds,
+         *   the data is called to obtain the data item: this is an optimization to load data only when necessary.
          * @param {string} [options.dataType] - The data type of the tile to cache. Required.
          * @param {Number} [options.cutoff=0] - If adding this tile goes over the cache max count, this
          *   function will release an old tile. The cutoff option specifies a tile level at or below which
@@ -777,6 +793,12 @@
             if (!options.dataType) {
                 $.console.error("[TileCache.cacheTile] options.dataType is newly required. " +
                     "For easier use of the cache system, use the tile instance API.");
+
+                // We need to force data acquisition now to guess the type
+                if (typeof options.data === 'function') {
+                    $.console.error("[TileCache.cacheTile] options.dataType is mandatory " +
+                        " when data item is a callback!");
+                }
                 options.dataType = $.convertor.guessType(options.data);
             }
 

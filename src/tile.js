@@ -423,8 +423,9 @@ $.Tile.prototype = {
      * @deprecated
      */
     set context2D(value) {
-        $.console.error("[Tile.context2D] property has been deprecated. Use [Tile.setData] instead.");
+        $.console.error("[Tile.context2D] property has been deprecated. Use [Tile.setData] within dedicated update event instead.");
         this.setData(value, "context2d");
+        this.updateRenderTarget();
     },
 
     /**
@@ -473,26 +474,7 @@ $.Tile.prototype = {
         if (!this.tiledImage) {
             return $.Promise.resolve(); //async can access outside its lifetime
         }
-
-        $.console.assert("TIle.getData requires type argument! got '%s'.", type);
-
-        //we return the data synchronously immediatelly (undefined if conversion happens)
-        const cache = this.getCache(this._wcKey);
-        if (!cache) {
-            const targetCopyKey = this.__restore ? this.originalCacheKey : this.cacheKey;
-            const origCache = this.getCache(targetCopyKey);
-            if (!origCache) {
-                $.console.error("[Tile::getData] There is no cache available for tile with key %s", targetCopyKey);
-            }
-
-            //todo consider calling addCache with callback, which can avoid creating data item only to just discard it
-            //  in case we addCache with existing key and the current tile just gets attached as a reference
-            //  .. or explicitly check that such cache does not exist globally (now checking only locally)
-            return origCache.getDataAs(type, true).then(data => {
-                return this.addCache(this._wcKey, data, type, false, false).await();
-            });
-        }
-        return cache.getDataAs(type, false);
+        return this._getOrCreateWorkingCacheData(type);
     },
 
     /**
@@ -521,10 +503,10 @@ $.Tile.prototype = {
             return null; //async context can access the tile outside its lifetime
         }
 
-        const cache = this.getCache(this._wcKey);
+        let cache = this.getCache(this._wcKey);
         if (!cache) {
-            $.console.error("[Tile::setData] You cannot set data without calling tile.getData()! The working cache is not initialized!");
-            return $.Promise.resolve();
+            this._getOrCreateWorkingCacheData(undefined);
+            cache = this.getCache(this._wcKey);
         }
         return cache.setDataAs(value, type);
     },
@@ -611,8 +593,11 @@ $.Tile.prototype = {
      * @param {string} key cache key, must be unique (we recommend re-using this.cacheTile
      *   value and extend it with some another unique content, by default overrides the existing
      *   main cache used for drawing, if not existing.
-     * @param {*} data data to cache - this data will be IGNORED if cache already exists!
-     * @param {string} [type=undefined] data type, will be guessed if not provided
+     * @param {*} data this data will be IGNORED if cache already exists; therefore if
+     *   `typeof data === 'function'` holds (both async and normal functions), the data is called to obtain
+     *   the data item: this is an optimization to load data only when necessary.
+     * @param {string} [type=undefined] data type, will be guessed if not provided (not recommended),
+     *   if data is a callback the type is a mandatory field, not setting it results in undefined behaviour
      * @param {boolean} [setAsMain=false] if true, the key will be set as the tile.cacheKey
      * @param [_safely=true] private
      * @returns {OpenSeadragon.CacheRecord|null} - The cache record the tile was attached to.
@@ -627,6 +612,9 @@ $.Tile.prototype = {
                 $.console.warn(this, "[Tile.addCache] called without type specification. " +
                     "Automated deduction is potentially unsafe: prefer specification of data type explicitly.");
                 this.__typeWarningReported = true;
+            }
+            if (typeof data === 'function') {
+                $.console.error("[TileCache.cacheTile] options.data as a callback requires type argument! Current is " + type);
             }
             type = $.convertor.guessType(data);
         }
@@ -675,6 +663,30 @@ $.Tile.prototype = {
         this._cKey = value;
         // we do not trigger redraw, this is handled within cache
         // as drawers request data for drawing
+    },
+
+    /**
+     * Initializes working cache if it does not exist.
+     * @param {string|undefined} type initial cache type to create
+     * @return {OpenSeadragon.Promise<?>} data-awaiting promise with the cache data
+     * @private
+     */
+    _getOrCreateWorkingCacheData: function (type) {
+        const cache = this.getCache(this._wcKey);
+        if (!cache) {
+            const targetCopyKey = this.__restore ? this.originalCacheKey : this.cacheKey;
+            const origCache = this.getCache(targetCopyKey);
+            if (!origCache) {
+                $.console.error("[Tile::getData] There is no cache available for tile with key %s", targetCopyKey);
+            }
+            // Here ensure type is defined, rquired by data callbacks
+            type = type || origCache.type;
+
+            // Here we use extensively ability to call addCache with callback: working cache is created only if not
+            // already in memory (=> shared).
+            return this.addCache(this._wcKey, () => origCache.getDataAs(type, true), type, false, false).await();
+        }
+        return cache.getDataAs(type, false);
     },
 
     /**
