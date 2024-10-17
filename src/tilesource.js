@@ -435,7 +435,7 @@ $.TileSource.prototype = {
     /**
      * Responsible for retrieving, and caching the
      * image metadata pertinent to this TileSources implementation.
-     * There are three scenarios of opening a tile source:
+     * There are three scenarios of opening a tile source: providing a parseable string, plain object, or an URL.
      * This method is only called by OSD if the TileSource configuration is a non-parseable string (~url).
      *
      * The string can contain a hash `#` symbol, followed by
@@ -726,8 +726,6 @@ $.TileSource.prototype = {
      * you are responsible for manually creating the cache data. This is useful
      * particularly if you want to use empty TiledImage with client-side derived data
      * only. The default tile-cache key is then called "" - an empty string.
-     *
-     * todo AIOSA: provide another hash function that maps data onto tiles 1:1 (e.g sobel) or 1:m (vignetting)
      *
      * Note: default behaviour does not take into account post data.
      * @param {Number} level tile level it was fetched with

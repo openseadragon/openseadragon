@@ -2906,6 +2906,7 @@ function OpenSeadragon( options ){
 
     /**
      * Promise proxy in OpenSeadragon, enables $.supportsAsync feature.
+     * This proxy is also necessary because OperaMini does not implement Promises (checks fail).
      * @type {PromiseConstructor}
      */
     $.Promise = window["Promise"] && $.supportsAsync ? window["Promise"] : class {

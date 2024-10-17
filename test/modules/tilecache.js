@@ -350,9 +350,6 @@
             const workingc00 = tile00.getCache(tile00._wcKey);
             test.notEqual(workingc00, workingc12, "Underlying working cache is not shared despite tiles share hash key.");
 
-            //TODO fix test from here
-            test.ok("TODO: FIX TEST SUITE FOR NEW CACHE SYSTEM");
-
             // now set value with keeping origin
             await tile00.setData(42, T_D);
             const newCache = tile00.getCache(tile00._wcKey);
