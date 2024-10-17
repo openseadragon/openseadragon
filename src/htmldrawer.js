@@ -129,7 +129,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
     }
 
     getSupportedDataFormats() {
-        return [HTMLDrawer.imageCacheType];
+        return [HTMLDrawer.imageCacheType, HTMLDrawer.canvasCacheType];
     }
 
     /**
