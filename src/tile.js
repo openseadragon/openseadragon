@@ -160,26 +160,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.loading = false;
-
-    /**
-     * The HTML div element for this tile
-     * @member {Element} element
-     * @memberof OpenSeadragon.Tile#
-     */
-    this.element    = null;
-    /**
-     * The HTML img element for this tile.
-     * @member {Element} imgElement
-     * @memberof OpenSeadragon.Tile#
-     */
-    this.imgElement = null;
-
-    /**
-     * The alias of this.element.style.
-     * @member {String} style
-     * @memberof OpenSeadragon.Tile#
-     */
-    this.style      = null;
     /**
      * This tile's position on screen, in pixels.
      * @member {OpenSeadragon.Point} position
@@ -366,6 +346,63 @@ $.Tile.prototype = {
     },
 
     /**
+     * The HTML div element for this tile
+     * @member {Element} element
+     * @memberof OpenSeadragon.Tile#
+     * @deprecated
+     */
+    get element() {
+        $.console.error("Tile::element property is deprecated. Use cache API instead. Moreover, this property might be unstable.");
+        const cache = this.getCache();
+        if (!cache || !cache.loaded) {
+            return null;
+        }
+        if (cache.type !== OpenSeadragon.HTMLDrawer.canvasCacheType || cache.type !== OpenSeadragon.HTMLDrawer.imageCacheType) {
+            $.console.error("Access to HtmlDrawer property via Tile instance: HTMLDrawer must be used!");
+            return null;
+        }
+        return cache.data.element;
+    },
+
+    /**
+     * The HTML img element for this tile.
+     * @member {Element} imgElement
+     * @memberof OpenSeadragon.Tile#
+     * @deprecated
+     */
+    get imgElement() {
+        $.console.error("Tile::imgElement property is deprecated. Use cache API instead. Moreover, this property might be unstable.");
+        const cache = this.getCache();
+        if (!cache || !cache.loaded) {
+            return null;
+        }
+        if (cache.type !== OpenSeadragon.HTMLDrawer.canvasCacheType || cache.type !== OpenSeadragon.HTMLDrawer.imageCacheType) {
+            $.console.error("Access to HtmlDrawer property via Tile instance: HTMLDrawer must be used!");
+            return null;
+        }
+        return cache.data.imgElement;
+    },
+
+    /**
+     * The alias of this.element.style.
+     * @member {String} style
+     * @memberof OpenSeadragon.Tile#
+     * @deprecated
+     */
+    get style() {
+        $.console.error("Tile::style property is deprecated. Use cache API instead. Moreover, this property might be unstable.");
+        const cache = this.getCache();
+        if (!cache || !cache.loaded) {
+            return null;
+        }
+        if (cache.type !== OpenSeadragon.HTMLDrawer.canvasCacheType || cache.type !== OpenSeadragon.HTMLDrawer.imageCacheType) {
+            $.console.error("Access to HtmlDrawer property via Tile instance: HTMLDrawer must be used!");
+            return null;
+        }
+        return cache.data.style;
+    },
+
+    /**
      * Get the Image object for this tile.
      * @returns {?Image}
      */
@@ -486,10 +523,12 @@ $.Tile.prototype = {
             return; //async context can access the tile outside its lifetime
         }
 
+        this.__restoreRequestedFree = freeIfUnused;
         if (this.originalCacheKey !== this.cacheKey) {
-            this.__restoreRequestedFree = freeIfUnused;
             this.__restore = true;
         }
+        // Somebody has called restore on this tile, make sure we delete working cache in case there was some
+        this.removeCache(this._wcKey, true);
     },
 
     /**
@@ -528,7 +567,7 @@ $.Tile.prototype = {
             const cache = this.getCache(this.originalCacheKey);
 
             this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
-                this, cache
+                this, cache, this.__restoreRequestedFree
             );
             this.__restore = false;
             return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache, this.processing);
@@ -555,7 +594,7 @@ $.Tile.prototype = {
         //TODO IMPLEMENT LOCKING AND IGNORE PIPELINE OUT OF THESE CALLS
 
         // Now, if working cache exists, we set main cache to the working cache, since it has been updated
-        const cache = this.getCache(this._wcKey);
+        const cache = !requestedRestore && this.getCache(this._wcKey);
         if (cache) {
             let newCacheKey = this.cacheKey === this.originalCacheKey ? "mod://" + this.originalCacheKey : this.cacheKey;
             this.tiledImage._tileCache.consumeCache({
@@ -569,7 +608,7 @@ $.Tile.prototype = {
         // If we requested restore, perform now
         if (requestedRestore) {
             this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
-                this, this.getCache(this.originalCacheKey)
+                this, this.getCache(this.originalCacheKey), this.__restoreRequestedFree
             );
         }
         // Else no work to be done
@@ -805,17 +844,22 @@ $.Tile.prototype = {
     },
 
     /**
-     * Removes tile from its container.
-     * @function
+     * Removes tile from the system: it will still be present in the
+     * OSD memory, but marked as loaded=false, and its data will be erased.
+     * @param {boolean} [erase=false]
      */
-    unload: function() {
-        //TODO AIOSA remove this.element and move it to a data constructor
-        if ( this.imgElement && this.imgElement.parentNode ) {
-            this.imgElement.parentNode.removeChild( this.imgElement );
+    unload: function(erase = false) {
+        if (!this.loaded) {
+            return;
         }
-        if ( this.element && this.element.parentNode ) {
-            this.element.parentNode.removeChild( this.element );
-        }
+        this.tiledImage._tileCache.unloadTile(this, erase);
+    },
+
+    /**
+     * this method shall be called only by cache system when the tile is already empty of data
+     * @private
+     */
+    _unload: function () {
         this.tiledImage = null;
         this._caches    = {};
         this._cacheSize = 0;

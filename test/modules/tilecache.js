@@ -218,7 +218,8 @@
         const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
         const fakeTiledImage1 = MockSeadragon.getTiledImage(fakeViewer);
 
-        //load data
+        //load data: note that tests SETUP MORE CACHES than they might use: it tests that some other caches / tiles
+        // are not touched during the manipulation of unrelated caches / tiles
         const tile00 = MockSeadragon.getTile('foo.jpg', fakeTiledImage0);
         tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
         const tile01 = MockSeadragon.getTile('foo2.jpg', fakeTiledImage0);
@@ -324,72 +325,192 @@
             test.equal(c12.data, 6, "In total 6 conversions on the cache object, above set changes working cache.");
             test.equal(c12.data, 6, "Changing type of working cache fires no conversion, we overwrite cache state.");
 
+            // Get set collide tries to modify the cache: all first request the data, and set the data in random order,
+            // but writing is done after reading --> we start from TA
+            collideGetSet(tile12, T_A); // no conversion, already in TA
+            collideGetSet(tile12, T_B); // conversion to TB
+            collideGetSet(tile12, T_B); // no conversion, already in TA
+            collideGetSet(tile12, T_A); // conversion to TB
+            collideGetSet(tile12, T_B); // conversion to TB
+            //should finish with next await with 6 steps at this point, add two more and await end
+            value = await collideGetSet(tile12, T_C); // A -> B -> C (forced await)
+            test.equal(typeAtoB, 8, "Conversion A->B increased by three + one for the last await.");
+            test.equal(typeBtoC, 6, "Conversion B->C + one for the last await.");
+            test.equal(typeCtoA, 5, "Conversion C->A did not happen.");
+            test.equal(typeDtoA, 0, "Conversion D->A did not happen.");
+            test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
+            test.equal(value, 8, "6+2 steps (writes are colliding, just single write will happen).");
+            const workingc12 = tile12.getCache(tile12._wcKey);
+            test.equal(workingc12.type, T_C, "Working cache is really type C.");
+
+            //working cache not shared, even if these two caches share key they have different data now
+            value = await tile00.getData(T_C);  // B -> C
+            test.equal(typeAtoB, 8, "Conversion A->B nor triggered.");
+            test.equal(typeBtoC, 7, "Conversion B->C triggered.");
+            const workingc00 = tile00.getCache(tile00._wcKey);
+            test.notEqual(workingc00, workingc12, "Underlying working cache is not shared despite tiles share hash key.");
+
             //TODO fix test from here
             test.ok("TODO: FIX TEST SUITE FOR NEW CACHE SYSTEM");
 
-            // // Get set collide tries to modify the cache
-            // collideGetSet(tile12, T_A); // B -> C -> A
-            // collideGetSet(tile12, T_B); // no conversion, all run at the same time
-            // collideGetSet(tile12, T_B); // no conversion, all run at the same time
-            // collideGetSet(tile12, T_A); // B -> C -> A
-            // collideGetSet(tile12, T_B); // no conversion, all run at the same time
-            // //should finish with next await with 6 steps at this point, add two more and await end
-            // value = await collideGetSet(tile12, T_A); // B -> C -> A
-            // test.equal(typeAtoB, 3, "Conversion A->B not increased, not needed as all T_B requests resolve immediatelly.");
-            // test.equal(typeBtoC, 9, "Conversion B->C happened three times more.");
-            // test.equal(typeCtoA, 9, "Conversion C->A happened three times more.");
-            // test.equal(typeDtoA, 0, "Conversion D->A did not happen.");
-            // test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
-            // test.equal(value, 13, "11+2 steps (writes are colliding, just single write will happen).");
-            //
-            // //shares cache with tile12
-            // value = await tile00.getData(T_A, false);
-            // test.equal(typeAtoB, 3, "Conversion A->B nor triggered.");
-            // test.equal(value, 13, "Value did not change.");
-            //
-            // //now set value with keeping origin
-            // await tile00.setData(42, T_D, true);
-            // test.equal(tile12.originalCacheKey, tile12.cacheKey, "Related tile not affected.");
-            // test.equal(tile00.originalCacheKey, tile12.originalCacheKey, "Cache data was modified, original kept.");
-            // test.notEqual(tile00.cacheKey, tile12.cacheKey, "Main cache keys changed.");
-            // const newCache = tile00.getCache();
-            // await newCache.transformTo(T_C);
-            // test.equal(typeDtoA, 1, "Conversion D->A happens first time.");
-            // test.equal(c12.data, 13, "Original cache value kept");
-            // test.equal(c12.type, T_A, "Original cache type kept");
-            // test.equal(c12, c00, "The same cache.");
-            //
-            // test.equal(typeAtoB, 4, "Conversion A->B triggered.");
-            // test.equal(newCache.type, T_C, "Original cache type kept");
-            // test.equal(newCache.data, 45, "42+3 steps happened.");
-            //
-            // //try again change in set data, now the cache gets overwritten
-            // await tile00.setData(42, T_B, true);
-            // test.equal(newCache.type, T_B, "Reset happened in place.");
-            // test.equal(newCache.data, 42, "Reset happened in place.");
-            //
-            // // Overwriting stress test with diff cache (see the same test as above, the same reasoning)
-            // collideGetSet(tile00, T_A); // B -> C -> A
-            // collideGetSet(tile00, T_B); // no conversion, all run at the same time
-            // collideGetSet(tile00, T_B); // no conversion, all run at the same time
-            // collideGetSet(tile00, T_A); // B -> C -> A
-            // collideGetSet(tile00, T_B); // no conversion, all run at the same time
-            // //should finish with next await with 6 steps at this point, add two more and await end
-            // value = await collideGetSet(tile00, T_A); // B -> C -> A
-            // test.equal(typeAtoB, 4, "Conversion A->B not increased.");
-            // test.equal(typeBtoC, 13, "Conversion B->C happened three times more.");
-            // //we converted D->C before, that's why C->A is one less
-            // test.equal(typeCtoA, 12, "Conversion C->A happened three times more.");
-            // test.equal(typeDtoA, 1, "Conversion D->A did not happen.");
-            // test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
-            // test.equal(value, 44, "+2 writes value (writes collide, just one finishes last).");
-            //
-            // test.equal(c12.data, 13, "Original cache value kept");
-            // test.equal(c12.type, T_A, "Original cache type kept");
-            // test.equal(c12, c00, "The same cache.");
-            //
-            // //todo test destruction throughout the test above
-            // //tile00.unload();
+            // now set value with keeping origin
+            await tile00.setData(42, T_D);
+            const newCache = tile00.getCache(tile00._wcKey);
+            await newCache.transformTo(T_C); // D -> A -> B -> C
+            test.equal(typeDtoA, 1, "Conversion D->A happens first time.");
+            test.equal(tile12.originalCacheKey, tile12.cacheKey, "Related tile not affected.");
+            test.equal(tile00.originalCacheKey, tile12.originalCacheKey, "Cache data was modified, original kept.");
+            test.equal(tile00.cacheKey, tile12.cacheKey, "Main cache keys not changed.");
+
+            // tile restore has no effect on the result since tile00 gets overwritten by tile12.updateRenderTarget()
+            tile00.restore(true);
+            // tile 12 changes data both tile 00 and tile 12
+            tile12.updateRenderTarget();
+            let newMainCache12 = tile12.getCache();
+            let newMainCache00 = tile00.getCache();
+
+            test.equal(newMainCache12.data, 8, "Tile 12 main cache value is now 8 as inherited from working cache.");
+            test.equal(newMainCache00.data, 8, "Tile 00 also shares the same data as tile 12.");
+
+            tile00.updateRenderTarget();
+            test.equal(newMainCache12.data, 8, "No effect in update target.");
+            test.equal(newMainCache00.data, 8, "No effect in update target.");
+            test.notEqual(tile00.cacheKey, tile00.originalCacheKey, "Tiles have original type.");
+
+            // Overwriting stress test with diff cache (see the same test as above, the same reasoning)
+            // but now stress test from clean state (WC initialized with first call)
+            tile00.restore(true); //first we call restore so that set/get reads from original cache
+            await collideGetSet(tile00, T_C); // tile has no working cache, conversion from original A -> B -> C
+            test.equal(await tile00.getData(T_C), 8, "Data is now 8 (6 at original + 2 conversion steps).");
+
+            // initialization of working cache directly as different type
+            collideGetSet(tile00, T_B); // C -> A -> B
+            collideGetSet(tile00, T_A); // C -> A
+            collideGetSet(tile00, T_A); // C -> A
+            collideGetSet(tile00, T_C); // no change
+            //should finish with next await with 6 steps at this point, add two more and await end
+            value = await collideGetSet(tile00, T_B); // C -> A -> B
+            test.equal(typeAtoB, 12, "Conversion A->B +3");
+            test.equal(typeBtoC, 9, "Conversion B->C +2 (one here, one a bit above)");
+            test.equal(typeCtoA, 9, "Conversion C->A +4");
+            test.equal(typeDtoA, 1, "Conversion D->A did not happen.");
+            test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
+
+            test.equal(value, 10, "6 original + 4 conversions value (last collide get set taken in action, rest values discarded).");
+
+            // tile restore has now effect since we swap order of updates
+            tile00.restore(true);
+            // tile 12 changes data both tile 00 and tile 12
+            tile00.updateRenderTarget();
+            newMainCache12 = tile12.getCache();
+            newMainCache00 = tile00.getCache();
+
+            test.equal(newMainCache12.data, 6, "Tile data is now 6 since we restored old data from tile00.");
+            test.equal(newMainCache12, newMainCache00, "Caches are equal.");
+
+            // we delete tile: original and main cache not freed, working yes
+            let cacheSize = tileCache.numCachesLoaded();
+            tile00.unload(true);
+            test.equal(tile00.getCacheSize(), 0, "No caches left.");
+            test.equal(await tile00.getData(T_A), undefined, "No data available.");
+            test.equal(tile00.loaded, false, "Tile in off state.");
+            test.equal(tile00.loading, false, "Tile no loading state.");
+            test.equal(tileCache.numCachesLoaded(), cacheSize, "Tile cache no change since original data shared.");
+
+            // we delete another tile, now original and main caches should be freed too
+            tile12.unload(true);
+            test.equal(tile12.getCacheSize(), 0, "No caches left.");
+            test.equal(await tile12.getData(T_A), undefined, "No data available.");
+            test.equal(tile12.loaded, false, "Tile in off state.");
+            test.equal(tile12.loading, false, "Tile no loading state.");
+            test.equal(tileCache.numCachesLoaded(), cacheSize - 1, "Tile cache shrunken by 1 since tile12 had only original data.");
+
+            done();
+        })();
+    });
+
+    QUnit.test('Tile API: basic conversion', function(test) {
+        const done = test.async();
+        const fakeViewer = MockSeadragon.getViewer(
+            MockSeadragon.getDrawer({
+                // tile in safe mode inspects the supported formats upon cache set
+                getSupportedDataFormats() {
+                    return [T_A, T_B, T_C, T_D, T_E];
+                }
+            })
+        );
+        const tileCache = fakeViewer.tileCache;
+        const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
+        const fakeTiledImage1 = MockSeadragon.getTiledImage(fakeViewer);
+
+        //load data: note that tests SETUP MORE CACHES than they might use: it tests that some other caches / tiles
+        // are not touched during the manipulation of unrelated caches / tiles
+        const tile00 = MockSeadragon.getTile('foo.jpg', fakeTiledImage0);
+        tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
+        const tile01 = MockSeadragon.getTile('foo2.jpg', fakeTiledImage0);
+        tile01.addCache(tile01.cacheKey, 0, T_B, false, false);
+        const tile10 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
+        tile10.addCache(tile10.cacheKey, 0, T_C, false, false);
+        const tile11 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
+        tile11.addCache(tile11.cacheKey, 0, T_C, false, false);
+        const tile12 = MockSeadragon.getTile('foo.jpg', fakeTiledImage1);
+        tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
+
+        //test set/get data in async env
+        (async function() {
+
+            // Tile10 VS Tile11 --> share cache (same key), collision update keeps last call sane
+            await tile10.setData(3, T_A);
+            await tile11.setData(5, T_C);
+
+            await tile10.updateRenderTarget();
+
+            test.equal(tile10.getCache().data, 3, "Tile 10 data used as main.");
+            test.equal(tile11.getCache().data, 3, "Tile 10 data used as main.");
+            test.equal(tile11.getCache().type, T_A, "Tile 10 data used as main.");
+            await tile11.updateRenderTarget();
+
+            test.equal(tile10.getCache().data, 5, "Tile 11 data used as main.");
+            test.equal(tile11.getCache().data, 5, "Tile 11 data used as main.");
+            test.equal(tile11.getCache().type, T_C, "Tile 11 data used as main.");
+
+            // Tile10 updated, reset -> OK
+            await tile10.setData(42, T_A);
+            tile10.restore();
+            await tile10.updateRenderTarget();
+            test.equal(tile10.getCache().data, 0, "Original data used as main: restore was called.");
+            test.equal(tile11.getCache().data, 0);
+            test.equal(tile11.getCache().type, T_C);
+
+
+            // UpdateTarget called on restore data
+            await tile11.setData(189, T_D);
+            await tile10.setData(-87, T_B);
+            tile10.restore();
+            await tile11.updateRenderTarget();
+
+            test.equal(tile11.getCache().data, 189, "New data reflected.");
+            test.equal(tile10.getCache().data, 189, "New data reflected also on connected tile.");
+            await tile10.updateRenderTarget();
+            test.equal(tile11.getCache().data, 189, "No effect: restore was called.");
+            test.equal(tile10.getCache().data, 189, "No effect: restore was called.");
+
+            let cacheSize = tileCache.numCachesLoaded();
+            tile11.unload(true);
+            test.equal(tile11.getCacheSize(), 0, "No caches left in tile11.");
+            test.equal(tileCache.numCachesLoaded(), cacheSize, "No caches freed: shared with tile12");
+
+            tile10.unload(true);
+            test.equal(tile10.getCacheSize(), 0, "No caches left in tile11.");
+            test.equal(tileCache.numCachesLoaded(), cacheSize - 2, "Two caches freed.");
+
+            tile01.unload(false);
+            test.equal(tileCache.numCachesLoaded(), cacheSize - 2, "No cache freed: zombie cache left.");
+
+            tile00.unload(true);
+            test.equal(tileCache.numCachesLoaded(), cacheSize - 2, "No cache freed: shared with tile12.");
+            tile12.unload(true);
+            test.equal(tileCache.numCachesLoaded(), 1, "One zombie cache left.");
 
             done();
         })();
@@ -424,32 +545,36 @@
 
         //test set/get data in async env
         (async function() {
-            // TODO FIX
+            test.equal(tileCache.numTilesLoaded(), 5, "We loaded 5 tiles");
+            test.equal(tileCache.numCachesLoaded(), 3, "We loaded 3 cache objects - three different urls");
+
+            const c00 = tile00.getCache(tile00.cacheKey);
+            const c12 = tile12.getCache(tile12.cacheKey);
+
+            //now test multi-cache within tile
+            const theTileKey = tile00.cacheKey;
+            tile00.setData(42, T_E);
+            test.equal(tile00.cacheKey, tile00.originalCacheKey, "Original cache still rendered.");
+            test.equal(theTileKey, tile00.originalCacheKey, "Original cache key preserved.");
+
+            tile00.updateRenderTarget();
+            test.notEqual(tile00.cacheKey, tile00.originalCacheKey, "New cache rendered.");
+
+            //now add artifically another record
+            tile00.addCache("my_custom_cache", 128, T_C);
+            test.equal(tileCache.numTilesLoaded(), 5, "We still loaded only 5 tiles.");
+            test.equal(tileCache.numCachesLoaded(), 5, "The cache has now 5 items (two new added already).");
+
+            test.equal(c00.getTileCount(), 2, "The cache still has only two tiles attached.");
+            test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects (original data, main cache & custom.");
+            //related tile not affected
+            test.notEqual(tile12.cacheKey, tile12.originalCacheKey, "Original cache change reflected on shared caches.");
+            test.equal(tile12.originalCacheKey, theTileKey, "Original cache key also preserved.");
+            test.equal(c12.getTileCount(), 2, "The original data cache still has only two tiles attached.");
+            test.equal(tile12.getCacheSize(), 2, "Related tile cache has also two caches.");
+
+            //TODO fix test from here
             test.ok("TODO: FIX TEST SUITE FOR NEW CACHE SYSTEM");
-            done();
-            // test.equal(tileCache.numTilesLoaded(), 5, "We loaded 5 tiles");
-            // test.equal(tileCache.numCachesLoaded(), 3, "We loaded 3 cache objects");
-            //
-            // const c00 = tile00.getCache(tile00.cacheKey);
-            // const c12 = tile12.getCache(tile12.cacheKey);
-            //
-            // //now test multi-cache within tile
-            // const theTileKey = tile00.cacheKey;
-            // tile00.setData(42, T_E, true);
-            // test.ok(tile00.cacheKey !== tile00.originalCacheKey, "Original cache key differs.");
-            // test.equal(theTileKey, tile00.originalCacheKey, "Original cache key preserved.");
-            //
-            // //now add artifically another record
-            // tile00.addCache("my_custom_cache", 128, T_C);
-            // test.equal(tileCache.numTilesLoaded(), 5, "We still loaded only 5 tiles.");
-            // test.equal(tileCache.numCachesLoaded(), 5, "The cache has now 5 items.");
-            // test.equal(c00.getTileCount(), 2, "The cache still has only two tiles attached.");
-            // test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects.");
-            // //related tile not really affected
-            // test.equal(tile12.cacheKey, tile12.originalCacheKey, "Original cache key not affected elsewhere.");
-            // test.equal(tile12.originalCacheKey, theTileKey, "Original cache key also preserved.");
-            // test.equal(c12.getTileCount(), 2, "The original data cache still has only two tiles attached.");
-            // test.equal(tile12.getCacheSize(), 1, "Related tile cache did not increase.");
             //
             // //add and delete cache nothing changes
             // tile00.addCache("my_custom_cache2", 128, T_C);
@@ -520,161 +645,155 @@
             // //now test tile destruction as zombie
             //
             // //now test tile cache sharing
-            // done();
+            done();
         })();
     });
 
     QUnit.test('Zombie Cache', function(test) {
         const done = test.async();
 
-        // TODO FIX
-        test.ok("TODO: FIX TEST SUITE FOR NEW CACHE SYSTEM");
-        done();
-        // //test jobs by coverage: fail if
-        // let jobCounter = 0, coverage = undefined;
-        // OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
-        //     jobCounter++;
-        //     if (coverage) {
-        //         //old coverage of previous tiled image: if loaded, fail --> should be in cache
-        //         const coverageItem = coverage[options.tile.level][options.tile.x][options.tile.y];
-        //         test.ok(!coverageItem, "Attempt to add job for tile that is not in cache OK if previously not loaded.");
-        //     }
-        //     return originalJob.call(this, options);
-        // };
-        //
-        // let tilesFinished = 0;
-        // const tileCounter = function (event) {tilesFinished++;}
-        //
-        // const openHandler = function(event) {
-        //     event.item.allowZombieCache(true);
-        //
-        //     viewer.world.removeHandler('add-item', openHandler);
-        //     test.ok(jobCounter === 0, 'Initial state, no images loaded');
-        //
-        //     waitFor(() => {
-        //         if (tilesFinished === jobCounter && event.item._fullyLoaded) {
-        //             coverage = $.extend(true, {}, event.item.coverage);
-        //             viewer.world.removeAll();
-        //             return true;
-        //         }
-        //         return false;
-        //     });
-        // };
-        //
-        // let jobsAfterRemoval = 0;
-        // const removalHandler = function (event) {
-        //     viewer.world.removeHandler('remove-item', removalHandler);
-        //     test.ok(jobCounter > 0, 'Tiled image removed after 100 ms, should load some images.');
-        //     jobsAfterRemoval = jobCounter;
-        //
-        //     viewer.world.addHandler('add-item', reopenHandler);
-        //     viewer.addTiledImage({
-        //         tileSource: '/test/data/testpattern.dzi'
-        //     });
-        // }
-        //
-        // const reopenHandler = function (event) {
-        //     event.item.allowZombieCache(true);
-        //
-        //     viewer.removeHandler('add-item', reopenHandler);
-        //     test.equal(jobCounter, jobsAfterRemoval, 'Reopening image does not fetch any tiles imemdiatelly.');
-        //
-        //     waitFor(() => {
-        //         if (event.item._fullyLoaded) {
-        //             viewer.removeHandler('tile-unloaded', unloadTileHandler);
-        //             viewer.removeHandler('tile-loaded', tileCounter);
-        //
-        //             //console test needs here explicit removal to finish correctly
-        //             OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
-        //             done();
-        //             return true;
-        //         }
-        //         return false;
-        //     });
-        // };
-        //
-        // const unloadTileHandler = function (event) {
-        //     test.equal(event.destroyed, false, "Tile unload event should not delete with zombies!");
-        // }
-        //
-        // viewer.world.addHandler('add-item', openHandler);
-        // viewer.world.addHandler('remove-item', removalHandler);
-        // viewer.addHandler('tile-unloaded', unloadTileHandler);
-        // viewer.addHandler('tile-loaded', tileCounter);
-        //
-        // viewer.open('/test/data/testpattern.dzi');
+        //test jobs by coverage: fail if cached coverage not fully re-stored without jobs
+        let jobCounter = 0, coverage = undefined;
+        OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
+            jobCounter++;
+            if (coverage) {
+                //old coverage of previous tiled image: if loaded, fail --> should be in cache
+                const coverageItem = coverage[options.tile.level][options.tile.x][options.tile.y];
+                test.ok(!coverageItem, "Attempt to add job for tile that should be already in memory.");
+            }
+            return originalJob.call(this, options);
+        };
+
+        let tilesFinished = 0;
+        const tileCounter = function (event) {tilesFinished++;}
+
+        const openHandler = function(event) {
+            event.item.allowZombieCache(true);
+
+            viewer.world.removeHandler('add-item', openHandler);
+            test.ok(jobCounter === 0, 'Initial state, no images loaded');
+
+            waitFor(() => {
+                if (tilesFinished === jobCounter && event.item._fullyLoaded) {
+                    coverage = $.extend(true, {}, event.item.coverage);
+                    viewer.world.removeAll();
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        let jobsAfterRemoval = 0;
+        const removalHandler = function (event) {
+            viewer.world.removeHandler('remove-item', removalHandler);
+            test.ok(jobCounter > 0, 'Tiled image removed after 100 ms, should load some images.');
+            jobsAfterRemoval = jobCounter;
+
+            viewer.world.addHandler('add-item', reopenHandler);
+            viewer.addTiledImage({
+                tileSource: '/test/data/testpattern.dzi'
+            });
+        }
+
+        const reopenHandler = function (event) {
+            event.item.allowZombieCache(true);
+
+            viewer.removeHandler('add-item', reopenHandler);
+            test.equal(jobCounter, jobsAfterRemoval, 'Reopening image does not fetch any tiles imemdiatelly.');
+
+            waitFor(() => {
+                if (event.item._fullyLoaded) {
+                    viewer.removeHandler('tile-unloaded', unloadTileHandler);
+                    viewer.removeHandler('tile-loaded', tileCounter);
+                    coverage = undefined;
+
+                    //console test needs here explicit removal to finish correctly
+                    OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
+                    done();
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        const unloadTileHandler = function (event) {
+            test.equal(event.destroyed, false, "Tile unload event should not delete with zombies!");
+        }
+
+        viewer.world.addHandler('add-item', openHandler);
+        viewer.world.addHandler('remove-item', removalHandler);
+        viewer.addHandler('tile-unloaded', unloadTileHandler);
+        viewer.addHandler('tile-loaded', tileCounter);
+
+        viewer.open('/test/data/testpattern.dzi');
     });
 
     QUnit.test('Zombie Cache Replace Item', function(test) {
         const done = test.async();
 
-        //TODO FIX
-        test.ok("TODO: FIX TEST SUITE FOR NEW CACHE SYSTEM");
-        done();
-        // //test jobs by coverage: fail if
-        // let jobCounter = 0, coverage = undefined;
-        // OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
-        //     jobCounter++;
-        //     if (coverage) {
-        //         //old coverage of previous tiled image: if loaded, fail --> should be in cache
-        //         const coverageItem = coverage[options.tile.level][options.tile.x][options.tile.y];
-        //         if (!coverageItem) {
-        //             console.warn(coverage, coverage[options.tile.level][options.tile.x], options.tile);
-        //         }
-        //         test.ok(!coverageItem, "Attempt to add job for tile data that was previously loaded.");
-        //     }
-        //     return originalJob.call(this, options);
-        // };
-        //
-        // let tilesFinished = 0;
-        // const tileCounter = function (event) {tilesFinished++;}
-        //
-        // const openHandler = function(event) {
-        //     event.item.allowZombieCache(true);
-        //     viewer.world.removeHandler('add-item', openHandler);
-        //     viewer.world.addHandler('add-item', reopenHandler);
-        //
-        //     waitFor(() => {
-        //         if (tilesFinished === jobCounter && event.item._fullyLoaded) {
-        //             coverage = $.extend(true, {}, event.item.coverage);
-        //             viewer.addTiledImage({
-        //                 tileSource: '/test/data/testpattern.dzi',
-        //                 index: 0,
-        //                 replace: true
-        //             });
-        //             return true;
-        //         }
-        //         return false;
-        //     });
-        // };
-        //
-        // const reopenHandler = function (event) {
-        //     event.item.allowZombieCache(true);
-        //
-        //     viewer.removeHandler('add-item', reopenHandler);
-        //     waitFor(() => {
-        //         if (event.item._fullyLoaded) {
-        //             viewer.removeHandler('tile-unloaded', unloadTileHandler);
-        //             viewer.removeHandler('tile-loaded', tileCounter);
-        //
-        //             //console test needs here explicit removal to finish correctly
-        //             OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
-        //             done();
-        //             return true;
-        //         }
-        //         return false;
-        //     });
-        // };
-        //
-        // const unloadTileHandler = function (event) {
-        //     test.equal(event.destroyed, false, "Tile unload event should not delete with zombies!");
-        // }
-        //
-        // viewer.world.addHandler('add-item', openHandler);
-        // viewer.addHandler('tile-unloaded', unloadTileHandler);
-        // viewer.addHandler('tile-loaded', tileCounter);
-        //
-        // viewer.open('/test/data/testpattern.dzi');
+        let jobCounter = 0, coverage = undefined;
+        OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
+            jobCounter++;
+            if (coverage) {
+                //old coverage of previous tiled image: if loaded, fail --> should be in cache
+                const coverageItem = coverage[options.tile.level][options.tile.x][options.tile.y];
+                if (!coverageItem) {
+                    console.warn(coverage, coverage[options.tile.level][options.tile.x], options.tile);
+                }
+                test.ok(!coverageItem, "Attempt to add job for tile data that was previously loaded.");
+            }
+            return originalJob.call(this, options);
+        };
+
+        let tilesFinished = 0;
+        const tileCounter = function (event) {tilesFinished++;}
+
+        const openHandler = function(event) {
+            event.item.allowZombieCache(true);
+            viewer.world.removeHandler('add-item', openHandler);
+            viewer.world.addHandler('add-item', reopenHandler);
+
+            waitFor(() => {
+                if (tilesFinished === jobCounter && event.item._fullyLoaded) {
+                    coverage = $.extend(true, {}, event.item.coverage);
+                    viewer.addTiledImage({
+                        tileSource: '/test/data/testpattern.dzi',
+                        index: 0,
+                        replace: true
+                    });
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        const reopenHandler = function (event) {
+            event.item.allowZombieCache(true);
+
+            viewer.removeHandler('add-item', reopenHandler);
+            waitFor(() => {
+                if (event.item._fullyLoaded) {
+                    viewer.removeHandler('tile-unloaded', unloadTileHandler);
+                    viewer.removeHandler('tile-loaded', tileCounter);
+
+                    //console test needs here explicit removal to finish correctly
+                    OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
+                    done();
+                    return true;
+                }
+                return false;
+            });
+        };
+
+        const unloadTileHandler = function (event) {
+            test.equal(event.destroyed, false, "Tile unload event should not delete with zombies!");
+        }
+
+        viewer.world.addHandler('add-item', openHandler);
+        viewer.addHandler('tile-unloaded', unloadTileHandler);
+        viewer.addHandler('tile-loaded', tileCounter);
+
+        viewer.open('/test/data/testpattern.dzi');
     });
 
 })();

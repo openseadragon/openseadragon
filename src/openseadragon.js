@@ -2379,6 +2379,14 @@ function OpenSeadragon( options ){
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}
+         *//**
+         * Makes an AJAX request.
+         * @param {String} url - the url to request
+         * @param {Function} onSuccess
+         * @param {Function} onError
+         * @throws {Error}
+         * @returns {XMLHttpRequest}
+         * @deprecated deprecated way of calling this function
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var withCredentials;
@@ -2388,7 +2396,6 @@ function OpenSeadragon( options ){
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
-            // FIXME ^ are we ready to drop legacy support? since we abandoned old ES...
             if( $.isPlainObject( url ) ){
                 onSuccess = url.success;
                 onError = url.error;
@@ -2397,6 +2404,8 @@ function OpenSeadragon( options ){
                 responseType = url.responseType || null;
                 postData = url.postData || null;
                 url = url.url;
+            } else {
+                $.console.warn("OpenSeadragon.makeAjaxRequest() deprecated usage!");
             }
 
             var protocol = $.getUrlProtocol( url );

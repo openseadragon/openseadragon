@@ -412,16 +412,17 @@
                 if (data instanceof $.Promise) {
                     this._promise = data.then(d => {
                         this._data = d;
+                        this.loaded = true;
                         return d;
                     });
                     this._data = null;
                 } else {
                     this._promise = $.Promise.resolve(data);
                     this._data = data;
+                    this.loaded = true;
                 }
 
                 this._type = type;
-                this.loaded = true;
                 this._tiles.push(tile);
             } else if (!this._tiles.includes(tile)) {
                 this._tiles.push(tile);
@@ -936,11 +937,11 @@
          * was requested restore().
          * @param tile
          * @param originalCache
+         * @param freeIfUnused if true, zombie is not created
          */
-        restoreTilesThatShareOriginalCache(tile, originalCache) {
+        restoreTilesThatShareOriginalCache(tile, originalCache, freeIfUnused) {
             for (let t of originalCache._tiles) {
-                // todo a bit dirty, touching tile privates
-                this.unloadCacheForTile(t, t.cacheKey, t.__restoreRequestedFree);
+                this.unloadCacheForTile(t, t.cacheKey, freeIfUnused);
                 delete t._caches[t.cacheKey];
                 t.cacheKey = t.originalCacheKey;
             }
@@ -993,7 +994,7 @@
                     }
 
                     if ( worstTile && worstTileIndex >= 0 ) {
-                        this.unloadTile(worstTile, true);
+                        this._unloadTile(worstTile, true);
                         insertionIndex = worstTileIndex;
                     }
                 }
@@ -1033,7 +1034,7 @@
                         //iterates from the array end, safe to remove
                         this._tilesLoaded.splice( i, 1 );
                     } else if ( tile.tiledImage === tiledImage ) {
-                        this.unloadTile(tile, !tiledImage._zombieCache || cacheOverflows, i);
+                        this._unloadTile(tile, !tiledImage._zombieCache || cacheOverflows, i);
                     }
                 }
             }
@@ -1097,13 +1098,27 @@
         }
 
         /**
+         * Unload tile: this will free the tile data and mark the tile as unloaded.
+         * @param {OpenSeadragon.Tile} tile
+         * @param {boolean} destroy if set to true, tile data is not preserved as zombies but deleted immediatelly
+         */
+        unloadTile(tile, destroy = false) {
+            if (!tile.loaded) {
+                $.console.warn("Attempt to unload already unloaded tile.");
+                return;
+            }
+            const index = this._tilesLoaded.findIndex(x => x === tile);
+            this._unloadTile(tile, destroy, index);
+        }
+
+        /**
          * @param tile tile to unload
          * @param destroy destroy tile cache if the cache tile counts falls to zero
-         * @param deleteAtIndex index to remove the tile record at, will not remove from _tiledLoaded if not set
+         * @param deleteAtIndex index to remove the tile record at, will not remove from _tilesLoaded if not set
          * @private
          */
-        unloadTile(tile, destroy, deleteAtIndex) {
-            $.console.assert(tile, '[TileCache.unloadTile] tile is required');
+        _unloadTile(tile, destroy, deleteAtIndex) {
+            $.console.assert(tile, '[TileCache._unloadTile] tile is required');
 
             for (let key in tile._caches) {
                 //we are 'ok' to remove tile caches here since we later call destroy on tile, otherwise
@@ -1121,7 +1136,7 @@
             }
 
             const tiledImage = tile.tiledImage;
-            tile.unload();
+            tile._unload();
 
             /**
              * Triggered when a tile has just been unloaded from memory.

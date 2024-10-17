@@ -1885,8 +1885,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // if we find existing record, check the original data of existing tile of this record
         let baseTile = record._tiles[0];
         if (!baseTile) {
-            // we are unable to setup the tile, this might be a bug somewhere else
-            return false;
+            // zombie cache -> revive, it's okay to use current tile as state inherit point since there is no state
+            baseTile = tile;
         }
 
         // Setup tile manually, data can be null -> we already have existing cache to share, share also caches
