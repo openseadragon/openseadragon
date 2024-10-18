@@ -386,27 +386,4 @@
             "Type not erased immediatelly as we still process the data.");
         test.ok(!conversionHappened, "We destroyed cache before conversion finished.");
     });
-
-
-    // TODO: The ultimate integration test:
-    // three items: one plain image data
-    //              one modified image data by two different plugins
-    //              one modified data by custom code that creates its own cache
-
-
-    // QUnit.test('Manual Data Convertors: testing conversion & destruction', function (test) {
-    //     const done = test.async();
-    //
-    //
-    //
-    //     viewer.world.addHandler('add-item', event => {
-    //         waitFor(() => {
-    //             if (event.item._fullyLoaded) {
-    //
-    //             }
-    //         });
-    //     });
-    //     viewer.open('/test/data/testpattern.dzi');
-    // });
-
 })();
