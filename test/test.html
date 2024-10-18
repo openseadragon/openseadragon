@@ -4,10 +4,17 @@
     <meta charset="utf-8">
     <title>OpenSeadragon QUnit</title>
     <script type="text/javascript">
+        function isInteractiveMode() {
+            const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+            const isHeadless = typeof navigator !== 'undefined' && navigator.webdriver;
+            return isBrowser && !isHeadless;
+        }
+
         window.QUnit = {
             config: {
-                //one minute per test timeout
-                testTimeout: 5000
+                //five seconds timeout due to problems with untrusted events (e.g. auto zoom) for non-interactive runs
+                //there is timeWatcher property but sometimes tests do not respect it, or they get stuck due to bugs
+                testTimeout: isInteractiveMode() ? 30000 : 5000
             }
         };
     </script>
