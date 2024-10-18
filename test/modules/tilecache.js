@@ -97,6 +97,11 @@
                 springStiffness: 100 // Faster animation = faster tests
             });
             OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
+
+            // Reset counters
+            typeAtoB = 0, typeBtoC = 0, typeCtoA = 0, typeDtoA = 0, typeCtoE = 0;
+            copyA = 0, copyB = 0, copyC = 0, copyD = 0, copyE = 0;
+            destroyA = 0, destroyB = 0, destroyC = 0, destroyD = 0, destroyE = 0;
         },
         afterEach: function () {
             if (viewer && viewer.close) {
@@ -130,7 +135,9 @@
 
         tile0._caches[tile0.cacheKey] = cache.cacheTile({
             tile: tile0,
-            tiledImage: fakeTiledImage0
+            tiledImage: fakeTiledImage0,
+            data: 3,
+            dataType: T_A
         });
         tile0._cacheSize++;
 
@@ -138,7 +145,9 @@
 
         tile1._caches[tile1.cacheKey] = cache.cacheTile({
             tile: tile1,
-            tiledImage: fakeTiledImage1
+            tiledImage: fakeTiledImage1,
+            data: 55,
+            dataType: T_B
         });
         tile1._cacheSize++;
         assert.equal(cache.numTilesLoaded(), 2, 'tile count after second cache');
@@ -178,7 +187,9 @@
 
         tile0._caches[tile0.cacheKey] = cache.cacheTile({
             tile: tile0,
-            tiledImage: fakeTiledImage0
+            tiledImage: fakeTiledImage0,
+            data: 55,
+            dataType: T_B
         });
         tile0._cacheSize++;
 
@@ -186,7 +197,9 @@
 
         tile1._caches[tile1.cacheKey] = cache.cacheTile({
             tile: tile1,
-            tiledImage: fakeTiledImage0
+            tiledImage: fakeTiledImage0,
+            data: 55,
+            dataType: T_B
         });
         tile1._cacheSize++;
 
@@ -194,7 +207,9 @@
 
         tile2._caches[tile2.cacheKey] = cache.cacheTile({
             tile: tile2,
-            tiledImage: fakeTiledImage0
+            tiledImage: fakeTiledImage0,
+            data: 55,
+            dataType: T_B
         });
         tile2._cacheSize++;
 
@@ -570,78 +585,72 @@
             test.equal(c12.getTileCount(), 2, "The original data cache still has only two tiles attached.");
             test.equal(tile12.getCacheSize(), 2, "Related tile cache has also two caches.");
 
-            //TODO fix test from here
-            test.ok("TODO: FIX TEST SUITE FOR NEW CACHE SYSTEM");
-            //
-            // //add and delete cache nothing changes
-            // tile00.addCache("my_custom_cache2", 128, T_C);
-            // tile00.removeCache("my_custom_cache2");
-            // test.equal(tileCache.numTilesLoaded(), 5, "We still loaded only 5 tiles.");
-            // test.equal(tileCache.numCachesLoaded(), 5, "The cache has now 5 items.");
-            // test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects.");
-            //
-            // //delete cache as a zombie
-            // tile00.addCache("my_custom_cache2", 17, T_C);
-            // //direct access shoes correct value although we set key!
-            // const myCustomCache2Data = tile00.getCache("my_custom_cache2").data;
-            // test.equal(myCustomCache2Data, 17, "Previously defined cache does not intervene.");
-            // test.equal(tileCache.numCachesLoaded(), 6, "The cache size is 6.");
-            // //keep zombie
-            // tile00.removeCache("my_custom_cache2", false);
-            // test.equal(tileCache.numCachesLoaded(), 6, "The cache is 5 + 1 zombie, no change.");
-            // test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects.");
-            //
-            // //revive zombie
-            // tile01.addCache("my_custom_cache2", 18, T_C);
-            // const myCustomCache2OtherData = tile01.getCache("my_custom_cache2").data;
-            // test.equal(myCustomCache2OtherData, myCustomCache2Data, "Caches are equal because revived.");
-            // //again, keep zombie
-            // tile01.removeCache("my_custom_cache2", false);
-            //
-            // //first create additional cache so zombie is not the youngest
-            // tile01.addCache("some weird cache", 11, T_A);
-            // test.ok(tile01.cacheKey === tile01.originalCacheKey, "Custom cache does not touch tile cache keys.");
-            //
-            // //insertion aadditional cache clears the zombie first although it is not the youngest one
-            // test.equal(tileCache.numCachesLoaded(), 7, "The cache has now 7 items.");
-            //
-            // //Test CAP
-            // tileCache._maxCacheItemCount = 7;
-            //
-            // //does not trigger insertion - deletion, since we setData to cache that already exists, 43 value ignored
-            // tile12.setData(43, T_B, true);
-            // test.notEqual(tile12.cacheKey, tile12.originalCacheKey, "Original cache key differs.");
-            // test.equal(theTileKey, tile12.originalCacheKey, "Original cache key preserved.");
-            // test.equal(tileCache.numCachesLoaded(), 7, "The cache has still 7 items.");
-            // //we called SET DATA with preserve=true on tile12 which was sharing cache with tile00, new cache is also shared
-            // test.equal(tile00.originalCacheKey, tile12.originalCacheKey, "Original cache key matches between tiles.");
-            // test.equal(tile00.cacheKey, tile12.cacheKey, "Modified cache key matches between tiles.");
-            // test.equal(tile12.getCache().data, 42, "The value is not 43 as setData triggers cache share!");
-            //
-            // //triggers insertion - deletion of zombie cache 'my_custom_cache2'
-            // tile00.addCache("trigger-max-cache-handler", 5, T_C);
-            // //reset CAP
-            // tileCache._maxCacheItemCount = OpenSeadragon.DEFAULT_SETTINGS.maxImageCacheCount;
-            //
-            // //try to revive zombie will fail: the zombie was deleted, we will find 18
-            // tile01.addCache("my_custom_cache2", 18, T_C);
-            // const myCustomCache2RecreatedData = tile01.getCache("my_custom_cache2").data;
-            // test.notEqual(myCustomCache2RecreatedData, myCustomCache2Data, "Caches are not equal because created.");
-            // test.equal(myCustomCache2RecreatedData, 18, "Cache data is actually as set to 18.");
-            // test.equal(tileCache.numCachesLoaded(), 8, "The cache has now 8 items.");
-            //
-            //
-            // //delete cache bound to other tiles, this tile has 4 caches:
-            // // cacheKey: shared, originalCacheKey: shared, <custom cache key>, <custom cache key>
-            // // note that cacheKey is shared because we called setData on two items that both create MOD cache
-            // tileCache.unloadTile(tile00, true, tileCache._tilesLoaded.indexOf(tile00));
-            // test.equal(tileCache.numCachesLoaded(), 6, "The cache has now 8-2 items.");
-            // test.equal(tileCache.numTilesLoaded(), 4, "One tile removed.");
-            // test.equal(c00.getTileCount(), 1, "The cache has still tile12 left.");
-            //
-            // //now test tile destruction as zombie
-            //
-            // //now test tile cache sharing
+            //add and delete cache nothing changes (+1 destroy T_C)
+            tile00.addCache("my_custom_cache2", 128, T_C);
+            tile00.removeCache("my_custom_cache2");
+            test.equal(tileCache.numTilesLoaded(), 5, "We still loaded only 5 tiles.");
+            test.equal(tileCache.numCachesLoaded(), 5, "The cache has now 5 items.");
+            test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects.");
+
+            //delete cache as a zombie  (+0 destroy)
+            tile00.addCache("my_custom_cache2", 17, T_D);
+            //direct access shoes correct value although we set key!
+            const myCustomCache2Data = tile00.getCache("my_custom_cache2").data;
+            test.equal(myCustomCache2Data, 17, "Previously defined cache does not intervene.");
+            test.equal(tileCache.numCachesLoaded(), 6, "The cache size is 6.");
+            //keep zombie
+            tile00.removeCache("my_custom_cache2", false);
+            test.equal(tileCache.numCachesLoaded(), 6, "The cache is 5 + 1 zombie, no change.");
+            test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects.");
+            test.equal(tileCache._zombiesLoadedCount, 1, "One zombie.");
+
+            //revive zombie
+            tile01.addCache("my_custom_cache2", 18, T_D);
+            const myCustomCache2OtherData = tile01.getCache("my_custom_cache2").data;
+            test.equal(myCustomCache2OtherData, myCustomCache2Data, "Caches are equal because revived.");
+            test.equal(tileCache._cachesLoadedCount, 6, "Zombie revived, original state restored.");
+            test.equal(tileCache._zombiesLoadedCount, 0, "No zombies.");
+
+            //again, keep zombie
+            tile01.removeCache("my_custom_cache2", false);
+
+            //first create additional cache so zombie is not the youngest
+            tile01.addCache("some weird cache", 11, T_A);
+            test.ok(tile01.cacheKey === tile01.originalCacheKey, "Custom cache does not touch tile cache keys.");
+
+            //insertion aadditional cache clears the zombie first although it is not the youngest one
+            test.equal(tileCache.numCachesLoaded(), 7, "The cache has now 7 items.");
+            test.equal(tileCache._cachesLoadedCount, 6, "New cache created -> 5+1.");
+            test.equal(tileCache._zombiesLoadedCount, 1, "One zombie remains.");
+
+            //Test CAP
+            tileCache._maxCacheItemCount = 7;
+
+            // Zombie destroyed before other caches (+1 destroy T_D)
+            tile12.setData(43, T_B);
+            test.notEqual(tile12.cacheKey, tile12.originalCacheKey, "Original cache key differs.");
+            test.equal(theTileKey, tile12.originalCacheKey, "Original cache key preserved.");
+            test.equal(tileCache.numCachesLoaded(), 7, "The cache has now 7 items.");
+            test.equal(tileCache._zombiesLoadedCount, 0, "One zombie sacrificed, preferred over living cache.");
+            test.notOk([tile00, tile01, tile10, tile11, tile12].find(x => !x.loaded), "All tiles sill loaded since zombie was sacrificed.");
+
+            // test destructors called as expected
+            test.equal(destroyA, 0, "No destructors for A called.");
+            test.equal(destroyB, 0, "No destructors for B called.");
+            test.equal(destroyC, 1, "One destruction for C called.");
+            test.equal(destroyD, 1, "One destruction for D called.");
+            test.equal(destroyE, 0, "No destructors for E called.");
+
+
+            //try to revive zombie will fail: the zombie was deleted, we will find new vaue there
+            tile01.addCache("my_custom_cache2", -849613, T_C);
+            const myCustomCache2RecreatedData = tile01.getCache("my_custom_cache2").data;
+            test.notEqual(myCustomCache2RecreatedData, myCustomCache2Data, "Caches are not equal because zombie was killed.");
+            test.equal(myCustomCache2RecreatedData, -849613, "Cache data is actually as set to 18.");
+            test.equal(tileCache.numCachesLoaded(), 7, "The cache has still 7 items.");
+
+            // some tile has been selected as a sacrifice since we triggered cap control
+            test.ok([tile00, tile01, tile10, tile11, tile12].find(x => !x.loaded), "One tile has been sacrificed.");
             done();
         })();
     });

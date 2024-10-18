@@ -637,7 +637,8 @@ $.Tile.prototype = {
      *   the data item: this is an optimization to load data only when necessary.
      * @param {string} [type=undefined] data type, will be guessed if not provided (not recommended),
      *   if data is a callback the type is a mandatory field, not setting it results in undefined behaviour
-     * @param {boolean} [setAsMain=false] if true, the key will be set as the tile.cacheKey
+     * @param {boolean} [setAsMain=false] if true, the key will be set as the tile.cacheKey,
+     *   no effect if key === this.cacheKey
      * @param [_safely=true] private
      * @returns {OpenSeadragon.CacheRecord|null} - The cache record the tile was attached to.
      */

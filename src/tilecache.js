@@ -361,17 +361,20 @@
          * Free all the data and call data destructors if defined.
          */
         destroy() {
-            delete this._conversionJobQueue;
-            this._destroyed = true;
+            if (!this._destroyed) {
+                delete this._conversionJobQueue;
+                this._destroyed = true;
 
-            // make sure this gets destroyed even if loaded=false
-            if (this.loaded) {
-                this._destroySelfUnsafe(this._data, this._type);
-            } else {
-                const oldType = this._type;
-                this._promise.then(x => this._destroySelfUnsafe(x, oldType));
+                // make sure this gets destroyed even if loaded=false
+                if (this.loaded) {
+                    this._destroySelfUnsafe(this._data, this._type);
+                } else {
+                    const oldType = this._type;
+                    this._promise.then(x => this._destroySelfUnsafe(x, oldType));
+                }
+                this.loaded = false;
             }
-            this.loaded = false;
+
         }
 
         _destroySelfUnsafe(data, type) {
@@ -392,7 +395,7 @@
         /**
          * Add tile dependency on this record
          * @param tile
-         * @param data
+         * @param data can be null|undefined => optimization, will skip data initialization and just adds tile reference
          * @param type
          */
         addTile(tile, data, type) {
@@ -402,30 +405,45 @@
             $.console.assert(tile, '[CacheRecord.addTile] tile is required');
 
             // first come first served, data for existing tiles is NOT overridden
-            if (this._tiles.length < 1) {
+            if (data !== undefined && data !== null && this._tiles.length < 1) {
                 // Since we IGNORE new data if already initialized, we support 'data getter'
                 if (typeof data === 'function') {
                     data = data();
                 }
 
-                // If we receive async callback, we consume the async state
-                if (data instanceof $.Promise) {
-                    this._promise = data.then(d => {
-                        this._data = d;
-                        this.loaded = true;
-                        return d;
-                    });
-                    this._data = null;
+                // in case we attempt to write to existing data object
+                if (this.type && this._promise) {
+                    if (data instanceof $.Promise) {
+                        this._promise = data.then(d => {
+                            this._overwriteData(d, type);
+                        });
+                    } else {
+                        this._overwriteData(data, type);
+                    }
                 } else {
-                    this._promise = $.Promise.resolve(data);
-                    this._data = data;
-                    this.loaded = true;
-                }
+                    // If we receive async callback, we consume the async state
+                    if (data instanceof $.Promise) {
+                        this._promise = data.then(d => {
+                            this._data = d;
+                            this.loaded = true;
+                            return d;
+                        });
+                        this._data = null;
+                    } else {
+                        this._promise = $.Promise.resolve(data);
+                        this._data = data;
+                        this.loaded = true;
+                    }
 
-                this._type = type;
+                    this._type = type;
+                }
                 this._tiles.push(tile);
-            } else if (!this._tiles.includes(tile)) {
+            } else if (!this._tiles.includes(tile) && this.type && this._promise) {
+                // here really check we are loaded, since if optimization allows sending no data and we add tile without
+                // proper initialization it is a bug
                 this._tiles.push(tile);
+            } else {
+                $.console.warn("Tile %s caching attempt without data argument on uninitialized cache entry!", tile);
             }
         }
 
@@ -496,7 +514,7 @@
          */
         _overwriteData(data, type) {
             if (this._destroyed) {
-                //we take ownership of the data, destroy
+                //we have received the ownership of the data, destroy it too since we are destroyed
                 $.convertor.destroy(data, type);
                 return $.Promise.resolve();
             }
@@ -772,7 +790,7 @@
 
             let cacheKey = options.cacheKey || theTile.cacheKey;
 
-            let cacheRecord = this._cachesLoaded[cacheKey] || this._zombiesLoaded[cacheKey];
+            let cacheRecord = this._cachesLoaded[cacheKey];
             if (!cacheRecord) {
                 if (options.data === undefined) {
                     $.console.error("[TileCache.cacheTile] options.image was renamed to options.data. '.image' attribute " +
@@ -780,15 +798,26 @@
                     options.data = options.image;
                 }
 
-                //allow anything but undefined, null, false (other values mean the data was set, for example '0')
-                const validData = options.data !== undefined && options.data !== null && options.data !== false;
-                $.console.assert( validData, "[TileCache.cacheTile] options.data is required to create an CacheRecord" );
-                cacheRecord = this._cachesLoaded[cacheKey] = new $.CacheRecord();
-                this._cachesLoadedCount++;
-            } else if (cacheRecord._destroyed) {
-                cacheRecord.revive();
-                delete this._zombiesLoaded[cacheKey];
-                this._zombiesLoadedCount--;
+                cacheRecord = this._zombiesLoaded[cacheKey];
+                if (cacheRecord) {
+                    // zombies should not be (yet) destroyed, but if we encounter one...
+                    if (cacheRecord._destroyed) {
+                        cacheRecord.revive();
+                    } else {
+                        // if zombie ready, do not overwrite its data
+                        delete options.data;
+                    }
+                    delete this._zombiesLoaded[cacheKey];
+                    this._zombiesLoadedCount--;
+                    this._cachesLoaded[cacheKey] = cacheRecord;
+                    this._cachesLoadedCount++;
+                } else {
+                    //allow anything but undefined, null, false (other values mean the data was set, for example '0')
+                    const validData = options.data !== undefined && options.data !== null && options.data !== false;
+                    $.console.assert( validData, "[TileCache.cacheTile] options.data is required to create an CacheRecord" );
+                    cacheRecord = this._cachesLoaded[cacheKey] = new $.CacheRecord();
+                    this._cachesLoadedCount++;
+                }
             }
 
             if (!options.dataType) {
