@@ -65,7 +65,7 @@
 
         // ----------
         assessNumericValue: function ( assert, value1, value2, variance, message ) {
-            assert.ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
+            assert.ok( Util.equalsWithVariance( value1, value2, variance ), message + " Actual:" + value1 + " Expected: " + value2 + " Variance: " + variance );
         },
 
         // ----------
