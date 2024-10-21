@@ -302,7 +302,7 @@
                         return;
                     }
                     //must re-check types since we perform in a queue of conversion requests
-                    if (type !== this._type || (Array.isArray(type) && !type.includes(this._type))) {
+                    if ((typeof type === "string" && type !== this._type) || (Array.isArray(type) && !type.includes(this._type))) {
                         //ensures queue gets executed after finish
                         this._convert(this._type, type);
                         this._promise.then(data => resolver(data));
@@ -317,7 +317,7 @@
                 return promise;
             }
 
-            if (type !== this._type || (Array.isArray(type) && !type.includes(this._type))) {
+            if ((typeof type === "string" && type !== this._type) || (Array.isArray(type) && !type.includes(this._type))) {
                 this._convert(this._type, type);
             }
             return this._promise;
