@@ -539,7 +539,7 @@ $.Tile.prototype = {
      */
     setData: function(value, type) {
         if (!this.tiledImage) {
-            return null; //async context can access the tile outside its lifetime
+            return Promise.resolve(); //async context can access the tile outside its lifetime
         }
 
         let cache = this.getCache(this._wcKey);
@@ -594,7 +594,8 @@ $.Tile.prototype = {
         //TODO IMPLEMENT LOCKING AND IGNORE PIPELINE OUT OF THESE CALLS
 
         // Now, if working cache exists, we set main cache to the working cache, since it has been updated
-        const cache = !requestedRestore && this.getCache(this._wcKey);
+        // if restore() was called last, then working cache was deleted (does not exist)
+        const cache = this.getCache(this._wcKey);
         if (cache) {
             let newCacheKey = this.cacheKey === this.originalCacheKey ? "mod://" + this.originalCacheKey : this.cacheKey;
             this.tiledImage._tileCache.consumeCache({
@@ -745,7 +746,7 @@ $.Tile.prototype = {
     removeCache: function(key, freeIfUnused = true) {
         if (!this._caches[key]) {
             // try to erase anyway in case the cache got stuck in memory
-            this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused);
+            this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused, true);
             return;
         }
 
@@ -771,7 +772,7 @@ $.Tile.prototype = {
                 return;
             }
         }
-        if (this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused)) {
+        if (this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused, false)) {
             //if we managed to free tile from record, we are sure we decreased cache count
             delete this._caches[key];
         }

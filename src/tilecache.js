@@ -186,8 +186,8 @@
             let internalCache = this[DRAWER_INTERNAL_CACHE];
             internalCache = internalCache && internalCache[drawer.getId()];
             if (keepInternalCopy && !internalCache) {
-                $.console.warn("Attempt to render tile that is not prepared with drawer requesting " +
-                    "internal cache! This might introduce artifacts.");
+                $.console.warn("Attempt to render tile cache %s that is not prepared with drawer requesting " +
+                    "internal cache! This might introduce artifacts.", this);
 
                 this.prepareForRendering(drawer.getId(), supportedTypes, keepInternalCopy)
                     .then(() => this._triggerNeedsDraw());
@@ -207,8 +207,8 @@
             }
 
             if (!supportedTypes.includes(internalCache.type)) {
-                $.console.warn("Attempt to render tile that is not prepared for current drawer supported format: " +
-                    "the preparation should've happened after tile processing has finished.");
+                $.console.warn("Attempt to render tile cache %s that is not prepared for current drawer " +
+                    "supported format: the preparation should've happened after tile processing has finished.", this);
 
                 internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
                     .then(() => this._triggerNeedsDraw());
@@ -1096,9 +1096,10 @@
          * @param {OpenSeadragon.Tile} tile
          * @param {string} key cache key
          * @param {boolean} destroy if true, empty cache is destroyed, else left as a zombie
+         * @param {boolean} okIfNotExists sometimes we call destruction just to make sure, if true do not report as error
          * @private
          */
-        unloadCacheForTile(tile, key, destroy) {
+        unloadCacheForTile(tile, key, destroy, okIfNotExists) {
             const cacheRecord = this._cachesLoaded[key];
             //unload record only if relevant - the tile exists in the record
             if (cacheRecord) {
@@ -1122,7 +1123,9 @@
                     "does not belong to! This could mean a bug in the cache system.");
                 return false;
             }
-            $.console.warn("[TileCache.unloadCacheForTile] Attempting to delete missing cache!");
+            if (!okIfNotExists) {
+                $.console.warn("[TileCache.unloadCacheForTile] Attempting to delete missing cache!");
+            }
             return false;
         }
 
