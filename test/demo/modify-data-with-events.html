@@ -86,11 +86,11 @@
             <p>You should see two plugins interacting. You can change the order of plugins and the logics!</p>
         </section>
 
-        <div style="display: flex; flex-direction: row;">
+        <div style="display: flex; flex-direction: row; flex-wrap: wrap;">
             <section class="demo" id="demo" style="width: 800px; height: 600px"></section>
 
             <div>
-            <textarea id="scriptInput" rows="25" cols="120" placeholder="" style="height: 450px">
+            <textarea id="scriptInput" rows="25" cols="120" placeholder="" style="height: 470px">
 // window.pluginA must be defined! draw small gradient square
 window.pluginA = async function(e) {
       const tile = e.tile;
@@ -117,7 +117,7 @@ window.pluginB = async function(e) {
 window.orderPluginA = 1;
 window.orderPluginB = 0;
         </textarea>
-                <textarea style="height: 120px" disabled>
+                <textarea style="height: 120px; background-color: #e5e5e5" disabled>
 // Application of the plugins done automatically:
 viewer.addHandler('tile-loaded', window.pluginA, null, window.orderPluginA);
 viewer.addHandler('tile-invalidated', window.pluginA, null, window.orderPluginA);
@@ -130,10 +130,6 @@ viewer.requestInvalidate();
             </div>
 
         </div>
-
-
-
-
 
         <script>
             const viewer = window.viewer = OpenSeadragon({
