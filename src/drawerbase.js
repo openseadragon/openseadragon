@@ -239,20 +239,19 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      *
      */
     _checkInterfaceImplementation(){
-        // TODO: is this necessary? why not throw just in the method itself?
-        if(this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement){
+        if (this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement) {
             throw(new Error("[drawer]._createDrawingElement must be implemented by child class"));
         }
-        if(this.draw === $.DrawerBase.prototype.draw){
+        if (this.draw === $.DrawerBase.prototype.draw) {
             throw(new Error("[drawer].draw must be implemented by child class"));
         }
-        if(this.canRotate === $.DrawerBase.prototype.canRotate){
+        if (this.canRotate === $.DrawerBase.prototype.canRotate) {
             throw(new Error("[drawer].canRotate must be implemented by child class"));
         }
-        if(this.destroy === $.DrawerBase.prototype.destroy){
+        if (this.destroy === $.DrawerBase.prototype.destroy) {
             throw(new Error("[drawer].destroy must be implemented by child class"));
         }
-        if(this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled){
+        if (this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled) {
             throw(new Error("[drawer].setImageSmoothingEnabled must be implemented by child class"));
         }
     }

@@ -229,23 +229,25 @@
          */
         prepareForRendering(drawerId, supportedTypes, keepInternalCopy = true, _shareTileUpdateStamp = null) {
 
-            // Locked update of render target,
-            if (_shareTileUpdateStamp) {
-                for (let tile of this._tiles) {
-                    if (tile.processing === _shareTileUpdateStamp) {
-                        tile.updateRenderTarget();
+            const fin = () => {
+                // Locked update of render target,
+                if (_shareTileUpdateStamp) {
+                    for (let tile of this._tiles) {
+                        if (tile.processing === _shareTileUpdateStamp) {
+                            tile.updateRenderTarget();
+                        }
                     }
                 }
-            }
-
+            };
 
             // if not internal copy and we have no data, or we are ready to render, exit
             if (!this.loaded || supportedTypes.includes(this.type)) {
+                fin();
                 return $.Promise.resolve(this);
             }
 
             if (!keepInternalCopy) {
-                return this.transformTo(supportedTypes);
+                return this.transformTo(supportedTypes).then(fin);
             }
 
             // we can get here only if we want to render incompatible type
@@ -257,6 +259,7 @@
             internalCache = internalCache[drawerId];
             if (internalCache) {
                 // already done
+                fin();
                 return $.Promise.resolve(this);
             } else {
                 internalCache = this[DRAWER_INTERNAL_CACHE][drawerId] = new $.SimpleCacheRecord();
@@ -269,7 +272,8 @@
             internalCache.withTileReference(this._tRef);
             const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
             return $.convertor.convert(this._tRef, this.data, this.type, selectedFormat).then(data => {
-                internalCache.setDataAs(data, selectedFormat);
+                internalCache.setDataAs(data, selectedFormat);  // synchronous, SimpleCacheRecord
+                fin();
                 return this;
             });
         }
@@ -530,8 +534,6 @@
                 const internal = this[DRAWER_INTERNAL_CACHE];
                 if (internal) {
                     for (let iCache in internal) {
-                        // TODO: if update will be greedy uncomment (see below)
-                        //internal[iCache].withTileReference(this._tRef);
                         internal[iCache].setDataAs(data, type);
                     }
                 }
@@ -550,8 +552,6 @@
                 const internal = this[DRAWER_INTERNAL_CACHE];
                 if (internal) {
                     for (let iCache in internal) {
-                        // TODO: if update will be greedy uncomment (see below)
-                        //internal[iCache].withTileReference(this._tRef);
                         internal[iCache].setDataAs(data, type);
                     }
                 }
@@ -898,7 +898,6 @@
         cloneCache(options) {
             const theTile = options.tile;
             const cacheKey = options.copyTargetKey;
-            //todo consider zombie drop support and custom queue for working cache items only
             const cacheRecord = this._cachesLoaded[cacheKey] || this._zombiesLoaded[cacheKey];
             $.console.assert(cacheRecord, "[TileCache.cloneCache] attempt to clone non-existent cache %s!", cacheKey);
             $.console.assert(!this._cachesLoaded[options.newCacheKey],

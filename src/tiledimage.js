@@ -290,7 +290,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     requestInvalidate: function (viewportOnly, tStamp, restoreTiles = true) {
         tStamp = tStamp || $.now();
-        // this.invalidatedAt = tStamp; //todo document, or remove by something nicer
         const tiles = viewportOnly ? this._lastDrawn.map(x => x.tile) : this._tileCache.getLoadedTilesFor(this);
         this.viewer.world.requestTileInvalidateEvent(tiles, tStamp, restoreTiles);
     },

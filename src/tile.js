@@ -488,9 +488,6 @@ $.Tile.prototype = {
         }
 
         if (value) {
-            // Note: the value's data is probably not preserved - if a cacheKey cache exists, it will ignore
-            // data - it would have to call setData(...)
-            // TODO: call setData() ?
             if (value.loaded) {
                 this.addCache(this.cacheKey, value.data, value.type, true, false);
             } else {
@@ -584,14 +581,9 @@ $.Tile.prototype = {
      * @return
      */
     updateRenderTarget: function () {
-        // TODO we probably need to create timestamp and check if current update stamp is the one saved on the cache,
-        //   if yes, then the update has been performed (and update all tiles asociated to the same cache at once)
-        //   since we cannot ensure all tiles are called with the update (e.g. zombies)
         // Check if we asked for restore, and make sure we set it to false since we update the whole cache state
         const requestedRestore = this.__restore;
         this.__restore = false;
-
-        //TODO IMPLEMENT LOCKING AND IGNORE PIPELINE OUT OF THESE CALLS
 
         // Now, if working cache exists, we set main cache to the working cache, since it has been updated
         // if restore() was called last, then working cache was deleted (does not exist)
@@ -763,8 +755,6 @@ $.Tile.prototype = {
         if (currentMainKey === key) {
             if (!sameBuiltinKeys && this._caches[originalDataKey]) {
                 // if we have original data let's revert back
-                // TODO consider calling drawer.getDataToDraw(...)
-                //   or even better, first ensure the data is compatible and then update...?
                 this._updateMainCacheKey(originalDataKey);
             } else {
                 $.console.warn("[Tile.removeCache] trying to remove the only cache that can be used to draw the tile!",

@@ -854,10 +854,6 @@
             const _this = this;
             const tex2DCompatibleLoader = (tile, data) => {
                 let tiledImage = tile.tiledImage;
-                //todo verify we are calling conversion just right amount of time!
-                // e.g. no upload of cpu-existing texture
-                // also check textures are really getting destroyed (it is tested, but also do this with demos)
-
                 let gl = _this._gl;
 
                 // create a gl Texture for this tile and bind the canvas with the image data
