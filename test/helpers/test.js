@@ -180,12 +180,45 @@
             }
         };
 
+    // OSD has circular references, if a console log tries to serialize
+    // certain object, remove these references from a clone (do not delete prop
+    // on the original object).
+    // NOTE: this does not work if someone replaces the original class with
+    // a mock object! Try to mock functions only, or ensure mock objects
+    // do not hold circular references.
+    const circularOSDReferences = {
+        'Tile': 'tiledImage',
+        'CacheRecord': ['_tRef', '_tiles'],
+        'World': 'viewer',
+        'DrawerBase': ['viewer', 'viewport'],
+        'CanvasDrawer': ['viewer', 'viewport'],
+        'WebGLDrawer': ['viewer', 'viewport'],
+        'TiledImage': ['viewer', '_drawer'],
+    };
     for ( var i in testLog ) {
         if ( testLog.hasOwnProperty( i ) && testLog[i].push ) {
+            // Circular reference removal
+            const osdCircularStructureReplacer = function (key, value) {
+                for (let ClassType in circularOSDReferences) {
+                    if (value instanceof OpenSeadragon[ClassType]) {
+                        const instance = {};
+                        Object.assign(instance, value);
+
+                        let circProps = circularOSDReferences[ClassType];
+                        if (!Array.isArray(circProps)) circProps = [circProps];
+                        for (let prop of circProps) {
+                            instance[prop] = '__circular_reference__';
+                        }
+                        return instance;
+                    }
+                }
+                return value;
+            };
+
             testConsole[i] = ( function ( arr ) {
                 return function () {
                     var args = Array.prototype.slice.call( arguments, 0 ); // Coerce to true Array
-                    arr.push( JSON.stringify( args ) ); // Store as JSON to avoid tedious array-equality tests
+                    arr.push( JSON.stringify( args, osdCircularStructureReplacer ) ); // Store as JSON to avoid tedious array-equality tests
                 };
             } )( testLog[i] );
 
@@ -207,5 +240,29 @@
     };
 
     OpenSeadragon.console = testConsole;
+
+    OpenSeadragon.getBuiltInDrawersForTest = function() {
+        const drawers = [];
+        for (let property in OpenSeadragon) {
+            const drawer = OpenSeadragon[ property ],
+                proto = drawer.prototype;
+            if( proto &&
+                proto instanceof OpenSeadragon.DrawerBase &&
+                $.isFunction( proto.getType )){
+                drawers.push(proto.getType.call( drawer ));
+            }
+        }
+        return drawers;
+    };
+
+    OpenSeadragon.Viewer.prototype.waitForFinishedJobsForTest = function () {
+        let finish;
+        let int = setInterval(() => {
+            if (this.imageLoader.jobsInProgress < 1) {
+                finish();
+            }
+        }, 50);
+        return new OpenSeadragon.Promise((resolve) => finish = resolve);
+    };
 } )();
 

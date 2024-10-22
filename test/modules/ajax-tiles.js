@@ -49,7 +49,8 @@
                 loadTilesWithAjax: true,
                 ajaxHeaders: {
                     'X-Viewer-Header': 'ViewerHeaderValue'
-                }
+                },
+                callTileLoadedWithCachedData: true
             });
         },
         afterEach: function() {

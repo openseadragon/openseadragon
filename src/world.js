@@ -54,6 +54,7 @@ $.World = function( options ) {
     this._needsDraw = false;
     this._autoRefigureSizes = true;
     this._needsSizesFigured = false;
+    this._queuedInvalidateTiles = [];
     this._delegatedFigureSizes = function(event) {
         if (_this._autoRefigureSizes) {
             _this._figureSizes();
@@ -69,6 +70,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Add the specified item.
      * @param {OpenSeadragon.TiledImage} item - The item to add.
+     * @param {Object} options - Options affecting insertion.
      * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.World.event:metrics-change
@@ -232,6 +234,106 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
+     * Forces the system consider all tiles across all tiled images
+     * as outdated, and fire tile update event on relevant tiles
+     * Detailed description is available within the 'tile-invalidated'
+     * event.
+     * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+     * @function
+     * @fires OpenSeadragon.Viewer.event:tile-invalidated
+     * @return {OpenSeadragon.Promise<?>}
+     */
+    requestInvalidate: function (tStamp, restoreTiles = true) {
+        $.__updated = tStamp = tStamp || $.now();
+
+        const promises = this._items.map(item => item.requestInvalidate(true, tStamp, restoreTiles));
+
+        const tiles = this.viewer.tileCache.getLoadedTilesFor(true);
+        promises.push(this.requestTileInvalidateEvent(tiles, tStamp, restoreTiles));
+        return $.Promise.all(promises);
+    },
+
+    /**
+     * Requests tile data update.
+     * @function OpenSeadragon.Viewer.prototype._updateSequenceButtons
+     * @private
+     * @param {Array<OpenSeadragon.Tile>} tileList tiles to update
+     * @param {Number} tStamp timestamp in milliseconds, if active timestamp of the same value is executing,
+     *   changes are added to the cycle, else they await next iteration
+     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+     * @fires OpenSeadragon.Viewer.event:tile-invalidated
+     * @return {OpenSeadragon.Promise<?>}
+     */
+    requestTileInvalidateEvent: function(tileList, tStamp, restoreTiles = true) {
+        if (tileList.length < 1) {
+            return $.Promise.resolve();
+        }
+
+        if (this._queuedInvalidateTiles.length) {
+            this._queuedInvalidateTiles.push(tileList);
+            return $.Promise.resolve();
+        }
+
+        // this.viewer.viewer is defined in navigator, ensure we call event on the parent viewer
+        const eventTarget = this.viewer.viewer || this.viewer;
+        const supportedFormats = eventTarget.drawer.getSupportedDataFormats();
+        const keepInternalCacheCopy = eventTarget.drawer.options.usePrivateCache;
+        const drawerId = eventTarget.drawer.getId();
+
+        tileList = tileList.filter(tile => {
+            if (!tile.loaded || tile.processing) {
+                return false;
+            }
+            const tileCache = tile.getCache();
+            if (tileCache._updateStamp >= tStamp) {
+                return false;
+            }
+            tileCache._updateStamp = tStamp;
+
+            for (let t of tileCache._tiles) {
+                // Mark all as processing
+                t.processing = true;
+            }
+            return true;
+        });
+
+        const jobList = tileList.map(tile => {
+            if (restoreTiles) {
+                tile.restore();
+            }
+            return eventTarget.raiseEventAwaiting('tile-invalidated', {
+                tile: tile,
+                tiledImage: tile.tiledImage,
+            }).then(() => {
+                // asynchronous finisher
+                return tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy);
+            }).catch(e => {
+                $.console.error("Update routine error:", e);
+            });
+        });
+
+        return $.Promise.all(jobList).then(() => {
+            for (let tile of tileList) {
+                // pass update stamp on the new cache object to avoid needless updates
+                const newCache = tile.getCache();
+                if (newCache) {
+                    newCache._updateStamp = tStamp;
+                    tile.processing = false;
+                }
+            }
+
+            if (this._queuedInvalidateTiles.length) {
+                // Make space for other logics execution before we continue in processing
+                let list = this._queuedInvalidateTiles.splice(0, 1)[0];
+                this.requestTileInvalidateEvent(list, tStamp, restoreTiles);
+            } else {
+                this.draw();
+            }
+        });
+    },
+
+    /**
      * Clears all tiles and triggers updates for all items.
      */
     resetItems: function() {
@@ -261,9 +363,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     draw: function() {
         this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
-        this._items.forEach((item) => {
+        for (let item of this._items) {
             this._needsDraw = item.setDrawn() || this._needsDraw;
-        });
+        }
     },
 
     /**
