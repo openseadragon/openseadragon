@@ -18,6 +18,13 @@ const drawers = {
     webgl: "New WebGL drawer"
 }
 
+const viewportMargins = {
+    left: 25,
+    top: 25,
+    right: 25,
+    bottom: 25,
+};
+
 //Support drawer type from the url
 const url = new URL(window.location.href);
 const drawer1 = url.searchParams.get("left") || 'canvas';
@@ -40,6 +47,7 @@ let viewer1 = window.viewer1 = OpenSeadragon({
     drawer:drawer1,
     blendTime:0,
     showNavigator:true,
+    viewportMargins,
 });
 
 // viewer2: webgl drawer
@@ -55,6 +63,7 @@ let viewer2 = window.viewer2 = OpenSeadragon({
     drawer:drawer2,
     blendTime:0,
     showNavigator:true,
+    viewportMargins,
 });
 
 // // viewer3: html drawer, unused

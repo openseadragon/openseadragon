@@ -256,7 +256,7 @@
         draw(tiledImages){
             let gl = this._gl;
             let view = {
-                bounds: this.viewport.getBoundsNoRotate(true),
+                bounds: this.viewport.getBoundsNoRotateWithMargins(true),
                 center: this.viewport.getCenter(true),
                 rotation: this.viewport.getRotation(true) * Math.PI / 180
             };
