@@ -550,7 +550,10 @@ $.Tile.prototype = {
 
     /**
      * Optimizazion: prepare target cache for subsequent use in rendering, and perform updateRenderTarget()
+     * The main idea of this function is that it must be ASYNCHRONOUS since there might be additional processing
+     * happening due to underlying drawer requirements.
      * @private
+     * @return {OpenSeadragon.Promise<?>}
      */
     updateRenderTargetWithDataTransform: function (drawerId, supportedFormats, usePrivateCache) {
         // Now, if working cache exists, we set main cache to the working cache --> prepare
@@ -570,17 +573,20 @@ $.Tile.prototype = {
             return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache, this.processing);
         }
 
-        return null;
+        return $.Promise.resolve();
     },
 
     /**
      * Resolves render target: changes might've been made to the rendering pipeline:
      *  - working cache is set: make sure main cache will be replaced
      *  - working cache is unset: make sure main cache either gets updated to original data or stays (based on this.__restore)
+     *
+     * The main idea of this function is that it is SYNCHRONOUS, e.g. can perform in-place cache swap to update
+     * before any rendering occurs.
      * @private
      * @return
      */
-    updateRenderTarget: function () {
+    updateRenderTarget: function (_allowTileNotLoaded = false) {
         // Check if we asked for restore, and make sure we set it to false since we update the whole cache state
         const requestedRestore = this.__restore;
         this.__restore = false;
@@ -593,7 +599,8 @@ $.Tile.prototype = {
             this.tiledImage._tileCache.consumeCache({
                 tile: this,
                 victimKey: this._wcKey,
-                consumerKey: newCacheKey
+                consumerKey: newCacheKey,
+                tileAllowNotLoaded: _allowTileNotLoaded
             });
             this.cacheKey = newCacheKey;
             return;
@@ -831,7 +838,6 @@ $.Tile.prototype = {
         }
         // Working key is never updated, it will be invalidated (but do not dereference cache, just fix the pointers)
         this._caches[newKey] = cache;
-        cache.AAA = true;
         delete this._caches[oldKey];
     },
 

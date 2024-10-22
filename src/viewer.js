@@ -769,18 +769,21 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      * @fires OpenSeadragon.Viewer.event:tile-invalidated
+     * @return {OpenSeadragon.Promise<?>}
      */
     requestInvalidate: function (restoreTiles = true) {
         if ( !THIS[ this.hash ] ) {
             //this viewer has already been destroyed: returning immediately
-            return;
+            return $.Promise.resolve();
         }
 
         const tStamp = $.now();
-        this.world.requestInvalidate(tStamp, restoreTiles);
-        if (this.navigator) {
-            this.navigator.world.requestInvalidate(tStamp, restoreTiles);
+        const worldPromise = this.world.requestInvalidate(tStamp, restoreTiles);
+        if (!this.navigator) {
+            return worldPromise;
         }
+        const navigatorPromise = this.navigator.world.requestInvalidate(tStamp, restoreTiles);
+        return $.Promise.all([worldPromise, navigatorPromise]);
     },
 
 

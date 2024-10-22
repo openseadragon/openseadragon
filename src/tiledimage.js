@@ -291,7 +291,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     requestInvalidate: function (viewportOnly, tStamp, restoreTiles = true) {
         tStamp = tStamp || $.now();
         const tiles = viewportOnly ? this._lastDrawn.map(x => x.tile) : this._tileCache.getLoadedTilesFor(this);
-        this.viewer.world.requestTileInvalidateEvent(tiles, tStamp, restoreTiles);
+        return this.viewer.world.requestTileInvalidateEvent(tiles, tStamp, restoreTiles);
     },
 
     /**
@@ -2106,7 +2106,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType) {
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // does nothing if tile.cacheKey already present
-        tile.addCache(tile.cacheKey, data, dataType, false, false);
+
+        let tileCacheCreated = false;
+        tile.addCache(tile.cacheKey, () => {
+            tileCacheCreated = true;
+            return data;
+        }, dataType, false, false);
 
         let resolver = null,
             increment = 0,
@@ -2125,7 +2130,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             tile.hasTransparency = tile.hasTransparency || _this.source.hasTransparency(
                 undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
             );
-            tile.updateRenderTarget();
+            tile.updateRenderTarget(true);
             //make sure cache data is ready for drawing, if not, request the desired format
             const cache = tile.getCache(tile.cacheKey),
                 requiredTypes = _this._drawer.getSupportedDataFormats();
@@ -2161,6 +2166,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         const fallbackCompletion = getCompletionCallback();
+
+        if (!tileCacheCreated) {
+            // Tile-loaded not called on each tile, but only on tiles with new data! Verify we share the main cache
+
+            // We could attempt to initialize the tile here (e.g. find another tile that has same key and if
+            // we find it in different main cache, we try to share it with current tile, but this process
+            // is also happening within tile cache logics (see last part of consumeCache(..)).
+            fallbackCompletion();
+            return;
+        }
 
         /**
          * Triggered when a tile has just been loaded in memory. That means that the

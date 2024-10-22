@@ -238,6 +238,7 @@
                         }
                     }
                 }
+                return this;
             };
 
             // if not internal copy and we have no data, or we are ready to render, exit
@@ -273,8 +274,7 @@
             const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
             return $.convertor.convert(this._tRef, this.data, this.type, selectedFormat).then(data => {
                 internalCache.setDataAs(data, selectedFormat);  // synchronous, SimpleCacheRecord
-                fin();
-                return this;
+                return fin();
             });
         }
 
@@ -372,11 +372,10 @@
                 // make sure this gets destroyed even if loaded=false
                 if (this.loaded) {
                     this._destroySelfUnsafe(this._data, this._type);
-                } else {
+                } else if (this._promise) {
                     const oldType = this._type;
                     this._promise.then(x => this._destroySelfUnsafe(x, oldType));
                 }
-                this.loaded = false;
             }
 
         }
@@ -389,6 +388,7 @@
             if (!this._destroyed) {
                 return;
             }
+            this.loaded = false;
             this._tiles = null;
             this._data = null;
             this._type = null;
@@ -922,12 +922,14 @@
          *   inheriting its tiles and key.
          * @param {String} options.consumerKey - The cache that consumes the victim. In fact, it gets destroyed and
          *   replaced by victim, which inherits all its metadata.
-         * @param {}
+         * @param {Boolean} options.tileAllowNotLoaded - if true, tile that is not loaded is also processed,
+         *   this is internal parameter used in tile-loaded completion routine, as we need to prepare tile but
+         *   it is not yet loaded and cannot be marked as so (otherwise the system would think it is ready)
          */
         consumeCache(options) {
             const victim = this._cachesLoaded[options.victimKey],
                 tile = options.tile;
-            if (!victim || (!tile.loaded && !tile.loading)) {
+            if (!victim || (!options.tileAllowNotLoaded && !tile.loaded && !tile.loading)) {
                 $.console.warn("Attempt to consume non-existent cache: this is probably a bug!");
                 return;
             }
@@ -935,11 +937,13 @@
             let tiles = [...tile.getCache()._tiles];
 
             if (consumer) {
-                // We need to avoid costly conversions: replace consumer.
-                // unloadCacheForTile() will modify the array, iterate over a copy
-                const iterateTiles = [...consumer._tiles];
+                // We need to avoid async execution here: replace consumer instead of overwriting the data.
+                const iterateTiles = [...consumer._tiles];  // unloadCacheForTile() will modify the array, use a copy
                 for (let tile of iterateTiles) {
-                    this.unloadCacheForTile(tile, options.consumerKey, true);
+                    if (tile.loaded) {
+                        this.unloadCacheForTile(tile, options.consumerKey, true);
+                    }
+
                 }
             }
             // Just swap victim to become new consumer
@@ -951,8 +955,10 @@
             if (resultCache) {
                 // Only one cache got working item, other caches were idle: update cache: add the new cache
                 // we can add since we removed above with unloadCacheForTile()
+                // Loading tiles are also accepted, since they might be in the process of finishing. However,
+                // note that they are not part of the unloading process above!
                 for (let tile of tiles) {
-                    if (tile !== options.tile && tile.loaded) {
+                    if (tile !== options.tile && (tile.loaded || tile.loading)) {
                         tile.addCache(options.consumerKey, resultCache.data, resultCache.type, true, false);
                     }
                 }

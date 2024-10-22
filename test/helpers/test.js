@@ -240,5 +240,29 @@
     };
 
     OpenSeadragon.console = testConsole;
+
+    OpenSeadragon.getBuiltInDrawersForTest = function() {
+        const drawers = [];
+        for (let property in OpenSeadragon) {
+            const drawer = OpenSeadragon[ property ],
+                proto = drawer.prototype;
+            if( proto &&
+                proto instanceof OpenSeadragon.DrawerBase &&
+                $.isFunction( proto.getType )){
+                drawers.push(proto.getType.call( drawer ));
+            }
+        }
+        return drawers;
+    };
+
+    OpenSeadragon.Viewer.prototype.waitForFinishedJobsForTest = function () {
+        let finish;
+        let int = setInterval(() => {
+            if (this.imageLoader.jobsInProgress < 1) {
+                finish();
+            }
+        }, 50);
+        return new OpenSeadragon.Promise((resolve) => finish = resolve);
+    };
 } )();
 

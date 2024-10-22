@@ -146,8 +146,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      * @returns {Element} the div to draw into
      */
     _createDrawingElement(){
-        let canvas = $.makeNeutralElement("div");
-        return canvas;
+        return $.makeNeutralElement("div");
     }
 
     /**
@@ -259,6 +258,10 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         //               content during animation of the container size.
 
         const dataObject = this.getDataToDraw(tile);
+        if (!dataObject) {
+            return;
+        }
+
         if ( dataObject.element.parentNode !== container ) {
             container.appendChild( dataObject.element );
         }

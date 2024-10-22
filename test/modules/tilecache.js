@@ -113,7 +113,6 @@
     });
 
     // ----------
-    // TODO: this used to be async
     QUnit.test('basics', function(assert) {
         const done = assert.async();
         const fakeViewer = MockSeadragon.getViewer(

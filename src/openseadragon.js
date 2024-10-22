@@ -2368,6 +2368,14 @@ function OpenSeadragon( options ){
 
         /**
          * Makes an AJAX request.
+         * @param {String} url - the url to request
+         * @param {Function} onSuccess
+         * @param {Function} onError
+         * @throws {Error}
+         * @returns {XMLHttpRequest}
+         * @deprecated deprecated way of calling this function
+         *//**
+         * Makes an AJAX request.
          * @param {Object} options
          * @param {String} options.url - the url to request
          * @param {Function} options.success - a function to call on a successful response
@@ -2379,14 +2387,6 @@ function OpenSeadragon( options ){
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
          * @throws {Error}
          * @returns {XMLHttpRequest}
-         *//**
-         * Makes an AJAX request.
-         * @param {String} url - the url to request
-         * @param {Function} onSuccess
-         * @param {Function} onError
-         * @throws {Error}
-         * @returns {XMLHttpRequest}
-         * @deprecated deprecated way of calling this function
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
             var withCredentials;

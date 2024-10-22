@@ -242,16 +242,16 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      * @function
      * @fires OpenSeadragon.Viewer.event:tile-invalidated
+     * @return {OpenSeadragon.Promise<?>}
      */
     requestInvalidate: function (tStamp, restoreTiles = true) {
         $.__updated = tStamp = tStamp || $.now();
-        for ( let i = 0; i < this._items.length; i++ ) {
-            this._items[i].requestInvalidate(true, tStamp, restoreTiles);
-        }
+
+        const promises = this._items.map(item => item.requestInvalidate(true, tStamp, restoreTiles));
 
         const tiles = this.viewer.tileCache.getLoadedTilesFor(true);
-        // Delay processing of all tiles of all items to a later stage by increasing tstamp
-        this.requestTileInvalidateEvent(tiles, tStamp, restoreTiles);
+        promises.push(this.requestTileInvalidateEvent(tiles, tStamp, restoreTiles));
+        return $.Promise.all(promises);
     },
 
     /**
@@ -263,42 +263,20 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      *   changes are added to the cycle, else they await next iteration
      * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      * @fires OpenSeadragon.Viewer.event:tile-invalidated
+     * @return {OpenSeadragon.Promise<?>}
      */
     requestTileInvalidateEvent: function(tileList, tStamp, restoreTiles = true) {
         if (tileList.length < 1) {
-            return;
+            return $.Promise.resolve();
         }
 
         if (this._queuedInvalidateTiles.length) {
             this._queuedInvalidateTiles.push(tileList);
-            return;
+            return $.Promise.resolve();
         }
 
         // this.viewer.viewer is defined in navigator, ensure we call event on the parent viewer
         const eventTarget = this.viewer.viewer || this.viewer;
-        const finish = () => {
-            for (let tile of tileList) {
-                // pass update stamp on the new cache object to avoid needless updates
-                const newCache = tile.getCache();
-                if (newCache) {
-
-                    newCache._updateStamp = tStamp;
-                    for (let t of newCache._tiles) {
-                        // Mark all as processing
-                        t.processing = false;
-                    }
-                }
-            }
-
-            if (this._queuedInvalidateTiles.length) {
-                // Make space for other logics execution before we continue in processing
-                let list = this._queuedInvalidateTiles.splice(0, 1)[0];
-                this.requestTileInvalidateEvent(list, tStamp, restoreTiles);
-            } else {
-                this.draw();
-            }
-        };
-
         const supportedFormats = eventTarget.drawer.getSupportedDataFormats();
         const keepInternalCacheCopy = eventTarget.drawer.options.usePrivateCache;
         const drawerId = eventTarget.drawer.getId();
@@ -320,7 +298,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return true;
         });
 
-        $.Promise.all(tileList.map(tile => {
+        const jobList = tileList.map(tile => {
             if (restoreTiles) {
                 tile.restore();
             }
@@ -328,9 +306,31 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 tile: tile,
                 tiledImage: tile.tiledImage,
             }).then(() => {
-                tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy);
+                // asynchronous finisher
+                return tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy);
+            }).catch(e => {
+                $.console.error("Update routine error:", e);
             });
-        })).catch(finish).then(finish);
+        });
+
+        return $.Promise.all(jobList).then(() => {
+            for (let tile of tileList) {
+                // pass update stamp on the new cache object to avoid needless updates
+                const newCache = tile.getCache();
+                if (newCache) {
+                    newCache._updateStamp = tStamp;
+                    tile.processing = false;
+                }
+            }
+
+            if (this._queuedInvalidateTiles.length) {
+                // Make space for other logics execution before we continue in processing
+                let list = this._queuedInvalidateTiles.splice(0, 1)[0];
+                this.requestTileInvalidateEvent(list, tStamp, restoreTiles);
+            } else {
+                this.draw();
+            }
+        });
     },
 
     /**
