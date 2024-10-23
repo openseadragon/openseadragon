@@ -186,8 +186,8 @@
             let internalCache = this[DRAWER_INTERNAL_CACHE];
             internalCache = internalCache && internalCache[drawer.getId()];
             if (keepInternalCopy && !internalCache) {
-                $.console.warn("Attempt to render tile cache %s that is not prepared with drawer requesting " +
-                    "internal cache! This might introduce artifacts.", this);
+                $.console.warn("Attempt to render %s that is not prepared with drawer requesting " +
+                    "internal cache! This might introduce artifacts.", this.toString());
 
                 this.prepareForRendering(drawer.getId(), supportedTypes, keepInternalCopy)
                     .then(() => this._triggerNeedsDraw());
@@ -207,8 +207,8 @@
             }
 
             if (!supportedTypes.includes(internalCache.type)) {
-                $.console.warn("Attempt to render tile cache %s that is not prepared for current drawer " +
-                    "supported format: the preparation should've happened after tile processing has finished.", this);
+                $.console.warn("Attempt to render %s that is not prepared for current drawer " +
+                    "supported format: the preparation should've happened after tile processing has finished.", this.toString());
 
                 internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
                     .then(() => this._triggerNeedsDraw());
@@ -231,6 +231,7 @@
 
             const fin = () => {
                 // Locked update of render target,
+                console.log("FINISH CACHE PREPARE", this._tRef);
                 if (_shareTileUpdateStamp) {
                     for (let tile of this._tiles) {
                         if (tile.processing === _shareTileUpdateStamp) {
@@ -345,6 +346,15 @@
          */
         withTileReference(ref) {
             this._tRef = ref;
+        }
+
+        /**
+         * Get cache description. Used for system messages and errors.
+         * @return {string}
+         */
+        toString() {
+            const tile = this._tRef || (this._tiles.length && this._tiles[0]);
+            return tile ? `Cache ${this.type} [used e.g. by ${tile.toString()}]` : `Orphan cache!`;
         }
 
         /**
@@ -850,9 +860,9 @@
          * @return {OpenSeadragon.CacheRecord | null}
          */
         renameCache( options ) {
-            let originalCache = this._cachesLoaded[options.oldCacheKey];
             const newKey = options.newCacheKey,
                 oldKey = options.oldCacheKey;
+            let originalCache = this._cachesLoaded[oldKey];
 
             if (!originalCache) {
                 originalCache = this._zombiesLoaded[oldKey];
@@ -940,11 +950,14 @@
                 // We need to avoid async execution here: replace consumer instead of overwriting the data.
                 const iterateTiles = [...consumer._tiles];  // unloadCacheForTile() will modify the array, use a copy
                 for (let tile of iterateTiles) {
-                    if (tile.loaded) {
+                    if (tile.loaded || tile.loading) {
                         this.unloadCacheForTile(tile, options.consumerKey, true);
                     }
 
                 }
+            }
+            if (this._cachesLoaded[options.consumerKey]) {
+                console.error("The routine should've freed cache!");
             }
             // Just swap victim to become new consumer
             const resultCache = this.renameCache({
@@ -955,8 +968,6 @@
             if (resultCache) {
                 // Only one cache got working item, other caches were idle: update cache: add the new cache
                 // we can add since we removed above with unloadCacheForTile()
-                // Loading tiles are also accepted, since they might be in the process of finishing. However,
-                // note that they are not part of the unloading process above!
                 for (let tile of tiles) {
                     if (tile !== options.tile && (tile.loaded || tile.loading)) {
                         tile.addCache(options.consumerKey, resultCache.data, resultCache.type, true, false);

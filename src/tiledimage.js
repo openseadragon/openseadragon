@@ -2118,7 +2118,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             eventFinished = false;
         const _this = this,
             finishPromise = new $.Promise(r => {
-                resolver = r;
+                resolver = () => {
+                    console.log("TILE READY", tile);
+                    r();
+                };
             });
 
         function completionCallback() {
@@ -2169,12 +2172,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (!tileCacheCreated) {
             // Tile-loaded not called on each tile, but only on tiles with new data! Verify we share the main cache
-
-            // We could attempt to initialize the tile here (e.g. find another tile that has same key and if
-            // we find it in different main cache, we try to share it with current tile, but this process
-            // is also happening within tile cache logics (see last part of consumeCache(..)).
-            fallbackCompletion();
-            return;
+            const origCache = tile.getCache(tile.originalCacheKey);
+            for (let t of origCache._tiles) {
+                if (!t.processing && t.cacheKey !== tile.cacheKey) {
+                    const targetMainCache = t.getCache();
+                    tile.addCache(t.cacheKey, targetMainCache.data, targetMainCache.type, true, false);
+                    fallbackCompletion();
+                    return;
+                }
+            }
         }
 
         /**
