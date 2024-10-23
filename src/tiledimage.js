@@ -2146,11 +2146,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }).then(_ => {
                     tile.loading = false;
                     tile.loaded = true;
+                    tile.lastProcess = 1;
                     resolver(tile);
                 });
             } else {
                 tile.loading = false;
                 tile.loaded = true;
+                tile.lastProcess = 1;
                 resolver(tile);
             }
         }

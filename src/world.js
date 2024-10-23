@@ -249,11 +249,12 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         // const promise = this.requestTileInvalidateEvent(priorityTiles, tStamp, restoreTiles);
         // return promise.then(() => this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles));
 
-        //
-        //return this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles);
+        // Tile-first retrieval fires computation on tiles that share cache, which are filtered out by processing property
+        return this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles);
 
-        // Try go cache-first order, ensuring all tiles that do have cache entry get processed
-        return this.requestTileInvalidateEvent(new Set(Object.values(this.viewer.tileCache._cachesLoaded).map(c => !c._destroyed && c._tiles[0])), tStamp, restoreTiles);
+        // Cache-first update tile retrieval is nicer since there might be many tiles sharing
+        // return this.requestTileInvalidateEvent(new Set(Object.values(this.viewer.tileCache._cachesLoaded)
+        //     .map(c => !c._destroyed && c._tiles[0])), tStamp, restoreTiles);
     },
 
     /**
@@ -268,23 +269,25 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @return {OpenSeadragon.Promise<?>}
      */
     requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true) {
-        const tileList = [];
+        const tileList = [],
+            markedTiles = [];
         for (const tile of tilesToProcess) {
-            //todo if tiles are processing then it does not update them to the latest stage
-            // but if we do allow it, then a collision on processing occurs - swap in middle of rendering, we need
-            // to check what is the latest processing stamp and if it is bigger than current process finish we need to abort
-            if (!tile || !tile.loaded || tile.processing) { /* || tile.processing*/
+            // We allow re-execution on tiles that are in process but have too low processing timestamp,
+            // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
+            // pipeline take no effect.
+            // TODO: cross writes on tile when processing cause memory errors - either ensure
+            //  tile makes NOOP for any execution that comes with older stamp, or prevent update routine
+            //  to happen simultanously
+            if (!tile || !tile.loaded || (tile.processing && tile.processing <= tStamp) || tile.transforming) {
                 continue;
             }
+            // TODO: consider locking on the original cache, which should be read only
+            //   or lock the main cache, and compare with tile.processing tstamp
             const tileCache = tile.getCache();
-            if (tileCache._updateStamp >= tStamp) {
-                continue;
-            }
-            tileCache._updateStamp = tStamp;
-
             for (let t of tileCache._tiles) {
-                // Mark all as processing
+                // Mark all related tiles as processing and cache the references to unmark later on
                 t.processing = tStamp;
+                markedTiles.push(t);
             }
             tileList.push(tile);
         }
@@ -307,23 +310,23 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 tile: tile,
                 tiledImage: tile.tiledImage,
             }).then(() => {
-                // asynchronous finisher
-                return tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy);
+                if (tile.processing === tStamp) {
+                    // asynchronous finisher
+                    tile.transforming = tStamp;
+                    return tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy);
+                }
+                return null;
             }).catch(e => {
                 $.console.error("Update routine error:", e);
             });
         });
 
         return $.Promise.all(jobList).then(() => {
-            for (let tile of tileList) {
-                // pass update stamp on the new cache object to avoid needless updates
-                const newCache = tile.getCache();
-                if (newCache) {
-                    newCache._updateStamp = tStamp;
-                    tile.processing = false;
-                }
+            for (let tile of markedTiles) {
+                tile.lastProcess = tile.processing;
+                tile.processing = false;
+                tile.transforming = false;
             }
-
             this.draw();
         });
     },

@@ -268,6 +268,18 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @private
      */
     this.processing = false;
+    /**
+     * Remembers last processing time of the tile, 1 if the tile has just been loaded.
+     * @private
+     */
+    this.lastProcess = 0;
+    /**
+     * Transforming flag, exempt the tile from any processing since it is being transformed to a drawer-compatible
+     * format. This process cannot be paused and the tile cannot be touched during the process. Used externally.
+     * @member {Boolean|Number}
+     * @private
+     */
+    this.transforming = false;
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -603,15 +615,14 @@ $.Tile.prototype = {
                 tileAllowNotLoaded: _allowTileNotLoaded
             });
             this.cacheKey = newCacheKey;
-            return;
-        }
-        // If we requested restore, perform now
-        if (requestedRestore) {
+        } else if (requestedRestore) {
+            // If we requested restore, perform now
             this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
                 this, this.getCache(this.originalCacheKey), this.__restoreRequestedFree
             );
         }
-        // Else no work to be done
+        // If transforming was set, we finished: drawer transform always finishes with updateRenderTarget()
+        this.transforming = false;
     },
 
     /**

@@ -163,15 +163,14 @@
 
         /**
          * @private
-         * Access of the data by drawers, synchronous function.
-         *
-         * When drawers access data, they can choose to access this data as internal copy
+         * Access of the data by drawers, synchronous function. Should always access a valid main cache, e.g.
+         * cache swap should be atomic.
          *
          * @param {OpenSeadragon.DrawerBase} drawer
-         *   until 'setData' is called
+         * @param {OpenSeadragon.Tile} tileDrawn
          * @returns {any|undefined} desired data if available, undefined if conversion must be done
          */
-        getDataForRendering(drawer) {
+        getDataForRendering(drawer, tileDrawn) {
             const supportedTypes = drawer.getSupportedDataFormats(),
                 keepInternalCopy = drawer.options.usePrivateCache;
             if (this.loaded && supportedTypes.includes(this.type)) {
@@ -180,6 +179,7 @@
 
             if (this._destroyed) {
                 $.console.error("Attempt to draw tile with destroyed main cache!");
+                tileDrawn._unload();  // try to restore the state so that the tile is later on fetched again
                 return undefined;
             }
 
