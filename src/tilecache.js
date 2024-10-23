@@ -230,8 +230,7 @@
         prepareForRendering(drawerId, supportedTypes, keepInternalCopy = true, _shareTileUpdateStamp = null) {
 
             const fin = () => {
-                // Locked update of render target,
-                console.log("FINISH CACHE PREPARE", this._tRef);
+                // Locked update of render target to the tile that initiated processing
                 if (_shareTileUpdateStamp) {
                     for (let tile of this._tiles) {
                         if (tile.processing === _shareTileUpdateStamp) {
@@ -1088,10 +1087,11 @@
         /**
          * Returns reference to all tiles loaded by a particular
          * tiled image item
-         * @param {OpenSeadragon.TiledImage|Boolean} tiledImage true for all, reference for selection
+         * @param {OpenSeadragon.TiledImage|null} tiledImage if null, gets all tiles, else filters out tiles
+         *   that belong to a specific image
          */
         getLoadedTilesFor(tiledImage) {
-            if (tiledImage === true) {
+            if (!tiledImage) {
                 return [...this._tilesLoaded];
             }
             return this._tilesLoaded.filter(tile => tile.tiledImage === tiledImage);

@@ -284,12 +284,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * as outdated, and fire tile update event on relevant tiles
      * Detailed description is available within the 'tile-invalidated'
      * event.
+     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      * @param {boolean} [viewportOnly=false] optionally invalidate only viewport-visible tiles if true
      * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
-     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      */
-    requestInvalidate: function (viewportOnly, tStamp, restoreTiles = true) {
-        tStamp = tStamp || $.now();
+    requestInvalidate: function (restoreTiles = true, viewportOnly = false, tStamp = $.now()) {
         const tiles = viewportOnly ? this._lastDrawn.map(x => x.tile) : this._tileCache.getLoadedTilesFor(this);
         return this.viewer.world.requestTileInvalidateEvent(tiles, tStamp, restoreTiles);
     },
@@ -2118,10 +2117,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             eventFinished = false;
         const _this = this,
             finishPromise = new $.Promise(r => {
-                resolver = () => {
-                    console.log("TILE READY", tile);
-                    r();
-                };
+                resolver = r;
             });
 
         function completionCallback() {

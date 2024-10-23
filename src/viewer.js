@@ -778,11 +778,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         const tStamp = $.now();
-        const worldPromise = this.world.requestInvalidate(tStamp, restoreTiles);
+        const worldPromise = this.world.requestInvalidate(restoreTiles, tStamp);
         if (!this.navigator) {
             return worldPromise;
         }
-        const navigatorPromise = this.navigator.world.requestInvalidate(tStamp, restoreTiles);
+        const navigatorPromise = this.navigator.world.requestInvalidate(restoreTiles, tStamp);
         return $.Promise.all([worldPromise, navigatorPromise]);
     },
 

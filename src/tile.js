@@ -264,7 +264,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     this._wcKey = `w${_workingCacheIdDealer++}://` + this.originalCacheKey;
     /**
      * Processing flag, exempt the tile from removal when there are ongoing updates
-     * @member {Boolean}
+     * @member {Boolean|Number}
      * @private
      */
     this.processing = false;
