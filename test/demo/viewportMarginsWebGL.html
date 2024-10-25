@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <title>Viewport Margins Discrepancy</title>
+    <style>
+        body {
+            margin: 0 5%;
+        }
+
+        .drawer-example {
+            width: 400px;
+            height: 300px;
+        }
+
+        .drawer-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            margin: 50px 0;
+            min-height: 320px;
+        }
+    </style>
+</head>
+<body>
+    <div class="drawer-container">
+        <div id="canvasdrawer" class="drawer-example">
+            <h2>Canvas Drawer</h1>
+        </div>
+        <div id="webgldrawer" class="drawer-example">
+            <h2>WebGL Drawer</h1>
+        </div>
+    </div>
+    <div>
+        <h2>INFO</h2>
+        <p>It looks like there's a discrepancy between what appears with debug mode enabled on canvas and on WebGL. If one of the margins is not equal to the others, there seems to be a discrepancy between the tiles that get drawn and the tiles defined by debug mode. My company and I see the canvas drawer as expected behavior.</p>
+        <pre id="thescript-code"></pre>
+    </div>
+    <script id="thescript">
+        // If the top margin !== the other margins, there's a mismatch between the tiles and the
+        // debug drawings between WebGL and Canvas
+        const extraTop = 50;
+        const viewportMargins = { left: 10, top: 10 + extraTop, right: 10, bottom: 10};
+        const config = {
+            debugMode: true,
+            viewportMargins,
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            showNavigator: false,
+        };
+
+        const canvasDrawer = OpenSeadragon({
+            ...config,
+            id: "canvasdrawer",
+            drawer: "canvas",
+        });
+
+        const webGlDrawer = OpenSeadragon({
+            ...config,
+            id: "webgldrawer",
+            drawer: "webgl",
+        });
+    </script>
+    <script>
+        const text = document.getElementById('thescript').text;
+        document.getElementById('thescript-code').innerHTML = text;
+    </script>
+</body>
+</html>
