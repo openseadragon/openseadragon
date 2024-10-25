@@ -19,10 +19,10 @@ const drawers = {
 }
 
 const viewportMargins = {
-    left: 25,
-    top: 25,
-    right: 25,
-    bottom: 25,
+    left: 100,
+    top: 0,
+    right: 0,
+    bottom: 50,
 };
 
 //Support drawer type from the url
