@@ -255,9 +255,10 @@
         */
         draw(tiledImages){
             let gl = this._gl;
+            const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
             let view = {
-                bounds: this.viewport.getBoundsNoRotateWithMargins(true),
-                center: this.viewport.getCenter(true),
+                bounds: bounds,
+                center: new OpenSeadragon.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
                 rotation: this.viewport.getRotation(true) * Math.PI / 180
             };
 
