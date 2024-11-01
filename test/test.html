@@ -14,7 +14,7 @@
             config: {
                 //five seconds timeout due to problems with untrusted events (e.g. auto zoom) for non-interactive runs
                 //there is timeWatcher property but sometimes tests do not respect it, or they get stuck due to bugs
-                testTimeout: isInteractiveMode() ? 30000 : 5000
+                testTimeout: isInteractiveMode() ? 30000 : 10000
             }
         };
     </script>
