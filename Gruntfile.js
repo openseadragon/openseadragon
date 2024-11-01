@@ -81,6 +81,11 @@ module.exports = function(grunt) {
         grunt.config.set('gitInfo', rev);
     });
 
+    let moduleFilter =  '';
+    if (grunt.option('module')) {
+        moduleFilter = '?module=' + grunt.option('module')
+    }
+
     // ----------
     // Project configuration.
     grunt.initConfig({
@@ -166,7 +171,7 @@ module.exports = function(grunt) {
         qunit: {
             normal: {
                 options: {
-                    urls: [ "http://localhost:8000/test/test.html" ],
+                    urls: [ "http://localhost:8000/test/test.html" + moduleFilter ],
                     timeout: 10000,
                     puppeteer: {
                         headless: 'new'
@@ -175,7 +180,7 @@ module.exports = function(grunt) {
             },
             coverage: {
                 options: {
-                    urls: [ "http://localhost:8000/test/coverage.html" ],
+                    urls: [ "http://localhost:8000/test/coverage.html" + moduleFilter ],
                     coverage: {
                         src: ['src/*.js'],
                         htmlReport: coverageDir + '/html/',
