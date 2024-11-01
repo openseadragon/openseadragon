@@ -54,18 +54,14 @@
                     }
 
                     if (_pA)  {
-                        viewer.removeHandler('tile-loaded', _pA);
                         viewer.removeHandler('tile-invalidated', _pA);
                     }
                     if (_pB) {
-                        viewer.removeHandler('tile-loaded', _pB);
                         viewer.removeHandler('tile-invalidated', _pB);
                     }
                     _pA = window.pluginA;
                     _pB = window.pluginB;
-                    viewer.addHandler('tile-loaded', _pA, null, window.orderPluginA || 0);
-                    viewer.addHandler('tile-invalidated', _pA, null), window.orderPluginA || 0;
-                    viewer.addHandler('tile-loaded', _pB, null, window.orderPluginB || 0);
+                    viewer.addHandler('tile-invalidated', _pA, null, window.orderPluginA || 0);
                     viewer.addHandler('tile-invalidated', _pB, null, window.orderPluginB || 0);
                     viewer.requestInvalidate();
                 } catch (error) {
@@ -119,9 +115,7 @@ window.orderPluginB = 0;
         </textarea>
                 <textarea style="height: 120px; background-color: #e5e5e5" disabled>
 // Application of the plugins done automatically:
-viewer.addHandler('tile-loaded', window.pluginA, null, window.orderPluginA);
 viewer.addHandler('tile-invalidated', window.pluginA, null, window.orderPluginA);
-viewer.addHandler('tile-loaded', window.pluginB, null, window.orderPluginB);
 viewer.addHandler('tile-invalidated', window.pluginB, null, window.orderPluginB);
 viewer.requestInvalidate();
         </textarea>

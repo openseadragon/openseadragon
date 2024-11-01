@@ -17,8 +17,10 @@
         }
     });
 
+    const PROMISE_REF_KEY = Symbol("_private_test_ref");
+
     OpenSeadragon.getBuiltInDrawersForTest().forEach(testDrawer);
-    // If yuu want to debug a specific drawer, use instead:
+    // If you want to debug a specific drawer, use instead:
     // ['webgl'].forEach(testDrawer);
 
     function getPluginCode(overlayColor = "rgba(0,0,255,0.5)") {
@@ -74,21 +76,31 @@
                     context.finish(ctx, null, "context2d");
                 }
             });
+
+            // Get promise reference to wait for tile ready
+            viewer.addHandler('tile-loaded', e => {
+                e.tile[PROMISE_REF_KEY] = e.promise;
+            });
         }
         const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
         // we test middle of the canvas, so that we can test both tiles or the output canvas of canvas drawer :)
-        async function readTileData() {
+        async function readTileData(tileRef = null) {
+            // Get some time for viewer to load data
+            await sleep(50);
+            // make sure at least one tile loaded
+            const tile = tileRef || viewer.world.getItemAt(0).getTilesToDraw()[0];
+            await tile[PROMISE_REF_KEY];
+            // Get some time for viewer to load data
+            await sleep(50);
+
             if (type === "canvas") {
                 //test with the underlying canvas instead
                 const canvas = viewer.drawer.canvas;
                 return viewer.drawer.canvas.getContext("2d").getImageData(canvas.width/2, canvas.height/2, 1, 1);
             }
 
-            await sleep(200);
-
             //else incompatible drawer for data getting
-            const tile = viewer.world.getItemAt(0).getTilesToDraw()[0];
             const cache = tile.tile.getCache();
             if (!cache || !cache.loaded) return null;
 
@@ -103,12 +115,8 @@
             const fnA = getPluginCode("rgba(0,0,255,1)");
             const fnB = getPluginCode("rgba(255,0,0,1)");
 
-            const crashTest = () => assert.ok(false, "Tile Invalidated event should not be called");
-
-            viewer.addHandler('tile-loaded', fnA);
-            viewer.addHandler('tile-invalidated', crashTest);
-            viewer.addHandler('tile-loaded', fnB);
-            viewer.addHandler('tile-invalidated', crashTest);
+            viewer.addHandler('tile-invalidated', fnA);
+            viewer.addHandler('tile-invalidated', fnB);
 
             viewer.addHandler('open', async () => {
                 await viewer.waitForFinishedJobsForTest();
@@ -120,6 +128,7 @@
 
                 // Thorough testing of the cache state
                 for (let tile of viewer.tileCache._tilesLoaded) {
+                    await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
                     assert.equal(caches.length, 2, `Tile ${getTileDescription(tile)} has only two caches - main & original`);
@@ -142,9 +151,7 @@
             const fnA = getPluginCode("rgba(0,0,255,1)");
             const fnB = getPluginCode("rgba(255,0,0,1)");
 
-            viewer.addHandler('tile-loaded', fnA);
             viewer.addHandler('tile-invalidated', fnA);
-            viewer.addHandler('tile-loaded', fnB, null, 1);
             viewer.addHandler('tile-invalidated', fnB, null, 1);
             // const promise = viewer.requestInvalidate();
 
@@ -158,7 +165,6 @@
                 assert.equal(data.data[3], 255);
 
                 // Test swap
-                viewer.addHandler('tile-loaded', fnB);
                 viewer.addHandler('tile-invalidated', fnB);
                 await viewer.requestInvalidate();
 
@@ -170,7 +176,6 @@
                 assert.equal(data.data[3], 255);
 
                 // Now B gets applied last! Red
-                viewer.addHandler('tile-loaded', fnB, null, -1);
                 viewer.addHandler('tile-invalidated', fnB, null, -1);
                 await viewer.requestInvalidate();
                 // no change
@@ -182,6 +187,7 @@
 
                 // Thorough testing of the cache state
                 for (let tile of viewer.tileCache._tilesLoaded) {
+                    await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
                     assert.equal(caches.length, 2, `Tile ${getTileDescription(tile)} has only two caches - main & original`);
@@ -204,9 +210,7 @@
             const fnA = getPluginCode("rgba(0,255,0,1)");
             const fnB = getResetTileDataCode();
 
-            viewer.addHandler('tile-loaded', fnA);
             viewer.addHandler('tile-invalidated', fnA);
-            viewer.addHandler('tile-loaded', fnB, null, 1);
             viewer.addHandler('tile-invalidated', fnB, null, 1);
             // const promise = viewer.requestInvalidate();
 
@@ -220,7 +224,6 @@
                 assert.equal(data.data[3], 255);
 
                 // Test swap - suddenly B applied since it was added later
-                viewer.addHandler('tile-loaded', fnB);
                 viewer.addHandler('tile-invalidated', fnB);
                 await viewer.requestInvalidate();
                 data = await readTileData();
@@ -229,7 +232,6 @@
                 assert.equal(data.data[2], 255);
                 assert.equal(data.data[3], 255);
 
-                viewer.addHandler('tile-loaded', fnB, null, -1);
                 viewer.addHandler('tile-invalidated', fnB, null, -1);
                 await viewer.requestInvalidate();
                 data = await readTileData();
@@ -241,6 +243,7 @@
 
                 // Thorough testing of the cache state
                 for (let tile of viewer.tileCache._tilesLoaded) {
+                    await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
                     assert.equal(caches.length, 1, `Tile ${getTileDescription(tile)} has only single, original cache`);

@@ -567,25 +567,34 @@ $.Tile.prototype = {
      * @private
      * @return {OpenSeadragon.Promise<?>}
      */
-    updateRenderTargetWithDataTransform: function (drawerId, supportedFormats, usePrivateCache) {
+    updateRenderTargetWithDataTransform: function (drawerId, supportedFormats, usePrivateCache, processTimestamp) {
         // Now, if working cache exists, we set main cache to the working cache --> prepare
-        const cache = this.getCache(this._wcKey);
+        let cache = this.getCache(this._wcKey);
         if (cache) {
-            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache, this.processing);
+            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache).then(c => {
+                if (c && processTimestamp && this.processing === processTimestamp) {
+                    this.updateRenderTarget();
+                }
+            });
         }
 
         // If we requested restore, perform now
         if (this.__restore) {
-            const cache = this.getCache(this.originalCacheKey);
+            cache = this.getCache(this.originalCacheKey);
 
             this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
                 this, cache, this.__restoreRequestedFree
             );
             this.__restore = false;
-            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache, this.processing);
+            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache).then((c) => {
+                if (c && processTimestamp && this.processing === processTimestamp) {
+                    this.updateRenderTarget();
+                }
+            });
         }
 
-        return $.Promise.resolve();
+        cache = this.getCache();
+        return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache);
     },
 
     /**

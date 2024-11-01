@@ -199,8 +199,9 @@ $.EventSource.prototype = {
      * calling the handler for each and awaiting async ones.
      * @function
      * @param {String} eventName - Name of event to get handlers for.
+     * @param {any} bindTarget - Bound target to return with the promise on finish
      */
-    getAwaitingHandler: function ( eventName) {
+    getAwaitingHandler: function ( eventName, bindTarget ) {
         let events = this.events[ eventName ];
         if ( !events || !events.length ) {
             return null;
@@ -217,7 +218,7 @@ $.EventSource.prototype = {
                 const length = events.length;
                 function loop(index) {
                     if ( index >= length || !events[ index ] ) {
-                        resolve("Resolved!");
+                        resolve(bindTarget);
                         return null;
                     }
                     args.eventSource = source;
@@ -259,17 +260,18 @@ $.EventSource.prototype = {
      * This events awaits every asynchronous or promise-returning function.
      * @param {String} eventName - Name of event to register.
      * @param {Object} eventArgs - Event-specific data.
+     * @param {?} [bindTarget = null] - Promise-resolved value on the event finish
      * @return {OpenSeadragon.Promise|undefined} - Promise resolved upon the event completion.
      */
-    raiseEventAwaiting: function ( eventName, eventArgs ) {
+    raiseEventAwaiting: function ( eventName, eventArgs, bindTarget = null ) {
         //uncomment if you want to get a log of all events
         //$.console.log( "Awaiting event fired:", eventName );
 
-        const awaitingHandler = this.getAwaitingHandler(eventName);
+        const awaitingHandler = this.getAwaitingHandler(eventName, bindTarget);
         if (awaitingHandler) {
             return awaitingHandler(this, eventArgs || {});
         }
-        return $.Promise.resolve("No handler for this event registered.");
+        return $.Promise.resolve(bindTarget);
     },
 
     /**

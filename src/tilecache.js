@@ -223,32 +223,18 @@
          * @param drawerId
          * @param supportedTypes
          * @param keepInternalCopy
-         * @param _shareTileUpdateStamp private param, updates render target (swap cache memory) for tiles that come
-         *   from the same tstamp batch
-         * @return {OpenSeadragon.Promise<OpenSeadragon.SimpleCacheRecord|OpenSeadragon.CacheRecord>}
+
+         * @return {OpenSeadragon.Promise<OpenSeadragon.SimpleCacheRecord|OpenSeadragon.CacheRecord> | null}
+         *   reference to the cache processed for drawer rendering requirements, or null on error
          */
-        prepareForRendering(drawerId, supportedTypes, keepInternalCopy = true, _shareTileUpdateStamp = null) {
-
-            const fin = () => {
-                // Locked update of render target to the tile that initiated processing
-                if (_shareTileUpdateStamp) {
-                    for (let tile of this._tiles) {
-                        if (tile.processing === _shareTileUpdateStamp) {
-                            tile.updateRenderTarget();
-                        }
-                    }
-                }
-                return this;
-            };
-
+        prepareForRendering(drawerId, supportedTypes, keepInternalCopy = true) {
             // if not internal copy and we have no data, or we are ready to render, exit
             if (!this.loaded || supportedTypes.includes(this.type)) {
-                fin();
                 return $.Promise.resolve(this);
             }
 
             if (!keepInternalCopy) {
-                return this.transformTo(supportedTypes).then(fin);
+                return this.transformTo(supportedTypes);
             }
 
             // we can get here only if we want to render incompatible type
@@ -260,11 +246,10 @@
             internalCache = internalCache[drawerId];
             if (internalCache) {
                 // already done
-                fin();
                 return $.Promise.resolve(this);
-            } else {
-                internalCache = this[DRAWER_INTERNAL_CACHE][drawerId] = new $.SimpleCacheRecord();
             }
+
+            internalCache = this[DRAWER_INTERNAL_CACHE][drawerId] = new $.SimpleCacheRecord();
             const conversionPath = $.convertor.getConversionPath(this.type, supportedTypes);
             if (!conversionPath) {
                 $.console.error(`[getDataForRendering] Conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
@@ -273,8 +258,8 @@
             internalCache.withTileReference(this._tRef);
             const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
             return $.convertor.convert(this._tRef, this.data, this.type, selectedFormat).then(data => {
-                internalCache.setDataAs(data, selectedFormat);  // synchronous, SimpleCacheRecord
-                return fin();
+                internalCache.setDataAs(data, selectedFormat);  // synchronous, SimpleCacheRecord call
+                return internalCache;
             });
         }
 
@@ -842,10 +827,6 @@
             }
 
             cacheRecord.addTile(theTile, options.data, options.dataType);
-            if (cacheKey === theTile.cacheKey) {
-                theTile.tiledImage._needsDraw = true;
-            }
-
             this._freeOldRecordRoutine(theTile, options.cutoff || 0);
             return cacheRecord;
         }
@@ -949,10 +930,7 @@
                 // We need to avoid async execution here: replace consumer instead of overwriting the data.
                 const iterateTiles = [...consumer._tiles];  // unloadCacheForTile() will modify the array, use a copy
                 for (let tile of iterateTiles) {
-                    if (tile.loaded || tile.loading) {
-                        this.unloadCacheForTile(tile, options.consumerKey, true);
-                    }
-
+                    this.unloadCacheForTile(tile, options.consumerKey, true, false);
                 }
             }
             if (this._cachesLoaded[options.consumerKey]) {
@@ -968,7 +946,7 @@
                 // Only one cache got working item, other caches were idle: update cache: add the new cache
                 // we can add since we removed above with unloadCacheForTile()
                 for (let tile of tiles) {
-                    if (tile !== options.tile && (tile.loaded || tile.loading)) {
+                    if (tile !== options.tile) {
                         tile.addCache(options.consumerKey, resultCache.data, resultCache.type, true, false);
                     }
                 }
@@ -985,7 +963,7 @@
          */
         restoreTilesThatShareOriginalCache(tile, originalCache, freeIfUnused) {
             for (let t of originalCache._tiles) {
-                this.unloadCacheForTile(t, t.cacheKey, freeIfUnused);
+                this.unloadCacheForTile(t, t.cacheKey, freeIfUnused, false);
                 delete t._caches[t.cacheKey];
                 t.cacheKey = t.originalCacheKey;
             }
@@ -1016,7 +994,7 @@
                         if ( prevTile.level <= cutoff ||
                             prevTile.beingDrawn ||
                             prevTile.loading ||
-                            prevTile.processing ) {
+                            prevTile.processing ) { //todo exempt from deletion, or block this routine on data updates
                             continue;
                         }
                         if ( !worstTile ) {
@@ -1171,7 +1149,7 @@
             for (let key in tile._caches) {
                 //we are 'ok' to remove tile caches here since we later call destroy on tile, otherwise
                 //tile has count of its cache size --> would be inconsistent
-                this.unloadCacheForTile(tile, key, destroy);
+                this.unloadCacheForTile(tile, key, destroy, false);
             }
             //delete also the tile record
             if (deleteAtIndex !== undefined) {

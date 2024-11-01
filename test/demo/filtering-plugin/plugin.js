@@ -47,8 +47,6 @@
         }
         const self = this;
         this.viewer = options.viewer;
-
-        this.viewer.addHandler('tile-loaded', applyFilters);
         this.viewer.addHandler('tile-invalidated', applyFilters);
 
         // filterIncrement allows to determine whether a tile contains the
@@ -67,10 +65,18 @@
             }
 
             const contextCopy = await tile.getData('context2d');
+
+            if (contextCopy.canvas.width === 0) {
+                debugger;
+            }
+
             const currentIncrement = self.filterIncrement;
             for (let i = 0; i < processors.length; i++) {
                 if (self.filterIncrement !== currentIncrement) {
                     break;
+                }
+                if (contextCopy.canvas.width === 0) {
+                    debugger;
                 }
                 await processors[i](contextCopy);
             }

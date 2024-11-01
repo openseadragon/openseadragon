@@ -265,30 +265,34 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @param {Number} tStamp timestamp in milliseconds, if active timestamp of the same value is executing,
      *   changes are added to the cycle, else they await next iteration
      * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+     * @param {Boolean} [_allowTileUnloaded=false] internal flag for calling on tiles that come new to the system
      * @fires OpenSeadragon.Viewer.event:tile-invalidated
      * @return {OpenSeadragon.Promise<?>}
      */
-    requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true) {
+    requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true, _allowTileUnloaded = false) {
         const tileList = [],
             markedTiles = [];
         for (const tile of tilesToProcess) {
             // We allow re-execution on tiles that are in process but have too low processing timestamp,
             // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
             // pipeline take no effect.
-            // TODO: cross writes on tile when processing cause memory errors - either ensure
-            //  tile makes NOOP for any execution that comes with older stamp, or prevent update routine
-            //  to happen simultanously
-            if (!tile || !tile.loaded || (tile.processing && tile.processing <= tStamp) || tile.transforming) {
+            if (!tile || (!_allowTileUnloaded && !tile.loaded) || tile.transforming) {
                 continue;
             }
-            // TODO: consider locking on the original cache, which should be read only
-            //   or lock the main cache, and compare with tile.processing tstamp
-            const tileCache = tile.getCache();
+            const tileCache = tile.getCache(tile.originalCacheKey);
+            if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
+                continue;
+            }
+
             for (let t of tileCache._tiles) {
-                // Mark all related tiles as processing and cache the references to unmark later on
+                // Mark all related tiles as processing and cache the references to unmark later on,
+                // last processing is set to old processing (null if finished)
+                t.lastProcess = t.processing;
                 t.processing = tStamp;
                 markedTiles.push(t);
             }
+
+            tileCache.__invStamp = tStamp;
             tileList.push(tile);
         }
 
@@ -309,11 +313,13 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return eventTarget.raiseEventAwaiting('tile-invalidated', {
                 tile: tile,
                 tiledImage: tile.tiledImage,
-            }).then(() => {
-                if (tile.processing === tStamp) {
+            }, tile.getCache(tile.originalCacheKey)).then(cacheKey => {
+                if (cacheKey.__invStamp === tStamp) {
                     // asynchronous finisher
                     tile.transforming = tStamp;
-                    return tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy);
+                    return tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy, tStamp).then(() => {
+                        cacheKey.__invStamp = null;
+                    });
                 }
                 return null;
             }).catch(e => {
@@ -323,7 +329,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         return $.Promise.all(jobList).then(() => {
             for (let tile of markedTiles) {
-                tile.lastProcess = tile.processing;
+                tile.lastProcess = false;
                 tile.processing = false;
                 tile.transforming = false;
             }

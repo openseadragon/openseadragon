@@ -2116,45 +2116,68 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             increment = 0,
             eventFinished = false;
         const _this = this,
-            finishPromise = new $.Promise(r => {
-                resolver = r;
-            });
+            now = $.now();
 
         function completionCallback() {
             increment--;
             if (increment > 0) {
                 return;
             }
+            eventFinished = true;
+
             //do not override true if set (false is default)
             tile.hasTransparency = tile.hasTransparency || _this.source.hasTransparency(
                 undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
             );
-            tile.updateRenderTarget(true);
-            //make sure cache data is ready for drawing, if not, request the desired format
-            const cache = tile.getCache(tile.cacheKey),
-                requiredTypes = _this._drawer.getSupportedDataFormats();
-            if (!cache) {
-                $.console.warn("Tile %s not cached or not loaded at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
-                resolver(tile);
-            } else if (!requiredTypes.includes(cache.type)) {
-                //initiate conversion as soon as possible if incompatible with the drawer
-                cache.prepareForRendering(_this._drawer.getId(), requiredTypes, _this._drawer.options.usePrivateCache).then(cacheRef => {
-                    if (!cacheRef) {
-                        return cache.transformTo(requiredTypes);
+            // tile.updateRenderTarget(true);
+            // //make sure cache data is ready for drawing, if not, request the desired format
+            // const cache = tile.getCache(),
+            //     requiredTypes = _this._drawer.getSupportedDataFormats();
+            // if (!cache) {
+            //     $.console.warn("Tile %s not cached or not loaded at the end of tile-loaded event: tile will not be drawn - it has no data!", tile);
+            //     resolver();
+            // } else if (!requiredTypes.includes(cache.type)) {
+            //     //initiate conversion as soon as possible if incompatible with the drawer
+            //     //either the cache is a new item in the system (do process), or the cache inherits data from elsewhere (no-op),
+            //     // or the cache was processed in this call
+            //     tile.transforming = now;  // block any updates on the tile
+            //     cache.prepareForRendering(_this._drawer.getId(), requiredTypes, _this._drawer.options.usePrivateCache).then(cacheRef => {
+            //         if (!cacheRef) {
+            //             return cache.transformTo(requiredTypes);
+            //         }
+            //         if (tile.processing === now) {
+            //             tile.updateRenderTarget();
+            //         }
+            //         return cacheRef;
+            //     }).then(resolver);
+            // } else {
+            //     resolver();
+            // }
+
+            // TODO consider first running this event before we call tile-loaded...
+            if (!tileCacheCreated) {
+                // Tile-loaded not called on each tile, but only on tiles with new data! Verify we share the main cache
+                const origCache = tile.getCache(tile.originalCacheKey);
+                for (let t of origCache._tiles) {
+                    // if there exists a tile that has different main cache, inherit it as a main cache
+                    if (t.cacheKey !== tile.cacheKey) {
+                        // add reference also to the main cache, no matter what the other tile state has
+                        // completion of the invaldate event should take care of all such tiles
+                        const targetMainCache = t.getCache();
+                        tile.addCache(t.cacheKey, () => {
+                            $.console.error("Attempt to share main cache with existing tile should not trigger data getter!");
+                            return targetMainCache.data;
+                        }, targetMainCache.type, true, false);
+                        break;
                     }
-                    return cacheRef;
-                }).then(_ => {
-                    tile.loading = false;
-                    tile.loaded = true;
-                    tile.lastProcess = 1;
-                    resolver(tile);
-                });
-            } else {
-                tile.loading = false;
-                tile.loaded = true;
-                tile.lastProcess = 1;
-                resolver(tile);
+                }
+
+                resolver();
+                return;
             }
+            // In case we did not succeed in tile restoration, request invalidation  todo what about catch
+            const updatePromise = _this.viewer.world.requestTileInvalidateEvent([tile], now, false, true);
+            updatePromise.then(resolver);
         }
 
         function getCompletionCallback() {
@@ -2168,18 +2191,27 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         const fallbackCompletion = getCompletionCallback();
 
-        if (!tileCacheCreated) {
-            // Tile-loaded not called on each tile, but only on tiles with new data! Verify we share the main cache
-            const origCache = tile.getCache(tile.originalCacheKey);
-            for (let t of origCache._tiles) {
-                if (!t.processing && t.cacheKey !== tile.cacheKey) {
-                    const targetMainCache = t.getCache();
-                    tile.addCache(t.cacheKey, targetMainCache.data, targetMainCache.type, true, false);
-                    fallbackCompletion();
-                    return;
-                }
-            }
-        }
+        // if (!tileCacheCreated) {
+        //     // Tile-loaded not called on each tile, but only on tiles with new data! Verify we share the main cache
+        //     const origCache = tile.getCache(tile.originalCacheKey);
+        //     if (!origCache.__invStamp) {
+        //         for (let t of origCache._tiles) {
+        //             if (t.cacheKey !== tile.cacheKey) {
+        //                 const targetMainCache = t.getCache();
+        //                 tile.addCache(t.cacheKey, targetMainCache.data, targetMainCache.type, true, false);
+        //                 fallbackCompletion();
+        //                 return;
+        //             }
+        //         }
+        //     }
+        //     // else todo: what if we somehow managed to finish before this tile gets attached? probably impossible if the tile is joined by original cache...
+        // }
+
+        // // TODO ENSURE ONLY THESE TWO EVENTS CAN CALL TILE UPDATES
+        // // prepare for the fact that tile routine can be called here too
+        // tile.lastProcess = false;
+        // tile.processing = now;
+        // tile.transforming = false;
 
         /**
          * Triggered when a tile has just been loaded in memory. That means that the
@@ -2197,13 +2229,24 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
          * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
          * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
          * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
+         *  NOTE: do no await the promise in the handler: you will create a deadlock!
          * @property {function} getCompletionCallback - deprecated
          */
         this.viewer.raiseEventAwaiting("tile-loaded", {
             tile: tile,
             tiledImage: this,
             tileRequest: tileRequest,
-            promise: finishPromise,
+            promise: new $.Promise(resolve => {
+                resolver = () => {
+                    tile.loading = false;
+                    tile.loaded = true;
+                    tile.lastProcess = false;
+                    tile.processing = false;
+                    tile.transforming = false;
+                    this.redraw();
+                    resolve(tile);
+                };
+            }),
             get image() {
                 $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'tile.getData()' instead.");
                 return data;
@@ -2219,8 +2262,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             },
         }).catch(() => {
             $.console.error("[tile-loaded] event finished with failure: there might be a problem with a plugin you are using.");
-        }).then(() => {
-            eventFinished = true;
         }).then(fallbackCompletion);
     },
 
