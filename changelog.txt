@@ -3,7 +3,10 @@ OPENSEADRAGON CHANGELOG
 
 5.0.1: (in progress...)
 
+* Improved overlay handling so it plays better with other libraries (#2582 @BeebBenjamin)
 * Fixed: If you switched from WebGL drawer to canvas drawer, it didn't clean up properly (#2570 @pearcetm)
+* Fixed: TiledImage.setClip would sometimes leave tiles unloaded (#2590 @pearcetm)
+* Fixed: The WebGL drawer didn't support viewportMargins (#2600, #2606 @pearcetm)
 
 5.0.0:
 
