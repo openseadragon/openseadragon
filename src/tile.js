@@ -104,9 +104,9 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     /**
      * Private property to hold string url or url retriever function.
      * Consumers should access via Tile.getUrl()
-     * @private
      * @member {String|Function} url
      * @memberof OpenSeadragon.Tile#
+     * @private
      */
     this._url     = url;
     /**
@@ -193,9 +193,9 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     /**
      * The squared distance of this tile to the viewport center.
      * Use for comparing tiles.
-     * @private
      * @member {Number} squaredDistance
      * @memberof OpenSeadragon.Tile#
+     * @private
      */
     this.squaredDistance   = null;
     /**
@@ -461,7 +461,7 @@ $.Tile.prototype = {
     /**
      * The context2D of this tile if it is provided directly by the tile source.
      * @deprecated
-     * @type {CanvasRenderingContext2D} context2D
+     * @type {CanvasRenderingContext2D}
      */
     get context2D() {
         $.console.error("[Tile.context2D] property has been deprecated. Use [Tile.getData] instead.");
@@ -565,8 +565,8 @@ $.Tile.prototype = {
      * Optimizazion: prepare target cache for subsequent use in rendering, and perform updateRenderTarget()
      * The main idea of this function is that it must be ASYNCHRONOUS since there might be additional processing
      * happening due to underlying drawer requirements.
-     * @private
      * @return {OpenSeadragon.Promise<?>}
+     * @private
      */
     updateRenderTargetWithDataTransform: function (drawerId, supportedFormats, usePrivateCache, processTimestamp) {
         // Now, if working cache exists, we set main cache to the working cache --> prepare
@@ -606,7 +606,6 @@ $.Tile.prototype = {
      * The main idea of this function is that it is SYNCHRONOUS, e.g. can perform in-place cache swap to update
      * before any rendering occurs.
      * @private
-     * @return
      */
     updateRenderTarget: function (_allowTileNotLoaded = false) {
         // Check if we asked for restore, and make sure we set it to false since we update the whole cache state

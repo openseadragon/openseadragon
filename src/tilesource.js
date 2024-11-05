@@ -799,11 +799,11 @@ $.TileSource.prototype = {
      *   add also reference to an ajax request if used.
      * @param {Function} [context.abort] - Called automatically when the job times out.
      *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
-     * @param {Function} [context.callback] @private - Called automatically once image has been downloaded
+     * @param {Function} [context.callback] Private parameter. Called automatically once image has been downloaded
      *   (triggered by finish).
-     * @param {Number} [context.timeout] @private - The max number of milliseconds that
+     * @param {Number} [context.timeout] Private parameter. The max number of milliseconds that
      *   this image job may take to complete.
-     * @param {string} [context.errorMsg] @private - The final error message, default null (set by finish).
+     * @param {string} [context.errorMsg] Private parameter. The final error message, default null (set by finish).
      */
     downloadTileStart: function (context) {
         const dataStore = context.userData,

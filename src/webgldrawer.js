@@ -200,7 +200,7 @@
 
         /**
          *
-         * @returns 'webgl'
+         * @returns {string} 'webgl'
          */
         getType(){
             return 'webgl';

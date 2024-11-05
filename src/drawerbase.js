@@ -131,7 +131,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     /**
      * Retrieve data types
      * @abstract
-     * @return {[string]}
+     * @return {string[]}
      */
     getSupportedDataFormats() {
         throw "Drawer.getSupportedDataFormats must define its supported rendering data types!";

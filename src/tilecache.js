@@ -162,7 +162,6 @@
         }
 
         /**
-         * @private
          * Access of the data by drawers, synchronous function. Should always access a valid main cache, e.g.
          * cache swap performed on working cache (consumeCache()) must be synchronous such that cache is always
          * ready to render, and swaps atomically between render calls.
@@ -173,6 +172,7 @@
          *   for which we request the data; if we attempt to draw such tile while main cache target is destroyed,
          *   attempt to reset the tile state to force system to re-download it again
          * @returns {any|undefined} desired data if available, undefined if conversion must be done
+         * @private
          */
         getDataForRendering(drawer, tileToDraw ) {
             const supportedTypes = drawer.getSupportedDataFormats(),
@@ -272,7 +272,7 @@
          * Does nothing if the type equals to the current type. Asynchronous.
          * Transformation is LAZY, meaning conversions are performed only to
          * match the last conversion request target type.
-         * @param {string|[string]} type if array provided, the system will
+         * @param {string|string[]} type if array provided, the system will
          *   try to optimize for the best type to convert to.
          * @return {OpenSeadragon.Promise<?>}
          */
@@ -650,7 +650,7 @@
         /**
          * Transform cache to desired type and get the data after conversion.
          * Does nothing if the type equals to the current type. Asynchronous.
-         * @param {string|[string]} type if array provided, the system will
+         * @param {string|string[]} type if array provided, the system will
          *   try to optimize for the best type to convert to.
          * @returns {OpenSeadragon.Promise<?>}
          */
@@ -877,7 +877,6 @@
 
         /**
          * Reads a cache if it exists and creates a new copy of a target, different cache if it does not
-         * @private
          * @param {Object} options
          * @param {OpenSeadragon.Tile} options.tile - The tile to own ot add record for the cache.
          * @param {String} options.copyTargetKey - The unique key used to identify this tile in the cache.
@@ -888,6 +887,7 @@
          *   function will release an old tile. The cutoff option specifies a tile level at or below which
          *   tiles will not be released.
          * @returns {OpenSeadragon.Promise<OpenSeadragon.CacheRecord>} - New record.
+         * @private
          */
         cloneCache(options) {
             const theTile = options.tile;
@@ -909,7 +909,6 @@
 
         /**
          * Consume cache by another cache
-         * @private
          * @param {Object} options
          * @param {OpenSeadragon.Tile} options.tile - The tile to own ot add record for the cache.
          * @param {String} options.victimKey - Cache that will be erased. In fact, the victim _replaces_ consumer,
@@ -919,6 +918,7 @@
          * @param {Boolean} options.tileAllowNotLoaded - if true, tile that is not loaded is also processed,
          *   this is internal parameter used in tile-loaded completion routine, as we need to prepare tile but
          *   it is not yet loaded and cannot be marked as so (otherwise the system would think it is ready)
+         * @private
          */
         consumeCache(options) {
             const victim = this._cachesLoaded[options.victimKey],
@@ -958,12 +958,12 @@
         }
 
         /**
-         * @private
          * This method ensures other tiles are restored if one of the tiles
          * was requested restore().
          * @param tile
          * @param originalCache
          * @param freeIfUnused if true, zombie is not created
+         * @private
          */
         restoreTilesThatShareOriginalCache(tile, originalCache, freeIfUnused) {
             for (let t of originalCache._tiles) {

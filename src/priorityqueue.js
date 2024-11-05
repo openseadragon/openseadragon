@@ -32,7 +32,7 @@ $.PriorityQueue = class {
          *
          * The only invariant is that children's keys must be greater than parents'.
          *
-         * @private @const {!Array<!Node>}
+         * @private
          */
         this.nodes_ = [];
 
@@ -334,13 +334,15 @@ $.PriorityQueue.Node = class {
     constructor(key, value) {
         /**
          * The key.
-         * @private {K}
+         * @type {K}
+         * @private
          */
         this.key = key;
 
         /**
          * The value.
-         * @private {V}
+         * @type {V}
+         * @private
          */
         this.value = value;
 

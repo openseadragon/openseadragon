@@ -82,7 +82,7 @@ class WeightedGraph {
     }
 
     /**
-     * @return {{path: *[], cost: number}|undefined} cheapest path for
+     * @return {{path: ConversionStep[], cost: number}|undefined} cheapest path from start to finish
      */
     dijkstra(start, finish) {
         let path = []; //to return at end
@@ -409,7 +409,7 @@ $.DataTypeConvertor = class {
      * Get possible system type conversions and cache result.
      * @param {string} from data item type
      * @param {string|string[]} to array of accepted types
-     * @return {[ConversionStep]|undefined} array of required conversions (returns empty array
+     * @return {ConversionStep[]|undefined} array of required conversions (returns empty array
      *  for from===to), or undefined if the system cannot convert between given types.
      *  Each object has 'transform' function that converts between neighbouring types, such
      *  that x = arr[i].transform(x) is valid input for convertor arr[i+1].transform(), e.g.
