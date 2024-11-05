@@ -75,9 +75,6 @@
                 if (self.filterIncrement !== currentIncrement) {
                     break;
                 }
-                if (contextCopy.canvas.width === 0) {
-                    debugger;
-                }
                 await processors[i](contextCopy);
             }
 

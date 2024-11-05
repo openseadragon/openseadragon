@@ -305,7 +305,7 @@
   * @property {Number} [rotationIncrement=90]
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
-  * @property {Number} [maxTilesPerFrame=10]
+  * @property {Number} [maxTilesPerFrame=1]
   *     The number of tiles loaded per frame. As the frame rate of the client's machine is usually high (e.g., 50 fps),
   *     one tile per frame should be a good choice. However, for large screens or lower frame rates, the number of
   *     loaded tiles per frame can be adjusted here. Reasonable values might be 2 or 3 tiles per frame.
@@ -1345,7 +1345,7 @@ function OpenSeadragon( options ){
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
             rotationIncrement:      90,
-            maxTilesPerFrame:       10,
+            maxTilesPerFrame:       1,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE

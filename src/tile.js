@@ -275,7 +275,8 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     this.lastProcess = 0;
     /**
      * Transforming flag, exempt the tile from any processing since it is being transformed to a drawer-compatible
-     * format. This process cannot be paused and the tile cannot be touched during the process. Used externally.
+     * format. This process cannot be paused and the tile cannot be touched during the process. Used for tile-locking
+     * in the data invalidation routine.
      * @member {Boolean|Number}
      * @private
      */

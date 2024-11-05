@@ -164,13 +164,17 @@
         /**
          * @private
          * Access of the data by drawers, synchronous function. Should always access a valid main cache, e.g.
-         * cache swap should be atomic.
+         * cache swap performed on working cache (consumeCache()) must be synchronous such that cache is always
+         * ready to render, and swaps atomically between render calls.
          *
-         * @param {OpenSeadragon.DrawerBase} drawer
-         * @param {OpenSeadragon.Tile} tileDrawn
+         * @param {OpenSeadragon.DrawerBase} drawer drawer reference which requests the data: the drawer
+         *   defines the supported formats this cache should return **synchronously**
+         * @param {OpenSeadragon.Tile} tileToDraw reference to the tile that is in the process of drawing and
+         *   for which we request the data; if we attempt to draw such tile while main cache target is destroyed,
+         *   attempt to reset the tile state to force system to re-download it again
          * @returns {any|undefined} desired data if available, undefined if conversion must be done
          */
-        getDataForRendering(drawer, tileDrawn) {
+        getDataForRendering(drawer, tileToDraw ) {
             const supportedTypes = drawer.getSupportedDataFormats(),
                 keepInternalCopy = drawer.options.usePrivateCache;
             if (this.loaded && supportedTypes.includes(this.type)) {
@@ -179,7 +183,7 @@
 
             if (this._destroyed) {
                 $.console.error("Attempt to draw tile with destroyed main cache!");
-                tileDrawn._unload();  // try to restore the state so that the tile is later on fetched again
+                tileToDraw._unload();  // try to restore the state so that the tile is later on fetched again
                 return undefined;
             }
 
