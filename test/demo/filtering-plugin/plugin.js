@@ -70,15 +70,19 @@
                 debugger;
             }
 
-            const currentIncrement = self.filterIncrement;
-            for (let i = 0; i < processors.length; i++) {
-                if (self.filterIncrement !== currentIncrement) {
-                    break;
+            try {
+                const currentIncrement = self.filterIncrement;
+                for (let i = 0; i < processors.length; i++) {
+                    if (self.filterIncrement !== currentIncrement) {
+                        break;
+                    }
+                    await processors[i](contextCopy);
                 }
-                await processors[i](contextCopy);
-            }
 
-            await tile.setData(contextCopy, 'context2d');
+                await tile.setData(contextCopy, 'context2d');
+            } catch (e) {
+                // pass, this is error caused by canvas being destroyed & replaced
+            }
         }
     };
 
