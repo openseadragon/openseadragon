@@ -300,11 +300,12 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return $.Promise.resolve();
         }
 
-        // this.viewer.viewer is defined in navigator, ensure we call event on the parent viewer
+        // We call the event on the parent viewer window no matter what
         const eventTarget = this.viewer.viewer || this.viewer;
-        const supportedFormats = eventTarget.drawer.getSupportedDataFormats();
-        const keepInternalCacheCopy = eventTarget.drawer.options.usePrivateCache;
-        const drawerId = eventTarget.drawer.getId();
+        // However, we must pick the correct drawer reference (navigator VS viewer)
+        const supportedFormats = this.viewer.drawer.getSupportedDataFormats();
+        const keepInternalCacheCopy = this.viewer.drawer.options.usePrivateCache;
+        const drawerId = this.viewer.drawer.getId();
 
         const jobList = tileList.map(tile => {
             if (restoreTiles) {
