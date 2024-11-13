@@ -807,7 +807,6 @@ async function processTile(tile) {
     console.log("Selected tile", tile);
     await Promise.all([
         updateCanvas(document.getElementById("tile-original"), tile, tile.originalCacheKey),
-        updateCanvas(document.getElementById("tile-working"), tile, tile._wcKey),
         updateCanvas(document.getElementById("tile-main"), tile, tile.cacheKey),
     ]);
 }

@@ -1179,7 +1179,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ajaxHeaders = {};
         }
         if (!$.isPlainObject(ajaxHeaders)) {
-            console.error('[TiledImage.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            $.console.error('[TiledImage.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
             return;
         }
 
@@ -1881,32 +1881,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Tile} tile
      */
     _tryFindTileCacheRecord: function(tile) {
-        let record = this._tileCache.getCacheRecord(tile.cacheKey);
+        let record = this._tileCache.getCacheRecord(tile.originalCacheKey);
 
         if (!record) {
             return false;
         }
-
-        // if we find existing record, check the original data of existing tile of this record
-        let baseTile = record._tiles[0];
-        if (!baseTile) {
-            // zombie cache -> revive, it's okay to use current tile as state inherit point since there is no state
-            baseTile = tile;
-        }
-
-        // Setup tile manually, data can be null -> we already have existing cache to share, share also caches
-        tile.tiledImage = this;
-        tile.addCache(baseTile.originalCacheKey, null, record.type, false, false);
-        if (baseTile.cacheKey !== baseTile.originalCacheKey) {
-            tile.addCache(baseTile.cacheKey, null, record.type, true, false);
-        }
-
-        tile.hasTransparency = tile.hasTransparency || this.source.hasTransparency(
-            undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
-        );
-
-        tile.loading = false;
-        tile.loaded = true;
+        tile.loading = true;
+        this._setTileLoaded(tile, record.data, null, null, record.type);
         return true;
     },
 
@@ -2154,7 +2135,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         function markTileAsReady() {
             tile.lastProcess = false;
             tile.processing = false;
-            tile.transforming = false;
 
             const fallbackCompletion = getCompletionCallback();
 
@@ -2185,16 +2165,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     resolver = resolve;
                 }),
                 get image() {
-                    $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'tile.getData()' instead.");
+                    $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'tile-invalidated' event to modify data instead.");
                     return data;
                 },
                 get data() {
-                    $.console.error("[tile-loaded] event 'data' has been deprecated. Use 'tile.getData()' instead.");
+                    $.console.error("[tile-loaded] event 'data' has been deprecated. Use 'tile-invalidated' event to modify data instead.");
                     return data;
                 },
                 getCompletionCallback: function () {
                     $.console.error("[tile-loaded] getCompletionCallback is deprecated: it introduces race conditions: " +
-                        "use async event handlers instead, execution order is deducted by addHandler(...) priority");
+                        "use async event handlers instead, execution order is deducted by addHandler(...) priority argument.");
                     return getCompletionCallback();
                 },
             }).catch(() => {
@@ -2207,8 +2187,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             const updatePromise = _this.viewer.world.requestTileInvalidateEvent([tile], now, false, true);
             updatePromise.then(markTileAsReady);
         } else {
-            // In case we did not succeed in tile restoration, request invalidation
-            // Tile-loaded not called on each tile, but only on tiles with new data! Verify we share the main cache
+            // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             const origCache = tile.getCache(tile.originalCacheKey);
             for (let t of origCache._tiles) {
 
@@ -2218,11 +2197,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     // add reference also to the main cache, no matter what the other tile state has
                     // completion of the invaldate event should take care of all such tiles
                     const targetMainCache = t.getCache();
-                    tile.addCache(t.cacheKey, () => {
-                        $.console.error("Attempt to share main cache with existing tile should not trigger data getter!");
-                        return targetMainCache.data;
-                    }, targetMainCache.type, true, false);
+                    tile.setCache(t.cacheKey, targetMainCache, true, false);
                     break;
+                } else if (t.processing) {
+                    console.log("ENCOUNTERED LOADING TILE!!!");
+                    let internval = setInterval(() => {
+                        if (t.processing) {
+                            clearInterval(internval);
+                            console.log("FINISHED!!!!!");
+                            markTileAsReady();
+                        }
+                    }, 500);
+                    return;
                 }
             }
             markTileAsReady();

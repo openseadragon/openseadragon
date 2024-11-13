@@ -276,7 +276,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             // We allow re-execution on tiles that are in process but have too low processing timestamp,
             // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
             // pipeline take no effect.
-            if (!tile || (!_allowTileUnloaded && !tile.loaded) || tile.transforming) {
+            if (!tile || (!_allowTileUnloaded && !tile.loaded)) {
                 continue;
             }
             const tileCache = tile.getCache(tile.originalCacheKey);
@@ -308,19 +308,95 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         const drawerId = this.viewer.drawer.getId();
 
         const jobList = tileList.map(tile => {
-            if (restoreTiles) {
-                tile.restore();
-            }
+            const tiledImage = tile.tiledImage;
+            const originalCache = tile.getCache(tile.originalCacheKey);
+            let workingCache = null;
+            const getWorkingCacheData = (type) => {
+                if (workingCache) {
+                    return workingCache.getDataAs(type, false);
+                }
+
+                const targetCopyKey = restoreTiles ? tile.originalCacheKey : tile.cacheKey;
+                const origCache = tile.getCache(targetCopyKey);
+                if (!origCache) {
+                    $.console.error("[Tile::getData] There is no cache available for tile with key %s", targetCopyKey);
+                    return $.Promise.reject();
+                }
+                // Here ensure type is defined, rquired by data callbacks
+                type = type || origCache.type;
+                workingCache = new $.CacheRecord().withTileReference(tile);
+                return origCache.getDataAs(type, true).then(data => {
+                    workingCache.addTile(tile, data, type);
+                    return workingCache.data;
+                });
+            };
+            const setWorkingCacheData = (value, type) => {
+                if (!workingCache) {
+                    workingCache = new $.CacheRecord().withTileReference(tile);
+                    workingCache.addTile(tile, value, type);
+                } else {
+                    workingCache.setDataAs(value, type);
+                }
+            };
+            const atomicCacheSwap = () => {
+                if (workingCache) {
+                    let newCacheKey = tile.buildDistinctMainCacheKey();
+                    tiledImage._tileCache.injectCache({
+                        tile: tile,
+                        cache: workingCache,
+                        targetKey: newCacheKey,
+                        setAsMainCache: true,
+                        tileAllowNotLoaded: false //todo what if called from load event?
+                    });
+                } else if (restoreTiles) {
+                    // If we requested restore, perform now
+                    tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, tile.getCache(tile.originalCacheKey), true);
+                }
+            };
+
+            //todo docs
             return eventTarget.raiseEventAwaiting('tile-invalidated', {
                 tile: tile,
-                tiledImage: tile.tiledImage,
-            }, tile.getCache(tile.originalCacheKey)).then(cacheKey => {
-                if (cacheKey.__invStamp === tStamp) {
-                    // asynchronous finisher
-                    tile.transforming = tStamp;
-                    return tile.updateRenderTargetWithDataTransform(drawerId, supportedFormats, keepInternalCacheCopy, tStamp).then(() => {
-                        cacheKey.__invStamp = null;
+                tiledImage: tiledImage,
+                outdated: () => originalCache.__invStamp !== tStamp,
+                getData: getWorkingCacheData,
+                setData: setWorkingCacheData,
+                resetData: () => {
+                    workingCache.destroy();
+                    workingCache = null;
+                }
+            }).then(_ => {
+                if (originalCache.__invStamp === tStamp) {
+                    if (workingCache) {
+                        return workingCache.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(c => {
+                            if (c && originalCache.__invStamp === tStamp) {
+                                atomicCacheSwap();
+                                originalCache.__invStamp = null;
+                            }
+                        });
+                    }
+
+                    // If we requested restore, perform now
+                    if (restoreTiles) {
+                        const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
+
+                        tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, freshOriginalCacheRef, true);
+                        return freshOriginalCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then((c) => {
+                            if (c && originalCache.__invStamp === tStamp) {
+                                atomicCacheSwap();
+                                originalCache.__invStamp = null;
+                            }
+                        });
+                    }
+
+                    const freshMainCacheRef = tile.getCache();
+                    return freshMainCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(() => {
+                        originalCache.__invStamp = null;
                     });
+
+                } else if (workingCache) {
+                    workingCache.destroy();
+                    workingCache = null;
                 }
                 return null;
             }).catch(e => {
@@ -332,7 +408,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             for (let tile of markedTiles) {
                 tile.lastProcess = false;
                 tile.processing = false;
-                tile.transforming = false;
             }
             this.draw();
         });

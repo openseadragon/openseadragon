@@ -1135,7 +1135,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             ajaxHeaders = {};
         }
         if (!$.isPlainObject(ajaxHeaders)) {
-            console.error('[Viewer.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            $.console.error('[Viewer.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
             return;
         }
         if (propagate === undefined) {

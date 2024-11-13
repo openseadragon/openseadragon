@@ -163,7 +163,7 @@
 
         /**
          * Access of the data by drawers, synchronous function. Should always access a valid main cache, e.g.
-         * cache swap performed on working cache (consumeCache()) must be synchronous such that cache is always
+         * cache swap performed on working cache (replaceCache()) must be synchronous such that cache is always
          * ready to render, and swaps atomically between render calls.
          *
          * @param {OpenSeadragon.DrawerBase} drawer drawer reference which requests the data: the drawer
@@ -190,8 +190,9 @@
             let internalCache = this[DRAWER_INTERNAL_CACHE];
             internalCache = internalCache && internalCache[drawer.getId()];
             if (keepInternalCopy && !internalCache) {
-                $.console.warn("Attempt to render %s that is not prepared with drawer requesting " +
-                    "internal cache! This might introduce artifacts.", this.toString());
+                $.console.warn("Attempt to render cache that is not prepared for current drawer " +
+                    "supported format: the preparation should've happened after tile processing has finished.",
+                    this, tileToDraw);
 
                 this.prepareForRendering(drawer.getId(), supportedTypes, keepInternalCopy)
                     .then(() => this._triggerNeedsDraw());
@@ -211,8 +212,10 @@
             }
 
             if (!supportedTypes.includes(internalCache.type)) {
-                $.console.warn("Attempt to render %s that is not prepared for current drawer " +
-                    "supported format: the preparation should've happened after tile processing has finished.", this.toString());
+                $.console.warn("Attempt to render cache that is not prepared for current drawer " +
+                    "supported format: the preparation should've happened after tile processing has finished.",
+                    Object.entries(this[DRAWER_INTERNAL_CACHE]),
+                    this, tileToDraw);
 
                 internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
                     .then(() => this._triggerNeedsDraw());
@@ -226,8 +229,8 @@
          * @private
          * @param drawerId
          * @param supportedTypes
-         * @param keepInternalCopy
-
+         * @param keepInternalCopy if a drawer requests internal copy, it means it can only use
+         *   given cache for itself, cannot be shared -> initialize privately
          * @return {OpenSeadragon.Promise<OpenSeadragon.SimpleCacheRecord|OpenSeadragon.CacheRecord> | null}
          *   reference to the cache processed for drawer rendering requirements, or null on error
          */
@@ -330,10 +333,12 @@
          * Conversion requires tile references:
          * keep the most 'up to date' ref here. It is called and managed automatically.
          * @param {OpenSeadragon.Tile} ref
+         * @return {OpenSeadragon.CacheRecord} self reference for builder pattern
          * @private
          */
         withTileReference(ref) {
             this._tRef = ref;
+            return this;
         }
 
         /**
@@ -642,9 +647,11 @@
          * Must be called before transformTo or setDataAs. To keep
          * compatible api with CacheRecord where tile refs are known.
          * @param {OpenSeadragon.Tile} referenceTile reference tile for conversion
+         * @return {OpenSeadragon.SimpleCacheRecord} self reference for builder pattern
          */
         withTileReference(referenceTile) {
             this._temporaryTileRef = referenceTile;
+            return this;
         }
 
         /**
@@ -908,51 +915,92 @@
         }
 
         /**
-         * Consume cache by another cache
+         * Inject new cache to the system
+         * @param {Object} options
+         * @param {OpenSeadragon.Tile} options.tile - Reference tile. All tiles sharing original data will be affected.
+         * @param {OpenSeadragon.CacheRecord} options.cache - Cache that will be injected.
+         * @param {String} options.targetKey - The target cache key to inhabit. Can replace existing cache.
+         * @param {Boolean} options.setAsMainCache - If true, tiles main cache gets updated to consumerKey.
+         *   Otherwise, if consumerKey==tile.cacheKey the cache is set as main too.
+         * @param {Boolean} options.tileAllowNotLoaded - if true, tile that is not loaded is also processed,
+         *   this is internal parameter used in tile-loaded completion routine, as we need to prepare tile but
+         *   it is not yet loaded and cannot be marked as so (otherwise the system would think it is ready)
+         * @private
+         */
+        injectCache(options) {
+            const targetKey = options.targetKey,
+                tile = options.tile;
+            if (!options.tileAllowNotLoaded && !tile.loaded && !tile.loading) {
+                $.console.warn("Attempt to inject cache on tile in invalid state: this is probably a bug!");
+                return;
+            }
+            const consumer = this._cachesLoaded[targetKey];
+            if (consumer) {
+                // We need to avoid async execution here: replace consumer instead of overwriting the data.
+                const iterateTiles = [...consumer._tiles];  // unloadCacheForTile() will modify the array, use a copy
+                for (let tile of iterateTiles) {
+                    this.unloadCacheForTile(tile, targetKey, true, false);
+                }
+            }
+            if (this._cachesLoaded[targetKey]) {
+                $.console.error("The inject routine should've freed cache!");
+            }
+
+            const cache = options.cache;
+            this._cachesLoaded[targetKey] = cache;
+
+            // Update cache: add the new cache, we must add since we removed above with unloadCacheForTile()
+            for (let t of tile.getCache(tile.originalCacheKey)._tiles) {  // grab all cache-equal tiles
+                t.setCache(targetKey, cache, options.setAsMainCache, false);
+            }
+        }
+
+        /**
+         * Replace cache (and update tile references) by another cache
          * @param {Object} options
          * @param {OpenSeadragon.Tile} options.tile - The tile to own ot add record for the cache.
          * @param {String} options.victimKey - Cache that will be erased. In fact, the victim _replaces_ consumer,
          *   inheriting its tiles and key.
          * @param {String} options.consumerKey - The cache that consumes the victim. In fact, it gets destroyed and
          *   replaced by victim, which inherits all its metadata.
+         * @param {Boolean} options.setAsMainCache - If true, tiles main cache gets updated to consumerKey.
+         *   Otherwise, if consumerKey==tile.cacheKey the cache is set as main too.
          * @param {Boolean} options.tileAllowNotLoaded - if true, tile that is not loaded is also processed,
          *   this is internal parameter used in tile-loaded completion routine, as we need to prepare tile but
          *   it is not yet loaded and cannot be marked as so (otherwise the system would think it is ready)
          * @private
          */
-        consumeCache(options) {
-            const victim = this._cachesLoaded[options.victimKey],
+        replaceCache(options) {
+            const victimKey = options.victimKey,
+                consumerKey = options.consumerKey,
+                victim = this._cachesLoaded[victimKey],
                 tile = options.tile;
             if (!victim || (!options.tileAllowNotLoaded && !tile.loaded && !tile.loading)) {
-                $.console.warn("Attempt to consume non-existent cache: this is probably a bug!");
+                $.console.warn("Attempt to consume cache on tile in invalid state: this is probably a bug!");
                 return;
             }
-            const consumer = this._cachesLoaded[options.consumerKey];
-            let tiles = [...tile.getCache()._tiles];
-
+            const consumer = this._cachesLoaded[consumerKey];
             if (consumer) {
                 // We need to avoid async execution here: replace consumer instead of overwriting the data.
                 const iterateTiles = [...consumer._tiles];  // unloadCacheForTile() will modify the array, use a copy
                 for (let tile of iterateTiles) {
-                    this.unloadCacheForTile(tile, options.consumerKey, true, false);
+                    this.unloadCacheForTile(tile, consumerKey, true, false);
                 }
             }
-            if (this._cachesLoaded[options.consumerKey]) {
-                console.error("The routine should've freed cache!");
+            if (this._cachesLoaded[consumerKey]) {
+                $.console.error("The consume routine should've freed cache!");
             }
             // Just swap victim to become new consumer
             const resultCache = this.renameCache({
-                oldCacheKey: options.victimKey,
-                newCacheKey: options.consumerKey
+                oldCacheKey: victimKey,
+                newCacheKey: consumerKey
             });
 
             if (resultCache) {
                 // Only one cache got working item, other caches were idle: update cache: add the new cache
-                // we can add since we removed above with unloadCacheForTile()
-                for (let tile of tiles) {
-                    if (tile !== options.tile) {
-                        tile.addCache(options.consumerKey, resultCache.data, resultCache.type, true, false);
-                    }
+                // we must add since we removed above with unloadCacheForTile()
+                for (let t of tile.getCache(tile.originalCacheKey)._tiles) {  // grab all cache-equal tiles
+                    t.setCache(consumerKey, resultCache, options.setAsMainCache, false);
                 }
             }
         }
@@ -967,9 +1015,11 @@
          */
         restoreTilesThatShareOriginalCache(tile, originalCache, freeIfUnused) {
             for (let t of originalCache._tiles) {
-                this.unloadCacheForTile(t, t.cacheKey, freeIfUnused, false);
-                delete t._caches[t.cacheKey];
-                t.cacheKey = t.originalCacheKey;
+                if (t.cacheKey !== t.originalCacheKey) {
+                    this.unloadCacheForTile(t, t.cacheKey, freeIfUnused, true);
+                    delete t._caches[t.cacheKey];
+                    t.cacheKey = t.originalCacheKey;
+                }
             }
         }
 
@@ -1087,6 +1137,25 @@
         getCacheRecord(cacheKey) {
             $.console.assert(cacheKey, '[TileCache.getCacheRecord] cacheKey is required');
             return this._cachesLoaded[cacheKey] || this._zombiesLoaded[cacheKey];
+        }
+
+        /**
+         * Delete cache safely from the system if it is not needed
+         * @param {OpenSeadragon.CacheRecord} cache
+         */
+        safeUnloadCache(cache) {
+           if (cache && !cache._destroyed && cache.getTileCount() < 1) {
+               for (let i in this._zombiesLoaded) {
+                   const c = this._zombiesLoaded[i];
+                   if (c === cache) {
+                       delete this._zombiesLoaded[i];
+                       c.destroy();
+                       return;
+                   }
+               }
+               $.console.error("Attempt to delete an orphan cache that is not in zombie list: this could be a bug!", cache);
+               cache.destroy();
+           }
         }
 
         /**

@@ -33,7 +33,6 @@
  */
 
 (function( $ ){
-let _workingCacheIdDealer = 0;
 
 /**
  * @class Tile
@@ -253,16 +252,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      */
     this._caches = {};
     /**
-     * Static Working Cache key to keep cached object (for swapping) when executing modifications.
-     * Uses unique ID to prevent sharing between other tiles:
-     *   - if some tile initiates processing, all other tiles usually are skipped if they share the data
-     *   - if someone tries to bypass sharing and process all tiles that share data, working caches would collide
-     * Note that $.now() is not sufficient, there might be tile created in the same millisecond.
-     * @member {String}
-     * @private
-     */
-    this._wcKey = `w${_workingCacheIdDealer++}://` + this.originalCacheKey;
-    /**
      * Processing flag, exempt the tile from removal when there are ongoing updates
      * @member {Boolean|Number}
      * @private
@@ -273,14 +262,6 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @private
      */
     this.lastProcess = 0;
-    /**
-     * Transforming flag, exempt the tile from any processing since it is being transformed to a drawer-compatible
-     * format. This process cannot be paused and the tile cannot be touched during the process. Used for tile-locking
-     * in the data invalidation routine.
-     * @member {Boolean|Number}
-     * @private
-     */
-    this.transforming = false;
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -420,7 +401,7 @@ $.Tile.prototype = {
      * @returns {?Image}
      */
     getImage: function() {
-        $.console.error("[Tile.getImage] property has been deprecated. Use [Tile.getData] instead.");
+        $.console.error("[Tile.getImage] property has been deprecated. Use 'tile-invalidated' routine event instead.");
         //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
@@ -445,10 +426,10 @@ $.Tile.prototype = {
     /**
      * Get the CanvasRenderingContext2D instance for tile image data drawn
      * onto Canvas if enabled and available
-     * @returns {?CanvasRenderingContext2D}
+     * @returns {CanvasRenderingContext2D|undefined}
      */
     getCanvasContext: function() {
-        $.console.error("[Tile.getCanvasContext] property has been deprecated. Use [Tile.getData] instead.");
+        $.console.error("[Tile.getCanvasContext] property has been deprecated. Use 'tile-invalidated' routine event instead.");
         //this method used to ensure the underlying data model conformed to given type - convert instead of getData()
         const cache = this.getCache(this.cacheKey);
         if (!cache) {
@@ -464,7 +445,7 @@ $.Tile.prototype = {
      * @type {CanvasRenderingContext2D}
      */
     get context2D() {
-        $.console.error("[Tile.context2D] property has been deprecated. Use [Tile.getData] instead.");
+        $.console.error("[Tile.context2D] property has been deprecated. Use 'tile-invalidated' routine event instead.");
         return this.getCanvasContext();
     },
 
@@ -473,9 +454,12 @@ $.Tile.prototype = {
      * @deprecated
      */
     set context2D(value) {
-        $.console.error("[Tile.context2D] property has been deprecated. Use [Tile.setData] within dedicated update event instead.");
-        this.setData(value, "context2d");
-        this.updateRenderTarget();
+        $.console.error("[Tile.context2D] property has been deprecated. Use 'tile-invalidated' routine event instead.");
+        const cache = this._caches[this.cacheKey];
+        if (cache) {
+            this.removeCache(this.cacheKey);
+        }
+        this.addCache(this.cacheKey, value, 'context2d', true, false);
     },
 
     /**
@@ -510,128 +494,12 @@ $.Tile.prototype = {
     },
 
     /**
-     * Get the data to render for this tile. If no conversion is necessary, get a reference. Else, get a copy
-     * of the data as desired type. This means that data modification _might_ be reflected on the tile, but
-     * it is not guaranteed. Use tile.setData() to ensure changes are reflected.
-     * @param {string} type data type to require
-     * @return {OpenSeadragon.Promise<*>} data in the desired type, or resolved promise with udnefined if the
-     *   associated cache object is out of its lifespan
-     */
-    getData: function(type) {
-        if (!this.tiledImage) {
-            return $.Promise.resolve(); //async can access outside its lifetime
-        }
-        return this._getOrCreateWorkingCacheData(type);
-    },
-
-    /**
-     * Restore the original data data for this tile
-     * @param {boolean} freeIfUnused if true, restoration frees cache along the way of the tile lifecycle
-     */
-    restore: function(freeIfUnused = true) {
-        if (!this.tiledImage) {
-            return; //async context can access the tile outside its lifetime
-        }
-
-        this.__restoreRequestedFree = freeIfUnused;
-        if (this.originalCacheKey !== this.cacheKey) {
-            this.__restore = true;
-        }
-        // Somebody has called restore on this tile, make sure we delete working cache in case there was some
-        this.removeCache(this._wcKey, true);
-    },
-
-    /**
-     * Set main cache data
-     * @param {*} value
-     * @param {?string} type data type to require
-     * @return {OpenSeadragon.Promise<*>}
-     */
-    setData: function(value, type) {
-        if (!this.tiledImage) {
-            return Promise.resolve(); //async context can access the tile outside its lifetime
-        }
-
-        let cache = this.getCache(this._wcKey);
-        if (!cache) {
-            this._getOrCreateWorkingCacheData(undefined);
-            cache = this.getCache(this._wcKey);
-        }
-        return cache.setDataAs(value, type);
-    },
-
-
-    /**
-     * Optimizazion: prepare target cache for subsequent use in rendering, and perform updateRenderTarget()
-     * The main idea of this function is that it must be ASYNCHRONOUS since there might be additional processing
-     * happening due to underlying drawer requirements.
-     * @return {OpenSeadragon.Promise<?>}
+     * Cache key for main cache that is 'cache-equal', but different from original cache key
+     * @return {string}
      * @private
      */
-    updateRenderTargetWithDataTransform: function (drawerId, supportedFormats, usePrivateCache, processTimestamp) {
-        // Now, if working cache exists, we set main cache to the working cache --> prepare
-        let cache = this.getCache(this._wcKey);
-        if (cache) {
-            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache).then(c => {
-                if (c && processTimestamp && this.processing === processTimestamp) {
-                    this.updateRenderTarget();
-                }
-            });
-        }
-
-        // If we requested restore, perform now
-        if (this.__restore) {
-            cache = this.getCache(this.originalCacheKey);
-
-            this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
-                this, cache, this.__restoreRequestedFree
-            );
-            this.__restore = false;
-            return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache).then((c) => {
-                if (c && processTimestamp && this.processing === processTimestamp) {
-                    this.updateRenderTarget();
-                }
-            });
-        }
-
-        cache = this.getCache();
-        return cache.prepareForRendering(drawerId, supportedFormats, usePrivateCache);
-    },
-
-    /**
-     * Resolves render target: changes might've been made to the rendering pipeline:
-     *  - working cache is set: make sure main cache will be replaced
-     *  - working cache is unset: make sure main cache either gets updated to original data or stays (based on this.__restore)
-     *
-     * The main idea of this function is that it is SYNCHRONOUS, e.g. can perform in-place cache swap to update
-     * before any rendering occurs.
-     * @private
-     */
-    updateRenderTarget: function (_allowTileNotLoaded = false) {
-        // Check if we asked for restore, and make sure we set it to false since we update the whole cache state
-        const requestedRestore = this.__restore;
-        this.__restore = false;
-
-        // Now, if working cache exists, we set main cache to the working cache, since it has been updated
-        // if restore() was called last, then working cache was deleted (does not exist)
-        const cache = this.getCache(this._wcKey);
-        if (cache) {
-            let newCacheKey = this.cacheKey === this.originalCacheKey ? "mod://" + this.originalCacheKey : this.cacheKey;
-            this.tiledImage._tileCache.consumeCache({
-                tile: this,
-                victimKey: this._wcKey,
-                consumerKey: newCacheKey,
-                tileAllowNotLoaded: _allowTileNotLoaded
-            });
-            this.cacheKey = newCacheKey;
-        } else if (requestedRestore) {
-            // If we requested restore, perform now
-            this.tiledImage._tileCache.restoreTilesThatShareOriginalCache(
-                this, this.getCache(this.originalCacheKey), this.__restoreRequestedFree
-            );
-        }
-        // If transforming was set, we finished: drawer transform always finishes with updateRenderTarget()
-        this.transforming = false;
+    buildDistinctMainCacheKey: function () {
+        return this.cacheKey === this.originalCacheKey ? "mod://" + this.originalCacheKey : this.cacheKey;
     },
 
     /**
@@ -648,10 +516,10 @@ $.Tile.prototype = {
     },
 
     /**
-     * Set tile cache, possibly multiple with custom key
-     * @param {string} key cache key, must be unique (we recommend re-using this.cacheTile
-     *   value and extend it with some another unique content, by default overrides the existing
-     *   main cache used for drawing, if not existing.
+     * Create tile cache for given data object. NOTE: if the existing cache already exists,
+     * data parameter is ignored and inherited from the existing cache object.
+     *
+     * @param {string} key cache key, if unique, new cache object is created, else existing cache attached
      * @param {*} data this data will be IGNORED if cache already exists; therefore if
      *   `typeof data === 'function'` holds (both async and normal functions), the data is called to obtain
      *   the data item: this is an optimization to load data only when necessary.
@@ -663,7 +531,8 @@ $.Tile.prototype = {
      * @returns {OpenSeadragon.CacheRecord|null} - The cache record the tile was attached to.
      */
     addCache: function(key, data, type = undefined, setAsMain = false, _safely = true) {
-        if (!this.tiledImage) {
+        const tiledImage = this.tiledImage;
+        if (!tiledImage) {
             return null; //async can access outside its lifetime
         }
 
@@ -679,33 +548,81 @@ $.Tile.prototype = {
             type = $.convertor.guessType(data);
         }
 
-        const writesToRenderingCache = key === this.cacheKey;
-        if (writesToRenderingCache && _safely) {
+        const overwritesMainCache = key === this.cacheKey;
+        if (_safely && (overwritesMainCache || setAsMain)) {
             // Need to get the supported type for rendering out of the active drawer.
-            const supportedTypes = this.tiledImage.viewer.drawer.getSupportedDataFormats();
+            const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
             const conversion = $.convertor.getConversionPath(type, supportedTypes);
             $.console.assert(conversion, "[Tile.addCache] data was set for the default tile cache we are unable" +
-                "to render. Make sure OpenSeadragon.convertor was taught to convert to (one of): " + type);
+                `to render. Make sure OpenSeadragon.convertor was taught to convert ${type} to (one of): ${conversion.toString()}`);
         }
 
-        const cachedItem = this.tiledImage._tileCache.cacheTile({
+        const cachedItem = tiledImage._tileCache.cacheTile({
             data: data,
             dataType: type,
             tile: this,
             cacheKey: key,
-            //todo consider caching this on a tiled image level
-            cutoff: this.__cutoff || this.tiledImage.source.getClosestLevel(),
+            cutoff: tiledImage.source.getClosestLevel(),
         });
         const havingRecord = this._caches[key];
         if (havingRecord !== cachedItem) {
             this._caches[key] = cachedItem;
+            if (havingRecord) {
+                havingRecord.removeTile(this);
+                tiledImage._tileCache.safeUnloadCache(havingRecord);
+            }
         }
 
         // Update cache key if differs and main requested
-        if (!writesToRenderingCache && setAsMain) {
+        if (!overwritesMainCache && setAsMain) {
             this._updateMainCacheKey(key);
         }
         return cachedItem;
+    },
+
+
+    /**
+     * Add cache object to the tile
+     *
+     * @param {string} key cache key, if unique, new cache object is created, else existing cache attached
+     * @param {OpenSeadragon.CacheRecord} cache the cache object to attach to this tile
+     * @param {boolean} [setAsMain=false] if true, the key will be set as the tile.cacheKey,
+     *   no effect if key === this.cacheKey
+     * @param [_safely=true] private
+     * @returns {OpenSeadragon.CacheRecord|null} - Returns cache parameter reference if attached.
+     */
+    setCache(key, cache, setAsMain = false, _safely = true) {
+        const tiledImage = this.tiledImage;
+        if (!tiledImage) {
+            return null; //async can access outside its lifetime
+        }
+
+        const overwritesMainCache = key === this.cacheKey;
+        if (_safely) {
+            $.console.assert(cache instanceof $.CacheRecord, "[Tile.setCache] cache must be a CacheRecord object!");
+            if (overwritesMainCache || setAsMain) {
+                // Need to get the supported type for rendering out of the active drawer.
+                const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
+                const conversion = $.convertor.getConversionPath(cache.type, supportedTypes);
+                $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
+                    `to render. Make sure OpenSeadragon.convertor was taught to convert ${cache.type} to (one of): ${conversion.toString()}`);
+            }
+        }
+
+        const havingRecord = this._caches[key];
+        if (havingRecord !== cache) {
+            this._caches[key] = cache;
+            if (havingRecord) {
+                havingRecord.removeTile(this);
+                tiledImage._tileCache.safeUnloadCache(havingRecord);
+            }
+        }
+
+        // Update cache key if differs and main requested
+        if (!overwritesMainCache && setAsMain) {
+            this._updateMainCacheKey(key);
+        }
+        return cache;
     },
 
     /**
@@ -717,36 +634,11 @@ $.Tile.prototype = {
     _updateMainCacheKey: function(value) {
         let ref = this._caches[this._cKey];
         if (ref) {
-            // make sure we free drawer internal cache
+            // make sure we free drawer internal cache if people change cache key externally
+            // todo make sure this is really needed even after refactoring
             ref.destroyInternalCache();
         }
         this._cKey = value;
-        // we do not trigger redraw, this is handled within cache
-        // as drawers request data for drawing
-    },
-
-    /**
-     * Initializes working cache if it does not exist.
-     * @param {string|undefined} type initial cache type to create
-     * @return {OpenSeadragon.Promise<?>} data-awaiting promise with the cache data
-     * @private
-     */
-    _getOrCreateWorkingCacheData: function (type) {
-        const cache = this.getCache(this._wcKey);
-        if (!cache) {
-            const targetCopyKey = this.__restore ? this.originalCacheKey : this.cacheKey;
-            const origCache = this.getCache(targetCopyKey);
-            if (!origCache) {
-                $.console.error("[Tile::getData] There is no cache available for tile with key %s", targetCopyKey);
-            }
-            // Here ensure type is defined, rquired by data callbacks
-            type = type || origCache.type;
-
-            // Here we use extensively ability to call addCache with callback: working cache is created only if not
-            // already in memory (=> shared).
-            return this.addCache(this._wcKey, () => origCache.getDataAs(type, true), type, false, false).await();
-        }
-        return cache.getDataAs(type, false);
     },
 
     /**
@@ -761,12 +653,15 @@ $.Tile.prototype = {
      * Free tile cache. Removes by default the cache record if no other tile uses it.
      * @param {string} key cache key, required
      * @param {boolean} [freeIfUnused=true] set to false if zombie should be created
+     * @return {OpenSeadragon.CacheRecord|undefined} reference to the cache record if it was removed,
+     *   undefined if removal was refused to perform (e.g. does not exist, it is an original data target etc.)
      */
     removeCache: function(key, freeIfUnused = true) {
-        if (!this._caches[key]) {
+        const deleteTarget = this._caches[key];
+        if (!deleteTarget) {
             // try to erase anyway in case the cache got stuck in memory
             this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused, true);
-            return;
+            return undefined;
         }
 
         const currentMainKey = this.cacheKey,
@@ -776,7 +671,7 @@ $.Tile.prototype = {
         if (!sameBuiltinKeys && originalDataKey === key) {
             $.console.warn("[Tile.removeCache] original data must not be manually deleted: other parts of the code might rely on it!",
                 "If you want the tile not to preserve the original data, toggle of data perseverance in tile.setData().");
-            return;
+            return undefined;
         }
 
         if (currentMainKey === key) {
@@ -786,13 +681,14 @@ $.Tile.prototype = {
             } else {
                 $.console.warn("[Tile.removeCache] trying to remove the only cache that can be used to draw the tile!",
                     "If you want to remove the main cache, first set different cache as main with tile.addCache()");
-                return;
+                return undefined;
             }
         }
         if (this.tiledImage._tileCache.unloadCacheForTile(this, key, freeIfUnused, false)) {
             //if we managed to free tile from record, we are sure we decreased cache count
             delete this._caches[key];
         }
+        return deleteTarget;
     },
 
     /**
@@ -826,8 +722,8 @@ $.Tile.prototype = {
         // the sketch canvas to the top and left and we must use negative coordinates to repaint it
         // to the main canvas. In that case, some browsers throw:
         // INDEX_SIZE_ERR: DOM Exception 1: Index or size was negative, or greater than the allowed value.
-        var x = Math.max(1, Math.ceil((sketchCanvasSize.x - canvasSize.x) / 2));
-        var y = Math.max(1, Math.ceil((sketchCanvasSize.y - canvasSize.y) / 2));
+        const x = Math.max(1, Math.ceil((sketchCanvasSize.x - canvasSize.x) / 2));
+        const y = Math.max(1, Math.ceil((sketchCanvasSize.y - canvasSize.y) / 2));
         return new $.Point(x, y).minus(
             this.position
                 .times($.pixelDensityRatio)

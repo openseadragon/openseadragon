@@ -25,18 +25,19 @@
 
     function getPluginCode(overlayColor = "rgba(0,0,255,0.5)") {
         return async function(e) {
-            const tile = e.tile;
-            const ctx = await tile.getData('context2d'), canvas = ctx.canvas;
-            ctx.fillStyle = overlayColor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            await tile.setData(ctx, 'context2d');
+            const ctx = await e.getData('context2d');
+            if (ctx) {
+                const canvas = ctx.canvas;
+                ctx.fillStyle = overlayColor;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                await e.setData(ctx, 'context2d');
+            }
         };
     }
 
     function getResetTileDataCode() {
         return async function(e) {
-            const tile = e.tile;
-            tile.restore();
+            e.resetData();
         };
     }
 

@@ -89,25 +89,28 @@
             <textarea id="scriptInput" rows="25" cols="120" placeholder="" style="height: 470px">
 // window.pluginA must be defined! draw small gradient square
 window.pluginA = async function(e) {
-      const tile = e.tile;
-      const ctx = await tile.getData('context2d');
+      const ctx = await e.getData('context2d');
 
-      const gradient = ctx.createLinearGradient(0, 0, 50, 50);
-      gradient.addColorStop(0, 'blue');
-      gradient.addColorStop(0.5, 'green');
-      gradient.addColorStop(1, 'red');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, 50, 50);
+      if (ctx) {
+          const gradient = ctx.createLinearGradient(0, 0, 50, 50);
+          gradient.addColorStop(0, 'blue');
+          gradient.addColorStop(0.5, 'green');
+          gradient.addColorStop(1, 'red');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 50, 50);
 
-      await tile.setData(ctx, 'context2d');
+          await e.setData(ctx, 'context2d');
+      }
 };
 // window.pluginB must be defined! overlay with color opacity 40%
 window.pluginB = async function(e) {
-      const tile = e.tile;
-      const ctx = await tile.getData('context2d'), canvas = ctx.canvas;
-      ctx.fillStyle = "rgba(156, 0, 26, 0.4)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      await tile.setData(ctx, 'context2d');
+      const ctx = await e.getData('context2d');
+      if (ctx) {
+          const canvas = ctx.canvas;
+          ctx.fillStyle = "rgba(156, 0, 26, 0.4)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await tile.setData(ctx, 'context2d');
+      }
 };
 // higher number = earlier execution
 window.orderPluginA = 1;

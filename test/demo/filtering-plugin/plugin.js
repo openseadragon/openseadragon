@@ -56,15 +56,15 @@
         setOptions(this, options);
 
         async function applyFilters(e) {
-            const tile = e.tile,
-                tiledImage = e.tiledImage,
+            const tiledImage = e.tiledImage,
                 processors = getFiltersProcessors(self, tiledImage);
 
             if (processors.length === 0) {
                 return;
             }
 
-            const contextCopy = await tile.getData('context2d');
+            const contextCopy = await e.getData('context2d');
+            if (!contextCopy) return;
 
             if (contextCopy.canvas.width === 0) {
                 debugger;
@@ -79,7 +79,7 @@
                     await processors[i](contextCopy);
                 }
 
-                await tile.setData(contextCopy, 'context2d');
+                await e.setData(contextCopy, 'context2d');
             } catch (e) {
                 // pass, this is error caused by canvas being destroyed & replaced
             }
