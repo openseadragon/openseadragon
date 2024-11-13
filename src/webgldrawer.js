@@ -111,7 +111,7 @@
             this.context = this._outputContext; // API required by tests
 
             this._requiresCanvasDrawerFallback = false;
-            this._doRenderingTest();
+            setTimeout(() => this._doRenderingTest(), 0); // defer this to the next event loop for tests
         }
 
         // Public API required by all Drawer implementations
@@ -1335,6 +1335,10 @@
          * @returns
          */
         _doRenderingTest(){
+            // Don't do the test if this drawer has already been destroyed
+            if( this._destroyed ){
+                return;
+            }
             // Avoid infinite call stack by only testing once
             if( testing ){
                 return;
@@ -1362,7 +1366,7 @@
             testing = false;
 
             // Clean up the test viewer when the main viewer is destroyed (if it hasn't been already)
-            testViewer.addOnceHandler('before-destroy', () => {
+            this.viewer.addOnceHandler('before-destroy', () => {
                 testViewer.destroy();
                 if(div.parentNode){
                     div.parentNode.removeChild(div);
