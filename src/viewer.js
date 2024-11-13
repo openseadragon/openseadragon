@@ -3905,7 +3905,7 @@ function drawWorld( viewer ) {
     viewer.world.draw();
 
     /**
-     * <em>- Needs documentation -</em>
+     * This event is raised any time the viewer has rendered a new frame.
      *
      * @event update-viewport
      * @memberof OpenSeadragon.Viewer
