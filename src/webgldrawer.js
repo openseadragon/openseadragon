@@ -1337,7 +1337,6 @@
         _doRenderingTest(){
             // Avoid infinite call stack by only testing once
             if( testing ){
-                this._isTestingViewer = true;
                 return;
             }
             // Set the testing flag to true until the test viewer has been created
