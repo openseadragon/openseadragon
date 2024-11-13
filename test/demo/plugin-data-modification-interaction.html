@@ -109,7 +109,7 @@ window.pluginB = async function(e) {
           const canvas = ctx.canvas;
           ctx.fillStyle = "rgba(156, 0, 26, 0.4)";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          await tile.setData(ctx, 'context2d');
+          await e.setData(ctx, 'context2d');
       }
 };
 // higher number = earlier execution

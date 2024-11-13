@@ -49,10 +49,6 @@
         this.viewer = options.viewer;
         this.viewer.addHandler('tile-invalidated', applyFilters);
 
-        // filterIncrement allows to determine whether a tile contains the
-        // latest filters results.
-        this.filterIncrement = 0;
-
         setOptions(this, options);
 
         async function applyFilters(e) {
@@ -66,23 +62,12 @@
             const contextCopy = await e.getData('context2d');
             if (!contextCopy) return;
 
-            if (contextCopy.canvas.width === 0) {
-                debugger;
+            for (let i = 0; i < processors.length; i++) {
+                if (e.outdated()) return;
+                await processors[i](contextCopy);
             }
-
-            try {
-                const currentIncrement = self.filterIncrement;
-                for (let i = 0; i < processors.length; i++) {
-                    if (self.filterIncrement !== currentIncrement) {
-                        break;
-                    }
-                    await processors[i](contextCopy);
-                }
-
-                await e.setData(contextCopy, 'context2d');
-            } catch (e) {
-                // pass, this is error caused by canvas being destroyed & replaced
-            }
+            if (e.outdated()) return;
+            await e.setData(contextCopy, 'context2d');
         }
     };
 
@@ -99,7 +84,6 @@
             filter.processors = $.isArray(filter.processors) ?
                 filter.processors : [filter.processors];
         }
-        instance.filterIncrement++;
         instance.viewer.requestInvalidate();
     }
 
