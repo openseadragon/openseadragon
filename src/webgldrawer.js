@@ -1347,12 +1347,12 @@
 
             // Create a small element for the test viewer and append it to our viewer's element
             const div = document.createElement('div');
-            div.setAttribute('id', 'osd_internal_test');
             div.style.width = '4px';
             div.style.height = '4px';
             div.style.position = 'fixed';
             div.style.top = 0;
             div.style.left = 0;
+            div.style.opacity = 0.0001;
             this.viewer.element.appendChild( div );
 
             // create the test viewer
@@ -1361,6 +1361,13 @@
             // reset testing flag to false so additional viewers can be tested
             testing = false;
 
+            // Clean up the test viewer when the main viewer is destroyed (if it hasn't been already)
+            testViewer.addOnceHandler('before-destroy', () => {
+                testViewer.destroy();
+                if(div.parentNode){
+                    div.parentNode.removeChild(div);
+                }
+            });
             // Once a frame is drawn, check the pixel values in the output canvas
             testViewer.addOnceHandler('update-viewport', () => {
                 const numNonZeroValues = testViewer.drawer._outputContext.getImageData(0, 0, 4, 4).data.filter( pixel => pixel > 0).length;
@@ -1388,7 +1395,9 @@
 
                 // Clean up the test viewer
                 setTimeout( () => testViewer.destroy(), 0);
-                this.viewer.element.removeChild(div);
+                if(div.parentNode){
+                    div.parentNode.removeChild(div);
+                }
             });
 
             // Open the test image using the dataUrl from above
