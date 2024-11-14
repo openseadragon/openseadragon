@@ -489,14 +489,11 @@
         * @param {Boolean} enabled If true, uses gl.LINEAR as the TEXTURE_MIN_FILTER and TEXTURE_MAX_FILTER, otherwise gl.NEAREST.
         */
         setImageSmoothingEnabled(enabled){
-            const changed = this._imageSmoothingEnabled !== enabled;
-            this._imageSmoothingEnabled = enabled;
-            if( changed ){
-                // We need to unload all existing textures so they can be recreated with the new filter
+            if( this._imageSmoothingEnabled !== enabled ){
+                this._imageSmoothingEnabled = enabled;
                 this._unloadTextures();
+                this.viewer.world.draw();
             }
-            // trigger a re-draw
-            this.viewer.world.draw();
         }
 
         /**
