@@ -92,6 +92,8 @@
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
 
+            this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
+
             // Add listeners for events that require modifying the scene or camera
             this._boundToTileReady = ev => this._tileReadyHandler(ev);
             this._boundToImageUnloaded = ev => this._imageUnloadedHandler(ev);
@@ -135,10 +137,7 @@
             gl.bindRenderbuffer(gl.RENDERBUFFER, null);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-            let canvases = Array.from(this._TextureMap.keys());
-            canvases.forEach(canvas => {
-                this._cleanupImageData(canvas); // deletes texture, removes from _TextureMap
-            });
+            this._unloadTextures();
 
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
@@ -486,11 +485,15 @@
 
         // Public API required by all Drawer implementations
         /**
-        * Required by DrawerBase, but has no effect on WebGLDrawer.
-        * @param {Boolean} enabled
+        * Sets whether image smoothing is enabled or disabled
+        * @param {Boolean} enabled If true, uses gl.LINEAR as the TEXTURE_MIN_FILTER and TEXTURE_MAX_FILTER, otherwise gl.NEAREST.
         */
         setImageSmoothingEnabled(enabled){
-            // noop - this property does not impact WebGLDrawer
+            if( this._imageSmoothingEnabled !== enabled ){
+                this._imageSmoothingEnabled = enabled;
+                this._unloadTextures();
+                this.viewer.world.draw();
+            }
         }
 
         /**
@@ -601,6 +604,11 @@
         }
 
         // private
+        _textureFilter(){
+            return this._imageSmoothingEnabled ? this._gl.LINEAR : this._gl.NEAREST;
+        }
+
+        // private
         _setupRenderer(){
             let gl = this._gl;
             if(!gl){
@@ -616,7 +624,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -815,7 +823,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -955,8 +963,8 @@
                 // Set the parameters so we can render any size image.
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._textureFilter());
 
                 // Upload the image into the texture.
                 this._uploadImageData(tileContext);
@@ -978,6 +986,14 @@
                 x: widthOverlapFraction,
                 y: heightOverlapFraction
             };
+        }
+
+        // private
+        _unloadTextures(){
+            let canvases = Array.from(this._TextureMap.keys());
+            canvases.forEach(canvas => {
+                this._cleanupImageData(canvas); // deletes texture, removes from _TextureMap
+            });
         }
 
         // private
