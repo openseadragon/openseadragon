@@ -256,22 +256,29 @@
             }
 
             internalCache = internalCache[drawerId];
-            if (internalCache) {
+            if (internalCache && supportedTypes.includes(internalCache.type)) {
                 // already done
                 return $.Promise.resolve(this);
             }
 
-            internalCache = this[DRAWER_INTERNAL_CACHE][drawerId] = new $.SimpleCacheRecord();
             const conversionPath = $.convertor.getConversionPath(this.type, supportedTypes);
             if (!conversionPath) {
                 $.console.error(`[getDataForRendering] Conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
                 return $.Promise.resolve(this);
             }
-            internalCache.withTileReference(this._tRef);
+            const newInternalCache = new $.SimpleCacheRecord();
+
+            newInternalCache.withTileReference(this._tRef);
             const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
             return $.convertor.convert(this._tRef, this.data, this.type, selectedFormat).then(data => {
-                internalCache.setDataAs(data, selectedFormat);  // synchronous, SimpleCacheRecord call
-                return internalCache;
+                newInternalCache.setDataAs(data, selectedFormat);  // synchronous, SimpleCacheRecord call
+
+                // if existed, delete
+                if (internalCache) {
+                    internalCache.destroy();
+                }
+                this[DRAWER_INTERNAL_CACHE][drawerId] = newInternalCache;
+                return newInternalCache;
             });
         }
 

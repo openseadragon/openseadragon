@@ -100,9 +100,9 @@
             this._setupCanvases();
             this._setupRenderer();
 
-            this._supportedFormats = [];
+            this._supportedFormats = this._setupTextureHandlers();
+            this._requiredFormats = this._supportedFormats;
             this._setupCallCount = 1;
-            this._setupTextureHandlers();
 
             this.context = this._outputContext; // API required by tests
         }
@@ -468,6 +468,10 @@
 
         }
 
+        getRequiredDataFormats() {
+            return this._requiredFormats;
+        }
+
         // Public API required by all Drawer implementations
         /**
         * Sets whether image smoothing is enabled or disabled
@@ -476,7 +480,12 @@
         setImageSmoothingEnabled(enabled){
             if( this._imageSmoothingEnabled !== enabled ){
                 this._imageSmoothingEnabled = enabled;
-                this._setupTextureHandlers();  // re-sets the type to enforce re-initialization
+
+                // Todo consider removing old type handlers if _supportedFormats had already types defined,
+                // and remove support for rendering old types...
+                const newFormats = this._setupTextureHandlers();  // re-sets the type to enforce re-initialization
+                this._supportedFormats.push(...newFormats);
+                this._requiredFormats = newFormats;
                 return this.viewer.requestInvalidate();
             }
             return $.Promise.resolve();
@@ -892,8 +901,8 @@
                 // Set the parameters so we can render any size image.
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, _this._textureFilter());
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, _this._textureFilter());
 
                 try{
                     // This depends on gl.TEXTURE_2D being bound to the texture
@@ -919,8 +928,6 @@
             // Differentiate type also based on type used to upload data: we can support bidirectional conversion.
             const c2dTexType = thisType + ":context2d",
                 imageTexType = thisType + ":image";
-            // Todo consider removing old type handlers if _supportedFormats had already types defined
-            this._supportedFormats = [c2dTexType, imageTexType];
 
             // We should be OK uploading any of these types. The complexity is selected to be O(3n), should be
             // more than linear pass over pixels
@@ -929,6 +936,7 @@
 
             $.convertor.learnDestroy(c2dTexType, tex2DCompatibleDestructor);
             $.convertor.learnDestroy(imageTexType, tex2DCompatibleDestructor);
+            return [c2dTexType, imageTexType];
         }
 
         // private

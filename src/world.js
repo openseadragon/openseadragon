@@ -303,7 +303,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         // We call the event on the parent viewer window no matter what
         const eventTarget = this.viewer.viewer || this.viewer;
         // However, we must pick the correct drawer reference (navigator VS viewer)
-        const supportedFormats = this.viewer.drawer.getSupportedDataFormats();
+        const supportedFormats = this.viewer.drawer.getRequiredDataFormats();
         const keepInternalCacheCopy = this.viewer.drawer.options.usePrivateCache;
         const drawerId = this.viewer.drawer.getId();
 

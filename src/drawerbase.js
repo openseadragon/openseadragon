@@ -129,6 +129,16 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     }
 
     /**
+     * Retrieve required data formats the data must be converted to.
+     * This list MUST BE A VALID SUBSET OF getSupportedDataFormats()
+     * @abstract
+     * @return {string[]}
+     */
+    getRequiredDataFormats() {
+        return this.getSupportedDataFormats();
+    }
+
+    /**
      * Retrieve data types
      * @abstract
      * @return {string[]}
