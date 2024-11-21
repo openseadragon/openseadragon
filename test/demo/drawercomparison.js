@@ -193,6 +193,11 @@ function updateTiledImage(tiledImage, data, value, item){
             tiledImage.setOpacity(Number(value));
         } else if (field == 'flipped'){
             tiledImage.setFlip($(item).prop('checked'));
+        } else if (field == 'smoothing'){
+            const checked = $(item).prop('checked');
+            viewer1.drawer.setImageSmoothingEnabled(checked);
+            viewer2.drawer.setImageSmoothingEnabled(checked);
+            $('[data-field=smoothing]').prop('checked', checked);
         } else if (field == 'cropped'){
             if( $(item).prop('checked') ){
                 let scale = tiledImage.source.width;
@@ -355,6 +360,7 @@ function makeImagePickerElement(key, label){
             <label>Debug: <input type="checkbox" data-image="" data-field="debug"></label>
             <label>Composite: <select data-image="" data-field="composite"></select></label>
             <label>Wrap: <select data-image="" data-field="wrapping"></select></label>
+            <label>Smoothing: <input type="checkbox" data-image="" data-field="smoothing" checked></label>
         </div>
     </div>`.replaceAll('data-image=""', `data-image="${key}"`).replace('__title__', label));
 

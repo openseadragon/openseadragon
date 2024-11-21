@@ -88,6 +88,8 @@
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
 
+            this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
+
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
             this.viewer.rejectEventHandler("tile-drawing", "The WebGLDrawer does not raise the tile-drawing event");
@@ -98,10 +100,9 @@
             this._setupCanvases();
             this._setupRenderer();
 
-            // Unique type per drawer: uploads texture to unique webgl context.
-            this._dataType = `${this.getId()}_TEX_2D`;
             this._supportedFormats = [];
-            this._setupTextureHandlers(this._dataType);
+            this._setupCallCount = 1;
+            this._setupTextureHandlers();
 
             this.context = this._outputContext; // API required by tests
         }
@@ -469,11 +470,16 @@
 
         // Public API required by all Drawer implementations
         /**
-        * Required by DrawerBase, but has no effect on WebGLDrawer.
-        * @param {Boolean} enabled
+        * Sets whether image smoothing is enabled or disabled
+        * @param {Boolean} enabled If true, uses gl.LINEAR as the TEXTURE_MIN_FILTER and TEXTURE_MAX_FILTER, otherwise gl.NEAREST.
         */
         setImageSmoothingEnabled(enabled){
-            // noop - this property does not impact WebGLDrawer
+            if( this._imageSmoothingEnabled !== enabled ){
+                this._imageSmoothingEnabled = enabled;
+                this._setupTextureHandlers();  // re-sets the type to enforce re-initialization
+                return this.viewer.requestInvalidate();
+            }
+            return $.Promise.resolve();
         }
 
         /**
@@ -584,6 +590,11 @@
         }
 
         // private
+        _textureFilter(){
+            return this._imageSmoothingEnabled ? this._gl.LINEAR : this._gl.NEAREST;
+        }
+
+        // private
         _setupRenderer(){
             let gl = this._gl;
             if(!gl){
@@ -599,7 +610,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -798,7 +809,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -851,7 +862,7 @@
             this.viewer.addHandler("resize", this._resizeHandler);
         }
 
-        _setupTextureHandlers(thisType) {
+        _setupTextureHandlers() {
             const _this = this;
             const tex2DCompatibleLoader = (tile, data) => {
                 let tiledImage = tile.tiledImage;
@@ -904,10 +915,12 @@
                 }
             };
 
+            const thisType = `${this.getId()}_${this._setupCallCount++}_TEX_2D`;
             // Differentiate type also based on type used to upload data: we can support bidirectional conversion.
             const c2dTexType = thisType + ":context2d",
                 imageTexType = thisType + ":image";
-            this._supportedFormats.push(c2dTexType, imageTexType);
+            // Todo consider removing old type handlers if _supportedFormats had already types defined
+            this._supportedFormats = [c2dTexType, imageTexType];
 
             // We should be OK uploading any of these types. The complexity is selected to be O(3n), should be
             // more than linear pass over pixels
@@ -945,6 +958,13 @@
         }
 
         // private
+//         _unloadTextures(){
+//             let canvases = Array.from(this._TextureMap.keys());
+//             canvases.forEach(canvas => {
+//                 this._cleanupImageData(canvas); // deletes texture, removes from _TextureMap
+//             });
+//         }
+
         _setClip(){
             // no-op: called by _renderToClippingCanvas when tiledImage._clip is truthy
             // so that tests will pass.
