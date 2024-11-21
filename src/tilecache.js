@@ -450,12 +450,15 @@
                     this._type = type;
                 }
                 this._tiles.push(tile);
-            } else if (!this._tiles.includes(tile) && this.type && this._promise) {
-                // here really check we are loaded, since if optimization allows sending no data and we add tile without
-                // proper initialization it is a bug
-                this._tiles.push(tile);
             } else {
-                $.console.warn("Tile %s caching attempt without data argument on uninitialized cache entry!", tile);
+                const tileExists = this._tiles.includes(tile);
+                if (!tileExists && this.type && this._promise) {
+                    // here really check we are loaded, since if optimization allows sending no data and we add tile without
+                    // proper initialization it is a bug
+                    this._tiles.push(tile);
+                } else if (!tileExists) {
+                    $.console.warn("Tile %s caching attempt without data argument on uninitialized cache entry!", tile);
+                }
             }
         }
 
