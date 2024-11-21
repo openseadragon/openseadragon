@@ -17,6 +17,7 @@
             }
         }, 20);
     }
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     // Replace conversion with our own system and test: __TEST__ prefix must be used, otherwise
     // other tests will interfere
@@ -26,8 +27,10 @@
         typeAtoB++;
         return x+1;
     });
-    Convertor.learn(T_B, T_C, (tile, x) => {
+    // Costly conversion to C simulation
+    Convertor.learn(T_B, T_C, async (tile, x) => {
         typeBtoC++;
+        await sleep(5);
         return x+1;
     });
     Convertor.learn(T_C, T_A, (tile, x) => {
@@ -83,6 +86,98 @@
         destroyE++;
     });
 
+    OpenSeadragon.TestCacheDrawer = class extends OpenSeadragon.DrawerBase {
+        constructor(opts) {
+            super(opts);
+            this.testEvents = new OpenSeadragon.EventSource();
+        }
+
+        getType() {
+            return "test-cache-drawer";
+        }
+
+        // Make test use private cache
+        get defaultOptions() {
+            return {
+                usePrivateCache: true
+            };
+        }
+
+        getSupportedDataFormats() {
+            return [T_C, T_E];
+        }
+
+        static isSupported() {
+            return true;
+        }
+
+        _createDrawingElement() {
+            return document.createElement("div");
+        }
+
+        draw(tiledImages) {
+            for (let image of tiledImages) {
+                const tilesDoDraw = image.getTilesToDraw().map(info => info.tile);
+                for (let tile of tilesDoDraw) {
+                    const data = this.getDataToDraw(tile);
+                    this.testEvents.raiseEvent('test-tile', {
+                       tile: tile,
+                       dataToDraw: data,
+                    });
+                }
+            }
+        }
+
+        canRotate() {
+            return true;
+        }
+
+        destroy() {
+            //noop
+        }
+
+        setImageSmoothingEnabled(imageSmoothingEnabled){
+            //noop
+        }
+
+        drawDebuggingRect(rect) {
+            //noop
+        }
+
+        clear(){
+            //noop
+        }
+    }
+
+    OpenSeadragon.EmptyTestT_ATileSource = class extends OpenSeadragon.TileSource {
+
+        supports( data, url ){
+            return data && data.isTestSource;
+        }
+
+        configure( data, url, postData ){
+            return {
+                width: 512, /* width *required */
+                height: 512, /* height *required */
+                tileSize: 128, /* tileSize *required */
+                tileOverlap: 0, /* tileOverlap *required */
+                minLevel: 0, /* minLevel */
+                maxLevel: 3, /* maxLevel */
+                tilesUrl: "", /* tilesUrl */
+                fileFormat: "", /* fileFormat */
+                displayRects: null /* displayRects */
+            }
+        }
+
+        getTileUrl(level, x, y) {
+            return String(level); //treat each tile on level same to introduce cache overlaps
+        }
+
+        downloadTileStart(context) {
+            context.finish(0, null, T_A);
+        }
+    }
+
     // ----------
     QUnit.module('TileCache', {
         beforeEach: function () {
@@ -94,7 +189,8 @@
                 id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
                 maxImageCacheCount: 200, //should be enough to fit test inside the cache
-                springStiffness: 100 // Faster animation = faster tests
+                springStiffness: 100, // Faster animation = faster tests
+                drawer: 'test-cache-drawer',
             });
             OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
 
@@ -218,313 +314,199 @@
     });
 
     //Tile API and cache interaction
-    QUnit.test('Tile API: basic conversion', function(test) {
+    QUnit.test('Tile: basic rendering & test setup', function(test) {
         const done = test.async();
-        const fakeViewer = MockSeadragon.getViewer(
-            MockSeadragon.getDrawer({
-                // tile in safe mode inspects the supported formats upon cache set
-                getSupportedDataFormats() {
-                    return [T_A, T_B, T_C, T_D, T_E];
-                }
-            })
-        );
-        const tileCache = fakeViewer.tileCache;
-        const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
-        const fakeTiledImage1 = MockSeadragon.getTiledImage(fakeViewer);
 
-        //load data: note that tests SETUP MORE CACHES than they might use: it tests that some other caches / tiles
-        // are not touched during the manipulation of unrelated caches / tiles
-        const tile00 = MockSeadragon.getTile('foo.jpg', fakeTiledImage0);
-        tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
-        const tile01 = MockSeadragon.getTile('foo2.jpg', fakeTiledImage0);
-        tile01.addCache(tile01.cacheKey, 0, T_B, false, false);
-        const tile10 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
-        tile10.addCache(tile10.cacheKey, 0, T_C, false, false);
-        const tile11 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
-        tile11.addCache(tile11.cacheKey, 0, T_C, false, false);
-        const tile12 = MockSeadragon.getTile('foo.jpg', fakeTiledImage1);
-        tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
+        const tileCache = viewer.tileCache;
+        const drawer = viewer.drawer;
 
-        const collideGetSet = async (tile, type) => {
-            const value = await tile.getData(type);
-            await tile.setData(value, type);
-            return value;
-        };
+        let testTileCalled = false;
+        drawer.testEvents.addHandler('test-tile', e => {
+            testTileCalled = true;
+            test.ok(e.dataToDraw, "Tile data is ready to be drawn");
+        });
 
-        //test set/get data in async env
-        (async function() {
-            test.equal(tileCache.numTilesLoaded(), 5, "We loaded 5 tiles");
-            test.equal(tileCache.numCachesLoaded(), 3, "We loaded 3 cache objects");
+        viewer.addHandler('open', async () => {
+            await viewer.waitForFinishedJobsForTest();
+            await sleep(1);  // necessary to make space for a draw call
 
-            //test structure
-            const c00 = tile00.getCache(tile00.cacheKey);
-            test.equal(c00.getTileCount(), 2, "Two tiles share key = url = foo.jpg.");
-            const c01 = tile01.getCache(tile01.cacheKey);
-            test.equal(c01.getTileCount(), 1, "No tiles share key = url = foo2.jpg.");
-            const c10 = tile10.getCache(tile10.cacheKey);
-            test.equal(c10.getTileCount(), 2, "Two tiles share key = url = foo3.jpg.");
-            const c12 = tile12.getCache(tile12.cacheKey);
+            test.ok(viewer.world.getItemAt(0).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
+            test.ok(viewer.world.getItemAt(1).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
+            test.ok(testTileCalled, "Drawer tested at least one tile.");
 
-            //test get/set data A
-            let value = await tile00.getData(T_A);
-            test.equal(typeAtoB, 0, "No conversion happened when requesting default type data.");
-            test.equal(value, 1, "One copy happened: getData creates working cache -> copy.");
-            //explicit type
-            value = await tile00.getData(T_A);
-            test.equal(typeAtoB, 0, "No conversion also for tile sharing the cache.");
-            test.equal(value, 1, "No increase in value A, working cache initialized.");
+            test.ok(typeAtoB > 1, "At least one conversion was triggered.");
+            test.equal(typeAtoB, typeBtoC, "A->B = B->C, since we need to move all data to T_C for the drawer.");
 
-            //copy & set type A
-            value = await tile00.getData(T_A);
-            test.equal(typeAtoB, 0, "No conversion also for tile sharing the cache.");
-            test.equal(copyA, 1, "A copy happened.");
-            test.equal(value, 1, "+1 conversion step happened.");
-            await tile00.setData(value, T_A); //overwrite
-            test.equal(tile00.cacheKey, tile00.originalCacheKey, "Overwriting cache: no change in value.");
-            test.equal(c00.type, T_A, "The tile cache data type was unchanged.");
-            //convert to B, async + sync behavior
-            value = await tile00.getData(T_B);
-            await tile00.setData(value, T_B); //overwrite
-            test.equal(typeAtoB, 1, "Conversion A->B happened.");
-            test.equal(value, 2, "+1 conversion step happened.");
-            // shares cache, but it is different tile instance
+            for (let tile of tileCache._tilesLoaded) {
+                const cache = tile.getCache();
+                test.equal(cache.type, T_A, "Cache data was not affected, the drawer uses internal cache.");
 
-            value = await tile12.getData(T_B);
-            test.equal(typeAtoB, 2, "Conversion A->B happened second time -> working cache forcefully initiated over shared data.");
-            test.equal(value, 1, "Original data is 1 since all previous modifications happened over working cache of tile00.");
-
-            //test ASYNC get data
-            value = await tile12.getData(T_B);
-            await tile12.setData(value, T_B); //overwrite
-            test.equal(typeAtoB, 2, "Two working caches created, two conversions.");
-            test.equal(typeBtoC, 0, "No conversion happened when requesting default type data.");
-            test.equal(copyB, 0, "B type not copied, working cache already initialized.");
-            test.equal(value, 1, "Data stayed the same.");
-
-            // Async collisions testing
-
-            //convert to A, before that request conversion to A and B several times, since we copy
-            // there should be just exactly the right amount of conversions
-            tile12.getData(T_A); // B -> C -> A
-            tile12.getData(T_B); // no conversion, all run at the same time
-            tile12.getData(T_B); // no conversion, all run at the same time
-            tile12.getData(T_A); // B -> C -> A
-            tile12.getData(T_B); // no conversion, all run at the same time
-            value = await tile12.getData(T_A); // B -> C -> A
-            test.equal(typeAtoB, 2, "No conversion A->B.");
-            test.equal(typeBtoC, 3, "Conversion B->C happened three times.");
-            test.equal(typeCtoA, 3, "Conversion C->A happened three times.");
-            test.equal(typeDtoA, 0, "Conversion D->A did not happen.");
-            test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
-            test.equal(value, 3, "We started from value 1 (wokring cache state), and performed two conversions (B->C->A). " +
-                "Any other conversion attempt results were thrown away, cache state does not get updated when conversion takes place, data is copied (by default).");
-
-            // C12 cache is still type A, we modified wokring cache!
-            //but direct requests on cache change await all modifications, but are lazy
-            //convert to A, before that request conversion to A and B several times, should finish accordingly
-            c12.transformTo(T_A); // no-op
-            c12.transformTo(T_B); // A -> B
-            c12.transformTo(T_B); // no-op
-            c12.transformTo(T_A); // B -> C -> A
-            c12.transformTo(T_B); // A -> B
-            //should finish with next await with 6 steps at this point, add two more and await end
-            value = await c12.transformTo(T_A); // B -> C -> A
-            test.equal(typeAtoB, 4, "Conversion A->B happened two more times, in total 4.");
-            test.equal(typeBtoC, 5, "Conversion B->C happened five (3+2) times.");
-            test.equal(typeCtoA, 5, "Conversion C->A happened five (3+2) times.");
-            test.equal(typeDtoA, 0, "Conversion D->A did not happen.");
-            test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
-            test.equal(value, 6, "In total 6 conversions on the cache object.");
-            await tile12.setData(value, T_A);
-            test.equal(c12.data, 6, "In total 6 conversions on the cache object, above set changes working cache.");
-            test.equal(c12.data, 6, "Changing type of working cache fires no conversion, we overwrite cache state.");
-
-            // Get set collide tries to modify the cache: all first request the data, and set the data in random order,
-            // but writing is done after reading --> we start from TA
-            collideGetSet(tile12, T_A); // no conversion, already in TA
-            collideGetSet(tile12, T_B); // conversion to TB
-            collideGetSet(tile12, T_B); // no conversion, already in TA
-            collideGetSet(tile12, T_A); // conversion to TB
-            collideGetSet(tile12, T_B); // conversion to TB
-            //should finish with next await with 6 steps at this point, add two more and await end
-            value = await collideGetSet(tile12, T_C); // A -> B -> C (forced await)
-            test.equal(typeAtoB, 8, "Conversion A->B increased by three + one for the last await.");
-            test.equal(typeBtoC, 6, "Conversion B->C + one for the last await.");
-            test.equal(typeCtoA, 5, "Conversion C->A did not happen.");
-            test.equal(typeDtoA, 0, "Conversion D->A did not happen.");
-            test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
-            test.equal(value, 8, "6+2 steps (writes are colliding, just single write will happen).");
-            const workingc12 = tile12.getCache(tile12._wcKey);
-            test.equal(workingc12.type, T_C, "Working cache is really type C.");
-
-            //working cache not shared, even if these two caches share key they have different data now
-            value = await tile00.getData(T_C);  // B -> C
-            test.equal(typeAtoB, 8, "Conversion A->B nor triggered.");
-            test.equal(typeBtoC, 7, "Conversion B->C triggered.");
-            const workingc00 = tile00.getCache(tile00._wcKey);
-            test.notEqual(workingc00, workingc12, "Underlying working cache is not shared despite tiles share hash key.");
-
-            // now set value with keeping origin
-            await tile00.setData(42, T_D);
-            const newCache = tile00.getCache(tile00._wcKey);
-            await newCache.transformTo(T_C); // D -> A -> B -> C
-            test.equal(typeDtoA, 1, "Conversion D->A happens first time.");
-            test.equal(tile12.originalCacheKey, tile12.cacheKey, "Related tile not affected.");
-            test.equal(tile00.originalCacheKey, tile12.originalCacheKey, "Cache data was modified, original kept.");
-            test.equal(tile00.cacheKey, tile12.cacheKey, "Main cache keys not changed.");
-
-            // tile restore has no effect on the result since tile00 gets overwritten by tile12.updateRenderTarget()
-            tile00.restore(true);
-            // tile 12 changes data both tile 00 and tile 12
-            tile12.updateRenderTarget();
-            let newMainCache12 = tile12.getCache();
-            let newMainCache00 = tile00.getCache();
-
-            test.equal(newMainCache12.data, 8, "Tile 12 main cache value is now 8 as inherited from working cache.");
-            test.equal(newMainCache00.data, 8, "Tile 00 also shares the same data as tile 12.");
-
-            tile00.updateRenderTarget();
-            test.equal(newMainCache12.data, 8, "No effect in update target.");
-            test.equal(newMainCache00.data, 8, "No effect in update target.");
-            test.notEqual(tile00.cacheKey, tile00.originalCacheKey, "Tiles have original type.");
-
-            // Overwriting stress test with diff cache (see the same test as above, the same reasoning)
-            // but now stress test from clean state (WC initialized with first call)
-            tile00.restore(true); //first we call restore so that set/get reads from original cache
-            await collideGetSet(tile00, T_C); // tile has no working cache, conversion from original A -> B -> C
-            test.equal(await tile00.getData(T_C), 8, "Data is now 8 (6 at original + 2 conversion steps).");
-
-            // initialization of working cache directly as different type
-            collideGetSet(tile00, T_B); // C -> A -> B
-            collideGetSet(tile00, T_A); // C -> A
-            collideGetSet(tile00, T_A); // C -> A
-            collideGetSet(tile00, T_C); // no change
-            //should finish with next await with 6 steps at this point, add two more and await end
-            value = await collideGetSet(tile00, T_B); // C -> A -> B
-            test.equal(typeAtoB, 12, "Conversion A->B +3");
-            test.equal(typeBtoC, 9, "Conversion B->C +2 (one here, one a bit above)");
-            test.equal(typeCtoA, 9, "Conversion C->A +4");
-            test.equal(typeDtoA, 1, "Conversion D->A did not happen.");
-            test.equal(typeCtoE, 0, "Conversion C->E did not happen.");
-
-            test.equal(value, 10, "6 original + 4 conversions value (last collide get set taken in action, rest values discarded).");
-
-            // tile restore has now effect since we swap order of updates
-            tile00.restore(true);
-            // tile 12 changes data both tile 00 and tile 12
-            tile00.updateRenderTarget();
-            newMainCache12 = tile12.getCache();
-            newMainCache00 = tile00.getCache();
-
-            test.equal(newMainCache12.data, 6, "Tile data is now 6 since we restored old data from tile00.");
-            test.equal(newMainCache12, newMainCache00, "Caches are equal.");
-
-            // we delete tile: original and main cache not freed, working yes
-            let cacheSize = tileCache.numCachesLoaded();
-            tile00.unload(true);
-            test.equal(tile00.getCacheSize(), 0, "No caches left.");
-            test.equal(await tile00.getData(T_A), undefined, "No data available.");
-            test.equal(tile00.loaded, false, "Tile in off state.");
-            test.equal(tile00.loading, false, "Tile no loading state.");
-            test.equal(tileCache.numCachesLoaded(), cacheSize, "Tile cache no change since original data shared.");
-
-            // we delete another tile, now original and main caches should be freed too
-            tile12.unload(true);
-            test.equal(tile12.getCacheSize(), 0, "No caches left.");
-            test.equal(await tile12.getData(T_A), undefined, "No data available.");
-            test.equal(tile12.loaded, false, "Tile in off state.");
-            test.equal(tile12.loading, false, "Tile no loading state.");
-            test.equal(tileCache.numCachesLoaded(), cacheSize - 1, "Tile cache shrunken by 1 since tile12 had only original data.");
+                const internalCache = cache.getDataForRendering(drawer, tile);
+                test.equal(internalCache.type, T_C, "Conversion A->C ready, since there is no way to get to T_E.");
+                test.ok(internalCache.loaded, "Internal cache ready.");
+            }
 
             done();
-        })();
+        });
+        viewer.open([
+            {isTestSource: true},
+            {isTestSource: true},
+        ]);
     });
 
-    QUnit.test('Tile API: basic conversion', function(test) {
+    QUnit.test('Tile & Invalidation API: basic conversion & preprocessing', function(test) {
         const done = test.async();
-        const fakeViewer = MockSeadragon.getViewer(
-            MockSeadragon.getDrawer({
-                // tile in safe mode inspects the supported formats upon cache set
-                getSupportedDataFormats() {
-                    return [T_A, T_B, T_C, T_D, T_E];
+
+        const tileCache = viewer.tileCache;
+        const drawer = viewer.drawer;
+
+        let testTileCalled = false;
+
+        let _currentTestVal = undefined;
+        let previousTestValue = undefined;
+        drawer.testEvents.addHandler('test-tile', e => {
+            test.ok(e.dataToDraw, "Tile data is ready to be drawn");
+            if (_currentTestVal !== undefined) {
+                testTileCalled = true;
+                test.equal(e.dataToDraw, _currentTestVal, "Value is correct on the drawn data.");
+            }
+        });
+
+        function testDrawingRoutine(value) {
+            _currentTestVal = value;
+            viewer.world.needsDraw();
+            viewer.world.draw();
+            previousTestValue = value;
+            _currentTestVal = undefined;
+        }
+
+        viewer.addHandler('open', async () => {
+            await viewer.waitForFinishedJobsForTest();
+            await sleep(1);  // necessary to make space for a draw call
+
+            // Test simple data set -> creates main cache
+
+            let testHandler = async e => {
+                // data comes in as T_A
+                test.equal(typeDtoA, 0, "No conversion needed to get type A.");
+                test.equal(typeCtoA, 0, "No conversion needed to get type A.");
+
+                const data = await e.getData(T_A);
+                test.equal(data, 1, "Copy: creation of a working cache.");
+                e.tile.__TEST_PROCESSED = true;
+
+                // Test value 2 since we set T_C no need to convert
+                await e.setData(2, T_C);
+                test.notOk(e.outdated(), "Event is still valid.");
+            };
+
+            viewer.addHandler('tile-invalidated', testHandler);
+            await viewer.world.requestInvalidate(true);
+            await sleep(1);  // necessary to make space for internal updates
+            testDrawingRoutine(2);
+
+            //test for each level only single cache was processed
+            const processedLevels = {};
+            for (let tile of tileCache._tilesLoaded) {
+                const level = tile.level;
+
+                if (tile.__TEST_PROCESSED) {
+                    test.ok(!processedLevels[level], "Only single tile processed per level.");
+                    processedLevels[level] = true;
+                    delete tile.__TEST_PROCESSED;
                 }
-            })
-        );
-        const tileCache = fakeViewer.tileCache;
-        const fakeTiledImage0 = MockSeadragon.getTiledImage(fakeViewer);
-        const fakeTiledImage1 = MockSeadragon.getTiledImage(fakeViewer);
 
-        //load data: note that tests SETUP MORE CACHES than they might use: it tests that some other caches / tiles
-        // are not touched during the manipulation of unrelated caches / tiles
-        const tile00 = MockSeadragon.getTile('foo.jpg', fakeTiledImage0);
-        tile00.addCache(tile00.cacheKey, 0, T_A, false, false);
-        const tile01 = MockSeadragon.getTile('foo2.jpg', fakeTiledImage0);
-        tile01.addCache(tile01.cacheKey, 0, T_B, false, false);
-        const tile10 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
-        tile10.addCache(tile10.cacheKey, 0, T_C, false, false);
-        const tile11 = MockSeadragon.getTile('foo3.jpg', fakeTiledImage1);
-        tile11.addCache(tile11.cacheKey, 0, T_C, false, false);
-        const tile12 = MockSeadragon.getTile('foo.jpg', fakeTiledImage1);
-        tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
+                const origCache = tile.getCache(tile.originalCacheKey);
+                test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses internal cache.");
+                test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses internal cache.");
 
-        //test set/get data in async env
-        (async function() {
+                const cache = tile.getCache();
+                test.equal(cache.type, T_C, "Main Cache Updated (suite 1)");
+                test.equal(cache.data, previousTestValue, "Main Cache Updated (suite 1)");
 
-            // Tile10 VS Tile11 --> share cache (same key), collision update keeps last call sane
-            await tile10.setData(3, T_A);
-            await tile11.setData(5, T_C);
+                const internalCache = cache.getDataForRendering(drawer, tile);
+                test.equal(T_C, internalCache.type, "Conversion A->C ready, since there is no way to get to T_E.");
+                test.ok(internalCache.loaded, "Internal cache ready.");
+            }
 
-            await tile10.updateRenderTarget();
+            // Test that basic scenario with reset data false starts from the main cache data of previous round
+            const modificationConstant = 50;
+            viewer.removeHandler('tile-invalidated', testHandler);
+            testHandler = async e => {
+                const data = await e.getData(T_B);
+                test.equal(data, previousTestValue + 2, "C -> A -> B conversion happened.");
+                await e.setData(data + modificationConstant, T_B);
+                console.log(data + modificationConstant);
+                test.notOk(e.outdated(), "Event is still valid.");
+            };
+            console.log(previousTestValue, modificationConstant)
 
-            test.equal(tile10.getCache().data, 3, "Tile 10 data used as main.");
-            test.equal(tile11.getCache().data, 3, "Tile 10 data used as main.");
-            test.equal(tile11.getCache().type, T_A, "Tile 10 data used as main.");
-            await tile11.updateRenderTarget();
+            viewer.addHandler('tile-invalidated', testHandler);
+            await viewer.world.requestInvalidate(false);
+            await sleep(1);  // necessary to make space for a draw call
+            // We set data as TB - there is T_C -> T_A -> T_B -> T_C conversion round
+            let newValue = previousTestValue + modificationConstant + 3;
+            testDrawingRoutine(newValue);
 
-            test.equal(tile10.getCache().data, 5, "Tile 11 data used as main.");
-            test.equal(tile11.getCache().data, 5, "Tile 11 data used as main.");
-            test.equal(tile11.getCache().type, T_C, "Tile 11 data used as main.");
+            newValue--; // intenrla cache performed +1 conversion, but here we have main cache with one step less
+            for (let tile of tileCache._tilesLoaded) {
+                const cache = tile.getCache();
+                test.equal(cache.type, T_B, "Main Cache Updated (suite 2).");
+                test.equal(cache.data, newValue, "Main Cache Updated (suite 2).");
+            }
 
-            // Tile10 updated, reset -> OK
-            await tile10.setData(42, T_A);
-            tile10.restore();
-            await tile10.updateRenderTarget();
-            test.equal(tile10.getCache().data, 0, "Original data used as main: restore was called.");
-            test.equal(tile11.getCache().data, 0);
-            test.equal(tile11.getCache().type, T_C);
+            // Now test whether data reset works, value 1 -> copy perfomed due to internal cache cration
+            viewer.removeHandler('tile-invalidated', testHandler);
+            testHandler = async e => {
+                const data = await e.getData(T_B);
+                test.equal(data, 1, "Copy: creation of a working cache.");
+                await e.setData(-8, T_E);
+                e.resetData();
+            };
+            viewer.addHandler('tile-invalidated', testHandler);
+            await viewer.world.requestInvalidate(true);
+            await sleep(1);  // necessary to make space for a draw call
+            testDrawingRoutine(2); // Value +2 rendering from original data
 
+            for (let tile of tileCache._tilesLoaded) {
+                const origCache = tile.getCache(tile.originalCacheKey);
+                test.ok(tile.getCache() === origCache, "Main cache is now original cache.");
+            }
 
-            // UpdateTarget called on restore data
-            await tile11.setData(189, T_D);
-            await tile10.setData(-87, T_B);
-            tile10.restore();
-            await tile11.updateRenderTarget();
+            // Now force main cache creation that differs
+            viewer.removeHandler('tile-invalidated', testHandler);
+            testHandler = async e => {
+                await e.setData(41, T_B);
+            };
+            viewer.addHandler('tile-invalidated', testHandler);
+            await viewer.world.requestInvalidate(true);
 
-            test.equal(tile11.getCache().data, 189, "New data reflected.");
-            test.equal(tile10.getCache().data, 189, "New data reflected also on connected tile.");
-            await tile10.updateRenderTarget();
-            test.equal(tile11.getCache().data, 189, "No effect: restore was called.");
-            test.equal(tile10.getCache().data, 189, "No effect: restore was called.");
+            // Now test whether data reset works, even with non-original data
+            viewer.removeHandler('tile-invalidated', testHandler);
+            testHandler = async e => {
+                const data = await e.getData(T_B);
+                test.equal(data, 42, "Copy: 41 + 1.");
+                await e.setData(data, T_E);
+                e.resetData();
+            };
+            viewer.addHandler('tile-invalidated', testHandler);
+            await viewer.world.requestInvalidate(false);
+            await sleep(1);  // necessary to make space for a draw call
+            testDrawingRoutine(42);
 
-            let cacheSize = tileCache.numCachesLoaded();
-            tile11.unload(true);
-            test.equal(tile11.getCacheSize(), 0, "No caches left in tile11.");
-            test.equal(tileCache.numCachesLoaded(), cacheSize, "No caches freed: shared with tile12");
+            for (let tile of tileCache._tilesLoaded) {
+                const origCache = tile.getCache(tile.originalCacheKey);
+                test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses main cache even after refresh.");
+                test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses main cache even after refresh.");
+            }
 
-            tile10.unload(true);
-            test.equal(tile10.getCacheSize(), 0, "No caches left in tile11.");
-            test.equal(tileCache.numCachesLoaded(), cacheSize - 2, "Two caches freed.");
-
-            tile01.unload(false);
-            test.equal(tileCache.numCachesLoaded(), cacheSize - 2, "No cache freed: zombie cache left.");
-
-            tile00.unload(true);
-            test.equal(tileCache.numCachesLoaded(), cacheSize - 2, "No cache freed: shared with tile12.");
-            tile12.unload(true);
-            test.equal(tileCache.numCachesLoaded(), 1, "One zombie cache left.");
-
+            test.ok(testTileCalled, "Drawer tested at least one tile.");
             done();
-        })();
+        });
+        viewer.open([
+            {isTestSource: true},
+            {isTestSource: true},
+        ]);
     });
 
     //Tile API and cache interaction
@@ -564,11 +546,7 @@
 
             //now test multi-cache within tile
             const theTileKey = tile00.cacheKey;
-            tile00.setData(42, T_E);
-            test.equal(tile00.cacheKey, tile00.originalCacheKey, "Original cache still rendered.");
-            test.equal(theTileKey, tile00.originalCacheKey, "Original cache key preserved.");
-
-            tile00.updateRenderTarget();
+            tile00.addCache(tile00.buildDistinctMainCacheKey(), 42, T_E, true, false);
             test.notEqual(tile00.cacheKey, tile00.originalCacheKey, "New cache rendered.");
 
             //now add artifically another record
@@ -579,10 +557,9 @@
             test.equal(c00.getTileCount(), 2, "The cache still has only two tiles attached.");
             test.equal(tile00.getCacheSize(), 3, "The tile has three cache objects (original data, main cache & custom.");
             //related tile not affected
-            test.notEqual(tile12.cacheKey, tile12.originalCacheKey, "Original cache change reflected on shared caches.");
+            test.equal(tile12.cacheKey, tile12.originalCacheKey, "Original cache change not reflected on shared caches.");
             test.equal(tile12.originalCacheKey, theTileKey, "Original cache key also preserved.");
             test.equal(c12.getTileCount(), 2, "The original data cache still has only two tiles attached.");
-            test.equal(tile12.getCacheSize(), 2, "Related tile cache has also two caches.");
 
             //add and delete cache nothing changes (+1 destroy T_C)
             tile00.addCache("my_custom_cache2", 128, T_C);
@@ -626,9 +603,7 @@
             tileCache._maxCacheItemCount = 7;
 
             // Zombie destroyed before other caches (+1 destroy T_D)
-            tile12.setData(43, T_B);
-            test.notEqual(tile12.cacheKey, tile12.originalCacheKey, "Original cache key differs.");
-            test.equal(theTileKey, tile12.originalCacheKey, "Original cache key preserved.");
+            tile12.addCache("someKey", 43, T_B);
             test.equal(tileCache.numCachesLoaded(), 7, "The cache has now 7 items.");
             test.equal(tileCache._zombiesLoadedCount, 0, "One zombie sacrificed, preferred over living cache.");
             test.notOk([tile00, tile01, tile10, tile11, tile12].find(x => !x.loaded), "All tiles sill loaded since zombie was sacrificed.");

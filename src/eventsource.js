@@ -37,9 +37,19 @@
 /**
  * Event handler method signature used by all OpenSeadragon events.
  *
- * @callback EventHandler
+ * @typedef {function(OpenSeadragon.Event): void} OpenSeadragon.EventHandler
  * @memberof OpenSeadragon
- * @param {Object} event - See individual events for event-specific properties.
+ * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @returns {void} This handler does not return a value.
+ */
+
+/**
+ * Event handler method signature used by all OpenSeadragon events.
+ *
+ * @typedef {function(OpenSeadragon.Event): Promise<void>} OpenSeadragon.AsyncEventHandler
+ * @memberof OpenSeadragon
+ * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @returns {Promise<void>} This handler does not return a value.
  */
 
 
@@ -62,7 +72,7 @@ $.EventSource.prototype = {
      * for a given event. It is not removable with removeHandler().
      * @function
      * @param {String} eventName - Name of event to register.
-     * @param {OpenSeadragon.EventHandler} handler - Function to call when event
+     * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to call when event
      * is triggered.
      * @param {Object} [userData=null] - Arbitrary object to be passed unchanged
      * to the handler.
@@ -89,7 +99,7 @@ $.EventSource.prototype = {
      * Add an event handler for a given event.
      * @function
      * @param {String} eventName - Name of event to register.
-     * @param {OpenSeadragon.EventHandler} handler - Function to call when event is triggered.
+     * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to call when event is triggered.
      * @param {Object} [userData=null] - Arbitrary object to be passed unchanged to the handler.
      * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
      * @returns {Boolean} - True if the handler was added, false if it was rejected
@@ -122,7 +132,7 @@ $.EventSource.prototype = {
      * Remove a specific event handler for a given event.
      * @function
      * @param {String} eventName - Name of event for which the handler is to be removed.
-     * @param {OpenSeadragon.EventHandler} handler - Function to be removed.
+     * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to be removed.
      */
     removeHandler: function ( eventName, handler ) {
         const events = this.events[ eventName ],
@@ -233,7 +243,8 @@ $.EventSource.prototype = {
     },
 
     /**
-     * Trigger an event, optionally passing additional information.
+     * Trigger an event, optionally passing additional information. Does not await async handlers, i.e.
+     * OpenSeadragon.AsyncEventHandler.
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {Object} eventArgs - Event-specific data.
@@ -257,7 +268,8 @@ $.EventSource.prototype = {
 
     /**
      * Trigger an event, optionally passing additional information.
-     * This events awaits every asynchronous or promise-returning function.
+     * This events awaits every asynchronous or promise-returning function, i.e.
+     * OpenSeadragon.AsyncEventHandler.
      * @param {String} eventName - Name of event to register.
      * @param {Object} eventArgs - Event-specific data.
      * @param {?} [bindTarget = null] - Promise-resolved value on the event finish

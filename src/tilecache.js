@@ -171,14 +171,16 @@
          * @param {OpenSeadragon.Tile} tileToDraw reference to the tile that is in the process of drawing and
          *   for which we request the data; if we attempt to draw such tile while main cache target is destroyed,
          *   attempt to reset the tile state to force system to re-download it again
-         * @returns {any|undefined} desired data if available, undefined if conversion must be done
+         * @returns {OpenSeadragon.CacheRecord|OpenSeadragon.SimpleCacheRecord|undefined} desired data if available,
+         *   wrapped in the cache container. This data is guaranteed to be loaded & in the type supported by the drawer.
+         *   Returns undefined if the data is not ready for rendering.
          * @private
          */
         getDataForRendering(drawer, tileToDraw ) {
             const supportedTypes = drawer.getSupportedDataFormats(),
                 keepInternalCopy = drawer.options.usePrivateCache;
             if (this.loaded && supportedTypes.includes(this.type)) {
-                return this.data;
+                return this;
             }
 
             if (this._destroyed) {
@@ -207,6 +209,9 @@
 
             // Cache in the process of loading, no-op
             if (!internalCache.loaded) {
+                $.console.warn("Attempt to render cache that is not prepared for current drawer: " +
+                    "internal cache still loading: this should be awaited.",
+                    this, tileToDraw);
                 this._triggerNeedsDraw();
                 return undefined;
             }
@@ -221,7 +226,7 @@
                     .then(() => this._triggerNeedsDraw());
                 return undefined; // type is NOT compatible
             }
-            return internalCache.data;
+            return internalCache;
         }
 
         /**

@@ -612,6 +612,7 @@ $.Tile.prototype = {
         const havingRecord = this._caches[key];
         if (havingRecord !== cache) {
             this._caches[key] = cache;
+            cache.addTile(this);  // keep reference bidirectional
             if (havingRecord) {
                 havingRecord.removeTile(this);
                 tiledImage._tileCache.safeUnloadCache(havingRecord);

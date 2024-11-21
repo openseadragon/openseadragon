@@ -334,9 +334,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 if (!workingCache) {
                     workingCache = new $.CacheRecord().withTileReference(tile);
                     workingCache.addTile(tile, value, type);
-                } else {
-                    workingCache.setDataAs(value, type);
+                    return $.Promise.resolve();
                 }
+                return workingCache.setDataAs(value, type);
             };
             const atomicCacheSwap = () => {
                 if (workingCache) {
@@ -354,7 +354,21 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 }
             };
 
-            //todo docs
+            /**
+             * @event tile-invalidated
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+             * @property {OpenSeadragon.Tile} tile
+             * @property {AsyncNullaryFunction<boolean>} outdated - predicate that evaluates to true if the event
+             *   is outdated and should not be longer processed (has no effect)
+             * @property {AsyncUnaryFunction<any, string>} getData - get data of desired type (string argument)
+             * @property {AsyncBinaryFunction<undefined, any, string>} setData - set data (any)
+             *   and the type of the data (string)
+             * @property {function} resetData - function that deletes any previous data modification in the current
+             *   execution pipeline
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
             return eventTarget.raiseEventAwaiting('tile-invalidated', {
                 tile: tile,
                 tiledImage: tiledImage,
@@ -362,8 +376,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 getData: getWorkingCacheData,
                 setData: setWorkingCacheData,
                 resetData: () => {
-                    workingCache.destroy();
-                    workingCache = null;
+                    if (workingCache) {
+                        workingCache.destroy();
+                        workingCache = null;
+                    }
                 }
             }).then(_ => {
                 if (originalCache.__invStamp === tStamp) {
@@ -379,8 +395,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     // If we requested restore, perform now
                     if (restoreTiles) {
                         const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
-
-                        tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, freshOriginalCacheRef, true);
                         return freshOriginalCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then((c) => {
                             if (c && originalCache.__invStamp === tStamp) {
                                 atomicCacheSwap();
@@ -389,8 +403,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                         });
                     }
 
+                    // Preventive call to ensure we stay compatible
                     const freshMainCacheRef = tile.getCache();
                     return freshMainCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(() => {
+                        atomicCacheSwap();
                         originalCache.__invStamp = null;
                     });
 

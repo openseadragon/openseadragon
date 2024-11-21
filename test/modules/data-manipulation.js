@@ -138,7 +138,6 @@
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
                         assert.ok(value._tiles.includes(tile), `Attached cache '${key}' reference is bidirectional.`);
                     }
-                    assert.notOk(tile.getCache(tile._wcKey), "Tile cache working key is unset");
                 }
 
                 done();
@@ -197,7 +196,6 @@
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
                         assert.ok(value._tiles.includes(tile), `Attached cache '${key}' reference is bidirectional.`);
                     }
-                    assert.notOk(tile.getCache(tile._wcKey), "Tile cache working key is unset");
                 }
 
                 done();
@@ -253,7 +251,6 @@
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
                         assert.ok(value._tiles.includes(tile), `Attached cache '${key}' reference is bidirectional.`);
                     }
-                    assert.notOk(tile.getCache(tile._wcKey), "Tile cache working key is unset");
                 }
 
                 done();

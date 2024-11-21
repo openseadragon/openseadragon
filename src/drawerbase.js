@@ -143,15 +143,16 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * value, the rendering _MUST NOT_ proceed. It should
      * await next animation frames and check again for availability.
      * @param {OpenSeadragon.Tile} tile
-     * @return {any|null|false} null if cache not available
+     * @return {any|undefined} undefined if cache not available, compatible data otherwise.
      */
     getDataToDraw(tile) {
         const cache = tile.getCache(tile.cacheKey);
         if (!cache) {
             $.console.warn("Attempt to draw tile %s when not cached!", tile);
-            return null;
+            return undefined;
         }
-        return cache.getDataForRendering(this, tile);
+        const dataCache = cache.getDataForRendering(this, tile);
+        return dataCache && dataCache.data;
     }
 
     /**

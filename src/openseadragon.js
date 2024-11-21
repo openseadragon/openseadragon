@@ -2905,6 +2905,29 @@ function OpenSeadragon( options ){
     }
 
     /**
+     * @template T
+     * @typedef {function(): OpenSeadragon.Promise<T>} AsyncNullaryFunction
+     * Represents an asynchronous function that takes no arguments and returns a promise of type T.
+     */
+
+    /**
+     * @template T, A
+     * @typedef {function(A): OpenSeadragon.Promise<T>} AsyncUnaryFunction
+     * Represents an asynchronous function that:
+     * @param {A} arg - The single argument of type A.
+     * @returns {OpenSeadragon.Promise<T>} A promise that resolves to a value of type T.
+     */
+
+    /**
+     * @template T, A, B
+     * @typedef {function(A, B): OpenSeadragon.Promise<T>} AsyncBinaryFunction
+     * Represents an asynchronous function that:
+     * @param {A} arg1 - The first argument of type A.
+     * @param {B} arg2 - The second argument of type B.
+     * @returns {OpenSeadragon.Promise<T>} A promise that resolves to a value of type T.
+     */
+
+    /**
      * Promise proxy in OpenSeadragon, enables $.supportsAsync feature.
      * This proxy is also necessary because OperaMini does not implement Promises (checks fail).
      * @type {PromiseConstructor}

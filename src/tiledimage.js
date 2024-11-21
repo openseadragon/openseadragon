@@ -2200,14 +2200,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     tile.setCache(t.cacheKey, targetMainCache, true, false);
                     break;
                 } else if (t.processing) {
-                    console.log("ENCOUNTERED LOADING TILE!!!");
-                    let internval = setInterval(() => {
-                        if (t.processing) {
-                            clearInterval(internval);
-                            console.log("FINISHED!!!!!");
+                    // TODO consider something nicer, now just wait until subsequent routine finishes
+                    let interval = setInterval(() => {
+                        if (!t.processing && t.getCache()) {
+                            const targetMainCache = t.getCache();
+                            tile.setCache(t.cacheKey, targetMainCache, true, false);
+                            clearInterval(interval);
                             markTileAsReady();
                         }
-                    }, 500);
+                    }, 50);
                     return;
                 }
             }
