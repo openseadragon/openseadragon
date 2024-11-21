@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: If you switched from WebGL drawer to canvas drawer, it didn't clean up properly (#2570 @pearcetm)
 * Fixed: TiledImage.setClip would sometimes leave tiles unloaded (#2590 @pearcetm)
 * Fixed: The WebGL drawer didn't support viewportMargins (#2600, #2606 @pearcetm)
+* Fixed: If you set viewport rotation before flip, the navigator display region would be drawn wrong (#2619 @jbakarich)
 
 5.0.0:
 
