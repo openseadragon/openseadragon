@@ -213,8 +213,8 @@ $.DataTypeConvertor = class {
             return context;
         };
 
-        this.learn("context2d", "url", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
-        this.learn("image", "url", (tile, image) => image.url);
+        this.learn("context2d", "webImageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
+        this.learn("image", "webImageUrl", (tile, image) => image.url);
         this.learn("image", "context2d", canvasContextCreator, 1, 1);
         this.learn("url", "image", imageCreator, 1, 1);
 
