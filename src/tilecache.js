@@ -217,10 +217,11 @@
             }
 
             if (!supportedTypes.includes(internalCache.type)) {
+                let logReference = this[DRAWER_INTERNAL_CACHE];
+                logReference = logReference ? Object.entries(logReference) : this;
                 $.console.warn("Attempt to render cache that is not prepared for current drawer " +
                     "supported format: the preparation should've happened after tile processing has finished.",
-                    Object.entries(this[DRAWER_INTERNAL_CACHE]),
-                    this, tileToDraw);
+                    logReference, tileToDraw);
 
                 internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
                     .then(() => this._triggerNeedsDraw());

@@ -1821,10 +1821,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         } else if (!loadingCoverage) {
             // add tile to best tiles to load only when not loaded already
             best = this._compareTiles( best, tile, this._currentMaxTilesPerFrame );
-            // TODO: test 'Viewer headers can be updated' fail if we start decreasing the number since not enough tiles get invoked
-            // if (this._currentMaxTilesPerFrame > this.maxTilesPerFrame) {
-            //     this._currentMaxTilesPerFrame = Math.max(Math.ceil(this.maxTilesPerFrame / 2), this.maxTilesPerFrame);
-            // }
+            if (this._currentMaxTilesPerFrame > this.maxTilesPerFrame) {
+                this._currentMaxTilesPerFrame = Math.max(Math.ceil(this.maxTilesPerFrame / 2), this.maxTilesPerFrame);
+            }
         }
 
         return {
