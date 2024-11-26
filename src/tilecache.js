@@ -1133,6 +1133,24 @@
         }
 
         /**
+         * Delete all data in the cache
+         * @param {boolean} withZombies
+         */
+        clear(withZombies = true) {
+            for (let zombie in this._zombiesLoaded) {
+                this._zombiesLoaded[zombie].destroy();
+            }
+            for (let tile in this._tilesLoaded) {
+                this._unloadTile(tile, true, undefined);
+            }
+            this._tilesLoaded = [];
+            this._zombiesLoaded = [];
+            this._zombiesLoadedCount = 0;
+            this._cachesLoaded = [];
+            this._cachesLoadedCount = 0;
+        }
+
+        /**
          * Returns reference to all tiles loaded by a particular
          * tiled image item
          * @param {OpenSeadragon.TiledImage|null} tiledImage if null, gets all tiles, else filters out tiles

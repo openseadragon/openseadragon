@@ -270,6 +270,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @return {OpenSeadragon.Promise<?>}
      */
     requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true, _allowTileUnloaded = false) {
+        if (!this.viewer.isOpen()) {
+            return $.Promise.resolve();
+        }
+
         const tileList = [],
             markedTiles = [];
         for (const tile of tilesToProcess) {
@@ -372,7 +376,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return eventTarget.raiseEventAwaiting('tile-invalidated', {
                 tile: tile,
                 tiledImage: tiledImage,
-                outdated: () => originalCache.__invStamp !== tStamp,
+                outdated: () => originalCache.__invStamp !== tStamp || (!tile.loaded && !tile.loading),
                 getData: getWorkingCacheData,
                 setData: setWorkingCacheData,
                 resetData: () => {
@@ -382,7 +386,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     }
                 }
             }).then(_ => {
-                if (originalCache.__invStamp === tStamp) {
+                if (originalCache.__invStamp === tStamp && (tile.loaded || tile.loading)) {
                     if (workingCache) {
                         return workingCache.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(c => {
                             if (c && originalCache.__invStamp === tStamp) {

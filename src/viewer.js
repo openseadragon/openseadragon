@@ -812,6 +812,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         THIS[ this.hash ].animating = false;
 
         this.world.removeAll();
+        this.tileCache.clear();
         this.imageLoader.clear();
 
         /**

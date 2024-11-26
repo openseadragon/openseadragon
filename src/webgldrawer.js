@@ -374,14 +374,15 @@
                     // iterate over tiles and add data for each one to the buffers
                     for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
                         let tile = tilesToDraw[tileIndex].tile;
-                        const textureInfo = this.getDataToDraw(tile);
-                        if (!textureInfo) {
-                            continue;
-                        }
-
                         let indexInDrawArray = tileIndex % maxTextures;
                         let numTilesToDraw =  indexInDrawArray + 1;
-                        this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                        const textureInfo = this.getDataToDraw(tile);
+
+                        if (textureInfo) {
+                            this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                        } else {
+                            // console.log('No tile info', tile);
+                        }
 
                         if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
                             // We've filled up the buffers: time to draw this set of tiles
