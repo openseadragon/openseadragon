@@ -374,13 +374,13 @@
                     // iterate over tiles and add data for each one to the buffers
                     for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
                         let tile = tilesToDraw[tileIndex].tile;
-                        let indexInDrawArray = tileIndex % maxTextures;
-                        let numTilesToDraw =  indexInDrawArray + 1;
-
                         const textureInfo = this.getDataToDraw(tile);
                         if (!textureInfo) {
-                            return;
+                            continue;
                         }
+
+                        let indexInDrawArray = tileIndex % maxTextures;
+                        let numTilesToDraw =  indexInDrawArray + 1;
                         this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
 
                         if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
