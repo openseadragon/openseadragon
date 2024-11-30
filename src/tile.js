@@ -771,7 +771,7 @@ $.Tile.prototype = {
      * @param {OpenSeadragon.Tile} tile
      */
     equals(tile) {
-         return this._ocKey === this._ocKey;
+         return this._ocKey === tile._ocKey;
     },
 
     /**

@@ -2733,7 +2733,6 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
             }
         } else {
             //can assume it's already a tile source implementation, force inheritance
-            tileSource = $.extend({}, $.TileSource.prototype, tileSource);
             waitUntilReady(tileSource, tileSource);
         }
     });
