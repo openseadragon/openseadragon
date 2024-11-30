@@ -240,6 +240,17 @@
             if(!this._backupCanvasDrawer){
                 this._backupCanvasDrawer = this.viewer.requestDrawer('canvas', {mainDrawer: false});
                 this._backupCanvasDrawer.canvas.style.setProperty('visibility', 'hidden');
+                this._backupCanvasDrawer.getSupportedDataFormats = () => this._supportedFormats;
+                this._backupCanvasDrawer.getDataToDraw = (tile) => {
+                    const cache = tile.getCache(tile.cacheKey);
+                    if (!cache) {
+                        $.console.warn("Attempt to draw tile %s when not cached!", tile);
+                        return undefined;
+                    }
+                    const dataCache = cache.getDataForRendering(this, tile);
+                    // Use CPU Data for the drawer instead
+                    return dataCache && dataCache.cpuData;
+                };
             }
 
             return this._backupCanvasDrawer;
@@ -926,7 +937,8 @@
                 // TextureInfo stored in the cache
                 return {
                     texture: texture,
-                    position: position
+                    position: position,
+                    cpuData: data // Reference to the outer cache data, used to draw if webgl canont be used
                 };
             };
             const tex2DCompatibleDestructor = textureInfo => {

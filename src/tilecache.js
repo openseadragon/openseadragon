@@ -176,7 +176,7 @@
          *   Returns undefined if the data is not ready for rendering.
          * @private
          */
-        getDataForRendering(drawer, tileToDraw ) {
+        getDataForRendering(drawer, tileToDraw) {
             const supportedTypes = drawer.getSupportedDataFormats(),
                 keepInternalCopy = drawer.options.usePrivateCache;
             if (this.loaded && supportedTypes.includes(this.type)) {
@@ -823,9 +823,14 @@
                 if (cacheRecord) {
                     // zombies should not be (yet) destroyed, but if we encounter one...
                     if (cacheRecord._destroyed) {
+                        // if destroyed, invalidation routine will get triggered for us automatically
                         cacheRecord.revive();
                     } else {
-                        // if zombie ready, do not overwrite its data
+                        // if zombie ready, do not overwrite its data, in that case try to call
+                        // we need to trigger invalidation routine, data was not part of the system!
+                        if (typeof data === 'function') {
+                            options.data();
+                        }
                         delete options.data;
                     }
                     delete this._zombiesLoaded[cacheKey];

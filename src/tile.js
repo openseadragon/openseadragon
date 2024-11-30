@@ -516,8 +516,16 @@ $.Tile.prototype = {
     },
 
     /**
-     * Create tile cache for given data object. NOTE: if the existing cache already exists,
+     * Create tile cache for given data object.
+     *
+     * Using `setAsMain` updates also main tile cache key - the main cache key used to draw this tile.
+     * In that case, the cache should be ready to be rendered immediatelly (converted to one of the supported formats
+     * of the currently employed drawer).
+     *
+     * NOTE: if the existing cache already exists,
      * data parameter is ignored and inherited from the existing cache object.
+     * WARNING: if you override main tile cache key to point to a different cache, the invalidation routine
+     * will no longer work. If you need to modify tile main data, prefer to use invalidation routine instead.
      *
      * @param {string} key cache key, if unique, new cache object is created, else existing cache attached
      * @param {*} data this data will be IGNORED if cache already exists; therefore if
@@ -756,6 +764,14 @@ $.Tile.prototype = {
         // Working key is never updated, it will be invalidated (but do not dereference cache, just fix the pointers)
         this._caches[newKey] = cache;
         delete this._caches[oldKey];
+    },
+
+    /**
+     * Check if two tiles are data-equal
+     * @param {OpenSeadragon.Tile} tile
+     */
+    equals(tile) {
+         return this._ocKey === this._ocKey;
     },
 
     /**
