@@ -449,7 +449,7 @@
                         gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
                         gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
                         gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
-                        gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
 
                         // Draw the quad (two triangles)
                         gl.drawArrays(gl.TRIANGLES, 0, 6);
