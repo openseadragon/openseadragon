@@ -2551,8 +2551,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
         if (previusPixelDensityRatio !== currentPixelDensityRatio) {
             $.pixelDensityRatio = currentPixelDensityRatio;
-            this.world.resetItems();
-            this.forceRedraw();
+            this.forceResize();
         }
     },
 
