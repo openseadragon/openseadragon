@@ -887,51 +887,63 @@
             const tex2DCompatibleLoader = (tile, data) => {
                 let tiledImage = tile.tiledImage;
                 let gl = this._gl;
-
-                let sourceWidthFraction, sourceHeightFraction;
-                if (tile.sourceBounds) {
-                    sourceWidthFraction = Math.min(tile.sourceBounds.width, data.width) / data.width;
-                    sourceHeightFraction = Math.min(tile.sourceBounds.height, data.height) / data.height;
-                } else {
-                    sourceWidthFraction = 1;
-                    sourceHeightFraction = 1;
-                }
-
-                // create a gl Texture for this tile and bind the canvas with the image data
-                let texture = gl.createTexture();
+                let texture;
                 let position;
-                let overlap = tiledImage.source.tileOverlap;
-                if( overlap > 0){
-                    // calculate the normalized position of the rect to actually draw
-                    // discarding overlap.
-                    let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
 
-                    let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
-                    let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
-                    let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
-                    let bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
-                    position = this._makeQuadVertexBuffer(left, right, top, bottom);
-                } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
-                    // no overlap and no padding: this texture can use the unit quad as its position data
-                    position = this._unitQuad;
-                } else {
-                    position = this._makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
-                }
+                if (!tiledImage.isTainted()) {
+                    if((data instanceof CanvasRenderingContext2D) && $.isCanvasTainted(data)){
+                        tiledImage.setTainted(true);
+                        $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
+                        this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
+                    } else {
+                        let sourceWidthFraction, sourceHeightFraction;
+                        if (tile.sourceBounds) {
+                            sourceWidthFraction = Math.min(tile.sourceBounds.width, data.width) / data.width;
+                            sourceHeightFraction = Math.min(tile.sourceBounds.height, data.height) / data.height;
+                        } else {
+                            sourceWidthFraction = 1;
+                            sourceHeightFraction = 1;
+                        }
 
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                // Set the parameters so we can render any size image.
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._textureFilter());
+                        // create a gl Texture for this tile and bind the canvas with the image data
+                        texture = gl.createTexture();
+                        let overlap = tiledImage.source.tileOverlap;
+                        if( overlap > 0){
+                            // calculate the normalized position of the rect to actually draw
+                            // discarding overlap.
+                            let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
 
-                try{
-                    // This depends on gl.TEXTURE_2D being bound to the texture
-                    // associated with this canvas before calling this function
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
-                } catch (e){
-                    $.console.error('Error uploading image data to WebGL', e);
+                            let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
+                            let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
+                            let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
+                            let bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
+                            position = this._makeQuadVertexBuffer(left, right, top, bottom);
+                        } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
+                            // no overlap and no padding: this texture can use the unit quad as its position data
+                            position = this._unitQuad;
+                        } else {
+                            position = this._makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
+                        }
+
+                        gl.activeTexture(gl.TEXTURE0);
+                        gl.bindTexture(gl.TEXTURE_2D, texture);
+                        // Set the parameters so we can render any size image.
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._textureFilter());
+
+                        try {
+                            // This depends on gl.TEXTURE_2D being bound to the texture
+                            // associated with this canvas before calling this function
+                            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
+                        } catch (e){
+                            // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
+                            tiledImage.setTainted(true);
+                            $.console.error('Error uploading image data to WebGL. Falling back to canvas renderer.', e);
+                            this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
+                        }
+                    }
                 }
 
                 // TextureInfo stored in the cache

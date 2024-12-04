@@ -368,7 +368,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         * @property {OpenSeadragon.DrawerBase} drawer - The drawer that raised the error.
         * @property {String} error - A message describing the error.
         * @property {?Object} userData - Arbitrary subscriber-defined object.
-        * @private
+        * @protected
         */
         this.viewer.raiseEvent( 'drawer-error', {
             tiledImage: tiledImage,
