@@ -10,6 +10,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: The WebGL drawer didn't support viewportMargins (#2600, #2606 @pearcetm)
 * Fixed: If you set viewport rotation before flip, the navigator display region would be drawn wrong (#2619 @jbakarich)
 * Fixed: In some cases, the WebGL drawer would draw the image in white (#2620 @sbarex)
+* Fixed: If the user changed the page zoom or moved the window a different monitor, the image would disappear (#2627 @pearcetm)
 
 5.0.0:
 
