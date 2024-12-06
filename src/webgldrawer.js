@@ -36,7 +36,7 @@
 (function( $ ){
 
     const OpenSeadragon = $; // alias for JSDoc
-
+    let testing = false;
    /**
     * @class OpenSeadragon.WebGLDrawer
     * @classdesc Default implementation of WebGLDrawer for an {@link OpenSeadragon.Viewer}. The WebGLDrawer
@@ -112,7 +112,9 @@
 
             this.context = this._outputContext; // API required by tests
 
-       }
+            this._requiresCanvasDrawerFallback = false;
+            setTimeout(() => this._doRenderingTest(), 0); // defer this to the next event loop for tests
+        }
 
         // Public API required by all Drawer implementations
         /**
@@ -280,7 +282,7 @@
             //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
             tiledImages.forEach( (tiledImage, tiledImageIndex) => {
 
-                if(tiledImage.isTainted()){
+                if(tiledImage.isTainted() || this._requiresCanvasDrawerFallback ){
                     // first, draw any data left in the rendering buffer onto the output canvas
                     if(renderingBufferHasImageData){
                         this._outputContext.drawImage(this._renderingCanvas, 0, 0);
@@ -1339,6 +1341,91 @@
             }
 
             return shaderProgram;
+        }
+
+        /**
+         * Test webgl rendering in the current browser by drawing a small image
+         * in a new viewer. If all pixel data is 0, rendering failed, and fallback
+         * to the CanvasDrawer is required for all tiled images.
+         * @private
+         * @returns
+         */
+        _doRenderingTest(){
+            // Don't do the test if this drawer has already been destroyed
+            if( this._destroyed ){
+                return;
+            }
+            // Avoid infinite call stack by only testing once
+            if( testing ){
+                return;
+            }
+            // Set the testing flag to true until the test viewer has been created
+            testing = true;
+
+            // A dataUrl with non-zero pixels to use
+            const dataUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAAIRlWElmTU0AKgAAAAgABQESAAMAAAABAAEAAAEaAAUAAAABAAAASgEbAAUAAAABAAAAUgEoAAMAAAABAAIAAIdpAAQAAAABAAAAWgAAAAAAAABIAAAAAQAAAEgAAAABAAOgAQADAAAAAQABAACgAgAEAAAAAQAAAASgAwAEAAAAAQAAAAQAAAAANlaTAQAAAAlwSFlzAAALEwAACxMBAJqcGAAAAVlpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDYuMC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iPgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KGV7hBwAAAElJREFUCB1jZACCa5uWJr/78JHVhkNkNuPpmhy/b5+Z1/74/vPzr2/3y1junTr5QYf1NAsDI4Pg1ivin0E6GLbnMDhsTmHwArEBM20b4j0ge4MAAAAASUVORK5CYII=";
+
+            // Create a small element for the test viewer and append it to our viewer's element
+            const div = document.createElement('div');
+            div.style.width = '4px';
+            div.style.height = '4px';
+            div.style.position = 'fixed';
+            div.style.top = 0;
+            div.style.left = 0;
+            div.style.opacity = 0.0001;
+            this.viewer.element.appendChild( div );
+
+            // create the test viewer
+            const testViewer = $( { element: div, drawer: 'webgl', navigator: false } );
+
+            // reset testing flag to false so additional viewers can be tested
+            testing = false;
+
+            // Clean up the test viewer when the main viewer is destroyed (if it hasn't been already)
+            this.viewer.addOnceHandler('before-destroy', () => {
+                testViewer.destroy();
+                if(div.parentNode){
+                    div.parentNode.removeChild(div);
+                }
+            });
+            // Once a frame is drawn, check the pixel values in the output canvas
+            testViewer.addOnceHandler('update-viewport', () => {
+                const numNonZeroValues = testViewer.drawer._outputContext.getImageData(0, 0, 4, 4).data.filter( pixel => pixel > 0).length;
+                // If all values are zero, rendering failed. Set a flag and issue a warning.
+                this._requiresCanvasDrawerFallback = ( numNonZeroValues === 0);
+                if( this._requiresCanvasDrawerFallback ){
+                    $.console.warn('A problem was detected with webgl rendering. Falling back to CanvasDrawer.');
+
+                    // Raise an event so applications can handle this more gracefully if needed
+                    /**
+                     * This event is fired if a WebGLDrawer detects a problem with rendering and
+                     * requires fallback to CanvasDrawer. This fallback happens automatically,
+                     * but some applications may not desire this and would wish to explicitly handle
+                     * the error in a different way, for example by removing and/or re-creating the viewer with
+                     * different settings.
+                     *
+                     * @event webgl-error
+                     * @memberof OpenSeadragon.Viewer
+                     * @type {object}
+                     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                     * @property {?Object} userData - Arbitrary subscriber-defined object.
+                     */
+                    this.viewer.raiseEvent('webgl-error', { });
+                }
+
+                // Clean up the test viewer
+                setTimeout( () => testViewer.destroy(), 0);
+                if(div.parentNode){
+                    div.parentNode.removeChild(div);
+                }
+            });
+
+            // Open the test image using the dataUrl from above
+            const testSource = {
+                url: dataUrl,
+                type: 'image'
+            };
+            testViewer.open( testSource );
         }
 
     };
