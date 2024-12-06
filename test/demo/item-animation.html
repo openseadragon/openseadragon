@@ -59,7 +59,8 @@
                     this.viewer = OpenSeadragon({
                         id: "contentDiv",
                         prefixUrl: "../../build/openseadragon/images/",
-                        tileSources: tileSources
+                        tileSources: tileSources,
+                        crossOriginPolicy: 'Anonymous',
                     });
 
                     this.viewer.addHandler('open', function() {

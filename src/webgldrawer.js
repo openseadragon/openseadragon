@@ -40,23 +40,23 @@
    /**
     * @class OpenSeadragon.WebGLDrawer
     * @classdesc Default implementation of WebGLDrawer for an {@link OpenSeadragon.Viewer}. The WebGLDrawer
-    * loads tile data as textures to the graphics card as soon as it is available (via the tile-ready event),
-    * and unloads the data (via the image-unloaded event). The drawer utilizes a context-dependent two pass drawing pipeline.
-    * For the first pass, tile composition for a given TiledImage is always done using a canvas with a WebGL context.
-    * This allows tiles to be stitched together without seams or artifacts, without requiring a tile source with overlap. If overlap is present,
-    * overlapping pixels are discarded. The second pass copies all pixel data from the WebGL context onto an output canvas
-    * with a Context2d context. This allows applications to have access to pixel data and other functionality provided by
-    * Context2d, regardless of whether the CanvasDrawer or the WebGLDrawer is used. Certain options, including compositeOperation,
-    * clip, croppingPolygons, and debugMode are implemented using Context2d operations; in these scenarios, each TiledImage is
-    * drawn onto the output canvas immediately after the tile composition step (pass 1). Otherwise, for efficiency, all TiledImages
-    * are copied over to the output canvas at once, after all tiles have been composited for all images.
+    * defines its own data type that ensures textures are correctly loaded to and deleted from the GPU memory.
+    * The drawer utilizes a context-dependent two pass drawing pipeline. For the first pass, tile composition
+    * for a given TiledImage is always done using a canvas with a WebGL context. This allows tiles to be stitched
+    * together without seams or artifacts, without requiring a tile source with overlap. If overlap is present,
+    * overlapping pixels are discarded. The second pass copies all pixel data from the WebGL context onto an output
+    * canvas with a Context2d context. This allows applications to have access to pixel data and other functionality
+    * provided by Context2d, regardless of whether the CanvasDrawer or the WebGLDrawer is used. Certain options,
+    * including compositeOperation, clip, croppingPolygons, and debugMode are implemented using Context2d operations;
+    * in these scenarios, each TiledImage is drawn onto the output canvas immediately after the tile composition step
+    * (pass 1). Otherwise, for efficiency, all TiledImages are copied over to the output canvas at once, after all
+    * tiles have been composited for all images.
     * @param {Object} options - Options for this Drawer.
     * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
     * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
     * @param {Element} options.element - Parent element.
     * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
     */
-
     OpenSeadragon.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
         constructor(options){
            super(options);
@@ -76,15 +76,11 @@
 
             // private members
             this._destroyed = false;
-            this._TextureMap = new Map();
-            this._TileMap = new Map();
-
             this._gl = null;
             this._firstPass = null;
             this._secondPass = null;
             this._glFrameBuffer = null;
             this._renderToTexture = null;
-            this._glFramebufferToCanvasTransform = null;
             this._outputCanvas = null;
             this._outputContext = null;
             this._clippingCanvas = null;
@@ -93,12 +89,6 @@
             this._backupCanvasDrawer = null;
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
-
-            // Add listeners for events that require modifying the scene or camera
-            this._boundToTileReady = ev => this._tileReadyHandler(ev);
-            this._boundToImageUnloaded = ev => this._imageUnloadedHandler(ev);
-            this.viewer.addHandler("tile-ready", this._boundToTileReady);
-            this.viewer.addHandler("image-unloaded", this._boundToImageUnloaded);
 
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
@@ -110,9 +100,23 @@
             this._setupCanvases();
             this._setupRenderer();
 
-            this.context = this._outputContext; // API required by tests
+            this._supportedFormats = this._setupTextureHandlers();
+            this._requiredFormats = this._supportedFormats;
+            this._setupCallCount = 1;
 
-       }
+            this.context = this._outputContext; // API required by tests
+        }
+
+        get defaultOptions() {
+            return {
+                // use detached cache: our type conversion will not collide (and does not have to preserve CPU data ref)
+                usePrivateCache: true
+            };
+        }
+
+        getSupportedDataFormats() {
+            return this._supportedFormats;
+        }
 
         // Public API required by all Drawer implementations
         /**
@@ -137,8 +141,6 @@
             gl.bindRenderbuffer(gl.RENDERBUFFER, null);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-            this._unloadTextures();
-
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
             gl.deleteFramebuffer(this._glFrameBuffer);
@@ -155,11 +157,6 @@
             if(ext){
                 ext.loseContext();
             }
-
-            // unbind our event listeners from the viewer
-            this.viewer.removeHandler("tile-ready", this._boundToTileReady);
-            this.viewer.removeHandler("image-unloaded", this._boundToImageUnloaded);
-            this.viewer.removeHandler("resize", this._resizeHandler);
 
             // set our webgl context reference to null to enable garbage collection
             this._gl = null;
@@ -204,7 +201,7 @@
 
         /**
          *
-         * @returns 'webgl'
+         * @returns {string} 'webgl'
          */
         getType(){
             return 'webgl';
@@ -243,6 +240,17 @@
             if(!this._backupCanvasDrawer){
                 this._backupCanvasDrawer = this.viewer.requestDrawer('canvas', {mainDrawer: false});
                 this._backupCanvasDrawer.canvas.style.setProperty('visibility', 'hidden');
+                this._backupCanvasDrawer.getSupportedDataFormats = () => this._supportedFormats;
+                this._backupCanvasDrawer.getDataToDraw = (tile) => {
+                    const cache = tile.getCache(tile.cacheKey);
+                    if (!cache) {
+                        $.console.warn("Attempt to draw tile %s when not cached!", tile);
+                        return undefined;
+                    }
+                    const dataCache = cache.getDataForRendering(this, tile);
+                    // Use CPU Data for the drawer instead
+                    return dataCache && dataCache.cpuData;
+                };
             }
 
             return this._backupCanvasDrawer;
@@ -379,23 +387,14 @@
                         let tile = tilesToDraw[tileIndex].tile;
                         let indexInDrawArray = tileIndex % maxTextures;
                         let numTilesToDraw =  indexInDrawArray + 1;
-                        let tileContext = tile.getCanvasContext();
+                        const textureInfo = this.getDataToDraw(tile);
 
-                        let textureInfo = tileContext ? this._TextureMap.get(tileContext.canvas) : null;
-                        if(!textureInfo){
-                            // tile was not processed in the tile-ready event (this can happen
-                            // if this drawer was created after the tile was downloaded)
-                            this._tileReadyHandler({tile: tile, tiledImage: tiledImage});
-
-                            // retry getting textureInfo
-                            textureInfo = tileContext ? this._TextureMap.get(tileContext.canvas) : null;
-                        }
-
-                        if(textureInfo){
+                        if (textureInfo) {
                             this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
                         } else {
                             // console.log('No tile info', tile);
                         }
+
                         if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
                             // We've filled up the buffers: time to draw this set of tiles
 
@@ -473,14 +472,16 @@
                     }
                 }
 
-
-
             });
 
             if(renderingBufferHasImageData){
                 this._outputContext.drawImage(this._renderingCanvas, 0, 0);
             }
 
+        }
+
+        getRequiredDataFormats() {
+            return this._requiredFormats;
         }
 
         // Public API required by all Drawer implementations
@@ -491,9 +492,15 @@
         setImageSmoothingEnabled(enabled){
             if( this._imageSmoothingEnabled !== enabled ){
                 this._imageSmoothingEnabled = enabled;
-                this._unloadTextures();
-                this.viewer.world.draw();
+
+                // Todo consider removing old type handlers if _supportedFormats had already types defined,
+                // and remove support for rendering old types...
+                const newFormats = this._setupTextureHandlers();  // re-sets the type to enforce re-initialization
+                this._supportedFormats.push(...newFormats);
+                this._requiredFormats = newFormats;
+                return this.viewer.requestInvalidate();
             }
+            return $.Promise.resolve();
         }
 
         /**
@@ -876,6 +883,97 @@
             this.viewer.addHandler("resize", this._resizeHandler);
         }
 
+        _setupTextureHandlers() {
+            const tex2DCompatibleLoader = (tile, data) => {
+                let tiledImage = tile.tiledImage;
+                let gl = this._gl;
+                let texture;
+                let position;
+
+                if (!tiledImage.isTainted()) {
+                    if((data instanceof CanvasRenderingContext2D) && $.isCanvasTainted(data.canvas)){
+                        tiledImage.setTainted(true);
+                        $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
+                        this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
+                    } else {
+                        let sourceWidthFraction, sourceHeightFraction;
+                        if (tile.sourceBounds) {
+                            sourceWidthFraction = Math.min(tile.sourceBounds.width, data.width) / data.width;
+                            sourceHeightFraction = Math.min(tile.sourceBounds.height, data.height) / data.height;
+                        } else {
+                            sourceWidthFraction = 1;
+                            sourceHeightFraction = 1;
+                        }
+
+                        // create a gl Texture for this tile and bind the canvas with the image data
+                        texture = gl.createTexture();
+                        let overlap = tiledImage.source.tileOverlap;
+                        if( overlap > 0){
+                            // calculate the normalized position of the rect to actually draw
+                            // discarding overlap.
+                            let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
+
+                            let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
+                            let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
+                            let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
+                            let bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
+                            position = this._makeQuadVertexBuffer(left, right, top, bottom);
+                        } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
+                            // no overlap and no padding: this texture can use the unit quad as its position data
+                            position = this._unitQuad;
+                        } else {
+                            position = this._makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
+                        }
+
+                        gl.activeTexture(gl.TEXTURE0);
+                        gl.bindTexture(gl.TEXTURE_2D, texture);
+                        // Set the parameters so we can render any size image.
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._textureFilter());
+
+                        try {
+                            // This depends on gl.TEXTURE_2D being bound to the texture
+                            // associated with this canvas before calling this function
+                            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
+                        } catch (e){
+                            // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
+                            tiledImage.setTainted(true);
+                            $.console.error('Error uploading image data to WebGL. Falling back to canvas renderer.', e);
+                            this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
+                        }
+                    }
+                }
+
+                // TextureInfo stored in the cache
+                return {
+                    texture: texture,
+                    position: position,
+                    cpuData: data // Reference to the outer cache data, used to draw if webgl canont be used
+                };
+            };
+            const tex2DCompatibleDestructor = textureInfo => {
+                if (textureInfo) {
+                    this._gl.deleteTexture(textureInfo.texture);
+                }
+            };
+
+            const thisType = `${this.getId()}_${this._setupCallCount++}_TEX_2D`;
+            // Differentiate type also based on type used to upload data: we can support bidirectional conversion.
+            const c2dTexType = thisType + ":context2d",
+                imageTexType = thisType + ":image";
+
+            // We should be OK uploading any of these types. The complexity is selected to be O(3n), should be
+            // more than linear pass over pixels
+            $.convertor.learn("context2d", c2dTexType, (t, d) => tex2DCompatibleLoader(t, d.canvas), 1, 3);
+            $.convertor.learn("image", imageTexType, tex2DCompatibleLoader, 1, 3);
+
+            $.convertor.learnDestroy(c2dTexType, tex2DCompatibleDestructor);
+            $.convertor.learnDestroy(imageTexType, tex2DCompatibleDestructor);
+            return [c2dTexType, imageTexType];
+        }
+
         // private
         _makeQuadVertexBuffer(left, right, top, bottom){
             return new Float32Array([
@@ -885,92 +983,6 @@
                 left, top,
                 right, bottom,
                 right, top]);
-        }
-
-        // private
-        _tileReadyHandler(event){
-            let tile = event.tile;
-            let tiledImage = event.tiledImage;
-
-            // If a tiledImage is already known to be tainted, don't try to upload any
-            // textures to webgl, because they won't be used even if it succeeds
-            if(tiledImage.isTainted()){
-                return;
-            }
-
-            let tileContext = tile.getCanvasContext();
-            let canvas = tileContext && tileContext.canvas;
-            // if the tile doesn't provide a canvas, or is tainted by cross-origin
-            // data, marked the TiledImage as tainted so the canvas drawer can be
-            // used instead, and return immediately - tainted data cannot be uploaded to webgl
-            if(!canvas || $.isCanvasTainted(canvas)){
-                const wasTainted = tiledImage.isTainted();
-                if(!wasTainted){
-                    tiledImage.setTainted(true);
-                    $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
-                    this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
-                }
-                return;
-            }
-
-            let textureInfo = this._TextureMap.get(canvas);
-
-            // if this is a new image for us, create a texture
-            if(!textureInfo){
-                let gl = this._gl;
-
-                // create a gl Texture for this tile and bind the canvas with the image data
-                let texture = gl.createTexture();
-                let position;
-                let overlap = tiledImage.source.tileOverlap;
-
-                // deal with tiles where there is padding, i.e. the pixel data doesn't take up the entire provided canvas
-                let sourceWidthFraction, sourceHeightFraction;
-                if (tile.sourceBounds) {
-                    sourceWidthFraction = Math.min(tile.sourceBounds.width, canvas.width) / canvas.width;
-                    sourceHeightFraction = Math.min(tile.sourceBounds.height, canvas.height) / canvas.height;
-                } else {
-                    sourceWidthFraction = 1;
-                    sourceHeightFraction = 1;
-                }
-
-                if( overlap > 0){
-                    // calculate the normalized position of the rect to actually draw
-                    // discarding overlap.
-                    let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
-
-                    let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
-                    let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
-                    let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
-                    let bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
-                    position = this._makeQuadVertexBuffer(left, right, top, bottom);
-                } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
-                    // no overlap and no padding: this texture can use the unit quad as its position data
-                    position = this._unitQuad;
-                } else {
-                    position = this._makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
-                }
-
-                let textureInfo = {
-                    texture: texture,
-                    position: position,
-                };
-
-                // add it to our _TextureMap
-                this._TextureMap.set(canvas, textureInfo);
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, texture);
-                // Set the parameters so we can render any size image.
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._textureFilter());
-
-                // Upload the image into the texture.
-                this._uploadImageData(tileContext);
-
-            }
-
         }
 
         // private
@@ -989,51 +1001,13 @@
         }
 
         // private
-        _unloadTextures(){
-            let canvases = Array.from(this._TextureMap.keys());
-            canvases.forEach(canvas => {
-                this._cleanupImageData(canvas); // deletes texture, removes from _TextureMap
-            });
-        }
+//         _unloadTextures(){
+//             let canvases = Array.from(this._TextureMap.keys());
+//             canvases.forEach(canvas => {
+//                 this._cleanupImageData(canvas); // deletes texture, removes from _TextureMap
+//             });
+//         }
 
-        // private
-        _uploadImageData(tileContext){
-
-            let gl = this._gl;
-            let canvas = tileContext.canvas;
-
-            try{
-                if(!canvas){
-                    throw('Tile context does not have a canvas', tileContext);
-                }
-                // This depends on gl.TEXTURE_2D being bound to the texture
-                // associated with this canvas before calling this function
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-            } catch (e){
-                $.console.error('Error uploading image data to WebGL', e);
-            }
-        }
-
-        // private
-        _imageUnloadedHandler(event){
-            let canvas = event.context2D.canvas;
-            this._cleanupImageData(canvas);
-        }
-
-        // private
-        _cleanupImageData(tileCanvas){
-            let textureInfo = this._TextureMap.get(tileCanvas);
-            //remove from the map
-            this._TextureMap.delete(tileCanvas);
-
-            //release the texture from the GPU
-            if(textureInfo){
-                this._gl.deleteTexture(textureInfo.texture);
-            }
-
-        }
-
-        // private
         _setClip(){
             // no-op: called by _renderToClippingCanvas when tiledImage._clip is truthy
             // so that tests will pass.
@@ -1340,9 +1314,7 @@
 
             return shaderProgram;
         }
-
     };
-
 
 
 }( OpenSeadragon ));

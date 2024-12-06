@@ -3,6 +3,21 @@
 <head>
     <meta charset="utf-8">
     <title>OpenSeadragon QUnit</title>
+    <script type="text/javascript">
+        function isInteractiveMode() {
+            const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+            const isHeadless = typeof navigator !== 'undefined' && navigator.webdriver;
+            return isBrowser && !isHeadless;
+        }
+
+        window.QUnit = {
+            config: {
+                //five seconds timeout due to problems with untrusted events (e.g. auto zoom) for non-interactive runs
+                //there is timeWatcher property but sometimes tests do not respect it, or they get stuck due to bugs
+                testTimeout: isInteractiveMode() ? 30000 : 10000
+            }
+        };
+    </script>
     <link rel="stylesheet" href="/node_modules/qunit/qunit/qunit.css">
     <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
     <link rel="stylesheet" href="/test/helpers/test.css">
@@ -16,6 +31,7 @@
     <script src="/test/lib/jquery.simulate.js"></script>
     <script src="/build/openseadragon/openseadragon.min.js"></script>
     <script src="/test/helpers/legacy.mouse.shim.js"></script>
+    <script src="/test/helpers/mocks.js"></script>
     <script src="/test/helpers/test.js"></script>
     <script src="/test/helpers/touch.js"></script>
 
@@ -25,6 +41,7 @@
     <script src="/test/modules/event-source.js"></script>
     <script src="/test/modules/viewerretrieval.js"></script>
     <script src="/test/modules/basic.js"></script>
+    <script src="/test/modules/type-conversion.js"></script>
     <script src="/test/modules/strings.js"></script>
     <script src="/test/modules/formats.js"></script>
     <script src="/test/modules/iiif.js"></script>
@@ -49,6 +66,7 @@
     <script src="/test/modules/ajax-post-data.js"></script>
     <script src="/test/modules/imageloader.js"></script>
     <script src="/test/modules/tilesource-dynamic-url.js"></script>
+    <script src="/test/modules/data-manipulation.js"></script>
     <!--The navigator tests are the slowest (for now; hopefully they can be sped up)
     so we put them last. -->
     <script src="/test/modules/navigator.js"></script>

@@ -48,7 +48,7 @@
  * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
- *      see TileSource::getPostData) or null
+ *      see TileSource::getTilePostData) or null
  * @param {Function} [options.callback] - Called once image has been downloaded.
  * @param {Function} [options.abort] - Called when this image job is aborted.
  * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
@@ -98,7 +98,7 @@ $.ImageJob.prototype = {
         var selfAbort = this.abort;
 
         this.jobId = window.setTimeout(function () {
-            self.finish(null, null, "Image load exceeded timeout (" + self.timeout + " ms)");
+            self.fail("Image load exceeded timeout (" + self.timeout + " ms)", null);
         }, this.timeout);
 
         this.abort = function() {
@@ -115,16 +115,46 @@ $.ImageJob.prototype = {
      * Finish this job.
      * @param {*} data data that has been downloaded
      * @param {XMLHttpRequest} request reference to the request if used
-     * @param {string} errorMessage description upon failure
+     * @param {string} dataType data type identifier
+     *   fallback compatibility behavior: dataType treated as errorMessage if data is falsey value
      * @memberof OpenSeadragon.ImageJob#
      */
-    finish: function(data, request, errorMessage ) {
+    finish: function(data, request, dataType) {
+        if (!this.jobId) {
+            return;
+        }
+        // old behavior, no deprecation due to possible finish calls with invalid data item (e.g. different error)
+        if (data === null || data === undefined || data === false) {
+            this.fail(dataType || "[downloadTileStart->finish()] Retrieved data is invalid!", request);
+            return;
+        }
+
         this.data = data;
         this.request = request;
-        this.errorMsg = errorMessage;
+        this.errorMsg = null;
+        this.dataType = dataType;
 
         if (this.jobId) {
             window.clearTimeout(this.jobId);
+        }
+
+        this.callback(this);
+    },
+
+    /**
+     * Finish this job as a failure.
+     * @param {string} errorMessage description upon failure
+     * @param {XMLHttpRequest} request reference to the request if used
+     */
+    fail: function(errorMessage, request) {
+        this.data = null;
+        this.request = request;
+        this.errorMsg = errorMessage;
+        this.dataType = null;
+
+        if (this.jobId) {
+            window.clearTimeout(this.jobId);
+            this.jobId = null;
         }
 
         this.callback(this);
@@ -167,11 +197,12 @@ $.ImageLoader.prototype = {
      * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,
-     *      see TileSource::getPostData) or null
+     *      see TileSource::getTilePostData) or null
      * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
      *      requests.
      * @param {Function} [options.callback] - Called once image has been downloaded.
      * @param {Function} [options.abort] - Called when this image job is aborted.
+     * @returns {boolean} true if job was immediatelly started, false if queued
      */
     addJob: function(options) {
         if (!options.source) {
@@ -184,10 +215,7 @@ $.ImageLoader.prototype = {
             };
         }
 
-        var _this = this,
-            complete = function(job) {
-                completeJob(_this, job, options.callback);
-            },
+        const _this = this,
             jobOptions = {
                 src: options.src,
                 tile: options.tile || {},
@@ -197,7 +225,7 @@ $.ImageLoader.prototype = {
                 crossOriginPolicy: options.crossOriginPolicy,
                 ajaxWithCredentials: options.ajaxWithCredentials,
                 postData: options.postData,
-                callback: complete,
+                callback: (job) => completeJob(_this, job, options.callback),
                 abort: options.abort,
                 timeout: this.timeout
             },
@@ -206,10 +234,17 @@ $.ImageLoader.prototype = {
         if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
             newJob.start();
             this.jobsInProgress++;
+            return true;
         }
-        else {
-            this.jobQueue.push( newJob );
-        }
+        this.jobQueue.push( newJob );
+        return false;
+    },
+
+    /**
+     * @returns {boolean} true if a job can be submitted
+     */
+    canAcceptNewJob() {
+        return !this.jobLimit || this.jobsInProgress < this.jobLimit;
     },
 
     /**
@@ -238,30 +273,30 @@ $.ImageLoader.prototype = {
  * @param callback - Called once cleanup is finished.
  */
 function completeJob(loader, job, callback) {
-    if (job.errorMsg !== '' && (job.data === null || job.data === undefined) && job.tries < 1 + loader.tileRetryMax) {
+    if (job.errorMsg && job.data === null && job.tries < 1 + loader.tileRetryMax) {
         loader.failedTiles.push(job);
     }
-    var nextJob;
+    let nextJob;
 
     loader.jobsInProgress--;
 
-    if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.jobQueue.length > 0) {
+    if (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
         nextJob = loader.jobQueue.shift();
         nextJob.start();
         loader.jobsInProgress++;
     }
 
     if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
-        if ((!loader.jobLimit || loader.jobsInProgress < loader.jobLimit) && loader.failedTiles.length > 0) {
-             nextJob = loader.failedTiles.shift();
-             setTimeout(function () {
-                 nextJob.start();
-             }, loader.tileRetryDelay);
-             loader.jobsInProgress++;
-         }
-     }
+        if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
+            nextJob = loader.failedTiles.shift();
+            setTimeout(function () {
+                nextJob.start();
+            }, loader.tileRetryDelay);
+            loader.jobsInProgress++;
+        }
+    }
 
-    callback(job.data, job.errorMsg, job.request);
+    callback(job.data, job.errorMsg, job.request, job.dataType);
 }
 
 }(OpenSeadragon));

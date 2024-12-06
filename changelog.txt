@@ -1,6 +1,30 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+6.0.0: (draft)
+* NEW BEHAVIOR: OpenSeadragon Data Pipeline Overhaul
+    * DEPRECATION: Properties on tile that manage drawer data, or store data to draw: Tile.[element|imgElement|style|context2D|getImage|getCanvasContext] and transitively Tile.getScaleForEdgeSmoothing
+    * DEPRECATION: TileSource data lifecycle handlers: system manages these automatically: TileSource.[createTileCache|destroyTileCache|getTileCacheData|getTileCacheDataAsImage|getTileCacheDataAsContext2D]
+    * Tiles data is driven by caches: tiles can have multiple caches and cache can reference multiple tiles.
+    * Data types & conversion pipeline: caches support automated conversion between types, and call optionally destructors. These are asynchronous.
+    * Data conversion reasoning: the system keeps costs of convertors and seeks the cheapest conversion to a target format (using Dijkstra).
+    * Async support: events can now await handlers. Added OpenSeadragon.Promise proxy object. This object supports also synchronous mode.
+    * Drawers define what data they are able to work with, and receive automatically data from one of the declared types.
+    * Drawers now store data only inside cache, and provide optional type convertors to move data into a format they can work with.
+    * TileSource equality operator. TileSource destructor support. TileSources now must output type of the data they download [context.finish].
+    * Zombies: data can outlive tiles, and be kept in the system to wait if they are not suddenly needed. Turned on automatically with TiledImage addition with `replace: true` and equality test success.
+    * ImagesLoadedPerFrame is boosted 10 times when system is fresh (reset / open) and then declines back to original value.
+    * CacheRecord supports 'internal cache' of 'SimpleCache' type. This cache can be used by drawers to hide complex types used for rendering. Such caches are stored internally on CacheRecord objects.
+    * CacheRecord drives asynchronous data management and ensures correct behavior through awaiting Promises.
+    * TileCache adds new methods for cache modification: renameCache, cloneCache, injectCache, replaceCache, restoreTilesThatShareOriginalCache, safeUnloadCache, unloadCacheForTile and more. Used internally within invalidation events
+    * Tiles have up to two 'originalCacheKey' and 'cacheKey' caches, which keep original data and target drawn data (if modified).
+    * Invalidation Pipeline: New event 'tile-invalidated' and requestInvalidate methods on World and TiledImage. Tiles get methods to modify data to draw, system prepares data for drawing and swaps them with the current main tile cache.
+    * New test suites for the new cache system, conversion pipeline and invalidation events.
+    * New testing/demo utilities (MockSeadragon, DrawerSwitcher for switching drawers in demos, getBuiltInDrawersForTest for testing all drawers), serialization guard in tests to remove circular references.
+    * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
+    * Misc: updated CSS for dev server, new dev & test commands.
+
+
 5.0.1: (in progress...)
 
 * Improved overlay handling so it plays better with other libraries (#2582 @BeebBenjamin)
