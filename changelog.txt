@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-5.0.1: (in progress...)
+5.0.1:
 
 * Improved overlay handling so it plays better with other libraries (#2582 @BeebBenjamin)
 * WebGLDrawer now supports the imageSmoothingEnabled option (#2615 @pearcetm)
