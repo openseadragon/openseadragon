@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+6.0.0: (in progress...)
+
 5.0.1:
 
 * Improved overlay handling so it plays better with other libraries (#2582 @BeebBenjamin)
