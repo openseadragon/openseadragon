@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!--
+/*
+ * Modified and maintained by the OpenSeadragon Community.
+ *
+ * This software was orignally developed at the National Institute of Standards and
+ * Technology by employees of the Federal Government. NIST assumes
+ * no responsibility whatsoever for its use by other parties, and makes no
+ * guarantees, expressed or implied, about its quality, reliability, or
+ * any other characteristic.
+ */
+-->
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>OpenSeadragon Filtering Plugin Demo</title>
+
+        <script type="text/javascript" src='/build/openseadragon/openseadragon.js'></script>
+
+        <!-- JQuery -->
+        <script src="/test/lib/jquery-1.9.1.min.js"></script>
+        <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+        <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
+
+        <!-- Local -->
+        <link rel="stylesheet" href="style.css">
+        <script src="plugin.js"></script>
+        <script src="/test/helpers/drawer-switcher.js"></script>
+
+        <!-- Thirdparty -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/camanjs/4.1.2/caman.full.min.js"></script>
+    </head>
+    <body>
+        <section class="home home-title" id="title-banner">
+            <h1>OpenSeadragon filtering plugin demo: <span id="title-drawer"></span></h1>
+            <p>You might want to check the plugin repository to see if the plugin code is up to date.</p>
+        </section>
+
+
+        <section class="demo">
+            <div class="wdzt-table-layout wdzt-full-width">
+                <div class="wdzt-row-layout">
+                    <div class="wdzt-cell-layout column-2">
+                        <div id="openseadragon"></div>
+                    </div>
+                    <div class="wdzt-cell-layout column-2">
+                        <select id="image-select">
+                        </select>
+
+                        <h3>Available filters</h3>
+                        <ul id="available">
+                        </ul>
+
+                        <h3>Selected filters</h3>
+                        <ul id="selected"></ul>
+
+                        <p>Drag and drop the selected filters to set their order.</p>
+
+                        <br>
+                        <label>
+                            <input type="checkbox" onchange="viewer.setDebugMode(this.checked);">
+                            Debug mode
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="monitoring">
+            Monitoring of a tile lifecycle: (use filters and click on a tile to start monitoring)
+
+            <div style="display: flex">
+                <div id="tile-original"></div>
+                <div id="tile-main"></div>
+            </div>
+        </section>
+
+        <script src="demo.js"></script>
+    </body>
+</html>

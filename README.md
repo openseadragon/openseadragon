@@ -27,3 +27,9 @@ OpenSeadragon is released under the New BSD license. For details, see the [LICEN
 [github-releases]: https://github.com/openseadragon/openseadragon/releases
 [github-contributing]: https://github.com/openseadragon/openseadragon/blob/master/CONTRIBUTING.md
 [github-license]: https://github.com/openseadragon/openseadragon/blob/master/LICENSE.txt
+
+## Sponsors
+
+We are grateful for the (development or financial) contribution to the OpenSeadragon project.
+
+<img alt="Logo BBMRI ERIC" src="test/data/assets/bbmri-logo.png" height="80"/>

@@ -37,9 +37,19 @@
 /**
  * Event handler method signature used by all OpenSeadragon events.
  *
- * @callback EventHandler
+ * @typedef {function(OpenSeadragon.Event): void} OpenSeadragon.EventHandler
  * @memberof OpenSeadragon
- * @param {Object} event - See individual events for event-specific properties.
+ * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @returns {void} This handler does not return a value.
+ */
+
+/**
+ * Event handler method signature used by all OpenSeadragon events.
+ *
+ * @typedef {function(OpenSeadragon.Event): Promise<void>} OpenSeadragon.AsyncEventHandler
+ * @memberof OpenSeadragon
+ * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @returns {Promise<void>} This handler does not return a value.
  */
 
 
@@ -62,7 +72,7 @@ $.EventSource.prototype = {
      * for a given event. It is not removable with removeHandler().
      * @function
      * @param {String} eventName - Name of event to register.
-     * @param {OpenSeadragon.EventHandler} handler - Function to call when event
+     * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to call when event
      * is triggered.
      * @param {Object} [userData=null] - Arbitrary object to be passed unchanged
      * to the handler.
@@ -72,10 +82,10 @@ $.EventSource.prototype = {
      * @returns {Boolean} - True if the handler was added, false if it was rejected
      */
     addOnceHandler: function(eventName, handler, userData, times, priority) {
-        var self = this;
+        const self = this;
         times = times || 1;
-        var count = 0;
-        var onceHandler = function(event) {
+        let count = 0;
+        const onceHandler = function(event) {
             count++;
             if (count === times) {
                 self.removeHandler(eventName, onceHandler);
@@ -89,7 +99,7 @@ $.EventSource.prototype = {
      * Add an event handler for a given event.
      * @function
      * @param {String} eventName - Name of event to register.
-     * @param {OpenSeadragon.EventHandler} handler - Function to call when event is triggered.
+     * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to call when event is triggered.
      * @param {Object} [userData=null] - Arbitrary object to be passed unchanged to the handler.
      * @param {Number} [priority=0] - Handler priority. By default, all priorities are 0. Higher number = priority.
      * @returns {Boolean} - True if the handler was added, false if it was rejected
@@ -101,12 +111,12 @@ $.EventSource.prototype = {
             return false;
         }
 
-        var events = this.events[ eventName ];
+        let events = this.events[ eventName ];
         if ( !events ) {
             this.events[ eventName ] = events = [];
         }
         if ( handler && $.isFunction( handler ) ) {
-            var index = events.length,
+            let index = events.length,
                 event = { handler: handler, userData: userData || null, priority: priority || 0 };
             events[ index ] = event;
             while ( index > 0 && events[ index - 1 ].priority < events[ index ].priority ) {
@@ -122,17 +132,16 @@ $.EventSource.prototype = {
      * Remove a specific event handler for a given event.
      * @function
      * @param {String} eventName - Name of event for which the handler is to be removed.
-     * @param {OpenSeadragon.EventHandler} handler - Function to be removed.
+     * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to be removed.
      */
     removeHandler: function ( eventName, handler ) {
-        var events = this.events[ eventName ],
-            handlers = [],
-            i;
+        const events = this.events[ eventName ],
+            handlers = [];
         if ( !events ) {
             return;
         }
         if ( $.isArray( events ) ) {
-            for ( i = 0; i < events.length; i++ ) {
+            for ( let i = 0; i < events.length; i++ ) {
                 if ( events[i].handler !== handler ) {
                     handlers.push( events[ i ] );
                 }
@@ -147,7 +156,7 @@ $.EventSource.prototype = {
      * @returns {number} amount of events
      */
     numberOfHandlers: function (eventName) {
-        var events = this.events[ eventName ];
+        const events = this.events[ eventName ];
         if ( !events ) {
             return 0;
         }
@@ -164,7 +173,7 @@ $.EventSource.prototype = {
         if ( eventName ){
             this.events[ eventName ] = [];
         } else{
-            for ( var eventType in this.events ) {
+            for ( let eventType in this.events ) {
                 this.events[ eventType ] = [];
             }
         }
@@ -176,7 +185,7 @@ $.EventSource.prototype = {
      * @param {String} eventName - Name of event to get handlers for.
      */
     getHandler: function ( eventName) {
-        var events = this.events[ eventName ];
+        let events = this.events[ eventName ];
         if ( !events || !events.length ) {
             return null;
         }
@@ -184,9 +193,8 @@ $.EventSource.prototype = {
             [ events[ 0 ] ] :
             Array.apply( null, events );
         return function ( source, args ) {
-            var i,
-                length = events.length;
-            for ( i = 0; i < length; i++ ) {
+            let length = events.length;
+            for ( let i = 0; i < length; i++ ) {
                 if ( events[ i ] ) {
                     args.eventSource = source;
                     args.userData = events[ i ].userData;
@@ -197,7 +205,46 @@ $.EventSource.prototype = {
     },
 
     /**
-     * Trigger an event, optionally passing additional information.
+     * Get a function which iterates the list of all handlers registered for a given event,
+     * calling the handler for each and awaiting async ones.
+     * @function
+     * @param {String} eventName - Name of event to get handlers for.
+     * @param {any} bindTarget - Bound target to return with the promise on finish
+     */
+    getAwaitingHandler: function ( eventName, bindTarget ) {
+        let events = this.events[ eventName ];
+        if ( !events || !events.length ) {
+            return null;
+        }
+        events = events.length === 1 ?
+            [ events[ 0 ] ] :
+            Array.apply( null, events );
+
+        return function ( source, args ) {
+            // We return a promise that gets resolved after all the events finish.
+            // Returning loop result is not correct, loop promises chain dynamically
+            // and outer code could process finishing logics in the middle of event loop.
+            return new $.Promise(resolve => {
+                const length = events.length;
+                function loop(index) {
+                    if ( index >= length || !events[ index ] ) {
+                        resolve(bindTarget);
+                        return null;
+                    }
+                    args.eventSource = source;
+                    args.userData = events[ index ].userData;
+                    let result = events[ index ].handler( args );
+                    result = (!result || $.type(result) !== "promise") ? $.Promise.resolve() : result;
+                    return result.then(() => loop(index + 1));
+                }
+                loop(0);
+            });
+        };
+    },
+
+    /**
+     * Trigger an event, optionally passing additional information. Does not await async handlers, i.e.
+     * OpenSeadragon.AsyncEventHandler.
      * @function
      * @param {String} eventName - Name of event to register.
      * @param {Object} eventArgs - Event-specific data.
@@ -205,18 +252,38 @@ $.EventSource.prototype = {
      */
     raiseEvent: function( eventName, eventArgs ) {
         //uncomment if you want to get a log of all events
-        //$.console.log( eventName );
+        //$.console.log( "Event fired:", eventName );
 
         if(Object.prototype.hasOwnProperty.call(this._rejectedEventList, eventName)){
             $.console.error(`Error adding handler for ${eventName}. ${this._rejectedEventList[eventName]}`);
             return false;
         }
 
-        var handler = this.getHandler( eventName );
+        const handler = this.getHandler( eventName );
         if ( handler ) {
             handler( this, eventArgs || {} );
         }
         return true;
+    },
+
+    /**
+     * Trigger an event, optionally passing additional information.
+     * This events awaits every asynchronous or promise-returning function, i.e.
+     * OpenSeadragon.AsyncEventHandler.
+     * @param {String} eventName - Name of event to register.
+     * @param {Object} eventArgs - Event-specific data.
+     * @param {?} [bindTarget = null] - Promise-resolved value on the event finish
+     * @return {OpenSeadragon.Promise|undefined} - Promise resolved upon the event completion.
+     */
+    raiseEventAwaiting: function ( eventName, eventArgs, bindTarget = null ) {
+        //uncomment if you want to get a log of all events
+        //$.console.log( "Awaiting event fired:", eventName );
+
+        const awaitingHandler = this.getAwaitingHandler(eventName, bindTarget);
+        if (awaitingHandler) {
+            return awaitingHandler(this, eventArgs || {});
+        }
+        return $.Promise.resolve(bindTarget);
     },
 
     /**
@@ -239,7 +306,6 @@ $.EventSource.prototype = {
     allowEventHandler(eventName){
         delete this._rejectedEventList[eventName];
     }
-
 };
 
 }( OpenSeadragon ));

@@ -69,6 +69,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     /**
      * Add the specified item.
      * @param {OpenSeadragon.TiledImage} item - The item to add.
+     * @param {Object} options - Options affecting insertion.
      * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.World.event:metrics-change
@@ -232,6 +233,209 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     },
 
     /**
+     * Forces the system consider all tiles across all tiled images
+     * as outdated, and fire tile update event on relevant tiles
+     * Detailed description is available within the 'tile-invalidated'
+     * event.
+     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+     * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+     * @function
+     * @fires OpenSeadragon.Viewer.event:tile-invalidated
+     * @return {OpenSeadragon.Promise<?>}
+     */
+    requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
+        $.__updated = tStamp;
+        // const priorityTiles = this._items.map(item => item._lastDrawn.map(x => x.tile)).flat();
+        // const promise = this.requestTileInvalidateEvent(priorityTiles, tStamp, restoreTiles);
+        // return promise.then(() => this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles));
+
+        // Tile-first retrieval fires computation on tiles that share cache, which are filtered out by processing property
+        return this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles);
+
+        // Cache-first update tile retrieval is nicer since there might be many tiles sharing
+        // return this.requestTileInvalidateEvent(new Set(Object.values(this.viewer.tileCache._cachesLoaded)
+        //     .map(c => !c._destroyed && c._tiles[0])), tStamp, restoreTiles);
+    },
+
+    /**
+     * Requests tile data update.
+     * @function OpenSeadragon.Viewer.prototype._updateSequenceButtons
+     * @private
+     * @param {Iterable<OpenSeadragon.Tile>} tilesToProcess tiles to update
+     * @param {Number} tStamp timestamp in milliseconds, if active timestamp of the same value is executing,
+     *   changes are added to the cycle, else they await next iteration
+     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+     * @param {Boolean} [_allowTileUnloaded=false] internal flag for calling on tiles that come new to the system
+     * @fires OpenSeadragon.Viewer.event:tile-invalidated
+     * @return {OpenSeadragon.Promise<?>}
+     */
+    requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true, _allowTileUnloaded = false) {
+        if (!this.viewer.isOpen()) {
+            return $.Promise.resolve();
+        }
+
+        const tileList = [],
+            tileFinishResolvers = [];
+        for (const tile of tilesToProcess) {
+            // We allow re-execution on tiles that are in process but have too low processing timestamp,
+            // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
+            // pipeline take no effect.
+            if (!tile || (!_allowTileUnloaded && !tile.loaded)) {
+                continue;
+            }
+            const tileCache = tile.getCache(tile.originalCacheKey);
+            if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
+                continue;
+            }
+
+            for (let t of tileCache._tiles) {
+                // Mark all related tiles as processing and register callback to unmark later on
+                t.processing = tStamp;
+                t.processingPromise = new $.Promise((resolve) => {
+                    tileFinishResolvers.push(() => {
+                        t.processing = false;
+                        resolve(t);
+                    });
+                });
+            }
+
+            tileCache.__invStamp = tStamp;
+            tileList.push(tile);
+        }
+
+        if (!tileList.length) {
+            return $.Promise.resolve();
+        }
+
+        // We call the event on the parent viewer window no matter what
+        const eventTarget = this.viewer.viewer || this.viewer;
+        // However, we must pick the correct drawer reference (navigator VS viewer)
+        const supportedFormats = this.viewer.drawer.getRequiredDataFormats();
+        const keepInternalCacheCopy = this.viewer.drawer.options.usePrivateCache;
+        const drawerId = this.viewer.drawer.getId();
+
+        const jobList = tileList.map(tile => {
+            const tiledImage = tile.tiledImage;
+            const originalCache = tile.getCache(tile.originalCacheKey);
+            let workingCache = null;
+            const getWorkingCacheData = (type) => {
+                if (workingCache) {
+                    return workingCache.getDataAs(type, false);
+                }
+
+                const targetCopyKey = restoreTiles ? tile.originalCacheKey : tile.cacheKey;
+                const origCache = tile.getCache(targetCopyKey);
+                if (!origCache) {
+                    $.console.error("[Tile::getData] There is no cache available for tile with key %s", targetCopyKey);
+                    return $.Promise.reject();
+                }
+                // Here ensure type is defined, rquired by data callbacks
+                type = type || origCache.type;
+                workingCache = new $.CacheRecord().withTileReference(tile);
+                return origCache.getDataAs(type, true).then(data => {
+                    workingCache.addTile(tile, data, type);
+                    return workingCache.data;
+                });
+            };
+            const setWorkingCacheData = (value, type) => {
+                if (!workingCache) {
+                    workingCache = new $.CacheRecord().withTileReference(tile);
+                    workingCache.addTile(tile, value, type);
+                    return $.Promise.resolve();
+                }
+                return workingCache.setDataAs(value, type);
+            };
+            const atomicCacheSwap = () => {
+                if (workingCache) {
+                    let newCacheKey = tile.buildDistinctMainCacheKey();
+                    tiledImage._tileCache.injectCache({
+                        tile: tile,
+                        cache: workingCache,
+                        targetKey: newCacheKey,
+                        setAsMainCache: true,
+                        tileAllowNotLoaded: tile.loading
+                    });
+                } else if (restoreTiles) {
+                    // If we requested restore, perform now
+                    tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, tile.getCache(tile.originalCacheKey), true);
+                }
+            };
+
+            /**
+             * @event tile-invalidated
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+             * @property {OpenSeadragon.Tile} tile
+             * @property {AsyncNullaryFunction<boolean>} outdated - predicate that evaluates to true if the event
+             *   is outdated and should not be longer processed (has no effect)
+             * @property {AsyncUnaryFunction<any, string>} getData - get data of desired type (string argument)
+             * @property {AsyncBinaryFunction<undefined, any, string>} setData - set data (any)
+             *   and the type of the data (string)
+             * @property {function} resetData - function that deletes any previous data modification in the current
+             *   execution pipeline
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            return eventTarget.raiseEventAwaiting('tile-invalidated', {
+                tile: tile,
+                tiledImage: tiledImage,
+                outdated: () => originalCache.__invStamp !== tStamp || (!tile.loaded && !tile.loading),
+                getData: getWorkingCacheData,
+                setData: setWorkingCacheData,
+                resetData: () => {
+                    if (workingCache) {
+                        workingCache.destroy();
+                        workingCache = null;
+                    }
+                }
+            }).then(_ => {
+                if (originalCache.__invStamp === tStamp && (tile.loaded || tile.loading)) {
+                    if (workingCache) {
+                        return workingCache.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(c => {
+                            if (c && originalCache.__invStamp === tStamp) {
+                                atomicCacheSwap();
+                                originalCache.__invStamp = null;
+                            }
+                        });
+                    }
+
+                    // If we requested restore, perform now
+                    if (restoreTiles) {
+                        const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
+                        return freshOriginalCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then((c) => {
+                            if (c && originalCache.__invStamp === tStamp) {
+                                atomicCacheSwap();
+                                originalCache.__invStamp = null;
+                            }
+                        });
+                    }
+
+                    // Preventive call to ensure we stay compatible
+                    const freshMainCacheRef = tile.getCache();
+                    return freshMainCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(() => {
+                        atomicCacheSwap();
+                        originalCache.__invStamp = null;
+                    });
+
+                } else if (workingCache) {
+                    workingCache.destroy();
+                    workingCache = null;
+                }
+                return null;
+            }).catch(e => {
+                $.console.error("Update routine error:", e);
+            });
+        });
+
+        return $.Promise.all(jobList).then(() => {
+            for (let resolve of tileFinishResolvers) {
+                resolve();
+            }
+            this.draw();
+        });
+    },
+
+    /**
      * Clears all tiles and triggers updates for all items.
      */
     resetItems: function() {
@@ -261,9 +465,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     draw: function() {
         this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
-        this._items.forEach((item) => {
+        for (let item of this._items) {
             this._needsDraw = item.setDrawn() || this._needsDraw;
-        });
+        }
     },
 
     /**

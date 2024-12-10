@@ -109,14 +109,14 @@
                     opacity: getOpacity( layerName )
                 };
                 var addLayerHandler = function( event ) {
-                    if ( event.options === options ) {
-                        viewer.removeHandler( "add-layer", addLayerHandler );
-                        layers[layerName] = event.drawer;
+                    if ( event.item.source.levels[0].url.includes(layerName) ) {
+                        viewer.world.removeHandler( "add-item", addLayerHandler );
+                        layers[layerName] = event.item;
                         updateOrder();
                     }
                 };
-                viewer.addHandler( "add-layer", addLayerHandler );
-                viewer.addLayer( options );
+                viewer.world.addHandler( "add-item", addLayerHandler );
+                viewer.addTiledImage( options );
             }
 
             function left() {
@@ -146,13 +146,15 @@
             }
 
             function updateOrder() {
-                var nbLayers = viewer.getLayersCount();
+                var nbLayers = viewer.world.getItemCount();
                 if ( nbLayers < 2 ) {
                     return;
                 }
                 $.each( $( "#used select option" ), function( index, value ) {
                     var layer = value.innerHTML;
-                    viewer.setLayerLevel( layers[layer], nbLayers -1 - index );
+                    if (layers[layer]) {
+                        viewer.world.setItemIndex( layers[layer], nbLayers -1 - index );
+                    }
                 } );
             }
 

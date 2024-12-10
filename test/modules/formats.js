@@ -29,7 +29,7 @@
     };
 
     var testOpen = function(tileSource, assert) {
-        var timeWatcher = Util.timeWatcher(assert, 7000);
+        const done = assert.async();
 
         viewer = OpenSeadragon({
             id:            'example',
@@ -56,7 +56,7 @@
             viewer.removeHandler('close', closeHandler);
             $('#example').empty();
             assert.ok(true, 'Close event was sent');
-            timeWatcher.done();
+            done();
         };
         viewer.addHandler('open', openHandler);
     };
