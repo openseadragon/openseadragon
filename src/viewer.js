@@ -2575,8 +2575,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Update pixel density ratio, clears all tiles and triggers updates for
-     * all items if the ratio has changed.
+     * Update pixel density ratio and forces a resize operation.
      * @private
      */
      _updatePixelDensityRatio: function() {
@@ -2584,8 +2583,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
         if (previusPixelDensityRatio !== currentPixelDensityRatio) {
             $.pixelDensityRatio = currentPixelDensityRatio;
-            this.world.resetItems();
-            this.forceRedraw();
+            this.forceResize();
         }
     },
 

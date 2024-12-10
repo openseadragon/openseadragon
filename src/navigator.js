@@ -347,7 +347,6 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     },
 
     setDisplayTransform: function(rule) {
-      setElementTransform(this.displayRegion, rule);
       setElementTransform(this.canvas, rule);
       setElementTransform(this.element, rule);
     },
