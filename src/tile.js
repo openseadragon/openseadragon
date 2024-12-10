@@ -258,10 +258,12 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      */
     this.processing = false;
     /**
-     * Remembers last processing time of the tile, 1 if the tile has just been loaded.
+     * Processing promise, resolves when the tile exits processing, or
+     * resolves immediatelly if not in the processing state.
+     * @member {OpenSeadragon.Promise}
      * @private
      */
-    this.lastProcess = 0;
+    this.processingPromise = $.Promise.resolve();
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -644,7 +646,6 @@ $.Tile.prototype = {
         let ref = this._caches[this._cKey];
         if (ref) {
             // make sure we free drawer internal cache if people change cache key externally
-            // todo make sure this is really needed even after refactoring
             ref.destroyInternalCache();
         }
         this._cKey = value;

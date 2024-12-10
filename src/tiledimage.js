@@ -2132,9 +2132,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         function markTileAsReady() {
-            tile.lastProcess = false;
-            tile.processing = false;
-
             const fallbackCompletion = getCompletionCallback();
 
             /**
@@ -2183,8 +2180,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
 
         if (tileCacheCreated) {
-            const updatePromise = _this.viewer.world.requestTileInvalidateEvent([tile], now, false, true);
-            updatePromise.then(markTileAsReady);
+            _this.viewer.world.requestTileInvalidateEvent([tile], now, false, true).then(markTileAsReady);
         } else {
             // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             const origCache = tile.getCache(tile.originalCacheKey);
@@ -2199,15 +2195,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     tile.setCache(t.cacheKey, targetMainCache, true, false);
                     break;
                 } else if (t.processing) {
-                    // TODO consider something nicer, now just wait until subsequent routine finishes
-                    let interval = setInterval(() => {
-                        if (!t.processing && t.getCache()) {
-                            const targetMainCache = t.getCache();
-                            tile.setCache(t.cacheKey, targetMainCache, true, false);
-                            clearInterval(interval);
-                            markTileAsReady();
-                        }
-                    }, 50);
+                    // Await once processing finishes - mark tile as loaded
+                    t.processingPromise.then(t => {
+                        const targetMainCache = t.getCache();
+                        tile.setCache(t.cacheKey, targetMainCache, true, false);
+                        markTileAsReady();
+                    });
                     return;
                 }
             }

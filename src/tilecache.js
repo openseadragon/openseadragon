@@ -1069,7 +1069,7 @@
                         if ( prevTile.level <= cutoff ||
                             prevTile.beingDrawn ||
                             prevTile.loading ||
-                            prevTile.processing ) { //todo exempt from deletion, or block this routine on data updates
+                            prevTile.processing ) {
                             continue;
                         }
                         if ( !worstTile ) {

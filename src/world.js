@@ -275,7 +275,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         }
 
         const tileList = [],
-            markedTiles = [];
+            tileFinishResolvers = [];
         for (const tile of tilesToProcess) {
             // We allow re-execution on tiles that are in process but have too low processing timestamp,
             // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
@@ -289,11 +289,14 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }
 
             for (let t of tileCache._tiles) {
-                // Mark all related tiles as processing and cache the references to unmark later on,
-                // last processing is set to old processing (null if finished)
-                t.lastProcess = t.processing;
+                // Mark all related tiles as processing and register callback to unmark later on
                 t.processing = tStamp;
-                markedTiles.push(t);
+                t.processingPromise = new $.Promise((resolve) => {
+                    tileFinishResolvers.push(() => {
+                        t.processing = false;
+                        resolve(t);
+                    });
+                });
             }
 
             tileCache.__invStamp = tStamp;
@@ -350,7 +353,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                         cache: workingCache,
                         targetKey: newCacheKey,
                         setAsMainCache: true,
-                        tileAllowNotLoaded: false //todo what if called from load event?
+                        tileAllowNotLoaded: tile.loading
                     });
                 } else if (restoreTiles) {
                     // If we requested restore, perform now
@@ -425,9 +428,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         });
 
         return $.Promise.all(jobList).then(() => {
-            for (let tile of markedTiles) {
-                tile.lastProcess = false;
-                tile.processing = false;
+            for (let resolve of tileFinishResolvers) {
+                resolve();
             }
             this.draw();
         });
