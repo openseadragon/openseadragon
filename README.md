@@ -32,4 +32,4 @@ OpenSeadragon is released under the New BSD license. For details, see the [LICEN
 
 We are grateful for the (development or financial) contribution to the OpenSeadragon project.
 
-<img alt="Logo BBMRI ERIC" src="test/data/assets/bbmri-logo.png" height="80"/>
+<a href="https://www.bbmri-eric.eu"><img alt="Logo BBMRI ERIC" src="assets/logos/bbmri-logo.png" height="80"/></a>
