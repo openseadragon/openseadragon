@@ -263,7 +263,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
 
             if (data.preferredFormats) {
                 for (var f = 0; f < data.preferredFormats.length; f++ ) {
-                    if ( OpenSeadragon.imageFormatSupported(data.preferredFormats[f]) ) {
+                    if ( $.imageFormatSupported(data.preferredFormats[f]) ) {
                         data.tileFormat = data.preferredFormats[f];
                         break;
                     }
@@ -501,6 +501,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         uri = [ this._id, iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
 
         return uri;
+    },
+
+    /**
+     * Equality comparator
+     */
+    equals: function(otherSource) {
+        return this._id === otherSource._id;
     },
 
     __testonly__: {

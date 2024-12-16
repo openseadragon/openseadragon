@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>OpenSeadragon Filtering Plugin Demo</title>
+
+        <script type="text/javascript" src='/build/openseadragon/openseadragon.js'></script>
+
+        <style>
+            textarea {
+                width: 900px;
+                padding: 10px;
+                font-size: 16px;
+                font-family: 'Courier New', Courier, monospace;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                background-color: #fff;
+                resize: vertical;
+                display: block;
+                max-width: 90%;
+            }
+            button {
+                margin-top: 10px;
+                padding: 10px 20px;
+                font-size: 16px;
+                color: #fff;
+                background-color: #007bff;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            button:hover {
+                background-color: #0056b3;
+                display: block;
+            }
+        </style>
+
+        <script>
+            let _pA, _pB;
+
+            function executeScript() {
+                const scriptContent = document.getElementById("scriptInput").value;
+
+                try {
+                    eval(scriptContent);
+
+                    if (! (typeof window.pluginA === "function") || ! (typeof window.pluginB === "function")) {
+                        alert("pluginA and pluginB functions must be defined!");
+                        return;
+                    }
+
+                    if (_pA)  {
+                        viewer.removeHandler('tile-invalidated', _pA);
+                    }
+                    if (_pB) {
+                        viewer.removeHandler('tile-invalidated', _pB);
+                    }
+                    _pA = window.pluginA;
+                    _pB = window.pluginB;
+                    viewer.addHandler('tile-invalidated', _pA, null, window.orderPluginA || 0);
+                    viewer.addHandler('tile-invalidated', _pB, null, window.orderPluginB || 0);
+                    viewer.requestInvalidate();
+                } catch (error) {
+                    alert("Error executing script: " + error.message);
+                }
+            }
+        </script>
+
+        <!-- JQuery -->
+        <script src="/test/lib/jquery-1.9.1.min.js"></script>
+        <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+        <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
+
+    </head>
+    <body>
+        <section class="home home-title" id="title-banner">
+            <h1>OpenSeadragon plugin demo</h1>
+            <p>You should see two plugins interacting. You can change the order of plugins and the logics!</p>
+        </section>
+
+        <div style="display: flex; flex-direction: row; flex-wrap: wrap;">
+            <section class="demo" id="demo" style="width: 800px; height: 600px"></section>
+
+            <div>
+            <textarea id="scriptInput" rows="25" cols="120" placeholder="" style="height: 470px">
+// window.pluginA must be defined! draw small gradient square
+window.pluginA = async function(e) {
+      const ctx = await e.getData('context2d');
+
+      if (ctx) {
+          const gradient = ctx.createLinearGradient(0, 0, 50, 50);
+          gradient.addColorStop(0, 'blue');
+          gradient.addColorStop(0.5, 'green');
+          gradient.addColorStop(1, 'red');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 50, 50);
+
+          await e.setData(ctx, 'context2d');
+      }
+};
+// window.pluginB must be defined! overlay with color opacity 40%
+window.pluginB = async function(e) {
+      const ctx = await e.getData('context2d');
+      if (ctx) {
+          const canvas = ctx.canvas;
+          ctx.fillStyle = "rgba(156, 0, 26, 0.4)";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          await e.setData(ctx, 'context2d');
+      }
+};
+// higher number = earlier execution
+window.orderPluginA = 1;
+window.orderPluginB = 0;
+        </textarea>
+                <textarea style="height: 120px; background-color: #e5e5e5" disabled>
+// Application of the plugins done automatically:
+viewer.addHandler('tile-invalidated', window.pluginA, null, window.orderPluginA);
+viewer.addHandler('tile-invalidated', window.pluginB, null, window.orderPluginB);
+viewer.requestInvalidate();
+        </textarea>
+                <button onclick="executeScript()">Apply</button>
+
+            </div>
+
+        </div>
+
+        <script>
+            const viewer = window.viewer = OpenSeadragon({
+                id: "demo",
+                prefixUrl: "../../build/openseadragon/images/",
+                tileSources: "https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+                drawer: 'webgl',
+                crossOriginPolicy: 'Anonymous',
+                wrapHorizontal: true,
+                showNavigator: true,
+            });
+        </script>
+    </body>
+</html>

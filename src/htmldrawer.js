@@ -68,12 +68,55 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         this.viewer.rejectEventHandler("tile-drawing", "The HTMLDrawer does not raise the tile-drawing event");
         // Since the tile-drawn event is fired by this drawer, make sure handlers can be added for it
         this.viewer.allowEventHandler("tile-drawn");
+
+        // works with canvas & image objects
+        function _prepareTile(tile, data) {
+            const element = $.makeNeutralElement( "div" );
+            const imgElement = data.cloneNode();
+            imgElement.style.msInterpolationMode = "nearest-neighbor";
+            imgElement.style.width = "100%";
+            imgElement.style.height = "100%";
+
+            const style = element.style;
+            style.position = "absolute";
+
+            return {
+                element, imgElement, style, data
+            };
+        }
+
+        // The actual placing logics will not happen at draw event, but when the cache is created:
+        $.convertor.learn("context2d", HTMLDrawer.canvasCacheType, (t, d) => _prepareTile(t, d.canvas), 1, 1);
+        $.convertor.learn("image", HTMLDrawer.imageCacheType, _prepareTile, 1, 1);
+        // Also learn how to move back, since these elements can be just used as-is
+        $.convertor.learn(HTMLDrawer.canvasCacheType, "context2d", (t, d) => d.data.getContext('2d'), 1, 3);
+        $.convertor.learn(HTMLDrawer.imageCacheType, "image", (t, d) => d.data, 1, 3);
+
+        function _freeTile(data) {
+            if ( data.imgElement && data.imgElement.parentNode ) {
+                data.imgElement.parentNode.removeChild( data.imgElement );
+            }
+            if ( data.element && data.element.parentNode ) {
+                data.element.parentNode.removeChild( data.element );
+            }
+        }
+
+        $.convertor.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
+        $.convertor.learnDestroy(HTMLDrawer.imageCacheType, _freeTile);
+    }
+
+    static get imageCacheType() {
+        return 'htmlDrawer[image]';
+    }
+
+    static get canvasCacheType() {
+        return 'htmlDrawer[canvas]';
     }
 
     /**
      * @returns {Boolean} always true
      */
-    static isSupported(){
+    static isSupported() {
         return true;
     }
 
@@ -83,6 +126,10 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      */
     getType(){
         return 'html';
+    }
+
+    getSupportedDataFormats() {
+        return [HTMLDrawer.imageCacheType, HTMLDrawer.canvasCacheType];
     }
 
     /**
@@ -99,8 +146,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      * @returns {Element} the div to draw into
      */
     _createDrawingElement(){
-        let canvas = $.makeNeutralElement("div");
-        return canvas;
+        return $.makeNeutralElement("div");
     }
 
     /**
@@ -200,13 +246,6 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
 
         let container = this.canvas;
 
-        if (!tile.cacheImageRecord) {
-            $.console.warn(
-                '[Drawer._drawTileToHTML] attempting to draw tile %s when it\'s not cached',
-                tile.toString());
-            return;
-        }
-
         if ( !tile.loaded ) {
             $.console.warn(
                 "Attempting to draw tile %s when it's not yet loaded.",
@@ -218,41 +257,29 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         //EXPERIMENTAL - trying to figure out how to scale the container
         //               content during animation of the container size.
 
-        if ( !tile.element ) {
-            var image = tile.getImage();
-            if (!image) {
-                return;
-            }
-
-            tile.element                              = $.makeNeutralElement( "div" );
-            tile.imgElement                           = image.cloneNode();
-            tile.imgElement.style.msInterpolationMode = "nearest-neighbor";
-            tile.imgElement.style.width               = "100%";
-            tile.imgElement.style.height              = "100%";
-
-            tile.style                     = tile.element.style;
-            tile.style.position            = "absolute";
+        const dataObject = this.getDataToDraw(tile);
+        if (!dataObject) {
+            return;
         }
 
-        if ( tile.element.parentNode !== container ) {
-            container.appendChild( tile.element );
+        if ( dataObject.element.parentNode !== container ) {
+            container.appendChild( dataObject.element );
         }
-        if ( tile.imgElement.parentNode !== tile.element ) {
-            tile.element.appendChild( tile.imgElement );
+        if ( dataObject.imgElement.parentNode !== dataObject.element ) {
+            dataObject.element.appendChild( dataObject.imgElement );
         }
 
-        tile.style.top     = tile.position.y + "px";
-        tile.style.left    = tile.position.x + "px";
-        tile.style.height  = tile.size.y + "px";
-        tile.style.width   = tile.size.x + "px";
+        dataObject.style.top     = tile.position.y + "px";
+        dataObject.style.left    = tile.position.x + "px";
+        dataObject.style.height  = tile.size.y + "px";
+        dataObject.style.width   = tile.size.x + "px";
 
         if (tile.flipped) {
-            tile.style.transform = "scaleX(-1)";
+            dataObject.style.transform = "scaleX(-1)";
         }
 
-        $.setElementOpacity( tile.element, tile.opacity );
+        $.setElementOpacity( dataObject.element, tile.opacity );
     }
-
 }
 
 $.HTMLDrawer = HTMLDrawer;

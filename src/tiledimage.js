@@ -163,6 +163,7 @@ $.TiledImage = function( options ) {
         _needsUpdate:   true,  // Does the tiledImage need to update the viewport again?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
+        _zombieCache:   false, // Allow cache to stay in memory upon deletion.
         _tilesToDraw:   [],    // info about the tiles currently in the viewport, two deep: array[level][tile]
         _lastDrawn:     [],    // array of tiles that were last fetched by the drawer
         _isBlending:    false, // Are any tiles still being blended?
@@ -188,7 +189,8 @@ $.TiledImage = function( options ) {
         preload:                           $.DEFAULT_SETTINGS.preload,
         compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
         subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency,
-        maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame
+        maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame,
+        _currentMaxTilesPerFrame:          (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10
     }, options );
 
     this._preload = this.preload;
@@ -229,6 +231,7 @@ $.TiledImage = function( options ) {
     this._ownAjaxHeaders = {};
     this.setAjaxHeaders(ajaxHeaders, false);
     this._initialized = true;
+    // this.invalidatedAt = 0;
 };
 
 $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.TiledImage.prototype */{
@@ -278,13 +281,29 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * Forces the system consider all tiles in this tiled image
+     * as outdated, and fire tile update event on relevant tiles
+     * Detailed description is available within the 'tile-invalidated'
+     * event.
+     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+     * @param {boolean} [viewportOnly=false] optionally invalidate only viewport-visible tiles if true
+     * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+     */
+    requestInvalidate: function (restoreTiles = true, viewportOnly = false, tStamp = $.now()) {
+        const tiles = viewportOnly ? this._lastDrawn.map(x => x.tile) : this._tileCache.getLoadedTilesFor(this);
+        return this.viewer.world.requestTileInvalidateEvent(tiles, tStamp, restoreTiles);
+    },
+
+    /**
      * Clears all tiles and triggers an update on the next call to
      * {@link OpenSeadragon.TiledImage#update}.
      */
     reset: function() {
         this._tileCache.clearTilesFor(this);
+        this._currentMaxTilesPerFrame = this.maxTilesPerFrame * 10;
         this.lastResetTime = $.now();
         this._needsDraw = true;
+        this._fullyLoaded = false;
     },
 
     /**
@@ -325,7 +344,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean} whether the item still needs to be drawn due to blending
      */
     setDrawn: function(){
-        this._needsDraw = this._isBlending || this._wasBlending;
+        this._needsDraw = this._isBlending || this._wasBlending ||
+            (this.opacity > 0 && this._lastDrawn.length < 1);
         return this._needsDraw;
     },
 
@@ -353,10 +373,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     destroy: function() {
         this.reset();
-
-        if (this.source.destroy) {
-            this.source.destroy(this.viewer);
-        }
+        this.source.destroy(this.viewer);
     },
 
     /**
@@ -907,13 +924,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.flipped = flip;
     },
 
-    get flipped(){
+    get flipped() {
         return this._flipped;
     },
-    set flipped(flipped){
+    set flipped(flipped) {
         let changed = this._flipped !== !!flipped;
         this._flipped = !!flipped;
-        if(changed){
+        if (changed && this._initialized) {
             this.update(true);
             this._needsDraw = true;
             this._raiseBoundsChange();
@@ -1162,7 +1179,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ajaxHeaders = {};
         }
         if (!$.isPlainObject(ajaxHeaders)) {
-            console.error('[TiledImage.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
+            $.console.error('[TiledImage.setAjaxHeaders] Ignoring invalid headers, must be a plain object');
             return;
         }
 
@@ -1225,6 +1242,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 job.ajaxHeaders = job.tile.loadWithAjax ? job.tile.ajaxHeaders : null;
             }
         }
+    },
+
+    /**
+     * Enable cache preservation even without this tile image,
+     * by default disabled. It means that upon removing,
+     * the tile cache does not get immediately erased but
+     * stays in the memory to be potentially re-used by other
+     * TiledImages.
+     * @param {boolean} allow
+     */
+    allowZombieCache: function(allow) {
+        this._zombieCache = allow;
     },
 
     // private
@@ -1433,20 +1462,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         // Load the new 'best' n tiles
         if (bestTiles && bestTiles.length > 0) {
-            bestTiles.forEach(function (tile) {
-                if (tile && !tile.context2D) {
+            for (let tile of bestTiles) {
+                if (tile) {
                     this._loadTile(tile, currentTime);
                 }
-            }, this);
-
+            }
             this._needsDraw = true;
             return false;
         } else {
             return this._tilesLoading === 0;
         }
-
-        // Update
-
     },
 
     /**
@@ -1736,12 +1761,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _updateTile: function( x, y, level,
                             levelVisibility, viewportCenter, numberOfTiles, currentTime, best){
 
-        var tile = this._getTile(
+        const tile = this._getTile(
             x, y,
             level,
             currentTime,
             numberOfTiles
-            );
+        );
+
 
         if( this.viewer ){
             /**
@@ -1784,22 +1810,20 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             levelVisibility
         );
 
-        if (!tile.loaded) {
-            if (tile.context2D) {
-                this._setTileLoaded(tile);
-            } else {
-                var imageRecord = this._tileCache.getImageRecord(tile.cacheKey);
-                if (imageRecord) {
-                    this._setTileLoaded(tile, imageRecord.getData());
-                }
-            }
+        // Try-find will populate tile with data if equal tile exists in system
+        if (!tile.loaded && !tile.loading && this._tryFindTileCacheRecord(tile)) {
+            loadingCoverage = true;
         }
 
         if ( tile.loading ) {
             // the tile is already in the download queue
             this._tilesLoading++;
         } else if (!loadingCoverage) {
-            best = this._compareTiles( best, tile, this.maxTilesPerFrame );
+            // add tile to best tiles to load only when not loaded already
+            best = this._compareTiles( best, tile, this._currentMaxTilesPerFrame );
+            if (this._currentMaxTilesPerFrame > this.maxTilesPerFrame) {
+                this._currentMaxTilesPerFrame = Math.max(Math.ceil(this.maxTilesPerFrame / 2), this.maxTilesPerFrame);
+            }
         }
 
         return {
@@ -1850,6 +1874,25 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
+     * @private
+     * @inner
+     * Try to find existing cache of the tile
+     * @param {OpenSeadragon.Tile} tile
+     */
+    _tryFindTileCacheRecord: function(tile) {
+        let record = this._tileCache.getCacheRecord(tile.originalCacheKey);
+
+        if (!record) {
+            return false;
+        }
+        tile.loading = true;
+        this._setTileLoaded(tile, record.data, null, null, record.type);
+        return true;
+    },
+
+    /**
+     * @private
+     * @inner
      * Obtains a tile at the given location.
      * @private
      * @param {Number} x
@@ -1873,7 +1916,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             urlOrGetter,
             post,
             ajaxHeaders,
-            context2D,
             tile,
             tilesMatrix = this.tilesMatrix,
             tileSource = this.source;
@@ -1905,9 +1947,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 ajaxHeaders = null;
             }
 
-            context2D = tileSource.getContext2D ?
-                tileSource.getContext2D(level, xMod, yMod) : undefined;
-
             tile = new $.Tile(
                 level,
                 x,
@@ -1915,7 +1954,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 bounds,
                 exists,
                 urlOrGetter,
-                context2D,
+                undefined,
                 this.loadTilesWithAjax,
                 ajaxHeaders,
                 sourceBounds,
@@ -1957,7 +1996,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _loadTile: function(tile, time ) {
         var _this = this;
         tile.loading = true;
-        this._imageLoader.addJob({
+        tile.tiledImage = this;
+        if (!this._imageLoader.addJob({
             src: tile.getUrl(),
             tile: tile,
             source: this.source,
@@ -1966,13 +2006,29 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ajaxHeaders: tile.ajaxHeaders,
             crossOriginPolicy: this.crossOriginPolicy,
             ajaxWithCredentials: this.ajaxWithCredentials,
-            callback: function( data, errorMsg, tileRequest ){
-                _this._onTileLoad( tile, time, data, errorMsg, tileRequest );
+            callback: function( data, errorMsg, tileRequest, dataType ){
+                _this._onTileLoad( tile, time, data, errorMsg, tileRequest, dataType );
             },
             abort: function() {
                 tile.loading = false;
             }
-        });
+        })) {
+            /**
+             * Triggered if tile load job was added to a full queue.
+             * This allows to react upon e.g. network not being able to serve the tiles fast enough.
+             * @event job-queue-full
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Tile} tile - The tile that failed to load.
+             * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image the tile belongs to.
+             * @property {number} time - The time in milliseconds when the tile load began.
+             */
+            this.viewer.raiseEvent("job-queue-full", {
+                tile: tile,
+                tiledImage: this,
+                time: time,
+            });
+        }
     },
 
     /**
@@ -1983,9 +2039,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {*} data image data
      * @param {String} errorMsg
      * @param {XMLHttpRequest} tileRequest
+     * @param {String} [dataType=undefined] data type, derived automatically if not set
      */
-    _onTileLoad: function( tile, time, data, errorMsg, tileRequest ) {
-        if ( !data ) {
+    _onTileLoad: function( tile, time, data, errorMsg, tileRequest, dataType ) {
+        //data is set to null on error by image loader, allow custom falsey values (e.g. 0)
+        if ( data === null || data === undefined ) {
             $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.getUrl(), errorMsg );
             /**
              * Triggered when a tile fails to load.
@@ -2019,28 +2077,50 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return;
         }
 
-        var _this = this,
-            finish = function() {
-                var ccc = _this.source;
-                var cutoff = ccc.getClosestLevel();
-                _this._setTileLoaded(tile, data, cutoff, tileRequest);
-        };
-
-
-        finish();
+        this._setTileLoaded(tile, data, null, tileRequest, dataType);
     },
 
     /**
      * @private
      * @param {OpenSeadragon.Tile} tile
-     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
-     * @param {Number|undefined} cutoff
-     * @param {XMLHttpRequest|undefined} tileRequest
+     * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object,
+     *   can be null: in that case, cache is assigned to a tile without further processing
+     * @param {?Number} cutoff ignored, @deprecated
+     * @param {?XMLHttpRequest} tileRequest
+     * @param {?String} [dataType=undefined] data type, derived automatically if not set
      */
-    _setTileLoaded: function(tile, data, cutoff, tileRequest) {
-        var increment = 0,
-            eventFinished = false,
-            _this = this;
+    _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType) {
+        tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
+        // does nothing if tile.cacheKey already present
+
+        let tileCacheCreated = false;
+        tile.addCache(tile.cacheKey, () => {
+            tileCacheCreated = true;
+            return data;
+        }, dataType, false, false);
+
+        let resolver = null,
+            increment = 0,
+            eventFinished = false;
+        const _this = this,
+            now = $.now();
+
+        function completionCallback() {
+            increment--;
+            if (increment > 0) {
+                return;
+            }
+            eventFinished = true;
+
+            //do not override true if set (false is default)
+            tile.hasTransparency = tile.hasTransparency || _this.source.hasTransparency(
+                undefined, tile.getUrl(), tile.ajaxHeaders, tile.postData
+            );
+            tile.loading = false;
+            tile.loaded = true;
+            _this.redraw();
+            resolver(tile);
+        }
 
         function getCompletionCallback() {
             if (eventFinished) {
@@ -2051,76 +2131,81 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return completionCallback;
         }
 
-        function completionCallback() {
-            increment--;
-            if (increment === 0) {
-                tile.loading = false;
-                tile.loaded = true;
-                tile.hasTransparency = _this.source.hasTransparency(
-                    tile.context2D, tile.getUrl(), tile.ajaxHeaders, tile.postData
-                );
-                if (!tile.context2D) {
-                    _this._tileCache.cacheTile({
-                        data: data,
-                        tile: tile,
-                        cutoff: cutoff,
-                        tiledImage: _this
-                    });
-                }
-                /**
-                 * Triggered when a tile is loaded and pre-processing is compelete,
-                 * and the tile is ready to draw.
-                 *
-                 * @event tile-ready
-                 * @memberof OpenSeadragon.Viewer
-                 * @type {object}
-                 * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
-                 * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
-                 * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
-                 * @private
-                 */
-                _this.viewer.raiseEvent("tile-ready", {
-                    tile: tile,
-                    tiledImage: _this,
-                    tileRequest: tileRequest
-                });
-                _this._needsDraw = true;
-            }
+        function markTileAsReady() {
+            const fallbackCompletion = getCompletionCallback();
+
+            /**
+             * Triggered when a tile has just been loaded in memory. That means that the
+             * image has been downloaded and can be modified before being drawn to the canvas.
+             * This event is _awaiting_, it supports asynchronous functions or functions that return a promise.
+             *
+             * @event tile-loaded
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {Image|*} image - The image (data) of the tile. Deprecated.
+             * @property {*} data image data, the data sent to ImageJob.prototype.finish(),
+             *   by default an Image object. Deprecated
+             * @property {String} dataType type of the data
+             * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
+             * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
+             * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
+             * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
+             *  NOTE: do no await the promise in the handler: you will create a deadlock!
+             * @property {function} getCompletionCallback - deprecated
+             */
+            _this.viewer.raiseEventAwaiting("tile-loaded", {
+                tile: tile,
+                tiledImage: _this,
+                tileRequest: tileRequest,
+                promise: new $.Promise(resolve => {
+                    resolver = resolve;
+                }),
+                get image() {
+                    $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'tile-invalidated' event to modify data instead.");
+                    return data;
+                },
+                get data() {
+                    $.console.error("[tile-loaded] event 'data' has been deprecated. Use 'tile-invalidated' event to modify data instead.");
+                    return data;
+                },
+                getCompletionCallback: function () {
+                    $.console.error("[tile-loaded] getCompletionCallback is deprecated: it introduces race conditions: " +
+                        "use async event handlers instead, execution order is deducted by addHandler(...) priority argument.");
+                    return getCompletionCallback();
+                },
+            }).catch(() => {
+                $.console.error("[tile-loaded] event finished with failure: there might be a problem with a plugin you are using.");
+            }).then(fallbackCompletion);
         }
 
-        /**
-         * Triggered when a tile has just been loaded in memory. That means that the
-         * image has been downloaded and can be modified before being drawn to the canvas.
-         *
-         * @event tile-loaded
-         * @memberof OpenSeadragon.Viewer
-         * @type {object}
-         * @property {Image|*} image - The image (data) of the tile. Deprecated.
-         * @property {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
-         * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
-         * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
-         * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
-         * @property {function} getCompletionCallback - A function giving a callback to call
-         * when the asynchronous processing of the image is done. The image will be
-         * marked as entirely loaded when the callback has been called once for each
-         * call to getCompletionCallback.
-         */
 
-        var fallbackCompletion = getCompletionCallback();
-        this.viewer.raiseEvent("tile-loaded", {
-            tile: tile,
-            tiledImage: this,
-            tileRequest: tileRequest,
-            get image() {
-                $.console.error("[tile-loaded] event 'image' has been deprecated. Use 'data' property instead.");
-                return data;
-            },
-            data: data,
-            getCompletionCallback: getCompletionCallback
-        });
-        eventFinished = true;
-        // In case the completion callback is never called, we at least force it once.
-        fallbackCompletion();
+        if (tileCacheCreated) {
+            _this.viewer.world.requestTileInvalidateEvent([tile], now, false, true).then(markTileAsReady);
+        } else {
+            // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
+            const origCache = tile.getCache(tile.originalCacheKey);
+            for (let t of origCache._tiles) {
+
+                // if there exists a tile that has different main cache, inherit it as a main cache
+                if (t.cacheKey !== tile.cacheKey) {
+
+                    // add reference also to the main cache, no matter what the other tile state has
+                    // completion of the invaldate event should take care of all such tiles
+                    const targetMainCache = t.getCache();
+                    tile.setCache(t.cacheKey, targetMainCache, true, false);
+                    break;
+                } else if (t.processing) {
+                    // Await once processing finishes - mark tile as loaded
+                    t.processingPromise.then(t => {
+                        const targetMainCache = t.getCache();
+                        tile.setCache(t.cacheKey, targetMainCache, true, false);
+                        markTileAsReady();
+                    });
+                    return;
+                }
+            }
+            markTileAsReady();
+        }
     },
 
 
@@ -2169,7 +2254,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         });
     },
-
 
     /**
      * Returns true if the given tile provides coverage to lower-level tiles of

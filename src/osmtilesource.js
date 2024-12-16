@@ -139,6 +139,13 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      */
     getTileUrl: function( level, x, y ) {
         return this.tilesUrl + (level - 8) + "/" + x + "/" + y + ".png";
+    },
+
+    /**
+     * Equality comparator
+     */
+    equals: function(otherSource) {
+        return this.tilesUrl === otherSource.tilesUrl;
     }
 });
 

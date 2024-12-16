@@ -77,7 +77,7 @@
         options.minLevel = 0;
         options.maxLevel = options.gridSize.length - 1;
 
-        OpenSeadragon.TileSource.apply(this, [options]);
+        $.TileSource.apply(this, [options]);
     };
 
     $.extend($.ZoomifyTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.ZoomifyTileSource.prototype */ {
@@ -143,6 +143,13 @@
             result = Math.floor(num / 256);
             return this.tilesUrl + 'TileGroup' + result + '/' + level + '-' + x + '-' + y + '.' + this.fileFormat;
 
+        },
+
+        /**
+         * Equality comparator
+         */
+        equals: function (otherSource) {
+            return this.tilesUrl === otherSource.tilesUrl;
         }
     });
 

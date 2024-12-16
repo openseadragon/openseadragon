@@ -2,8 +2,7 @@
 
 (function() {
     var viewer;
-    const drawerTypes = ['webgl','canvas','html'];
-    drawerTypes.forEach(runDrawerTests);
+    OpenSeadragon.getBuiltInDrawersForTest().forEach(runDrawerTests);
 
     function runDrawerTests(drawerType){
 
