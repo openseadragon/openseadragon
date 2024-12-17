@@ -61,6 +61,10 @@ Our tests are based on [QUnit](https://qunitjs.com/) and [Puppeteer](https://git
 
     grunt test
 
+To test a specific module (`navigator` here) only:
+
+    grunt test --module="navigator"
+
 If you wish to work interactively with the tests or test your changes:
 
     grunt connect watch
@@ -68,6 +72,12 @@ If you wish to work interactively with the tests or test your changes:
 and open `http://localhost:8000/test/test.html` in your browser.
 
 Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
+
+
+> Note: corresponding npm commands for the above are:
+>  - npm run test
+>  - npm run test -- --module="navigator"
+>  - npm run dev
 
 You can also get a report of the tests' code coverage:
 

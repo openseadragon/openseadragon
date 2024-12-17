@@ -168,6 +168,14 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
 
 
     /**
+     * Equality comparator
+     */
+    equals: function(otherSource) {
+        return this.tilesUrl === otherSource.tilesUrl;
+    },
+
+
+    /**
      * @function
      * @param {Number} level
      * @param {Number} x

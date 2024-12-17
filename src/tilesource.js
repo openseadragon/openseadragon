@@ -55,7 +55,8 @@
  * @param {Object} options
  *      You can either specify a URL, or literally define the TileSource (by specifying
  *      width, height, tileSize, tileOverlap, minLevel, and maxLevel). For the former,
- *      the extending class is expected to implement 'getImageInfo' and 'configure'.
+ *      the extending class is expected to implement 'supports' and 'configure'.
+ *      Note that _in this case, the child class of getImageInfo() is ignored!_
  *      For the latter, the construction is assumed to occur through
  *      the extending classes implementation of 'configure'.
  * @param {String} [options.url]
@@ -72,6 +73,7 @@
  * @param {Boolean} [options.splitHashDataForPost]
  *      First occurrence of '#' in the options.url is used to split URL
  *      and the latter part is treated as POST data (applies to getImageInfo(...))
+ *      Does not work if getImageInfo() is overridden and used (see the options description)
  * @param {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
  * @param {Number} [options.height]
@@ -140,6 +142,12 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
     }
 
     /**
+     * Retrieve context2D of this tile source
+     * @memberOf OpenSeadragon.TileSource
+     * @function getContext2D
+     */
+
+    /**
      * Ratio of width to height
      * @member {Number} aspectRatio
      * @memberof OpenSeadragon.TileSource#
@@ -170,6 +178,8 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
 
+    // TODO potentially buggy behavior: what if .url is used by child class before it calls super constructor?
+    //  this can happen if old JS class definition is used
     if( 'string' === $.type( arguments[ 0 ] ) ){
         this.url = arguments[0];
     }
@@ -425,6 +435,13 @@ $.TileSource.prototype = {
     /**
      * Responsible for retrieving, and caching the
      * image metadata pertinent to this TileSources implementation.
+     * There are three scenarios of opening a tile source: providing a parseable string, plain object, or an URL.
+     * This method is only called by OSD if the TileSource configuration is a non-parseable string (~url).
+     *
+     * The string can contain a hash `#` symbol, followed by
+     * key=value arguments. If this is the case, this method sends this
+     * data as a POST body.
+     *
      * @function
      * @param {String} url
      * @throws {Error}
@@ -554,7 +571,7 @@ $.TileSource.prototype = {
                      * @property {String} message
                      * @property {String} source
                      * @property {String} postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-                     *      see TileSource::getPostData) or null
+                     *      see TileSource::getTilePostData) or null
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
@@ -587,6 +604,17 @@ $.TileSource.prototype = {
     },
 
     /**
+     * Check whether two tileSources are equal. This is used for example
+     * when replacing tile-sources, which turns on the zombie cache before
+     * old item removal.
+     * @param {OpenSeadragon.TileSource} otherSource
+     * @returns {Boolean}
+     */
+    equals: function (otherSource) {
+        return false;
+    },
+
+    /**
      * Responsible for parsing and configuring the
      * image metadata pertinent to this TileSources implementation.
      * This method is not implemented by this class other than to throw an Error
@@ -606,6 +634,16 @@ $.TileSource.prototype = {
      */
     configure: function( data, url, postData ) {
         throw new Error( "Method not implemented." );
+    },
+
+    /**
+     * Shall this source need to free some objects
+     * upon unloading, it must be done here. For example, canvas
+     * size must be set to 0 for safari to free.
+     * @param {OpenSeadragon.Viewer} viewer
+     */
+    destroy: function ( viewer ) {
+        //no-op
     },
 
     /**
@@ -683,9 +721,12 @@ $.TileSource.prototype = {
      * The tile cache object is uniquely determined by this key and used to lookup
      * the image data in cache: keys should be different if images are different.
      *
-     * In case a tile has context2D property defined (TileSource.prototype.getContext2D)
-     * or its context2D is set manually; the cache is not used and this function
-     * is irrelevant.
+     * You can return falsey tile cache key, in which case the tile will
+     * be created without invoking ImageJob --- but with data=null. Then,
+     * you are responsible for manually creating the cache data. This is useful
+     * particularly if you want to use empty TiledImage with client-side derived data
+     * only. The default tile-cache key is then called "" - an empty string.
+     *
      * Note: default behaviour does not take into account post data.
      * @param {Number} level tile level it was fetched with
      * @param {Number} x x-coordinate in the pyramid level
@@ -693,6 +734,9 @@ $.TileSource.prototype = {
      * @param {String} url the tile was fetched with
      * @param {Object} ajaxHeaders the tile was fetched with
      * @param {*} postData data the tile was fetched with (type depends on getTilePostData(..) return type)
+     * @return {?String} can return the cache key or null, in that case an empty cache is initialized
+     *   without downloading any data for internal use: user has to define the cache contents manually, via
+     *   the cache interface of this class.
      */
     getTileHashKey: function(level, x, y, url, ajaxHeaders, postData) {
         function withHeaders(hash) {
@@ -723,10 +767,15 @@ $.TileSource.prototype = {
 
     /**
      * Decide whether tiles have transparency: this is crucial for correct images blending.
+     * Overriden on a tile level by setting tile.hasTransparency = true;
+     * @param context2D unused, deprecated argument
+     * @param url tile.getUrl() value for given tile
+     * @param ajaxHeaders tile.ajaxHeaders value for given tile
+     * @param post tile.post value for given tile
      * @returns {boolean} true if the image has transparency
      */
     hasTransparency: function(context2D, url, ajaxHeaders, post) {
-        return !!context2D || url.match('.png');
+        return url.match('.png');
     },
 
     /**
@@ -738,41 +787,45 @@ $.TileSource.prototype = {
      * @param {String} [context.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {Boolean} [context.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
      * @param {String} [context.crossOriginPolicy] - CORS policy to use for downloads
-     * @param {String} [context.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-     *   see TileSource::getPostData) or null
+     * @param {?String|?Object} [context.postData] - HTTP POST data (usually but not necessarily
+     *   in k=v&k2=v2... form, see TileSource::getTilePostData) or null
      * @param {*} [context.userData] - Empty object to attach your own data and helper variables to.
-     * @param {Function} [context.finish] - Should be called unless abort() was executed, e.g. on all occasions,
-     *   be it successful or unsuccessful request.
-     *   Usage: context.finish(data, request, errMessage). Pass the downloaded data object or null upon failure.
-     *   Add also reference to an ajax request if used. Provide error message in case of failure.
+     * @param {Function} [context.finish] - Should be called unless abort() was executed upon successful
+     *   data retrieval.
+     *   Usage: context.finish(data, request, dataType=undefined). Pass the downloaded data object
+     *   add also reference to an ajax request if used. Optionally, specify what data type the data is.
+     * @param {Function} [context.fail] - Should be called unless abort() was executed upon unsuccessful request.
+     *   Usage: context.fail(errMessage, request). Provide error message in case of failure,
+     *   add also reference to an ajax request if used.
      * @param {Function} [context.abort] - Called automatically when the job times out.
-     *   Usage: context.abort().
-     * @param {Function} [context.callback] @private - Called automatically once image has been downloaded
+     *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
+     * @param {Function} [context.callback] Private parameter. Called automatically once image has been downloaded
      *   (triggered by finish).
-     * @param {Number} [context.timeout] @private - The max number of milliseconds that
+     * @param {Number} [context.timeout] Private parameter. The max number of milliseconds that
      *   this image job may take to complete.
-     * @param {string} [context.errorMsg] @private - The final error message, default null (set by finish).
+     * @param {string} [context.errorMsg] Private parameter. The final error message, default null (set by finish).
      */
     downloadTileStart: function (context) {
-        var dataStore = context.userData,
+        const dataStore = context.userData,
             image = new Image();
 
         dataStore.image = image;
         dataStore.request = null;
 
-        var finish = function(error) {
-            if (!image) {
-                context.finish(null, dataStore.request, "Image load failed: undefined Image instance.");
+        const finalize = function(error) {
+            if (error || !image) {
+                context.fail(error || "[downloadTileStart] Image load failed: undefined Image instance.",
+                    dataStore.request);
                 return;
             }
             image.onload = image.onerror = image.onabort = null;
-            context.finish(error ? null : image, dataStore.request, error);
+            context.finish(image, dataStore.request, "image");
         };
         image.onload = function () {
-            finish();
+            finalize();
         };
         image.onabort = image.onerror = function() {
-            finish("Image load aborted.");
+            finalize("[downloadTileStart] Image load aborted.");
         };
 
         // Load the tile with an AJAX request if the loadWithAjax option is
@@ -792,21 +845,21 @@ $.TileSource.prototype = {
                     try {
                         blb = new window.Blob([request.response]);
                     } catch (e) {
-                        var BlobBuilder = (
+                        const BlobBuilder = (
                             window.BlobBuilder ||
                             window.WebKitBlobBuilder ||
                             window.MozBlobBuilder ||
                             window.MSBlobBuilder
                         );
                         if (e.name === 'TypeError' && BlobBuilder) {
-                            var bb = new BlobBuilder();
+                            const bb = new BlobBuilder();
                             bb.append(request.response);
                             blb = bb.getBlob();
                         }
                     }
                     // If the blob is empty for some reason consider the image load a failure.
                     if (blb.size === 0) {
-                        finish("Empty image response.");
+                        finalize("[downloadTileStart] Empty image response.");
                     } else {
                         // Create a URL for the blob data and make it the source of the image object.
                         // This will still trigger Image.onload to indicate a successful tile load.
@@ -814,7 +867,7 @@ $.TileSource.prototype = {
                     }
                 },
                 error: function(request) {
-                    finish("Image load aborted - XHR error");
+                    finalize("[downloadTileStart] Image load aborted - XHR error");
                 }
             });
         } else {
@@ -828,6 +881,8 @@ $.TileSource.prototype = {
     /**
      * Provide means of aborting the execution.
      * Note that if you override this function, you should override also downloadTileStart().
+     * Note that calling job.abort() would create an infinite loop!
+     *
      * @param {ImageJob} context job, the same object as with downloadTileStart(..)
      * @param {*} [context.userData] - Empty object to attach (and mainly read) your own data.
      */
@@ -846,33 +901,44 @@ $.TileSource.prototype = {
      * cacheObject parameter should be used to attach the data to, there are no
      * conventions on how it should be stored - all the logic is implemented within *TileCache() functions.
      *
-     * Note that if you override any of *TileCache() functions, you should override all of them.
-     * @param {object} cacheObject context cache object
+     * Note that
+     *  - data is cached automatically as cacheObject.data
+     *  - if you override any of *TileCache() functions, you should override all of them.
+     *  - these functions might be called over shared cache object managed by other TileSources simultaneously.
+     * @param {OpenSeadragon.CacheRecord} cacheObject context cache object
      * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object
-     * @param {Tile} tile instance the cache was created with
+     * @param {OpenSeadragon.Tile} tile instance the cache was created with
+     * @deprecated
      */
     createTileCache: function(cacheObject, data, tile) {
-        cacheObject._data = data;
+        $.console.error("[TileSource.createTileCache] has been deprecated. Use cache API of a tile instead.");
+        //no-op, we create the cache automatically
     },
 
     /**
      * Cache object destructor, unset all properties you created to allow GC collection.
      * Note that if you override any of *TileCache() functions, you should override all of them.
-     * @param {object} cacheObject context cache object
+     * Note that these functions might be called over shared cache object managed by other TileSources simultaneously.
+     * Original cache data is cacheObject.data, but do not delete it manually! It is taken care for,
+     * you might break things.
+     * @param {OpenSeadragon.CacheRecord} cacheObject context cache object
+     * @deprecated
      */
     destroyTileCache: function (cacheObject) {
-        cacheObject._data = null;
-        cacheObject._renderedContext = null;
+        $.console.error("[TileSource.destroyTileCache] has been deprecated. Use cache API of a tile instead.");
+        //no-op, handled internally
     },
 
     /**
-     * Raw data getter
-     * Note that if you override any of *TileCache() functions, you should override all of them.
-     * @param {object} cacheObject context cache object
-     * @returns {*} cache data
+     * Raw data getter, should return anything that is compatible with the system, or undefined
+     * if the system can handle it.
+     * @param {OpenSeadragon.CacheRecord} cacheObject context cache object
+     * @returns {OpenSeadragon.Promise<?>} cache data
+     * @deprecated
      */
     getTileCacheData: function(cacheObject) {
-        return cacheObject._data;
+        $.console.error("[TileSource.getTileCacheData] has been deprecated. Use cache API of a tile instead.");
+        return cacheObject.getDataAs(undefined, false);
     },
 
     /**
@@ -880,11 +946,14 @@ $.TileSource.prototype = {
      *  - plugins might need image representation of the data
      *  - div HTML rendering relies on image element presence
      * Note that if you override any of *TileCache() functions, you should override all of them.
-     *  @param {object} cacheObject context cache object
+     * Note that these functions might be called over shared cache object managed by other TileSources simultaneously.
+     *  @param {OpenSeadragon.CacheRecord} cacheObject context cache object
      *  @returns {Image} cache data as an Image
+     *  @deprecated
      */
     getTileCacheDataAsImage: function(cacheObject) {
-        return cacheObject._data; //the data itself by default is Image
+        $.console.error("[TileSource.getTileCacheDataAsImage] has been deprecated. Use cache API of a tile instead.");
+        return cacheObject.getImage();
     },
 
     /**
@@ -892,21 +961,13 @@ $.TileSource.prototype = {
      *  - most heavily used rendering method is a canvas-based approach,
      *    convert the data to a canvas and return it's 2D context
      * Note that if you override any of *TileCache() functions, you should override all of them.
-     * @param {object} cacheObject context cache object
+     * @param {OpenSeadragon.CacheRecord} cacheObject context cache object
      * @returns {CanvasRenderingContext2D} context of the canvas representation of the cache data
+     * @deprecated
      */
     getTileCacheDataAsContext2D: function(cacheObject) {
-        if (!cacheObject._renderedContext) {
-            var canvas = document.createElement( 'canvas' );
-            canvas.width = cacheObject._data.width;
-            canvas.height = cacheObject._data.height;
-            cacheObject._renderedContext = canvas.getContext('2d');
-            cacheObject._renderedContext.drawImage( cacheObject._data, 0, 0 );
-            //since we are caching the prerendered image on a canvas
-            //allow the image to not be held in memory
-            cacheObject._data = null;
-        }
-        return cacheObject._renderedContext;
+        $.console.error("[TileSource.getTileCacheDataAsContext2D] has been deprecated. Use cache API of a tile instead.");
+        return cacheObject.getRenderedContext();
     }
 };
 

@@ -34,7 +34,14 @@
 
 (function( $ ){
 
-    const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
+/**
+ * @typedef BaseDrawerOptions
+ * @memberOf OpenSeadragon
+ * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
+ *   detached (=internal) cache object in case it has to perform type conversion
+ */
+
+const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
 /**
  * @class OpenSeadragon.DrawerBase
  * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
@@ -51,10 +58,11 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
         $.console.assert( options.element, "[Drawer] options.element is required" );
 
+        this._id = this.getType() + $.now();
         this.viewer = options.viewer;
         this.viewport = options.viewport;
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
-        this.options = options.options || {};
+        this.options = $.extend({}, this.defaultOptions, options.options);
 
         this.container  = $.getElement( options.element );
 
@@ -77,16 +85,38 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.container.style.textAlign = "left";
         this.container.appendChild( this.canvas );
 
-        this._checkForAPIOverrides();
+        this._checkInterfaceImplementation();
+    }
+
+    /**
+     * Retrieve default options for the current drawer.
+     * The base implementation provides default shared options.
+     * Overrides should enumerate all defaults or extend from this implementation.
+     *   return $.extend({}, super.options, { ... custom drawer instance options ... });
+     * @returns {BaseDrawerOptions} common options
+     */
+    get defaultOptions() {
+        return {
+            usePrivateCache: false
+        };
     }
 
     // protect the canvas member with a getter
     get canvas(){
         return this._renderingTarget;
     }
+
     get element(){
         $.console.error('Drawer.element is deprecated. Use Drawer.container instead.');
         return this.container;
+    }
+
+    /**
+     * Get unique drawer ID
+     * @return {string}
+     */
+    getId() {
+        return this._id;
     }
 
     /**
@@ -96,6 +126,43 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     getType(){
         $.console.error('Drawer.getType must be implemented by child class');
         return undefined;
+    }
+
+    /**
+     * Retrieve required data formats the data must be converted to.
+     * This list MUST BE A VALID SUBSET OF getSupportedDataFormats()
+     * @abstract
+     * @return {string[]}
+     */
+    getRequiredDataFormats() {
+        return this.getSupportedDataFormats();
+    }
+
+    /**
+     * Retrieve data types
+     * @abstract
+     * @return {string[]}
+     */
+    getSupportedDataFormats() {
+        throw "Drawer.getSupportedDataFormats must define its supported rendering data types!";
+    }
+
+    /**
+     * Check a particular cache record is compatible.
+     * This function _MUST_ be called: if it returns a falsey
+     * value, the rendering _MUST NOT_ proceed. It should
+     * await next animation frames and check again for availability.
+     * @param {OpenSeadragon.Tile} tile
+     * @return {any|undefined} undefined if cache not available, compatible data otherwise.
+     */
+    getDataToDraw(tile) {
+        const cache = tile.getCache(tile.cacheKey);
+        if (!cache) {
+            $.console.warn("Attempt to draw tile %s when not cached!", tile);
+            return undefined;
+        }
+        const dataCache = cache.getDataForRendering(this, tile);
+        return dataCache && dataCache.data;
     }
 
     /**
@@ -149,7 +216,6 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         return false;
     }
 
-
     /**
      * @abstract
      * @param {Boolean} [imageSmoothingEnabled] - Whether or not the image is
@@ -183,20 +249,20 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @private
      *
      */
-    _checkForAPIOverrides(){
-        if(this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement){
+    _checkInterfaceImplementation(){
+        if (this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement) {
             throw(new Error("[drawer]._createDrawingElement must be implemented by child class"));
         }
-        if(this.draw === $.DrawerBase.prototype.draw){
+        if (this.draw === $.DrawerBase.prototype.draw) {
             throw(new Error("[drawer].draw must be implemented by child class"));
         }
-        if(this.canRotate === $.DrawerBase.prototype.canRotate){
+        if (this.canRotate === $.DrawerBase.prototype.canRotate) {
             throw(new Error("[drawer].canRotate must be implemented by child class"));
         }
-        if(this.destroy === $.DrawerBase.prototype.destroy){
+        if (this.destroy === $.DrawerBase.prototype.destroy) {
             throw(new Error("[drawer].destroy must be implemented by child class"));
         }
-        if(this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled){
+        if (this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled) {
             throw(new Error("[drawer].setImageSmoothingEnabled must be implemented by child class"));
         }
     }
@@ -302,7 +368,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         * @property {OpenSeadragon.DrawerBase} drawer - The drawer that raised the error.
         * @property {String} error - A message describing the error.
         * @property {?Object} userData - Arbitrary subscriber-defined object.
-        * @private
+        * @protected
         */
         this.viewer.raiseEvent( 'drawer-error', {
             tiledImage: tiledImage,

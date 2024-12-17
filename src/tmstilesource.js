@@ -131,6 +131,13 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
         var yTiles = this.getNumTiles( level ).y - 1;
 
         return this.tilesUrl + level + "/" + x + "/" + (yTiles - y) + ".png";
+    },
+
+    /**
+     * Equality comparator
+     */
+    equals: function (otherSource) {
+        return this.tilesUrl === otherSource.tilesUrl;
     }
 });
 
