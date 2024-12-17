@@ -56,6 +56,7 @@
     * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
     * @param {Element} options.element - Parent element.
     * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
+    * @param {Boolean} [options.useTwoPassRendering] - Always use two pass rendering.
     */
     OpenSeadragon.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
         constructor(options){
@@ -322,7 +323,7 @@
                         tiledImage.debugMode
                     );
 
-                    let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
+                    let useTwoPassRendering = this.options.useTwoPassRendering || useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
 
                     // using the context2d pipeline requires a clean rendering (back) buffer to start
                     if(useContext2dPipeline){
