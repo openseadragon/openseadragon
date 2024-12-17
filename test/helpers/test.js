@@ -59,31 +59,31 @@
         },
 
         // ----------
-        equalsWithVariance: function ( value1, value2, variance ) {
-            return Math.abs( value1 - value2 ) <= variance;
+       equalsWithVariance: function (value1, value2, variance) {
+        return Math.abs(value1 - value2) <= variance;
         },
 
         // ----------
-        assessNumericValue: function ( assert, value1, value2, variance, message ) {
-            assert.ok( Util.equalsWithVariance( value1, value2, variance ), message + " Expected:" + value1 + " Found: " + value2 + " Variance: " + variance );
+        assessNumericValue: function (assert, actual, expected, variance, message) {
+        assert.ok(
+            Util.equalsWithVariance(actual, expected, variance),
+            message + " Actual: " + actual + " Expected: " + expected + " Variance: " + variance
+        );
         },
 
         // ----------
         assertPointsEquals: function (assert, pointA, pointB, precision, message) {
-            Util.assessNumericValue(assert, pointA.x, pointB.x, precision, message + " x: ");
-            Util.assessNumericValue(assert, pointA.y, pointB.y, precision, message + " y: ");
+        Util.assessNumericValue(assert, pointA.x, pointB.x, precision, message + " x: ");
+        Util.assessNumericValue(assert, pointA.y, pointB.y, precision, message + " y: ");
         },
 
         // ----------
-        assertRectangleEquals: function (assert, rectA, rectB, precision, message) {
-            Util.assessNumericValue(assert, rectA.x, rectB.x, precision, message + " x: ");
-            Util.assessNumericValue(assert, rectA.y, rectB.y, precision, message + " y: ");
-            Util.assessNumericValue(assert, rectA.width, rectB.width, precision,
-                message + " width: ");
-            Util.assessNumericValue(assert, rectA.height, rectB.height, precision,
-                message + " height: ");
-            Util.assessNumericValue(assert, rectA.degrees, rectB.degrees, precision,
-                message + " degrees: ");
+         assertRectangleEquals: function (assert, rectA, rectB, precision, message) {
+        Util.assessNumericValue(assert, rectA.x, rectB.x, precision, message + " x: ");
+        Util.assessNumericValue(assert, rectA.y, rectB.y, precision, message + " y: ");
+        Util.assessNumericValue(assert, rectA.width, rectB.width, precision, message + " width: ");
+        Util.assessNumericValue(assert, rectA.height, rectB.height, precision, message + " height: ");
+        Util.assessNumericValue(assert, rectA.degrees, rectB.degrees, precision, message + " degrees: ");
         },
 
         // ----------
