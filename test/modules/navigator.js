@@ -52,15 +52,15 @@
 
     var assessNavigatorLocation = function (assert, expectedX, expectedY) {
         navigatorElement = navigatorElement || $(".navigator");
-        Util.assessNumericValue(assert, expectedX, navigatorElement.offset().left, 10, ' Navigator x Position');
-        Util.assessNumericValue(assert, expectedY, navigatorElement.offset().top, 10, ' Navigator y Position');
+        Util.assessNumericValue(assert, navigatorElement.offset().left, expectedX, 10, ' Navigator x Position');
+        Util.assessNumericValue(assert, navigatorElement.offset().top, expectedY, 10, ' Navigator y Position');
     };
 
     var assessNavigatorSize = function (assert, expectedWidth, expectedHeight, msg) {
         msg = msg || "";
         navigatorElement = navigatorElement || $(".navigator");
-        Util.assessNumericValue(assert, expectedWidth, navigatorElement.width(), 2, ' Navigator Width ' + msg);
-        Util.assessNumericValue(assert, expectedHeight, navigatorElement.height(), 2, ' Navigator Height ' + msg);
+        Util.assessNumericValue(assert, navigatorElement.width(), expectedWidth, 2, ' Navigator Width ' + msg);
+        Util.assessNumericValue(assert, navigatorElement.height(), expectedHeight, 2, ' Navigator Height ' + msg);
     };
 
     var assessNavigatorAspectRatio = function (assert, expectedAspectRatio, variance, msg) {
@@ -68,8 +68,8 @@
         navigatorElement = navigatorElement || $(".navigator");
         Util.assessNumericValue(
             assert,
-            expectedAspectRatio,
             navigatorElement.width() / navigatorElement.height(),
+            expectedAspectRatio,
             variance,
             ' Navigator Aspect Ratio ' + msg
         );
@@ -80,12 +80,13 @@
         navigatorElement = navigatorElement || $(".navigator");
         Util.assessNumericValue(
             assert,
-            expectedArea,
             navigatorElement.width() * navigatorElement.height(),
+            expectedArea,
             Math.max(navigatorElement.width(), navigatorElement.height()),
             ' Navigator Area ' + msg
         );
     };
+
 
     var navigatorRegionBoundsInPoints = function () {
         var regionBoundsInPoints,
@@ -142,21 +143,22 @@
         var expectedBounds = navigatorRegionBoundsInPoints();
         Util.assessNumericValue(
             assert,
-            expectedBounds.width,
             displayRegion.width() + viewer.navigator.totalBorderWidths.x,
+            expectedBounds.width,
             2,
             status + ' Width synchronization'
         );
         Util.assessNumericValue(
             assert,
-            expectedBounds.height,
             displayRegion.height() + viewer.navigator.totalBorderWidths.y,
+            expectedBounds.height,
             2,
             status + ' Height synchronization'
         );
-        Util.assessNumericValue(assert, expectedBounds.x, displayRegion.position().left, 2, status + ' Left synchronization');
-        Util.assessNumericValue(assert, expectedBounds.y, displayRegion.position().top, 2, status + ' Top synchronization');
+        Util.assessNumericValue(assert, displayRegion.position().left, expectedBounds.x, 2, status + ' Left synchronization');
+        Util.assessNumericValue(assert, displayRegion.position().top, expectedBounds.y, 2, status + ' Top synchronization');
     };
+
 
     var waitForViewer = function () {
         return function (assert, handler, count, lastDisplayRegionLeft, lastDisplayWidth) {
@@ -271,13 +273,14 @@
         }
         Util.assessNumericValue(
             assert,
-            1 / viewer.source.aspectRatio / 2,
             viewer.viewport.getCenter().y,
+            1 / viewer.source.aspectRatio / 2,
             yPositionVariance,
             ' Viewer at center, y coord'
         );
-        Util.assessNumericValue(assert, 0.5, viewer.viewport.getCenter().x, 0.4, ' Viewer at center, x coord');
+        Util.assessNumericValue(assert, viewer.viewport.getCenter().x, 0.5, 0.4, ' Viewer at center, x coord');
     };
+
 
     var assessViewerInCorner = function (theContentCorner, assert) {
         return function () {
@@ -301,8 +304,8 @@
             if (viewer.viewport.getBounds().width < 1) {
                 Util.assessNumericValue(
                     assert,
-                    expectedXCoordinate,
                     viewer.viewport.getBounds().x,
+                    expectedXCoordinate,
                     0.04,
                     ' Viewer at ' + theContentCorner + ', x coord'
                 );
@@ -310,8 +313,8 @@
             if (viewer.viewport.getBounds().height < 1 / viewer.source.aspectRatio) {
                 Util.assessNumericValue(
                     assert,
-                    expectedYCoordinate,
                     viewer.viewport.getBounds().y,
+                    expectedYCoordinate,
                     0.04,
                     ' Viewer at ' + theContentCorner + ', y coord'
                 );
