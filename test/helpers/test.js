@@ -59,8 +59,8 @@
         },
 
         // ----------
-        equalsWithVariance: function (actual, expected, variance) {
-            return Math.abs(actual - expected) <= variance;
+        equalsWithVariance: function (value1, value2, variance) {
+            return Math.abs(value1 - value2) <= variance;
         },
 
         // ----------
