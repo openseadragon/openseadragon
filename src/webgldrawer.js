@@ -100,9 +100,9 @@
             this._setupCanvases();
             this._setupRenderer();
 
+            this._setupCallCount = 1;
             this._supportedFormats = this._setupTextureHandlers();
             this._requiredFormats = this._supportedFormats;
-            this._setupCallCount = 1;
 
             this.context = this._outputContext; // API required by tests
         }
@@ -249,7 +249,7 @@
                     }
                     const dataCache = cache.getDataForRendering(this, tile);
                     // Use CPU Data for the drawer instead
-                    return dataCache && dataCache.cpuData;
+                    return dataCache && dataCache.data.cpuData.getContext("2d");
                 };
             }
 
@@ -950,7 +950,7 @@
                 return {
                     texture: texture,
                     position: position,
-                    cpuData: data // Reference to the outer cache data, used to draw if webgl canont be used
+                    cpuData: data
                 };
             };
             const tex2DCompatibleDestructor = textureInfo => {
@@ -967,10 +967,12 @@
             // We should be OK uploading any of these types. The complexity is selected to be O(3n), should be
             // more than linear pass over pixels
             $.convertor.learn("context2d", c2dTexType, (t, d) => tex2DCompatibleLoader(t, d.canvas), 1, 3);
-            $.convertor.learn("image", imageTexType, tex2DCompatibleLoader, 1, 3);
+            // TODO: lost support for image
+            // $.convertor.learn("image", imageTexType, tex2DCompatibleLoader, 1, 3);
 
             $.convertor.learnDestroy(c2dTexType, tex2DCompatibleDestructor);
-            $.convertor.learnDestroy(imageTexType, tex2DCompatibleDestructor);
+            // TODO
+            // $.convertor.learnDestroy(imageTexType, tex2DCompatibleDestructor);
             return [c2dTexType, imageTexType];
         }
 

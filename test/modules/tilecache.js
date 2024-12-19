@@ -341,7 +341,7 @@
                 const cache = tile.getCache();
                 test.equal(cache.type, T_A, "Cache data was not affected, the drawer uses internal cache.");
 
-                const internalCache = cache.getDataForRendering(drawer, tile);
+                const internalCache = cache.getCacheForRendering(drawer, tile);
                 test.equal(internalCache.type, T_C, "Conversion A->C ready, since there is no way to get to T_E.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }
@@ -424,7 +424,7 @@
                 test.equal(cache.type, T_C, "Main Cache Updated (suite 1)");
                 test.equal(cache.data, previousTestValue, "Main Cache Updated (suite 1)");
 
-                const internalCache = cache.getDataForRendering(drawer, tile);
+                const internalCache = cache.getCacheForRendering(drawer, tile);
                 test.equal(T_C, internalCache.type, "Conversion A->C ready, since there is no way to get to T_E.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }
