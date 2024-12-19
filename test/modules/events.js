@@ -333,10 +333,10 @@
                 assert.equal( quickClick, expected.quickClick, expected.description + 'clickHandler event.quick matches expected (' + expected.quickClick + ')' );
             }
             if ('speed' in expected) {
-                Util.assessNumericValue(expected.speed, speed, 1.0, expected.description + 'Drag speed ');
+                Util.assessNumericValue(assert, speed, expected.speed, 1.0, expected.description + 'Drag speed');
             }
             if ('direction' in expected) {
-                Util.assessNumericValue(expected.direction, direction, 0.2, expected.description + 'Drag direction ');
+                Util.assessNumericValue(assert, direction, expected.direction, 0.2, expected.description + 'Drag direction');
             }
         };
 
@@ -868,7 +868,7 @@
             simulateDblTap();
 
             var zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
+            Util.assessNumericValue(assert, zoom, originalZoom, epsilon,
                 "Zoom on double tap should be prevented");
 
             // Reset event handler to original
@@ -878,7 +878,7 @@
             originalZoom *= viewer.zoomPerClick;
 
             zoom = viewer.viewport.getZoom();
-            Util.assessNumericValue(assert, originalZoom, zoom, epsilon,
+            Util.assessNumericValue(assert, zoom, originalZoom, epsilon,
                 "Zoom on double tap should not be prevented");
 
 

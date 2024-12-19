@@ -22,37 +22,26 @@
         assert.strictEqual(rect.degrees, 0, 'rect.degrees should be 0');
 
         rect = new OpenSeadragon.Rect(0, 0, 1, 2, -405);
-        Util.assessNumericValue(assert, Math.sqrt(2) / 2, rect.x, precision,
-            'rect.x should be sqrt(2)/2');
-        Util.assessNumericValue(assert, -Math.sqrt(2) / 2, rect.y, precision,
-            'rect.y should be -sqrt(2)/2');
-        Util.assessNumericValue(assert, 2, rect.width, precision,
-            'rect.width should be 2');
-        Util.assessNumericValue(assert, 1, rect.height, precision,
-            'rect.height should be 1');
-        assert.strictEqual(45, rect.degrees, 'rect.degrees should be 45');
+        Util.assessNumericValue(assert, rect.x, Math.sqrt(2) / 2, precision, 'rect.x should be sqrt(2)/2');
+        Util.assessNumericValue(assert, rect.y, -Math.sqrt(2) / 2, precision, 'rect.y should be -sqrt(2)/2');
+        Util.assessNumericValue(assert, rect.width, 2, precision, 'rect.width should be 2');
+        Util.assessNumericValue(assert, rect.height, 1, precision, 'rect.height should be 1');
+        assert.strictEqual(rect.degrees, 45, 'rect.degrees should be 45');
 
         rect = new OpenSeadragon.Rect(0, 0, 1, 2, 135);
-        Util.assessNumericValue(assert, -Math.sqrt(2), rect.x, precision,
-            'rect.x should be -sqrt(2)');
-        Util.assessNumericValue(assert, -Math.sqrt(2), rect.y, precision,
-            'rect.y should be -sqrt(2)');
-        Util.assessNumericValue(assert, 2, rect.width, precision,
-            'rect.width should be 2');
-        Util.assessNumericValue(assert, 1, rect.height, precision,
-            'rect.height should be 1');
-        assert.strictEqual(45, rect.degrees, 'rect.degrees should be 45');
+        Util.assessNumericValue(assert, rect.x, -Math.sqrt(2), precision, 'rect.x should be -sqrt(2)');
+        Util.assessNumericValue(assert, rect.y, -Math.sqrt(2), precision, 'rect.y should be -sqrt(2)');
+        Util.assessNumericValue(assert, rect.width, 2, precision, 'rect.width should be 2');
+        Util.assessNumericValue(assert, rect.height, 1, precision, 'rect.height should be 1');
+        assert.strictEqual(rect.degrees, 45, 'rect.degrees should be 45');
 
         rect = new OpenSeadragon.Rect(0, 0, 1, 1, 585);
-        Util.assessNumericValue(assert, 0, rect.x, precision,
-            'rect.x should be 0');
-        Util.assessNumericValue(assert, -Math.sqrt(2), rect.y, precision,
-            'rect.y should be -sqrt(2)');
-        Util.assessNumericValue(assert, 1, rect.width, precision,
-            'rect.width should be 1');
-        Util.assessNumericValue(assert, 1, rect.height, precision,
-            'rect.height should be 1');
-        assert.strictEqual(45, rect.degrees, 'rect.degrees should be 45');
+        Util.assessNumericValue(assert, rect.x, 0, precision, 'rect.x should be 0');
+        Util.assessNumericValue(assert, rect.y, -Math.sqrt(2), precision, 'rect.y should be -sqrt(2)');
+        Util.assessNumericValue(assert, rect.width, 1, precision, 'rect.width should be 1');
+        Util.assessNumericValue(assert, rect.height, 1, precision, 'rect.height should be 1');
+        assert.strictEqual(rect.degrees, 45, 'rect.degrees should be 45');
+
     });
 
     QUnit.test('getTopLeft', function(assert) {

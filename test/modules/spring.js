@@ -36,7 +36,7 @@
 
         now = 500;
         spring.update();
-        Util.assessNumericValue(assert, 5.5, spring.current.value, 0.00001, 'current value after first update');
+        Util.assessNumericValue(assert, spring.current.value, 5.5, 0.00001, 'current value after first update');
         assert.equal(spring.target.value, 6, 'target value after first update');
 
         now = 1000;
@@ -65,7 +65,7 @@
 
         now = 500;
         spring.update();
-        Util.assessNumericValue(assert, 1.41421, spring.current.value, 0.00001, 'current value after first update');
+        Util.assessNumericValue(assert, spring.current.value, 1.41421, 0.00001, 'current value after first update');
         assert.equal(spring.target.value, 2, 'target value after first update');
 
         now = 1000;
