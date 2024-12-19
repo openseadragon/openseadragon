@@ -59,7 +59,7 @@
         },
 
         // ----------
-        equalsWithVariance: function (value1, value2, variance) {
+       equalsWithVariance: function (value1, value2, variance) {
             return Math.abs(value1 - value2) <= variance;
         },
 
@@ -72,13 +72,13 @@
         },
 
         // ----------
-        assertPointEquals: function (assert, actualPoint, expectedPoint, precision, message) {
+        assertPointsEquals: function (assert, actualPoint, expectedPoint, precision, message) {
             Util.assessNumericValue(assert, actualPoint.x, expectedPoint.x, precision, message + " x: ");
             Util.assessNumericValue(assert, actualPoint.y, expectedPoint.y, precision, message + " y: ");
         },
 
         // ----------
-        assertRectangleEquals: function (assert, actualRect, expectedRect, precision, message) {
+         assertRectangleEquals: function (assert, actualRect, expectedRect, precision, message) {
             Util.assessNumericValue(assert, actualRect.x, expectedRect.x, precision, message + " x: ");
             Util.assessNumericValue(assert, actualRect.y, expectedRect.y, precision, message + " y: ");
             Util.assessNumericValue(assert, actualRect.width, expectedRect.width, precision, message + " width: ");
