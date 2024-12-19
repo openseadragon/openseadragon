@@ -220,11 +220,6 @@ function updateTiledImage(tiledImage, data, value, item){
             } else {
                 tiledImage.debugMode = false;
             }
-        } else if (field == 'twoPassRendering'){
-            const checked = $(item).prop('checked');
-            viewer1.drawer.options.useTwoPassRendering = checked;
-            viewer2.drawer.options.useTwoPassRendering = checked;
-            $('[data-field=twoPassRendering]').prop('checked', checked);
         }
     } else {
         //viewer-level option
@@ -366,7 +361,6 @@ function makeImagePickerElement(key, label){
             <label>Composite: <select data-image="" data-field="composite"></select></label>
             <label>Wrap: <select data-image="" data-field="wrapping"></select></label>
             <label>Smoothing: <input type="checkbox" data-image="" data-field="smoothing" checked></label>
-            <label>Two Pass Rendering:<input type="checkbox" data-image="" data-field="twoPassRendering"></label>
         </div>
     </div>`.replaceAll('data-image=""', `data-image="${key}"`).replace('__title__', label));
 
