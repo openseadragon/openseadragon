@@ -3024,17 +3024,23 @@ function OpenSeadragon( options ){
 
 
 // Universal Module Definition, supports CommonJS, AMD and simple script tag
-(function (root, factory) {
+(function (root, $) {
     if (typeof define === 'function' && define.amd) {
         // expose as amd module
-        define([], factory);
+        define([], function () {
+            return OpenSeadragon;
+        });
     } else if (typeof module === 'object' && module.exports) {
         // expose as commonjs module
-        module.exports = factory();
+        module.exports = $;
     } else {
+        if (!root) {
+            root = typeof window === 'object' && window;
+            if (!root) {
+                $.console.error("OpenSeadragon must run in browser environment!");
+            }
+        }
         // expose as window.OpenSeadragon
-        root.OpenSeadragon = factory();
+        root.OpenSeadragon = $;
     }
-}(this, function () {
-    return OpenSeadragon;
-}));
+}(this, OpenSeadragon));
