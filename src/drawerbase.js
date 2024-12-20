@@ -161,7 +161,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
             $.console.warn("Attempt to draw tile %s when not cached!", tile);
             return undefined;
         }
-        const dataCache = cache.getDataForRendering(this, tile);
+        const dataCache = cache.getCacheForRendering(this, tile);
         return dataCache && dataCache.data;
     }
 

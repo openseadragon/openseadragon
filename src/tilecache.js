@@ -176,7 +176,7 @@
          *   Returns undefined if the data is not ready for rendering.
          * @private
          */
-        getDataForRendering(drawer, tileToDraw) {
+        getCacheForRendering(drawer, tileToDraw) {
             const supportedTypes = drawer.getSupportedDataFormats(),
                 keepInternalCopy = drawer.options.usePrivateCache;
             if (this.loaded && supportedTypes.includes(this.type)) {
@@ -264,7 +264,7 @@
 
             const conversionPath = $.convertor.getConversionPath(this.type, supportedTypes);
             if (!conversionPath) {
-                $.console.error(`[getDataForRendering] Conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
+                $.console.error(`[getCacheForRendering] Conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
                 return $.Promise.resolve(this);
             }
             const newInternalCache = new $.SimpleCacheRecord();
