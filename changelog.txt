@@ -24,6 +24,7 @@ OPENSEADRAGON CHANGELOG
     * New testing/demo utilities (MockSeadragon, DrawerSwitcher for switching drawers in demos, getBuiltInDrawersForTest for testing all drawers), serialization guard in tests to remove circular references.
     * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
     * Misc: updated CSS for dev server, new dev & test commands.
+* Improved unit tests (#2640 @harshkg23)
 
 
 5.0.1:
