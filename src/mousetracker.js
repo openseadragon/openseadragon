@@ -277,8 +277,6 @@
             sentDragEvent:         false
         };
 
-        this.hasScrollHandler = !!this.scrollHandler;
-
         if ( $.MouseTracker.havePointerEvents ) {
             $.setElementPointerEvents( this.element, 'auto' );
         }
@@ -401,6 +399,15 @@
                       this.dragHandler ||
                       this.dragEndHandler ||
                       this.pinchHandler);
+        },
+
+        /**
+         * Do we currently have a scroll handler.
+         * @function
+         * @returns {Boolean} Do we currently have a scroll handler.
+         */
+        hasScrollHandler: function () {
+            return !!this.scrollHandler;
         },
 
         /**
@@ -2881,7 +2888,7 @@
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // handleWheelEvent() may set true
-                eventInfo.preventGesture = !tracker.hasScrollHandler;
+                eventInfo.preventGesture = !tracker.hasScrollHandler();
                 eventInfo.stopPropagation = false;
                 break;
             case 'gotpointercapture':
