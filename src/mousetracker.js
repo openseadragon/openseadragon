@@ -386,10 +386,9 @@
 
         /**
          * Do we currently have any assigned gesture handlers.
-         * @function
          * @returns {Boolean} Do we currently have any assigned gesture handlers.
          */
-        hasGestureHandlers: function () {
+        get hasGestureHandlers() {
             return !!(this.pressHandler ||
                       this.nonPrimaryPressHandler ||
                       this.releaseHandler ||
@@ -403,10 +402,9 @@
 
         /**
          * Do we currently have a scroll handler.
-         * @function
          * @returns {Boolean} Do we currently have a scroll handler.
          */
-        hasScrollHandler: function () {
+        get hasScrollHandler() {
             return !!this.scrollHandler;
         },
 
@@ -2855,7 +2853,7 @@
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
-                eventInfo.preventGesture = !tracker.hasGestureHandlers();
+                eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerover':
@@ -2873,22 +2871,22 @@
             case 'pointerdown':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
-                eventInfo.preventDefault = false; // updatePointerDown() may set true (tracker.hasGestureHandlers())
-                eventInfo.preventGesture = !tracker.hasGestureHandlers();
+                eventInfo.preventDefault = false; // updatePointerDown() may set true (tracker.hasGestureHandlers)
+                eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
             case 'pointerup':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
-                eventInfo.preventGesture = !tracker.hasGestureHandlers();
+                eventInfo.preventGesture = !tracker.hasGestureHandlers;
                 eventInfo.stopPropagation = false;
                 break;
             case 'wheel':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // handleWheelEvent() may set true
-                eventInfo.preventGesture = !tracker.hasScrollHandler();
+                eventInfo.preventGesture = !tracker.hasScrollHandler;
                 eventInfo.stopPropagation = false;
                 break;
             case 'gotpointercapture':
