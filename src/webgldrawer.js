@@ -322,7 +322,7 @@
                         tiledImage.debugMode
                     );
 
-                    let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.hasTransparency;
+                    let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
 
                     // using the context2d pipeline requires a clean rendering (back) buffer to start
                     if(useContext2dPipeline){
