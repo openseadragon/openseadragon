@@ -25,6 +25,7 @@ OPENSEADRAGON CHANGELOG
     * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
     * Misc: updated CSS for dev server, new dev & test commands.
 * Improved unit tests (#2640 @harshkg23)
+* Fixed: Transparency detection didn't always work properly (#2636 @pcram-techcyte)
 
 
 5.0.1:
