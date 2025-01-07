@@ -97,7 +97,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      */
     get defaultOptions() {
         return {
-            usePrivateCache: false
+            usePrivateCache: false,
+            preloadCache: true,
         };
     }
 
@@ -161,7 +162,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
             $.console.warn("Attempt to draw tile %s when not cached!", tile);
             return undefined;
         }
-        const dataCache = cache.getCacheForRendering(this, tile);
+        const dataCache = cache.getDataForRendering(this, tile);
         return dataCache && dataCache.data;
     }
 
@@ -238,6 +239,31 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     // Deprecated functions
     clear(){
         $.console.warn('[drawer].clear() is deprecated. The drawer is responsible for clearing itself as needed before drawing tiles.');
+    }
+
+    /**
+     * If options.usePrivateCache is true, this method MUST RETURN the private cache content
+     * @param {OpenSeadragon.CacheRecord} cache
+     * @param {OpenSeadragon.Tile} tile
+     * @return any
+     */
+    dataCreate(cache, tile) {}
+
+    /**
+     * It is possible to perform any necessary cleanup on internal cache, necessary if you
+     * need to clean up some memory (e.g. destroy canvas by setting with & height to 0).
+     * @param {*} data object returned by dataCreate(...)
+     */
+    dataFree(data) {}
+
+    /**
+     * Call to invalidate internal cache. It will be rebuilt. With synchronous converions,
+     * it will be rebuilt immediatelly. With asynchronous, it will be rebuilt once invalidation
+     * routine happens, e.g. you should call also requestInvalidate() if you need to happen
+     * it as soon as possible.
+     */
+    setDataNeedsRefresh() {
+        this._dataNeedsRefresh = $.now();
     }
 
     // Private functions
