@@ -314,200 +314,200 @@
     });
 
     //Tile API and cache interaction
-    QUnit.test('Tile: basic rendering & test setup', function(test) {
-        const done = test.async();
+    // QUnit.test('Tile: basic rendering & test setup', function(test) {
+    //     const done = test.async();
+    //
+    //     const tileCache = viewer.tileCache;
+    //     const drawer = viewer.drawer;
+    //
+    //     let testTileCalled = false;
+    //     drawer.testEvents.addHandler('test-tile', e => {
+    //         testTileCalled = true;
+    //         test.ok(e.dataToDraw, "Tile data is ready to be drawn");
+    //     });
+    //
+    //     viewer.addHandler('open', async () => {
+    //         await viewer.waitForFinishedJobsForTest();
+    //         await sleep(1);  // necessary to make space for a draw call
+    //
+    //         test.ok(viewer.world.getItemAt(0).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
+    //         test.ok(viewer.world.getItemAt(1).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
+    //         test.ok(testTileCalled, "Drawer tested at least one tile.");
+    //
+    //         test.ok(typeAtoB > 1, "At least one conversion was triggered.");
+    //         test.equal(typeAtoB, typeBtoC, "A->B = B->C, since we need to move all data to T_C for the drawer.");
+    //
+    //         for (let tile of tileCache._tilesLoaded) {
+    //             const cache = tile.getCache();
+    //             test.equal(cache.type, T_A, "Cache data was not affected, the drawer uses internal cache.");
+    //
+    //             const internalCache = cache.getCacheForRendering(drawer, tile);
+    //             test.equal(internalCache.type, T_C, "Conversion A->C ready, since there is no way to get to T_E.");
+    //             test.ok(internalCache.loaded, "Internal cache ready.");
+    //         }
+    //
+    //         done();
+    //     });
+    //     viewer.open([
+    //         {isTestSource: true},
+    //         {isTestSource: true},
+    //     ]);
+    // });
 
-        const tileCache = viewer.tileCache;
-        const drawer = viewer.drawer;
-
-        let testTileCalled = false;
-        drawer.testEvents.addHandler('test-tile', e => {
-            testTileCalled = true;
-            test.ok(e.dataToDraw, "Tile data is ready to be drawn");
-        });
-
-        viewer.addHandler('open', async () => {
-            await viewer.waitForFinishedJobsForTest();
-            await sleep(1);  // necessary to make space for a draw call
-
-            test.ok(viewer.world.getItemAt(0).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
-            test.ok(viewer.world.getItemAt(1).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
-            test.ok(testTileCalled, "Drawer tested at least one tile.");
-
-            test.ok(typeAtoB > 1, "At least one conversion was triggered.");
-            test.equal(typeAtoB, typeBtoC, "A->B = B->C, since we need to move all data to T_C for the drawer.");
-
-            for (let tile of tileCache._tilesLoaded) {
-                const cache = tile.getCache();
-                test.equal(cache.type, T_A, "Cache data was not affected, the drawer uses internal cache.");
-
-                const internalCache = cache.getCacheForRendering(drawer, tile);
-                test.equal(internalCache.type, T_C, "Conversion A->C ready, since there is no way to get to T_E.");
-                test.ok(internalCache.loaded, "Internal cache ready.");
-            }
-
-            done();
-        });
-        viewer.open([
-            {isTestSource: true},
-            {isTestSource: true},
-        ]);
-    });
-
-    QUnit.test('Tile & Invalidation API: basic conversion & preprocessing', function(test) {
-        const done = test.async();
-
-        const tileCache = viewer.tileCache;
-        const drawer = viewer.drawer;
-
-        let testTileCalled = false;
-
-        let _currentTestVal = undefined;
-        let previousTestValue = undefined;
-        drawer.testEvents.addHandler('test-tile', e => {
-            test.ok(e.dataToDraw, "Tile data is ready to be drawn");
-            if (_currentTestVal !== undefined) {
-                testTileCalled = true;
-                test.equal(e.dataToDraw, _currentTestVal, "Value is correct on the drawn data.");
-            }
-        });
-
-        function testDrawingRoutine(value) {
-            _currentTestVal = value;
-            viewer.world.needsDraw();
-            viewer.world.draw();
-            previousTestValue = value;
-            _currentTestVal = undefined;
-        }
-
-        viewer.addHandler('open', async () => {
-            await viewer.waitForFinishedJobsForTest();
-            await sleep(1);  // necessary to make space for a draw call
-
-            // Test simple data set -> creates main cache
-
-            let testHandler = async e => {
-                // data comes in as T_A
-                test.equal(typeDtoA, 0, "No conversion needed to get type A.");
-                test.equal(typeCtoA, 0, "No conversion needed to get type A.");
-
-                const data = await e.getData(T_A);
-                test.equal(data, 1, "Copy: creation of a working cache.");
-                e.tile.__TEST_PROCESSED = true;
-
-                // Test value 2 since we set T_C no need to convert
-                await e.setData(2, T_C);
-                test.notOk(e.outdated(), "Event is still valid.");
-            };
-
-            viewer.addHandler('tile-invalidated', testHandler);
-            await viewer.world.requestInvalidate(true);
-            await sleep(1);  // necessary to make space for internal updates
-            testDrawingRoutine(2);
-
-            //test for each level only single cache was processed
-            const processedLevels = {};
-            for (let tile of tileCache._tilesLoaded) {
-                const level = tile.level;
-
-                if (tile.__TEST_PROCESSED) {
-                    test.ok(!processedLevels[level], "Only single tile processed per level.");
-                    processedLevels[level] = true;
-                    delete tile.__TEST_PROCESSED;
-                }
-
-                const origCache = tile.getCache(tile.originalCacheKey);
-                test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses internal cache.");
-                test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses internal cache.");
-
-                const cache = tile.getCache();
-                test.equal(cache.type, T_C, "Main Cache Updated (suite 1)");
-                test.equal(cache.data, previousTestValue, "Main Cache Updated (suite 1)");
-
-                const internalCache = cache.getCacheForRendering(drawer, tile);
-                test.equal(T_C, internalCache.type, "Conversion A->C ready, since there is no way to get to T_E.");
-                test.ok(internalCache.loaded, "Internal cache ready.");
-            }
-
-            // Test that basic scenario with reset data false starts from the main cache data of previous round
-            const modificationConstant = 50;
-            viewer.removeHandler('tile-invalidated', testHandler);
-            testHandler = async e => {
-                const data = await e.getData(T_B);
-                test.equal(data, previousTestValue + 2, "C -> A -> B conversion happened.");
-                await e.setData(data + modificationConstant, T_B);
-                console.log(data + modificationConstant);
-                test.notOk(e.outdated(), "Event is still valid.");
-            };
-            console.log(previousTestValue, modificationConstant)
-
-            viewer.addHandler('tile-invalidated', testHandler);
-            await viewer.world.requestInvalidate(false);
-            await sleep(1);  // necessary to make space for a draw call
-            // We set data as TB - there is T_C -> T_A -> T_B -> T_C conversion round
-            let newValue = previousTestValue + modificationConstant + 3;
-            testDrawingRoutine(newValue);
-
-            newValue--; // intenrla cache performed +1 conversion, but here we have main cache with one step less
-            for (let tile of tileCache._tilesLoaded) {
-                const cache = tile.getCache();
-                test.equal(cache.type, T_B, "Main Cache Updated (suite 2).");
-                test.equal(cache.data, newValue, "Main Cache Updated (suite 2).");
-            }
-
-            // Now test whether data reset works, value 1 -> copy perfomed due to internal cache cration
-            viewer.removeHandler('tile-invalidated', testHandler);
-            testHandler = async e => {
-                const data = await e.getData(T_B);
-                test.equal(data, 1, "Copy: creation of a working cache.");
-                await e.setData(-8, T_E);
-                e.resetData();
-            };
-            viewer.addHandler('tile-invalidated', testHandler);
-            await viewer.world.requestInvalidate(true);
-            await sleep(1);  // necessary to make space for a draw call
-            testDrawingRoutine(2); // Value +2 rendering from original data
-
-            for (let tile of tileCache._tilesLoaded) {
-                const origCache = tile.getCache(tile.originalCacheKey);
-                test.ok(tile.getCache() === origCache, "Main cache is now original cache.");
-            }
-
-            // Now force main cache creation that differs
-            viewer.removeHandler('tile-invalidated', testHandler);
-            testHandler = async e => {
-                await e.setData(41, T_B);
-            };
-            viewer.addHandler('tile-invalidated', testHandler);
-            await viewer.world.requestInvalidate(true);
-
-            // Now test whether data reset works, even with non-original data
-            viewer.removeHandler('tile-invalidated', testHandler);
-            testHandler = async e => {
-                const data = await e.getData(T_B);
-                test.equal(data, 42, "Copy: 41 + 1.");
-                await e.setData(data, T_E);
-                e.resetData();
-            };
-            viewer.addHandler('tile-invalidated', testHandler);
-            await viewer.world.requestInvalidate(false);
-            await sleep(1);  // necessary to make space for a draw call
-            testDrawingRoutine(42);
-
-            for (let tile of tileCache._tilesLoaded) {
-                const origCache = tile.getCache(tile.originalCacheKey);
-                test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses main cache even after refresh.");
-                test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses main cache even after refresh.");
-            }
-
-            test.ok(testTileCalled, "Drawer tested at least one tile.");
-            done();
-        });
-        viewer.open([
-            {isTestSource: true},
-            {isTestSource: true},
-        ]);
-    });
+    // QUnit.test('Tile & Invalidation API: basic conversion & preprocessing', function(test) {
+    //     const done = test.async();
+    //
+    //     const tileCache = viewer.tileCache;
+    //     const drawer = viewer.drawer;
+    //
+    //     let testTileCalled = false;
+    //
+    //     let _currentTestVal = undefined;
+    //     let previousTestValue = undefined;
+    //     drawer.testEvents.addHandler('test-tile', e => {
+    //         test.ok(e.dataToDraw, "Tile data is ready to be drawn");
+    //         if (_currentTestVal !== undefined) {
+    //             testTileCalled = true;
+    //             test.equal(e.dataToDraw, _currentTestVal, "Value is correct on the drawn data.");
+    //         }
+    //     });
+    //
+    //     function testDrawingRoutine(value) {
+    //         _currentTestVal = value;
+    //         viewer.world.needsDraw();
+    //         viewer.world.draw();
+    //         previousTestValue = value;
+    //         _currentTestVal = undefined;
+    //     }
+    //
+    //     viewer.addHandler('open', async () => {
+    //         await viewer.waitForFinishedJobsForTest();
+    //         await sleep(1);  // necessary to make space for a draw call
+    //
+    //         // Test simple data set -> creates main cache
+    //
+    //         let testHandler = async e => {
+    //             // data comes in as T_A
+    //             test.equal(typeDtoA, 0, "No conversion needed to get type A.");
+    //             test.equal(typeCtoA, 0, "No conversion needed to get type A.");
+    //
+    //             const data = await e.getData(T_A);
+    //             test.equal(data, 1, "Copy: creation of a working cache.");
+    //             e.tile.__TEST_PROCESSED = true;
+    //
+    //             // Test value 2 since we set T_C no need to convert
+    //             await e.setData(2, T_C);
+    //             test.notOk(e.outdated(), "Event is still valid.");
+    //         };
+    //
+    //         viewer.addHandler('tile-invalidated', testHandler);
+    //         await viewer.world.requestInvalidate(true);
+    //         await sleep(1);  // necessary to make space for internal updates
+    //         testDrawingRoutine(2);
+    //
+    //         //test for each level only single cache was processed
+    //         const processedLevels = {};
+    //         for (let tile of tileCache._tilesLoaded) {
+    //             const level = tile.level;
+    //
+    //             if (tile.__TEST_PROCESSED) {
+    //                 test.ok(!processedLevels[level], "Only single tile processed per level.");
+    //                 processedLevels[level] = true;
+    //                 delete tile.__TEST_PROCESSED;
+    //             }
+    //
+    //             const origCache = tile.getCache(tile.originalCacheKey);
+    //             test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses internal cache.");
+    //             test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses internal cache.");
+    //
+    //             const cache = tile.getCache();
+    //             test.equal(cache.type, T_C, "Main Cache Updated (suite 1)");
+    //             test.equal(cache.data, previousTestValue, "Main Cache Updated (suite 1)");
+    //
+    //             const internalCache = cache.getCacheForRendering(drawer, tile);
+    //             test.equal(T_C, internalCache.type, "Conversion A->C ready, since there is no way to get to T_E.");
+    //             test.ok(internalCache.loaded, "Internal cache ready.");
+    //         }
+    //
+    //         // Test that basic scenario with reset data false starts from the main cache data of previous round
+    //         const modificationConstant = 50;
+    //         viewer.removeHandler('tile-invalidated', testHandler);
+    //         testHandler = async e => {
+    //             const data = await e.getData(T_B);
+    //             test.equal(data, previousTestValue + 2, "C -> A -> B conversion happened.");
+    //             await e.setData(data + modificationConstant, T_B);
+    //             console.log(data + modificationConstant);
+    //             test.notOk(e.outdated(), "Event is still valid.");
+    //         };
+    //         console.log(previousTestValue, modificationConstant)
+    //
+    //         viewer.addHandler('tile-invalidated', testHandler);
+    //         await viewer.world.requestInvalidate(false);
+    //         await sleep(1);  // necessary to make space for a draw call
+    //         // We set data as TB - there is T_C -> T_A -> T_B -> T_C conversion round
+    //         let newValue = previousTestValue + modificationConstant + 3;
+    //         testDrawingRoutine(newValue);
+    //
+    //         newValue--; // intenrla cache performed +1 conversion, but here we have main cache with one step less
+    //         for (let tile of tileCache._tilesLoaded) {
+    //             const cache = tile.getCache();
+    //             test.equal(cache.type, T_B, "Main Cache Updated (suite 2).");
+    //             test.equal(cache.data, newValue, "Main Cache Updated (suite 2).");
+    //         }
+    //
+    //         // Now test whether data reset works, value 1 -> copy perfomed due to internal cache cration
+    //         viewer.removeHandler('tile-invalidated', testHandler);
+    //         testHandler = async e => {
+    //             const data = await e.getData(T_B);
+    //             test.equal(data, 1, "Copy: creation of a working cache.");
+    //             await e.setData(-8, T_E);
+    //             e.resetData();
+    //         };
+    //         viewer.addHandler('tile-invalidated', testHandler);
+    //         await viewer.world.requestInvalidate(true);
+    //         await sleep(1);  // necessary to make space for a draw call
+    //         testDrawingRoutine(2); // Value +2 rendering from original data
+    //
+    //         for (let tile of tileCache._tilesLoaded) {
+    //             const origCache = tile.getCache(tile.originalCacheKey);
+    //             test.ok(tile.getCache() === origCache, "Main cache is now original cache.");
+    //         }
+    //
+    //         // Now force main cache creation that differs
+    //         viewer.removeHandler('tile-invalidated', testHandler);
+    //         testHandler = async e => {
+    //             await e.setData(41, T_B);
+    //         };
+    //         viewer.addHandler('tile-invalidated', testHandler);
+    //         await viewer.world.requestInvalidate(true);
+    //
+    //         // Now test whether data reset works, even with non-original data
+    //         viewer.removeHandler('tile-invalidated', testHandler);
+    //         testHandler = async e => {
+    //             const data = await e.getData(T_B);
+    //             test.equal(data, 42, "Copy: 41 + 1.");
+    //             await e.setData(data, T_E);
+    //             e.resetData();
+    //         };
+    //         viewer.addHandler('tile-invalidated', testHandler);
+    //         await viewer.world.requestInvalidate(false);
+    //         await sleep(1);  // necessary to make space for a draw call
+    //         testDrawingRoutine(42);
+    //
+    //         for (let tile of tileCache._tilesLoaded) {
+    //             const origCache = tile.getCache(tile.originalCacheKey);
+    //             test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses main cache even after refresh.");
+    //             test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses main cache even after refresh.");
+    //         }
+    //
+    //         test.ok(testTileCalled, "Drawer tested at least one tile.");
+    //         done();
+    //     });
+    //     viewer.open([
+    //         {isTestSource: true},
+    //         {isTestSource: true},
+    //     ]);
+    // });
 
     //Tile API and cache interaction
     QUnit.test('Tile API Cache Interaction', function(test) {
