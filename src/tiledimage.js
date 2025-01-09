@@ -997,6 +997,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         this._opacity = opacity;
         this._needsDraw = true;
+        this._needsUpdate = true;
         /**
          * Raised when the TiledImage's opacity is changed.
          * @event opacity-change
