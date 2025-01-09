@@ -27,6 +27,7 @@ OPENSEADRAGON CHANGELOG
 * Improved unit tests (#2640 @harshkg23)
 * Fixed: Transparency detection didn't always work properly (#2636 @pcram-techcyte)
 * Fixed: MouseTracker's hasGestureHandlers and hasScrollHandler values were not getting updated upon dynamically adding/removing handlers (#2649 @Seafret)
+* Fixed: Sometimes images wouldn't update when you changed their opacity (#2652 @pearcetm)
 
 5.0.1:
 
