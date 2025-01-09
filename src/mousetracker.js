@@ -277,13 +277,6 @@
             sentDragEvent:         false
         };
 
-        this.hasGestureHandlers = !!( this.pressHandler || this.nonPrimaryPressHandler ||
-                                this.releaseHandler || this.nonPrimaryReleaseHandler ||
-                                this.clickHandler || this.dblClickHandler ||
-                                this.dragHandler || this.dragEndHandler ||
-                                this.pinchHandler );
-        this.hasScrollHandler = !!this.scrollHandler;
-
         if ( $.MouseTracker.havePointerEvents ) {
             $.setElementPointerEvents( this.element, 'auto' );
         }
@@ -389,6 +382,30 @@
             }
 
             return count;
+        },
+
+        /**
+         * Do we currently have any assigned gesture handlers.
+         * @returns {Boolean} Do we currently have any assigned gesture handlers.
+         */
+        get hasGestureHandlers() {
+            return !!(this.pressHandler ||
+                      this.nonPrimaryPressHandler ||
+                      this.releaseHandler ||
+                      this.nonPrimaryReleaseHandler ||
+                      this.clickHandler ||
+                      this.dblClickHandler ||
+                      this.dragHandler ||
+                      this.dragEndHandler ||
+                      this.pinchHandler);
+        },
+
+        /**
+         * Do we currently have a scroll handler.
+         * @returns {Boolean} Do we currently have a scroll handler.
+         */
+        get hasScrollHandler() {
+            return !!this.scrollHandler;
         },
 
         /**
