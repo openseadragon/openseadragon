@@ -135,7 +135,7 @@
             };
         }
 
-        this.hash               = Math.random(); // An unique hash for this tracker.
+        this.hash               = uniqueHash(); // An unique hash for this tracker.
         /**
          * The element for which pointer events are being monitored.
          * @member {Element} element
@@ -3779,6 +3779,21 @@
                 userData:             tracker.userData
             } );
         }
+    }
+
+
+    /**
+     * @function
+     * @private
+     * @inner
+     */
+    function uniqueHash( ) {
+        let uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+        while (uniqueId in THIS) {
+            // rehash when not unique
+            uniqueId = Date.now().toString(36) + Math.random().toString(36).substring(2);
+        }
+        return uniqueId;
     }
 
 }(OpenSeadragon));
