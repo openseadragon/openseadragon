@@ -24,6 +24,7 @@ OPENSEADRAGON CHANGELOG
     * New testing/demo utilities (MockSeadragon, DrawerSwitcher for switching drawers in demos, getBuiltInDrawersForTest for testing all drawers), serialization guard in tests to remove circular references.
     * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
     * Misc: updated CSS for dev server, new dev & test commands.
+* Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
 * Improved unit tests (#2640 @harshkg23)
 * Fixed: Transparency detection didn't always work properly (#2636 @pcram-techcyte)
 * Fixed: MouseTracker's hasGestureHandlers and hasScrollHandler values were not getting updated upon dynamically adding/removing handlers (#2649 @Seafret)
