@@ -86,141 +86,6 @@
         destroyE++;
     });
 
-    OpenSeadragon.TestCacheDrawer = class extends OpenSeadragon.DrawerBase {
-        constructor(opts) {
-            super(opts);
-            this.testEvents = new OpenSeadragon.EventSource();
-        }
-
-        static isSupported() {
-            return true;
-        }
-
-        _createDrawingElement() {
-            return document.createElement("div");
-        }
-
-        draw(tiledImages) {
-            for (let image of tiledImages) {
-                const tilesDoDraw = image.getTilesToDraw().map(info => info.tile);
-                for (let tile of tilesDoDraw) {
-                    const data = this.getDataToDraw(tile);
-                    this.testEvents.raiseEvent('test-tile', {
-                       tile: tile,
-                       dataToDraw: data,
-                    });
-                }
-            }
-        }
-
-        dataFree(data) {
-            this.testEvents.raiseEvent('free-data');
-        }
-
-        canRotate() {
-            return true;
-        }
-
-        destroy() {
-            this.destroyInternalCache();
-        }
-
-        setImageSmoothingEnabled(imageSmoothingEnabled){
-            //noop
-        }
-
-        drawDebuggingRect(rect) {
-            //noop
-        }
-
-        clear(){
-            //noop
-        }
-    }
-
-    OpenSeadragon.SyncInternalCacheDrawer = class extends OpenSeadragon.TestCacheDrawer {
-
-        getType() {
-            return "test-cache-drawer-sync";
-        }
-
-        getSupportedDataFormats() {
-            return [T_C, T_E];
-        }
-
-        // Make test use private cache
-        get defaultOptions() {
-            return {
-                usePrivateCache: true,
-                preloadCache: false,
-            };
-        }
-
-        dataCreate(cache, tile) {
-            this.testEvents.raiseEvent('create-data');
-            return cache.data;
-        }
-    }
-
-    OpenSeadragon.AsnycInternalCacheDrawer = class extends OpenSeadragon.TestCacheDrawer {
-
-        getType() {
-            return "test-cache-drawer-async";
-        }
-
-        getSupportedDataFormats() {
-            return [T_A];
-        }
-
-        // Make test use private cache
-        get defaultOptions() {
-            return {
-                usePrivateCache: true,
-                preloadCache: true,
-            };
-        }
-
-        dataCreate(cache, tile) {
-            this.testEvents.raiseEvent('create-data');
-            return cache.getDataAs(T_C, true);
-        }
-
-        dataFree(data) {
-            super.dataFree(data);
-            // Be nice and truly destroy the data copy
-            OpenSeadragon.convertor.destroy(data, T_C);
-        }
-    }
-
-    OpenSeadragon.EmptyTestT_ATileSource = class extends OpenSeadragon.TileSource {
-
-        supports( data, url ){
-            return data && data.isTestSource;
-        }
-
-        configure( data, url, postData ){
-            return {
-                width: 512, /* width *required */
-                height: 512, /* height *required */
-                tileSize: 128, /* tileSize *required */
-                tileOverlap: 0, /* tileOverlap *required */
-                minLevel: 0, /* minLevel */
-                maxLevel: 3, /* maxLevel */
-                tilesUrl: "", /* tilesUrl */
-                fileFormat: "", /* fileFormat */
-                displayRects: null /* displayRects */
-            }
-        }
-
-        getTileUrl(level, x, y) {
-            return String(level); //treat each tile on level same to introduce cache overlaps
-        }
-
-        downloadTileStart(context) {
-            context.finish(0, null, T_A);
-        }
-    }
-
     // ----------
     QUnit.module('TileCache', {
         beforeEach: function () {
@@ -233,11 +98,152 @@
             typeAtoB = 0, typeBtoC = 0, typeCtoA = 0, typeDtoA = 0, typeCtoE = 0;
             copyA = 0, copyB = 0, copyC = 0, copyD = 0, copyE = 0;
             destroyA = 0, destroyB = 0, destroyC = 0, destroyD = 0, destroyE = 0;
+
+            OpenSeadragon.TestCacheDrawer = class extends OpenSeadragon.DrawerBase {
+                constructor(opts) {
+                    super(opts);
+                    this.testEvents = new OpenSeadragon.EventSource();
+                }
+
+                static isSupported() {
+                    return true;
+                }
+
+                _createDrawingElement() {
+                    return document.createElement("div");
+                }
+
+                draw(tiledImages) {
+                    for (let image of tiledImages) {
+                        const tilesDoDraw = image.getTilesToDraw().map(info => info.tile);
+                        for (let tile of tilesDoDraw) {
+                            const data = this.getDataToDraw(tile);
+                            this.testEvents.raiseEvent('test-tile', {
+                                tile: tile,
+                                dataToDraw: data,
+                            });
+                        }
+                    }
+                }
+
+                dataFree(data) {
+                    this.testEvents.raiseEvent('free-data');
+                }
+
+                canRotate() {
+                    return true;
+                }
+
+                destroy() {
+                    this.destroyInternalCache();
+                }
+
+                setImageSmoothingEnabled(imageSmoothingEnabled){
+                    //noop
+                }
+
+                drawDebuggingRect(rect) {
+                    //noop
+                }
+
+                clear(){
+                    //noop
+                }
+            }
+
+            OpenSeadragon.SyncInternalCacheDrawer = class extends OpenSeadragon.TestCacheDrawer {
+
+                getType() {
+                    return "test-cache-drawer-sync";
+                }
+
+                getSupportedDataFormats() {
+                    return [T_C, T_E];
+                }
+
+                // Make test use private cache
+                get defaultOptions() {
+                    return {
+                        usePrivateCache: true,
+                        preloadCache: false,
+                    };
+                }
+
+                dataCreate(cache, tile) {
+                    this.testEvents.raiseEvent('create-data');
+                    return cache.data;
+                }
+            }
+
+            OpenSeadragon.AsnycInternalCacheDrawer = class extends OpenSeadragon.TestCacheDrawer {
+
+                getType() {
+                    return "test-cache-drawer-async";
+                }
+
+                getSupportedDataFormats() {
+                    return [T_A];
+                }
+
+                // Make test use private cache
+                get defaultOptions() {
+                    return {
+                        usePrivateCache: true,
+                        preloadCache: true,
+                    };
+                }
+
+                dataCreate(cache, tile) {
+                    this.testEvents.raiseEvent('create-data');
+                    return cache.getDataAs(T_C, true);
+                }
+
+                dataFree(data) {
+                    super.dataFree(data);
+                    // Be nice and truly destroy the data copy
+                    OpenSeadragon.convertor.destroy(data, T_C);
+                }
+            }
+
+            OpenSeadragon.EmptyTestT_ATileSource = class extends OpenSeadragon.TileSource {
+
+                supports( data, url ){
+                    return data && data.isTestSource;
+                }
+
+                configure( data, url, postData ){
+                    return {
+                        width: 512, /* width *required */
+                        height: 512, /* height *required */
+                        tileSize: 128, /* tileSize *required */
+                        tileOverlap: 0, /* tileOverlap *required */
+                        minLevel: 0, /* minLevel */
+                        maxLevel: 3, /* maxLevel */
+                        tilesUrl: "", /* tilesUrl */
+                        fileFormat: "", /* fileFormat */
+                        displayRects: null /* displayRects */
+                    }
+                }
+
+                getTileUrl(level, x, y) {
+                    return String(level); //treat each tile on level same to introduce cache overlaps
+                }
+
+                downloadTileStart(context) {
+                    context.finish(0, null, T_A);
+                }
+            }
         },
         afterEach: function () {
             if (viewer && viewer.close) {
                 viewer.close();
             }
+
+            // Some tests test all drawers - remove test drawers to avoid collision with other tests
+            OpenSeadragon.EmptyTestT_ATileSource = null;
+            OpenSeadragon.AsnycInternalCacheDrawer = null;
+            OpenSeadragon.SyncInternalCacheDrawer = null;
+            OpenSeadragon.TestCacheDrawer = null;
 
             viewer = null;
         }
