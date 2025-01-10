@@ -197,7 +197,7 @@
             }
 
             // If we support internal cache
-            if (keepInternalCopy && !drawer.options.preloadCache) {
+            if (keepInternalCopy) {
                 // let sync preparation handle data
                 if (!drawer.options.preloadCache) {
                     return this.prepareInternalCacheSync(drawer);
@@ -361,15 +361,24 @@
 
         /**
          * If cache ceases to be the primary one, free data
+         * @param {string} drawerId if undefined, all caches are freed, else only target one
          * @private
          */
-        destroyInternalCache() {
+        destroyInternalCache(drawerId = undefined) {
             const internal = this[DRAWER_INTERNAL_CACHE];
             if (internal) {
-                for (let iCache in internal) {
-                    internal[iCache].destroy();
+                if (drawerId) {
+                    const cache = internal[drawerId];
+                    if (cache) {
+                        cache.destroy();
+                        delete internal[drawerId];
+                    }
+                } else {
+                    for (let iCache in internal) {
+                        internal[iCache].destroy();
+                    }
+                    delete this[DRAWER_INTERNAL_CACHE];
                 }
-                delete this[DRAWER_INTERNAL_CACHE];
             }
         }
 
@@ -1150,6 +1159,20 @@
             this._zombiesLoadedCount = 0;
             this._cachesLoaded = [];
             this._cachesLoadedCount = 0;
+        }
+
+        /**
+         * Clean up internal drawer data for a given drawer
+         * @param {OpenSeadragon.DrawerBase} drawer
+         */
+        clearDrawerInternalCache(drawer) {
+            const drawerId = drawer.getId();
+            for (let zombie in this._zombiesLoaded) {
+                this._zombiesLoaded[zombie].destroyInternalCache(drawerId);
+            }
+            for (let cache in this._tilesLoaded) {
+                this._tilesLoaded[cache].destroyInternalCache(drawerId);
+            }
         }
 
         /**

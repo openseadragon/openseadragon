@@ -107,7 +107,8 @@
         get defaultOptions() {
             return {
                 // use detached cache: our type conversion will not collide (and does not have to preserve CPU data ref)
-                usePrivateCache: true
+                usePrivateCache: true,
+                preloadCache: false,
             };
         }
 
@@ -167,6 +168,8 @@
             if(this.viewer.drawer === this){
                 this.viewer.drawer = null;
             }
+
+            this.destroyInternalCache();
 
             // set our destroyed flag to true
             this._destroyed = true;
@@ -238,16 +241,7 @@
                 this._backupCanvasDrawer = this.viewer.requestDrawer('canvas', {mainDrawer: false});
                 this._backupCanvasDrawer.canvas.style.setProperty('visibility', 'hidden');
                 this._backupCanvasDrawer.getSupportedDataFormats = () => this._supportedFormats;
-                this._backupCanvasDrawer.getDataToDraw = (tile) => {
-                    const cache = tile.getCache(tile.cacheKey);
-                    if (!cache) {
-                        $.console.warn("Attempt to draw tile %s when not cached!", tile);
-                        return undefined;
-                    }
-                    const dataCache = cache.getDataForRendering(this, tile);
-                    // Use CPU Data for the drawer instead
-                    return dataCache && dataCache.cpuData;
-                };
+                this._backupCanvasDrawer.getDataToDraw = this.getDataToDraw.bind(this);
             }
 
             return this._backupCanvasDrawer;
@@ -386,7 +380,7 @@
                         let numTilesToDraw =  indexInDrawArray + 1;
                         const textureInfo = this.getDataToDraw(tile);
 
-                        if (textureInfo) {
+                        if (textureInfo && textureInfo.texture) {
                             this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
                         } else {
                             // console.log('No tile info', tile);
@@ -824,7 +818,6 @@
             //bind the frame buffer to the new texture
             gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._renderToTexture, 0);
-
         }
 
         // private
@@ -876,13 +869,14 @@
             let texture;
             let position;
 
-            const data = cache.data;
+            let data = cache.data;
 
             if (!tiledImage.isTainted()) {
                 if((data instanceof CanvasRenderingContext2D) && $.isCanvasTainted(data.canvas)){
                     tiledImage.setTainted(true);
                     $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
                     this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
+                    this.setDataNeedsRefresh();
                 } else {
                     let sourceWidthFraction, sourceHeightFraction;
                     if (tile.sourceBounds) {
@@ -925,21 +919,34 @@
                         // This depends on gl.TEXTURE_2D being bound to the texture
                         // associated with this canvas before calling this function
                         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
+                        // TextureInfo stored in the cache
+                        return {
+                            texture: texture,
+                            position: position,
+                        };
                     } catch (e){
                         // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
                         tiledImage.setTainted(true);
                         $.console.error('Error uploading image data to WebGL. Falling back to canvas renderer.', e);
                         this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
+                        this.setDataNeedsRefresh();
                     }
                 }
             }
-
-            // TextureInfo stored in the cache
-            return {
-                texture: texture,
-                position: position,
-                cpuData: data // Reference to the outer cache data, used to draw if webgl cannot be used
-            };
+            if (data instanceof Image) {
+                const canvas = document.createElement( 'canvas' );
+                canvas.width = data.width;
+                canvas.height = data.height;
+                const context = canvas.getContext('2d', { willReadFrequently: true });
+                context.drawImage( data, 0, 0 );
+                data = context;
+                $.console.log("FONCSCNSO");
+            }
+            if (data instanceof CanvasRenderingContext2D) {
+                return data;
+            }
+            $.console.error("Unsupported data used for WebGL Drawer - probably a bug!");
+            return {};
         }
 
         dataFree(data) {

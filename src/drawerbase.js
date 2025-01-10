@@ -38,7 +38,14 @@
  * @typedef BaseDrawerOptions
  * @memberOf OpenSeadragon
  * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
- *   detached (=internal) cache object in case it has to perform type conversion
+ *   detached (=internal) cache object in case it has to perform custom type conversion atop
+ *   what cache performs. In that case, drawer must implement dataCreate() which gets data in one
+ *   of formats the drawer declares as supported. This method must return object to be used during drawing.
+ *   You should probably implement also dataFree() to provide cleanup logics.
+ *
+ * @property {boolean} [preloadCache=true]
+ *  When dataCreate is used, it can be applied offline (asynchronously) during data processing = preloading,
+ *  or just in time before rendering (if necessary). Preloading supports
  */
 
 const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
@@ -86,6 +93,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.container.appendChild( this.canvas );
 
         this._checkInterfaceImplementation();
+        this.setDataNeedsRefresh();  // initializes stamp
     }
 
     /**
@@ -206,6 +214,14 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      */
     destroy() {
         $.console.error('Drawer.destroy must be implemented by child class');
+    }
+
+    /**
+     * Destroy internal cache. Should be called within destroy() when
+     *
+     */
+    destroyInternalCache() {
+        this.viewer.tileCache.clearDrawerInternalCache(this);
     }
 
     /**
