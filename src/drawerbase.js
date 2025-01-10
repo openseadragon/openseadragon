@@ -218,7 +218,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
 
     /**
      * Destroy internal cache. Should be called within destroy() when
-     *
+     * usePrivateCache is set to true. Ensures cleanup of anything created
+     * by dataCreate(...).
      */
     destroyInternalCache() {
         this.viewer.tileCache.clearDrawerInternalCache(this);
