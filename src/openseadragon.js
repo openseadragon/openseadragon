@@ -3028,7 +3028,7 @@ function OpenSeadragon( options ){
     if (typeof define === 'function' && define.amd) {
         // expose as amd module
         define([], function () {
-            return OpenSeadragon;
+            return $;
         });
     } else if (typeof module === 'object' && module.exports) {
         // expose as commonjs module
