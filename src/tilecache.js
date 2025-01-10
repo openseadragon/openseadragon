@@ -225,21 +225,17 @@
         prepareForRendering(drawer) {
             const supportedTypes = drawer.getRequiredDataFormats();
 
-            if (drawer.options.usePrivateCache && drawer.options.preloadCache) {
-                return this.prepareInternalCacheAsync(drawer).then(_ => {
-                    // if not internal copy and we have no data, or we are ready to render, exit
-                    if (!this.loaded || supportedTypes.includes(this.type)) {
-                        return this.await();
-                    }
-
-                    return this.transformTo(supportedTypes);
-                });
-            }
-
+            let selfPromise;
             if (!this.loaded || supportedTypes.includes(this.type)) {
-                return this.await();
+                selfPromise = this.await();
+            } else {
+                selfPromise = this.transformTo(supportedTypes);
             }
-            return this.transformTo(supportedTypes);
+
+            if (drawer.options.usePrivateCache && drawer.options.preloadCache) {
+                return selfPromise.then(_ => this.prepareInternalCacheAsync(drawer));
+            }
+            return selfPromise;
         }
 
         /**
@@ -265,7 +261,9 @@
             $.console.assert(this._tRef, "Data Create called from invalidation routine needs tile reference!");
             const transformedData = drawer.dataCreate(this, this._tRef);
             $.console.assert(transformedData !== undefined, "[DrawerBase.dataCreate] must return a value if usePrivateCache is enabled!");
-            internalCache = this[DRAWER_INTERNAL_CACHE][drawer.getId()] = new $.InternalCacheRecord(transformedData, (data) => drawer.dataFree(data));
+            const drawerID = drawer.getId();
+            internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
+                drawerID, (data) => drawer.dataFree(data));
             return internalCache.await();
         }
 
@@ -290,7 +288,10 @@
             $.console.assert(this._tRef, "Data Create called from drawing loop needs tile reference!");
             const transformedData = drawer.dataCreate(this, this._tRef);
             $.console.assert(transformedData !== undefined, "[DrawerBase.dataCreate] must return a value if usePrivateCache is enabled!");
-            internalCache = this[DRAWER_INTERNAL_CACHE][drawer.getId()] = new $.InternalCacheRecord(transformedData, (data) => drawer.dataFree(data));
+
+            const drawerID = drawer.getId();
+            internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
+                drawerID, (data) => drawer.dataFree(data));
             return internalCache;
         }
 
@@ -676,9 +677,10 @@
      * @private
      */
     $.InternalCacheRecord = class {
-        constructor(data, onDestroy) {
+        constructor(data, type, onDestroy) {
             this.tstamp = $.now();
             this._ondestroy = onDestroy;
+            this._type = type;
 
             if (data instanceof $.Promise) {
                 this._promise = data;
@@ -706,7 +708,7 @@
          * @returns {string}
          */
         get type() {
-            return "__internal_cache__";
+            return this._type;
         }
 
         /**
@@ -1167,11 +1169,15 @@
          */
         clearDrawerInternalCache(drawer) {
             const drawerId = drawer.getId();
-            for (let zombie in this._zombiesLoaded) {
-                this._zombiesLoaded[zombie].destroyInternalCache(drawerId);
+            for (let zombie of this._zombiesLoaded) {
+                if (zombie) {
+                    zombie.destroyInternalCache(drawerId);
+                }
             }
-            for (let cache in this._tilesLoaded) {
-                this._tilesLoaded[cache].destroyInternalCache(drawerId);
+            for (let cache of this._cachesLoaded) {
+                if (cache) {
+                    cache.destroyInternalCache(drawerId);
+                }
             }
         }
 
