@@ -479,7 +479,7 @@
         setImageSmoothingEnabled(enabled){
             if( this._imageSmoothingEnabled !== enabled ){
                 this._imageSmoothingEnabled = enabled;
-                this.setDataNeedsRefresh();
+                this.setInternalCacheNeedsRefresh();
                 this.viewer.forceRedraw();
             }
         }
@@ -863,7 +863,7 @@
             this.viewer.addHandler("resize", this._resizeHandler);
         }
 
-        dataCreate(cache, tile) {
+        internalCacheCreate(cache, tile) {
             let tiledImage = tile.tiledImage;
             let gl = this._gl;
             let texture;
@@ -876,7 +876,7 @@
                     tiledImage.setTainted(true);
                     $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
                     this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
-                    this.setDataNeedsRefresh();
+                    this.setInternalCacheNeedsRefresh();
                 } else {
                     let sourceWidthFraction, sourceHeightFraction;
                     if (tile.sourceBounds) {
@@ -929,7 +929,7 @@
                         tiledImage.setTainted(true);
                         $.console.error('Error uploading image data to WebGL. Falling back to canvas renderer.', e);
                         this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
-                        this.setDataNeedsRefresh();
+                        this.setInternalCacheNeedsRefresh();
                     }
                 }
             }
@@ -948,7 +948,7 @@
             return {};
         }
 
-        dataFree(data) {
+        internalCacheFree(data) {
             if (data && data.texture) {
                 this._gl.deleteTexture(data.texture);
                 data.texture = null;

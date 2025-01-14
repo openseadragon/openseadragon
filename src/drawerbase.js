@@ -39,12 +39,12 @@
  * @memberOf OpenSeadragon
  * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
  *   detached (=internal) cache object in case it has to perform custom type conversion atop
- *   what cache performs. In that case, drawer must implement dataCreate() which gets data in one
+ *   what cache performs. In that case, drawer must implement internalCacheCreate() which gets data in one
  *   of formats the drawer declares as supported. This method must return object to be used during drawing.
- *   You should probably implement also dataFree() to provide cleanup logics.
+ *   You should probably implement also internalCacheFree() to provide cleanup logics.
  *
  * @property {boolean} [preloadCache=true]
- *  When dataCreate is used, it can be applied offline (asynchronously) during data processing = preloading,
+ *  When internalCacheCreate is used, it can be applied offline (asynchronously) during data processing = preloading,
  *  or just in time before rendering (if necessary). Preloading supports
  */
 
@@ -93,7 +93,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.container.appendChild( this.canvas );
 
         this._checkInterfaceImplementation();
-        this.setDataNeedsRefresh();  // initializes stamp
+        this.setInternalCacheNeedsRefresh();  // initializes stamp
     }
 
     /**
@@ -219,7 +219,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     /**
      * Destroy internal cache. Should be called within destroy() when
      * usePrivateCache is set to true. Ensures cleanup of anything created
-     * by dataCreate(...).
+     * by internalCacheCreate(...).
      */
     destroyInternalCache() {
         this.viewer.tileCache.clearDrawerInternalCache(this);
@@ -264,14 +264,14 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @param {OpenSeadragon.Tile} tile
      * @return any
      */
-    dataCreate(cache, tile) {}
+    internalCacheCreate(cache, tile) {}
 
     /**
      * It is possible to perform any necessary cleanup on internal cache, necessary if you
      * need to clean up some memory (e.g. destroy canvas by setting with & height to 0).
-     * @param {*} data object returned by dataCreate(...)
+     * @param {*} data object returned by internalCacheCreate(...)
      */
-    dataFree(data) {}
+    internalCacheFree(data) {}
 
     /**
      * Call to invalidate internal cache. It will be rebuilt. With synchronous converions,
@@ -279,7 +279,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * routine happens, e.g. you should call also requestInvalidate() if you need to happen
      * it as soon as possible.
      */
-    setDataNeedsRefresh() {
+    setInternalCacheNeedsRefresh() {
         this._dataNeedsRefresh = $.now();
     }
 
