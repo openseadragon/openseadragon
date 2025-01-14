@@ -310,9 +310,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         // We call the event on the parent viewer window no matter what
         const eventTarget = this.viewer.viewer || this.viewer;
         // However, we must pick the correct drawer reference (navigator VS viewer)
-        const supportedFormats = this.viewer.drawer.getRequiredDataFormats();
-        const keepInternalCacheCopy = this.viewer.drawer.options.usePrivateCache;
-        const drawerId = this.viewer.drawer.getId();
+        const drawer = this.viewer.drawer;
 
         const jobList = tileList.map(tile => {
             const tiledImage = tile.tiledImage;
@@ -360,7 +358,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, tile.getCache(tile.originalCacheKey), true);
                 }
             };
-
             /**
              * @event tile-invalidated
              * @memberof OpenSeadragon.Viewer
@@ -391,7 +388,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }).then(_ => {
                 if (originalCache.__invStamp === tStamp && (tile.loaded || tile.loading)) {
                     if (workingCache) {
-                        return workingCache.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(c => {
+                        return workingCache.prepareForRendering(drawer).then(c => {
                             if (c && originalCache.__invStamp === tStamp) {
                                 atomicCacheSwap();
                                 originalCache.__invStamp = null;
@@ -402,7 +399,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     // If we requested restore, perform now
                     if (restoreTiles) {
                         const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
-                        return freshOriginalCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then((c) => {
+                        return freshOriginalCacheRef.prepareForRendering(drawer).then((c) => {
                             if (c && originalCache.__invStamp === tStamp) {
                                 atomicCacheSwap();
                                 originalCache.__invStamp = null;
@@ -412,7 +409,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
                     // Preventive call to ensure we stay compatible
                     const freshMainCacheRef = tile.getCache();
-                    return freshMainCacheRef.prepareForRendering(drawerId, supportedFormats, keepInternalCacheCopy).then(() => {
+                    return freshMainCacheRef.prepareForRendering(drawer).then(() => {
                         atomicCacheSwap();
                         originalCache.__invStamp = null;
                     });

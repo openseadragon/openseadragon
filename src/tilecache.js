@@ -79,7 +79,7 @@
          */
         await() {
             if (!this._promise) { //if not cache loaded, do not fail
-                return $.Promise.resolve();
+                return $.Promise.resolve(this._data);
             }
             return this._promise;
         }
@@ -162,92 +162,171 @@
         }
 
         /**
-         * Access of the data by drawers, synchronous function. Should always access a valid main cache, e.g.
-         * cache swap performed on working cache (replaceCache()) must be synchronous such that cache is always
-         * ready to render, and swaps atomically between render calls.
+         * Access of the data by drawers, synchronous function. Should always access a valid main cache.
+         * This is ensured by invalidation routine that executes data modification on a copy record, and
+         * then synchronously swaps records (main caches) to the new data between render calls.
+         *
+         * If a drawer decides to have internal cache with synchronous behavior, it is (if necessary)
+         * performed during this phase.
          *
          * @param {OpenSeadragon.DrawerBase} drawer drawer reference which requests the data: the drawer
          *   defines the supported formats this cache should return **synchronously**
          * @param {OpenSeadragon.Tile} tileToDraw reference to the tile that is in the process of drawing and
          *   for which we request the data; if we attempt to draw such tile while main cache target is destroyed,
          *   attempt to reset the tile state to force system to re-download it again
-         * @returns {OpenSeadragon.CacheRecord|OpenSeadragon.SimpleCacheRecord|undefined} desired data if available,
+         * @returns {OpenSeadragon.CacheRecord|OpenSeadragon.InternalCacheRecord|undefined} desired data if available,
          *   wrapped in the cache container. This data is guaranteed to be loaded & in the type supported by the drawer.
          *   Returns undefined if the data is not ready for rendering.
          * @private
          */
         getDataForRendering(drawer, tileToDraw) {
-            const supportedTypes = drawer.getSupportedDataFormats(),
-                keepInternalCopy = drawer.options.usePrivateCache;
-            if (this.loaded && supportedTypes.includes(this.type)) {
-                return this;
-            }
+            const keepInternalCopy = drawer.options.usePrivateCache;
 
+            // Test cache state
+            if (!this.loaded) {
+                $.console.error("Attempt to draw tile when not loaded main cache!");
+                return undefined;
+            }
             if (this._destroyed) {
                 $.console.error("Attempt to draw tile with destroyed main cache!");
                 tileToDraw._unload();  // try to restore the state so that the tile is later on fetched again
                 return undefined;
             }
 
-            let internalCache = this[DRAWER_INTERNAL_CACHE];
-            internalCache = internalCache && internalCache[drawer.getId()];
-            if (keepInternalCopy && !internalCache) {
-                $.console.warn("Attempt to render cache that is not prepared for current drawer " +
-                    "supported format: the preparation should've happened after tile processing has finished.",
-                    this, tileToDraw);
-
-                this.prepareForRendering(drawer.getId(), supportedTypes, keepInternalCopy)
-                    .then(() => this._triggerNeedsDraw());
+            // Ensure cache in a format suitable for the current drawer. If not it is an error, prepareForRendering
+            // should be called at the end of invalidation routine instead. Since the processing is async, we are
+            // unable to provide the rendering data immediatelly - return.
+            const supportedTypes = drawer.getSupportedDataFormats();
+            if (!supportedTypes.includes(this.type)) {
+                $.console.error("Attempt to draw tile with unsupported target drawer type!");
+                this.prepareForRendering(drawer);
                 return undefined;
             }
 
-            if (internalCache) {
-                internalCache.withTileReference(this._tRef);
+            // If we support internal cache
+            if (keepInternalCopy) {
+                // let sync preparation handle data if no preloading desired
+                if (!drawer.options.preloadCache) {
+                    return this.prepareInternalCacheSync(drawer);
+                }
+                // or check internal cache state before returning
+                const internalCache = this._getInternalCacheRef(drawer);
+                if (!internalCache || !internalCache.loaded) {
+                    $.console.error("Attempt to draw tile with internal cache non-ready state!");
+                    return undefined;
+                }
+                return internalCache;
+            }
+
+            // else just return self reference
+            return this;
+        }
+
+        /**
+         * Preparation for rendering ensures the CacheRecord is in a format supported by the current
+         * drawer. Furthermore, if internal cache is to be used by a drawer with preloading enabled,
+         * it happens in this step.
+         *
+         * Note: Should not be called if cache type is already among supported types.
+         * @private
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @return {OpenSeadragon.Promise<*>} reference to the data,
+         *  or null if not data yet loaded/ready (usually due to error)
+         */
+        prepareForRendering(drawer) {
+            const supportedTypes = drawer.getRequiredDataFormats();
+
+            // If not loaded, await until ready and try again
+            if (!this.loaded) {
+                return this.await().then(_ => this.prepareForRendering(drawer));
+            }
+
+            let selfPromise;
+            // If not in one of required types, transform
+            if (!supportedTypes.includes(this.type)) {
+                selfPromise = this.transformTo(supportedTypes);
             } else {
-                internalCache = this;
+                selfPromise = this.await();
             }
 
-            // Cache in the process of loading, no-op
-            if (!internalCache.loaded) {
-                $.console.warn("Attempt to render cache that is not prepared for current drawer: " +
-                    "internal cache still loading: this should be awaited.",
-                    this, tileToDraw);
-                this._triggerNeedsDraw();
-                return undefined;
+            // If internal cache wanted and preloading enabled, convert now
+            if (drawer.options.usePrivateCache && drawer.options.preloadCache) {
+                return selfPromise.then(_ => this.prepareInternalCacheAsync(drawer));
+            }
+            return selfPromise;
+        }
+
+        /**
+         * Internal cache is defined by a Drawer. Async preparation happens as the last step in the
+         * invalidation routine.
+         * Must not be called if drawer.options.usePrivateCache == false. Called inside prepareForRenderine
+         * by cache itself if preloadCache == true (supports async behavior).
+         *
+         * @private
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @return {OpenSeadragon.Promise<*>} reference to the data wrapped in a promise,
+         *  or null if not data yet loaded/ready (usually due to error)
+         */
+        prepareInternalCacheAsync(drawer) {
+            let internalCache = this._getInternalCacheRef(drawer);
+            if (this._checkInternalCacheUpToDate(internalCache, drawer)) {
+                return internalCache.await();
             }
 
-            if (!supportedTypes.includes(internalCache.type)) {
-                let logReference = this[DRAWER_INTERNAL_CACHE];
-                logReference = logReference ? Object.entries(logReference) : this;
-                $.console.warn("Attempt to render cache that is not prepared for current drawer " +
-                    "supported format: the preparation should've happened after tile processing has finished.",
-                    logReference, tileToDraw);
-
-                internalCache.transformTo(supportedTypes.length > 1 ? supportedTypes : supportedTypes[0])
-                    .then(() => this._triggerNeedsDraw());
-                return undefined; // type is NOT compatible
+            // Force reset
+            if (internalCache && !internalCache.loaded) {
+                internalCache.await().then(() => internalCache.destroy());
             }
+
+            $.console.assert(this._tRef, "Data Create called from invalidation routine needs tile reference!");
+            const transformedData = drawer.internalCacheCreate(this, this._tRef);
+            $.console.assert(transformedData !== undefined, "[DrawerBase.internalCacheCreate] must return a value if usePrivateCache is enabled!");
+            const drawerID = drawer.getId();
+            internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
+                drawerID, (data) => drawer.internalCacheFree(data));
+            return internalCache.await();
+        }
+
+        /**
+         * Internal cache is defined by a Drawer. Sync preparation happens directly before rendering.
+         * Must not be called if drawer.options.usePrivateCache == false. Called inside getDataForRendering
+         * by cache itself if preloadCache == false (without support for async behavior).
+         * @private
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @return {OpenSeadragon.InternalCacheRecord} reference to the cache
+         */
+        prepareInternalCacheSync(drawer) {
+            let internalCache = this._getInternalCacheRef(drawer);
+            if (this._checkInternalCacheUpToDate(internalCache, drawer)) {
+                return internalCache;
+            }
+
+            // Force reset
+            if (internalCache) {
+                internalCache.destroy();
+            }
+
+            $.console.assert(this._tRef, "Data Create called from drawing loop needs tile reference!");
+            const transformedData = drawer.internalCacheCreate(this, this._tRef);
+            $.console.assert(transformedData !== undefined, "[DrawerBase.internalCacheCreate] must return a value if usePrivateCache is enabled!");
+
+            const drawerID = drawer.getId();
+            internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
+                drawerID, (data) => drawer.internalCacheFree(data));
             return internalCache;
         }
 
         /**
-         * Should not be called if cache type is already among supported types
+         * Get an internal cache reference for given drawer
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @return {OpenSeadragon.InternalCacheRecord|undefined}
          * @private
-         * @param drawerId
-         * @param supportedTypes
-         * @param keepInternalCopy if a drawer requests internal copy, it means it can only use
-         *   given cache for itself, cannot be shared -> initialize privately
-         * @return {OpenSeadragon.Promise<OpenSeadragon.SimpleCacheRecord|OpenSeadragon.CacheRecord> | null}
-         *   reference to the cache processed for drawer rendering requirements, or null on error
          */
-        prepareForRendering(drawerId, supportedTypes, keepInternalCopy = true) {
-            // if not internal copy and we have no data, or we are ready to render, exit
-            if (!this.loaded || supportedTypes.includes(this.type)) {
-                return $.Promise.resolve(this);
-            }
-
-            if (!keepInternalCopy) {
-                return this.transformTo(supportedTypes);
+        _getInternalCacheRef(drawer) {
+            const options = drawer.options;
+            if (!options.usePrivateCache) {
+                $.console.error("[CacheRecord.prepareInternalCacheSync] must not be called when usePrivateCache is false.");
+                return undefined;
             }
 
             // we can get here only if we want to render incompatible type
@@ -255,32 +334,19 @@
             if (!internalCache) {
                 internalCache = this[DRAWER_INTERNAL_CACHE] = {};
             }
+            return internalCache[drawer.getId()];
+        }
 
-            internalCache = internalCache[drawerId];
-            if (internalCache && supportedTypes.includes(internalCache.type)) {
-                // already done
-                return $.Promise.resolve(this);
-            }
-
-            const conversionPath = $.convertor.getConversionPath(this.type, supportedTypes);
-            if (!conversionPath) {
-                $.console.error(`[getDataForRendering] Conversion ${this.type} ---> ${supportedTypes} cannot be done!`);
-                return $.Promise.resolve(this);
-            }
-            const newInternalCache = new $.SimpleCacheRecord();
-
-            newInternalCache.withTileReference(this._tRef);
-            const selectedFormat = conversionPath[conversionPath.length - 1].target.value;
-            return $.convertor.convert(this._tRef, this.data, this.type, selectedFormat).then(data => {
-                newInternalCache.setDataAs(data, selectedFormat);  // synchronous, SimpleCacheRecord call
-
-                // if existed, delete
-                if (internalCache) {
-                    internalCache.destroy();
-                }
-                this[DRAWER_INTERNAL_CACHE][drawerId] = newInternalCache;
-                return newInternalCache;
-            });
+        /**
+         * @param {OpenSeadragon.InternalCacheRecord} internalCache
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @return {boolean} false if the internal cache is outdated
+         * @private
+         */
+        _checkInternalCacheUpToDate(internalCache, drawer) {
+            // We respect existing records, unless they are outdated. Invalidation routine by its nature
+            // destroys internal cache, therefore we do not need to check if internal cache is consistent with its parent.
+            return internalCache && internalCache.loaded && internalCache.tstamp >= drawer._dataNeedsRefresh;
         }
 
         /**
@@ -330,15 +396,24 @@
 
         /**
          * If cache ceases to be the primary one, free data
+         * @param {string} drawerId if undefined, all caches are freed, else only target one
          * @private
          */
-        destroyInternalCache() {
+        destroyInternalCache(drawerId = undefined) {
             const internal = this[DRAWER_INTERNAL_CACHE];
             if (internal) {
-                for (let iCache in internal) {
-                    internal[iCache].destroy();
+                if (drawerId) {
+                    const cache = internal[drawerId];
+                    if (cache) {
+                        cache.destroy();
+                        delete internal[drawerId];
+                    }
+                } else {
+                    for (let iCache in internal) {
+                        internal[iCache].destroy();
+                    }
+                    delete this[DRAWER_INTERNAL_CACHE];
                 }
-                delete this[DRAWER_INTERNAL_CACHE];
             }
         }
 
@@ -623,7 +698,7 @@
     };
 
     /**
-     * @class SimpleCacheRecord
+     * @class InternalCacheRecord
      * @memberof OpenSeadragon
      * @classdesc Simple cache record without robust support for async access. Meant for internal use only.
      *
@@ -635,12 +710,23 @@
      * It also does not record tiles nor allows cache/tile sharing.
      * @private
      */
-    $.SimpleCacheRecord = class {
-        constructor(preferredTypes) {
-            this._data = null;
-            this._type = null;
-            this.loaded = false;
-            this.format = Array.isArray(preferredTypes) ? preferredTypes : null;
+    $.InternalCacheRecord = class {
+        constructor(data, type, onDestroy) {
+            this.tstamp = $.now();
+            this._ondestroy = onDestroy;
+            this._type = type;
+
+            if (data instanceof $.Promise) {
+                this._promise = data;
+                data.then(data => {
+                    this.loaded = true;
+                    this._data = data;
+                });
+            } else {
+                this._promise = null;
+                this.loaded = true;
+                this._data = data;
+            }
         }
 
         /**
@@ -660,10 +746,21 @@
         }
 
         /**
+         * Await ongoing process so that we get cache ready on callback.
+         * @returns {OpenSeadragon.Promise<?>}
+         */
+        await() {
+            if (!this._promise) { //if not cache loaded, do not fail
+                return $.Promise.resolve(this._data);
+            }
+            return this._promise;
+        }
+
+        /**
          * Must be called before transformTo or setDataAs. To keep
          * compatible api with CacheRecord where tile refs are known.
          * @param {OpenSeadragon.Tile} referenceTile reference tile for conversion
-         * @return {OpenSeadragon.SimpleCacheRecord} self reference for builder pattern
+         * @return {OpenSeadragon.InternalCacheRecord} self reference for builder pattern
          */
         withTileReference(referenceTile) {
             this._temporaryTileRef = referenceTile;
@@ -671,71 +768,16 @@
         }
 
         /**
-         * Transform cache to desired type and get the data after conversion.
-         * Does nothing if the type equals to the current type. Asynchronous.
-         * @param {string|string[]} type if array provided, the system will
-         *   try to optimize for the best type to convert to.
-         * @returns {OpenSeadragon.Promise<?>}
-         */
-        transformTo(type) {
-            $.console.assert(this._temporaryTileRef, "SimpleCacheRecord needs tile reference set before update operation!");
-            const convertor = $.convertor,
-                conversionPath = convertor.getConversionPath(this._type, type);
-            if (!conversionPath) {
-                $.console.error(`[SimpleCacheRecord.transformTo] Conversion ${this._type} ---> ${type} cannot be done!`);
-                return $.Promise.resolve(); //no-op
-            }
-
-            const stepCount = conversionPath.length,
-                _this = this,
-                convert = (x, i) => {
-                    if (i >= stepCount) {
-                        _this._data = x;
-                        _this.loaded = true;
-                        _this._temporaryTileRef = null;
-                        return $.Promise.resolve(x);
-                    }
-                    let edge = conversionPath[i];
-                    try {
-                        // no test for y - less robust approach
-                        let y = edge.transform(this._temporaryTileRef, x);
-                        convertor.destroy(x, edge.origin.value);
-                        const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
-                        return result.then(res => convert(res, i + 1));
-                    } catch (e) {
-                        _this.loaded = false;
-                        _this._temporaryTileRef = null;
-                        throw e;
-                    }
-                };
-
-            this.loaded = false;
-            // Read target type from the conversion path: [edge.target] = Vertex, its value=type
-            this._type = conversionPath[stepCount - 1].target.value;
-            const promise = convert(this._data, 0);
-            this._data = undefined;
-            return promise;
-        }
-
-        /**
          * Free all the data and call data destructors if defined.
          */
         destroy() {
-            $.convertor.destroy(this._data, this._type);
-            this._data = null;
-            this._type = null;
-        }
-
-        /**
-         * Safely overwrite the cache data and return the old data
-         * @private
-         */
-        setDataAs(data, type) {
-            // no check for state, users must ensure compatibility manually
-            $.convertor.destroy(this._data, this._type);
-            this._type = type;
-            this._data = data;
-            this.loaded = true;
+            if (this.loaded) {
+                if (this._ondestroy) {
+                    this._ondestroy(this._data);
+                }
+                this._data = null;
+                this.loaded = false;
+            }
         }
     };
 
@@ -1153,6 +1195,24 @@
             this._zombiesLoadedCount = 0;
             this._cachesLoaded = [];
             this._cachesLoadedCount = 0;
+        }
+
+        /**
+         * Clean up internal drawer data for a given drawer
+         * @param {OpenSeadragon.DrawerBase} drawer
+         */
+        clearDrawerInternalCache(drawer) {
+            const drawerId = drawer.getId();
+            for (let zombie of this._zombiesLoaded) {
+                if (zombie) {
+                    zombie.destroyInternalCache(drawerId);
+                }
+            }
+            for (let cache of this._cachesLoaded) {
+                if (cache) {
+                    cache.destroyInternalCache(drawerId);
+                }
+            }
         }
 
         /**

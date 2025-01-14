@@ -86,123 +86,164 @@
         destroyE++;
     });
 
-    OpenSeadragon.TestCacheDrawer = class extends OpenSeadragon.DrawerBase {
-        constructor(opts) {
-            super(opts);
-            this.testEvents = new OpenSeadragon.EventSource();
-        }
-
-        getType() {
-            return "test-cache-drawer";
-        }
-
-        // Make test use private cache
-        get defaultOptions() {
-            return {
-                usePrivateCache: true
-            };
-        }
-
-        getSupportedDataFormats() {
-            return [T_C, T_E];
-        }
-
-        static isSupported() {
-            return true;
-        }
-
-        _createDrawingElement() {
-            return document.createElement("div");
-        }
-
-        draw(tiledImages) {
-            for (let image of tiledImages) {
-                const tilesDoDraw = image.getTilesToDraw().map(info => info.tile);
-                for (let tile of tilesDoDraw) {
-                    const data = this.getDataToDraw(tile);
-                    this.testEvents.raiseEvent('test-tile', {
-                       tile: tile,
-                       dataToDraw: data,
-                    });
-                }
-            }
-        }
-
-        canRotate() {
-            return true;
-        }
-
-        destroy() {
-            //noop
-        }
-
-        setImageSmoothingEnabled(imageSmoothingEnabled){
-            //noop
-        }
-
-        drawDebuggingRect(rect) {
-            //noop
-        }
-
-        clear(){
-            //noop
-        }
-    }
-
-    OpenSeadragon.EmptyTestT_ATileSource = class extends OpenSeadragon.TileSource {
-
-        supports( data, url ){
-            return data && data.isTestSource;
-        }
-
-        configure( data, url, postData ){
-            return {
-                width: 512, /* width *required */
-                height: 512, /* height *required */
-                tileSize: 128, /* tileSize *required */
-                tileOverlap: 0, /* tileOverlap *required */
-                minLevel: 0, /* minLevel */
-                maxLevel: 3, /* maxLevel */
-                tilesUrl: "", /* tilesUrl */
-                fileFormat: "", /* fileFormat */
-                displayRects: null /* displayRects */
-            }
-        }
-
-        getTileUrl(level, x, y) {
-            return String(level); //treat each tile on level same to introduce cache overlaps
-        }
-
-        downloadTileStart(context) {
-            context.finish(0, null, T_A);
-        }
-    }
-
     // ----------
     QUnit.module('TileCache', {
         beforeEach: function () {
             $('<div id="example"></div>').appendTo("#qunit-fixture");
 
             testLog.reset();
-
-            viewer = OpenSeadragon({
-                id: 'example',
-                prefixUrl: '/build/openseadragon/images/',
-                maxImageCacheCount: 200, //should be enough to fit test inside the cache
-                springStiffness: 100, // Faster animation = faster tests
-                drawer: 'test-cache-drawer',
-            });
             OpenSeadragon.ImageLoader.prototype.addJob = originalJob;
 
             // Reset counters
             typeAtoB = 0, typeBtoC = 0, typeCtoA = 0, typeDtoA = 0, typeCtoE = 0;
             copyA = 0, copyB = 0, copyC = 0, copyD = 0, copyE = 0;
             destroyA = 0, destroyB = 0, destroyC = 0, destroyD = 0, destroyE = 0;
+
+            OpenSeadragon.TestCacheDrawer = class extends OpenSeadragon.DrawerBase {
+                constructor(opts) {
+                    super(opts);
+                    this.testEvents = new OpenSeadragon.EventSource();
+                }
+
+                static isSupported() {
+                    return true;
+                }
+
+                _createDrawingElement() {
+                    return document.createElement("div");
+                }
+
+                draw(tiledImages) {
+                    for (let image of tiledImages) {
+                        const tilesDoDraw = image.getTilesToDraw().map(info => info.tile);
+                        for (let tile of tilesDoDraw) {
+                            const data = this.getDataToDraw(tile);
+                            this.testEvents.raiseEvent('test-tile', {
+                                tile: tile,
+                                dataToDraw: data,
+                            });
+                        }
+                    }
+                }
+
+                internalCacheFree(data) {
+                    this.testEvents.raiseEvent('free-data');
+                }
+
+                canRotate() {
+                    return true;
+                }
+
+                destroy() {
+                    this.destroyInternalCache();
+                }
+
+                setImageSmoothingEnabled(imageSmoothingEnabled){
+                    //noop
+                }
+
+                drawDebuggingRect(rect) {
+                    //noop
+                }
+
+                clear(){
+                    //noop
+                }
+            }
+
+            OpenSeadragon.SyncInternalCacheDrawer = class extends OpenSeadragon.TestCacheDrawer {
+
+                getType() {
+                    return "test-cache-drawer-sync";
+                }
+
+                getSupportedDataFormats() {
+                    return [T_C, T_E];
+                }
+
+                // Make test use private cache
+                get defaultOptions() {
+                    return {
+                        usePrivateCache: true,
+                        preloadCache: false,
+                    };
+                }
+
+                internalCacheCreate(cache, tile) {
+                    this.testEvents.raiseEvent('create-data');
+                    return cache.data;
+                }
+            }
+
+            OpenSeadragon.AsnycInternalCacheDrawer = class extends OpenSeadragon.TestCacheDrawer {
+
+                getType() {
+                    return "test-cache-drawer-async";
+                }
+
+                getSupportedDataFormats() {
+                    return [T_A];
+                }
+
+                // Make test use private cache
+                get defaultOptions() {
+                    return {
+                        usePrivateCache: true,
+                        preloadCache: true,
+                    };
+                }
+
+                internalCacheCreate(cache, tile) {
+                    this.testEvents.raiseEvent('create-data');
+                    return cache.getDataAs(T_C, true);
+                }
+
+                internalCacheFree(data) {
+                    super.internalCacheFree(data);
+                    // Be nice and truly destroy the data copy
+                    OpenSeadragon.convertor.destroy(data, T_C);
+                }
+            }
+
+            OpenSeadragon.EmptyTestT_ATileSource = class extends OpenSeadragon.TileSource {
+
+                supports( data, url ){
+                    return data && data.isTestSource;
+                }
+
+                configure( data, url, postData ){
+                    return {
+                        width: 512, /* width *required */
+                        height: 512, /* height *required */
+                        tileSize: 128, /* tileSize *required */
+                        tileOverlap: 0, /* tileOverlap *required */
+                        minLevel: 0, /* minLevel */
+                        maxLevel: 3, /* maxLevel */
+                        tilesUrl: "", /* tilesUrl */
+                        fileFormat: "", /* fileFormat */
+                        displayRects: null /* displayRects */
+                    }
+                }
+
+                getTileUrl(level, x, y) {
+                    return String(level); //treat each tile on level same to introduce cache overlaps
+                }
+
+                downloadTileStart(context) {
+                    context.finish(0, null, T_A);
+                }
+            }
         },
         afterEach: function () {
             if (viewer && viewer.close) {
                 viewer.close();
             }
+
+            // Some tests test all drawers - remove test drawers to avoid collision with other tests
+            OpenSeadragon.EmptyTestT_ATileSource = null;
+            OpenSeadragon.AsnycInternalCacheDrawer = null;
+            OpenSeadragon.SyncInternalCacheDrawer = null;
+            OpenSeadragon.TestCacheDrawer = null;
 
             viewer = null;
         }
@@ -313,17 +354,33 @@
         done();
     });
 
-    //Tile API and cache interaction
-    QUnit.test('Tile: basic rendering & test setup', function(test) {
+    // Tile API and cache interaction
+    QUnit.test('Tile: basic rendering & test setup (sync drawer)', function(test) {
         const done = test.async();
+
+        viewer = OpenSeadragon({
+            id: 'example',
+            prefixUrl: '/build/openseadragon/images/',
+            maxImageCacheCount: 200, //should be enough to fit test inside the cache
+            springStiffness: 100, // Faster animation = faster tests
+            drawer: 'test-cache-drawer-sync',
+        });
 
         const tileCache = viewer.tileCache;
         const drawer = viewer.drawer;
 
         let testTileCalled = false;
+        let countFreeCalled = 0;
+        let countCreateCalled = 0;
         drawer.testEvents.addHandler('test-tile', e => {
             testTileCalled = true;
             test.ok(e.dataToDraw, "Tile data is ready to be drawn");
+        });
+        drawer.testEvents.addHandler('create-data', e => {
+            countCreateCalled++;
+        });
+        drawer.testEvents.addHandler('free-data', e => {
+            countFreeCalled++;
         });
 
         viewer.addHandler('open', async () => {
@@ -339,12 +396,16 @@
 
             for (let tile of tileCache._tilesLoaded) {
                 const cache = tile.getCache();
-                test.equal(cache.type, T_A, "Cache data was not affected, the drawer uses internal cache.");
+                test.equal(cache.type, T_C, "Cache data was affected, the drawer supports only T_C since there is no way to get to T_E.");
 
                 const internalCache = cache.getDataForRendering(drawer, tile);
-                test.equal(internalCache.type, T_C, "Conversion A->C ready, since there is no way to get to T_E.");
+                test.equal(internalCache.type, viewer.drawer.getId(), "Sync conversion routine means T_C is also internal since dataCreate only creates data. However, internal cache keeps type of the drawer ID.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }
+
+            test.ok(countCreateCalled > 0, "Internal cache creation called.");
+            viewer.drawer.destroyInternalCache();
+            test.equal(countCreateCalled, countFreeCalled, "Free called as many times as create.");
 
             done();
         });
@@ -357,6 +418,13 @@
     QUnit.test('Tile & Invalidation API: basic conversion & preprocessing', function(test) {
         const done = test.async();
 
+        viewer = OpenSeadragon({
+            id: 'example',
+            prefixUrl: '/build/openseadragon/images/',
+            maxImageCacheCount: 200, //should be enough to fit test inside the cache
+            springStiffness: 100, // Faster animation = faster tests
+            drawer: 'test-cache-drawer-async',
+        });
         const tileCache = viewer.tileCache;
         const drawer = viewer.drawer;
 
@@ -376,7 +444,6 @@
             _currentTestVal = value;
             viewer.world.needsDraw();
             viewer.world.draw();
-            previousTestValue = value;
             _currentTestVal = undefined;
         }
 
@@ -402,8 +469,6 @@
 
             viewer.addHandler('tile-invalidated', testHandler);
             await viewer.world.requestInvalidate(true);
-            await sleep(1);  // necessary to make space for internal updates
-            testDrawingRoutine(2);
 
             //test for each level only single cache was processed
             const processedLevels = {};
@@ -421,37 +486,37 @@
                 test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses internal cache.");
 
                 const cache = tile.getCache();
-                test.equal(cache.type, T_C, "Main Cache Updated (suite 1)");
-                test.equal(cache.data, previousTestValue, "Main Cache Updated (suite 1)");
+                test.equal(cache.type, T_A, "Main Cache Converted T_C -> T_A (drawer supports type A) (suite 1)");
+                test.equal(cache.data, 3, "Conversion step increases plugin-stored value 2 to 3");
 
                 const internalCache = cache.getDataForRendering(drawer, tile);
-                test.equal(T_C, internalCache.type, "Conversion A->C ready, since there is no way to get to T_E.");
+                test.equal(internalCache.type, viewer.drawer.getId(), "Internal cache has type of the drawer ID.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }
+            // Internal cache will have value 5: main cache is 3, type is T_A,
+            testDrawingRoutine(5); // internal cache transforms to T_C: two steps, TA->TB->TC 3+2
 
             // Test that basic scenario with reset data false starts from the main cache data of previous round
             const modificationConstant = 50;
             viewer.removeHandler('tile-invalidated', testHandler);
             testHandler = async e => {
                 const data = await e.getData(T_B);
-                test.equal(data, previousTestValue + 2, "C -> A -> B conversion happened.");
+                test.equal(data, 4, "A -> B conversion happened, we started from value 3 in the main cache.");
                 await e.setData(data + modificationConstant, T_B);
-                console.log(data + modificationConstant);
                 test.notOk(e.outdated(), "Event is still valid.");
             };
-            console.log(previousTestValue, modificationConstant)
 
             viewer.addHandler('tile-invalidated', testHandler);
             await viewer.world.requestInvalidate(false);
-            await sleep(1);  // necessary to make space for a draw call
-            // We set data as TB - there is T_C -> T_A -> T_B -> T_C conversion round
-            let newValue = previousTestValue + modificationConstant + 3;
-            testDrawingRoutine(newValue);
 
-            newValue--; // intenrla cache performed +1 conversion, but here we have main cache with one step less
+            // We set data as TB - there is required T_A: T_B -> T_C -> T_A conversion round on the main cache
+            let newValue = modificationConstant + 4 + 2;
+            // and there is still requirement of T_C on internal data, +2 steps
+            testDrawingRoutine(newValue + 2);
+
             for (let tile of tileCache._tilesLoaded) {
                 const cache = tile.getCache();
-                test.equal(cache.type, T_B, "Main Cache Updated (suite 2).");
+                test.equal(cache.type, T_A, "Main Cache Updated (suite 2).");
                 test.equal(cache.data, newValue, "Main Cache Updated (suite 2).");
             }
 
@@ -485,14 +550,22 @@
             viewer.removeHandler('tile-invalidated', testHandler);
             testHandler = async e => {
                 const data = await e.getData(T_B);
-                test.equal(data, 42, "Copy: 41 + 1.");
-                await e.setData(data, T_E);
-                e.resetData();
+                test.equal(data, 44, "Copy: 41 +2 (previous request invalidate ends at T_A) + 1 (we request type B).");
+                await e.setData(data, T_E); // there is no way to convert T_E -> T_A, this would throw an error
+                e.resetData(); // reset data will revert to original cache
             };
             viewer.addHandler('tile-invalidated', testHandler);
+
+            // The data will be 45 since no change has been made:
+            // last main cache set was 41 T_B, supported T_A = +2
+            //  and internal requirement T_C = +2
+            const checkNotCalled = e => {
+                test.ok(false, "Create data must not be called when there is no change!");
+            };
+            drawer.testEvents.addHandler('create-data', checkNotCalled);
+
             await viewer.world.requestInvalidate(false);
-            await sleep(1);  // necessary to make space for a draw call
-            testDrawingRoutine(42);
+            testDrawingRoutine(45);
 
             for (let tile of tileCache._tilesLoaded) {
                 const origCache = tile.getCache(tile.originalCacheKey);
@@ -501,6 +574,7 @@
             }
 
             test.ok(testTileCalled, "Drawer tested at least one tile.");
+            viewer.destroy();
             done();
         });
         viewer.open([
@@ -632,6 +706,14 @@
     QUnit.test('Zombie Cache', function(test) {
         const done = test.async();
 
+        viewer = OpenSeadragon({
+            id: 'example',
+            prefixUrl: '/build/openseadragon/images/',
+            maxImageCacheCount: 200, //should be enough to fit test inside the cache
+            springStiffness: 100, // Faster animation = faster tests
+            drawer: 'test-cache-drawer-sync',
+        });
+
         //test jobs by coverage: fail if cached coverage not fully re-stored without jobs
         let jobCounter = 0, coverage = undefined;
         OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
@@ -710,6 +792,14 @@
 
     QUnit.test('Zombie Cache Replace Item', function(test) {
         const done = test.async();
+
+        viewer = OpenSeadragon({
+            id: 'example',
+            prefixUrl: '/build/openseadragon/images/',
+            maxImageCacheCount: 200, //should be enough to fit test inside the cache
+            springStiffness: 100, // Faster animation = faster tests
+            drawer: 'test-cache-drawer-sync',
+        });
 
         let jobCounter = 0, coverage = undefined;
         OpenSeadragon.ImageLoader.prototype.addJob = function (options) {
