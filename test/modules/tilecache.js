@@ -126,7 +126,7 @@
                     }
                 }
 
-                dataFree(data) {
+                internalCacheFree(data) {
                     this.testEvents.raiseEvent('free-data');
                 }
 
@@ -169,7 +169,7 @@
                     };
                 }
 
-                dataCreate(cache, tile) {
+                internalCacheCreate(cache, tile) {
                     this.testEvents.raiseEvent('create-data');
                     return cache.data;
                 }
@@ -193,13 +193,13 @@
                     };
                 }
 
-                dataCreate(cache, tile) {
+                internalCacheCreate(cache, tile) {
                     this.testEvents.raiseEvent('create-data');
                     return cache.getDataAs(T_C, true);
                 }
 
-                dataFree(data) {
-                    super.dataFree(data);
+                internalCacheFree(data) {
+                    super.internalCacheFree(data);
                     // Be nice and truly destroy the data copy
                     OpenSeadragon.convertor.destroy(data, T_C);
                 }
