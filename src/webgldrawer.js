@@ -940,7 +940,6 @@
                 const context = canvas.getContext('2d', { willReadFrequently: true });
                 context.drawImage( data, 0, 0 );
                 data = context;
-                $.console.log("FONCSCNSO");
             }
             if (data instanceof CanvasRenderingContext2D) {
                 return data;
