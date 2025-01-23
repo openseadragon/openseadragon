@@ -3,7 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 6.0.0: (in progress...)
 
-* NEW BEHAVIOR: OpenSeadragon Data Pipeline Overhaul (#2407 @Aiosa)
+* NEW BEHAVIOR: OpenSeadragon Data Pipeline Overhaul (#2407, #2643 @Aiosa)
     * DEPRECATION: Properties on tile that manage drawer data, or store data to draw: Tile.[element|imgElement|style|context2D|getImage|getCanvasContext] and transitively Tile.getScaleForEdgeSmoothing
     * DEPRECATION: TileSource data lifecycle handlers: system manages these automatically: TileSource.[createTileCache|destroyTileCache|getTileCacheData|getTileCacheDataAsImage|getTileCacheDataAsContext2D]
     * Tiles data is driven by caches: tiles can have multiple caches and cache can reference multiple tiles.
