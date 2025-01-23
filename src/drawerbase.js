@@ -38,7 +38,14 @@
  * @typedef BaseDrawerOptions
  * @memberOf OpenSeadragon
  * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
- *   detached (=internal) cache object in case it has to perform type conversion
+ *   detached (=internal) cache object in case it has to perform custom type conversion atop
+ *   what cache performs. In that case, drawer must implement internalCacheCreate() which gets data in one
+ *   of formats the drawer declares as supported. This method must return object to be used during drawing.
+ *   You should probably implement also internalCacheFree() to provide cleanup logics.
+ *
+ * @property {boolean} [preloadCache=true]
+ *  When internalCacheCreate is used, it can be applied offline (asynchronously) during data processing = preloading,
+ *  or just in time before rendering (if necessary). Preloading supports
  */
 
 const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
@@ -86,6 +93,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.container.appendChild( this.canvas );
 
         this._checkInterfaceImplementation();
+        this.setInternalCacheNeedsRefresh();  // initializes stamp
     }
 
     /**
@@ -97,7 +105,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      */
     get defaultOptions() {
         return {
-            usePrivateCache: false
+            usePrivateCache: false,
+            preloadCache: true,
         };
     }
 
@@ -208,6 +217,15 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     }
 
     /**
+     * Destroy internal cache. Should be called within destroy() when
+     * usePrivateCache is set to true. Ensures cleanup of anything created
+     * by internalCacheCreate(...).
+     */
+    destroyInternalCache() {
+        this.viewer.tileCache.clearDrawerInternalCache(this);
+    }
+
+    /**
      * @param {TiledImage} tiledImage the tiled image that is calling the function
      * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
      * @private
@@ -238,6 +256,31 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     // Deprecated functions
     clear(){
         $.console.warn('[drawer].clear() is deprecated. The drawer is responsible for clearing itself as needed before drawing tiles.');
+    }
+
+    /**
+     * If options.usePrivateCache is true, this method MUST RETURN the private cache content
+     * @param {OpenSeadragon.CacheRecord} cache
+     * @param {OpenSeadragon.Tile} tile
+     * @return any
+     */
+    internalCacheCreate(cache, tile) {}
+
+    /**
+     * It is possible to perform any necessary cleanup on internal cache, necessary if you
+     * need to clean up some memory (e.g. destroy canvas by setting with & height to 0).
+     * @param {*} data object returned by internalCacheCreate(...)
+     */
+    internalCacheFree(data) {}
+
+    /**
+     * Call to invalidate internal cache. It will be rebuilt. With synchronous converions,
+     * it will be rebuilt immediatelly. With asynchronous, it will be rebuilt once invalidation
+     * routine happens, e.g. you should call also requestInvalidate() if you need to happen
+     * it as soon as possible.
+     */
+    setInternalCacheNeedsRefresh() {
+        this._dataNeedsRefresh = $.now();
     }
 
     // Private functions
