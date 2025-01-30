@@ -2222,7 +2222,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
    /**
      * Adds an html element as an overlay to the current viewport.  Useful for
      * highlighting words or areas of interest on an image or other zoomable
-     * interface. Unless the viewer has been configured with the preserveOverlays 
+     * interface. Unless the viewer has been configured with the preserveOverlays
      * option, overlays added via this method are removed when the viewport
      * is closed (including in sequence mode when changing page).
      * @method
