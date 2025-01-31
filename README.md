@@ -32,8 +32,8 @@ OpenSeadragon is released under the New BSD license. For details, see the [LICEN
 
 We are grateful for the (development or financial) contribution to the OpenSeadragon project.
 
-<a href="https://www.bbmri-eric.eu"><img alt="BBMRI ERIC Logo" src="assets/logos/bbmri-logo.png" height="80" /></a>
+<a href="https://www.bbmri-eric.eu"><img alt="BBMRI ERIC Logo" src="assets/logos/bbmri-logo.png" height="70" /></a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://www.pitt.edu/"><img alt="University of Pittsburgh Logo" src="assets/logos/pitt-logo.png" height="80" /></a>
+<a href="https://www.pitt.edu/"><img alt="University of Pittsburgh Logo" src="assets/logos/pitt-logo.png" height="70" /></a>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-<a href="https://www.stanford.edu/"><img alt="Stanford University Logo" src="assets/logos/stanford-logo.png" height="80" /></a>
+<a href="https://www.stanford.edu/"><img alt="Stanford University Logo" src="assets/logos/stanford-logo.png" height="70" /></a>
