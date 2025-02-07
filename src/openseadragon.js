@@ -1082,7 +1082,9 @@ function OpenSeadragon( options ){
                                     context.msBackingStorePixelRatio ||
                                     context.oBackingStorePixelRatio ||
                                     context.backingStorePixelRatio || 1;
-            return Math.max(devicePixelRatio, 1) / backingStoreRatio;
+            console.log("device, store ratios", devicePixelRatio, backingStoreRatio);
+            console.log("final ratio", Math.max(devicePixelRatio, 1) / backingStoreRatio);
+            return 1;
         } else {
             return 1;
         }

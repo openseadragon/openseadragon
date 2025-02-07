@@ -1361,6 +1361,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // Once a level fully covers the viewport the loop is halted and
         // lower-resolution levels are skipped
         let useLevel = false;
+        let unloaded = [];
+        let extraUnloaded = [];
         for (let i = 0; i < levelList.length; i++) {
             let level = levelList[i];
 
@@ -1409,6 +1411,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
 
             bestTiles = result.bestTiles;
+            if (unloaded.length === 0) {
+                unloaded = result.unloadedTiles;
+            }
+            if (extraUnloaded.length === 0) {
+                extraUnloaded = result.extraTiles;
+            }
             var tiles = result.updatedTiles.filter(tile => tile.loaded);
             var makeTileInfoObject = (function(level, levelOpacity, currentTime){
                 return function(tile){
@@ -1430,15 +1438,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         }
 
+        unloaded.slice(0, 20).forEach(tile => {
+            this._loadTile(tile, currentTime);
+        });
+
+        if (extraUnloaded.length && this._tilesLoading === 0 && !unloaded.length) {
+            extraUnloaded.slice(0, 10).forEach(tile => {
+                this._loadTile(tile, currentTime);
+            });
+        }
+
 
         // Load the new 'best' n tiles
         if (bestTiles && bestTiles.length > 0) {
-            bestTiles.forEach(function (tile) {
-                if (tile && !tile.context2D) {
-                    this._loadTile(tile, currentTime);
-                }
-            }, this);
-
             this._needsDraw = true;
             return false;
         } else {
@@ -1630,8 +1642,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var numTiles = Math.max(0, (bottomRightTile.x - topLeftTile.x) * (bottomRightTile.y - topLeftTile.y));
         var tiles = new Array(numTiles);
         var tileIndex = 0;
-        for (var x = topLeftTile.x; x <= bottomRightTile.x; x++) {
-            for (var y = topLeftTile.y; y <= bottomRightTile.y; y++) {
+        var unloadedTiles = [];
+        var extraTiles = [];
+
+        var overLoad = 2;
+
+        var xStart = Math.max(topLeftTile.x - overLoad, 0);
+        var yStart = Math.max(topLeftTile.y - overLoad, 0);
+        var xEnd = Math.min(bottomRightTile.x + overLoad, numberOfTiles.x - 1);
+        var yEnd = Math.min(bottomRightTile.y + overLoad, numberOfTiles.y - 1);
+
+        for (var x = xStart; x <= xEnd; x++) {
+            for (var y = yStart; y <= yEnd; y++) {
 
                 var flippedX;
                 if (this.getFlip()) {
@@ -1641,10 +1663,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     flippedX = x;
                 }
 
-                if (drawArea.intersection(this.getTileBounds(level, flippedX, y)) === null) {
-                    // This tile is outside of the viewport, no need to draw it
-                    continue;
-                }
+                var extraTile = drawArea.intersection(this.getTileBounds(level, flippedX, y)) === null;
+
+                // if (drawArea.intersection(this.getTileBounds(level, flippedX, y)) === null) {
+                //     // This tile is outside of the viewport, no need to draw it
+                //     continue;
+                // }
 
                 var result = this._updateTile(
                     flippedX, y,
@@ -1655,6 +1679,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     currentTime,
                     best
                 );
+                if (!result.loaded) {
+                    if (!extraTile) {
+                        unloadedTiles.push(result.tile);
+                    } else {
+                        extraTiles.push(result.tile);
+                    }
+                }
                 best = result.bestTiles;
                 tiles[tileIndex] = result.tile;
                 tileIndex += 1;
@@ -1663,7 +1694,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         return {
             bestTiles: best,
-            updatedTiles: tiles
+            updatedTiles: tiles,
+            unloadedTiles: unloadedTiles,
+            extraTiles: extraTiles
         };
     },
 
@@ -1804,7 +1837,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         return {
             bestTiles: best,
-            tile: tile
+            tile: tile,
+            loaded: tile.loaded || tile.loading
         };
     },
 
