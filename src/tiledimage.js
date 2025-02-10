@@ -1442,6 +1442,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         unloaded.slice(0, 50).forEach(tile => {
+            console.log("loading tile x,y,level", tile.x, tile.y, tile.level, tile.getUrl());
             this._loadTile(tile, currentTime);
         });
 
@@ -1453,7 +1454,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
 
         // Load the new 'best' n tiles
-        if (bestTiles && bestTiles.length > 0) {
+        if (unloaded && unloaded.length > 0) {
             this._needsDraw = true;
             return false;
         } else {
