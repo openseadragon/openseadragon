@@ -1362,7 +1362,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // lower-resolution levels are skipped
         let useLevel = false;
         let unloaded = [];
-        let extraUnloaded = [];
+        // let extraUnloaded = [];
+        let baseLevel = null;
         for (let i = 0; i < levelList.length; i++) {
             let level = levelList[i];
 
@@ -1377,6 +1378,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 useLevel = true;
             } else if (!useLevel) {
                 continue;
+            }
+
+            if (baseLevel === null) {
+                baseLevel = level;
             }
 
             var targetRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
@@ -1411,11 +1416,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             );
 
             bestTiles = result.bestTiles;
-            if (unloaded.length === 0) {
-                unloaded = result.unloadedTiles;
-            }
-            if (extraUnloaded.length === 0) {
-                extraUnloaded = result.extraTiles;
+            unloaded = result.unloadedTiles.concat(unloaded);
+            if (baseLevel === level + 1) {
+                // extraUnloaded = result.extraTiles;
             }
             var tiles = result.updatedTiles.filter(tile => tile.loaded);
             var makeTileInfoObject = (function(level, levelOpacity, currentTime){
@@ -1438,15 +1441,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         }
 
-        unloaded.slice(0, 20).forEach(tile => {
+        unloaded.slice(0, 50).forEach(tile => {
             this._loadTile(tile, currentTime);
         });
 
-        if (extraUnloaded.length && this._tilesLoading === 0 && !unloaded.length) {
-            extraUnloaded.slice(0, 10).forEach(tile => {
-                this._loadTile(tile, currentTime);
-            });
-        }
+        // if (extraUnloaded.length && this._tilesLoading === 0 && !unloaded.length) {
+        //     extraUnloaded.slice(0, 20).forEach(tile => {
+        //         this._loadTile(tile, currentTime);
+        //     });
+        // }
 
 
         // Load the new 'best' n tiles
