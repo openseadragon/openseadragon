@@ -1650,33 +1650,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         };
     },
 
-      /**
-     * Updates all tiles at a given resolution level.
+    /**
+     * Visit all tiles in an a given area on a given level.
      * @private
      * @param {Number} level
-     * @param {Number} levelOpacity
-     * @param {Number} levelVisibility
-     * @param {OpenSeadragon.Rect} drawArea
-     * @param {Number} currentTime
-     * @param {OpenSeadragon.Tile[]} best Array of the current best tiles
-     * @returns {OpenSeadragon.Tile[]} Updated tiles
+     * @param {OpenSeadragon.Rect} area
+     * @param {Function} callback - TiledImage, x, y, total
      */
-    _updateDrawArea: function(level,
-                            levelVisibility, drawArea, currentTime) {
-
-        var topLeftBound = drawArea.getBoundingBox().getTopLeft();
-        var bottomRightBound = drawArea.getBoundingBox().getBottomRight();
-
-        this._resetCoverage(this.coverage, level);
-
+    _visitTiles: function(level, area, callback) {
+        var topLeftBound = area.getBoundingBox().getTopLeft();
+        var bottomRightBound = area.getBoundingBox().getBottomRight();
 
         var drawCornerTiles = this._getCornerTiles(level, topLeftBound, bottomRightBound);
         var drawTopLeftTile = drawCornerTiles.topLeft;
         var drawBottomRightTile = drawCornerTiles.bottomRight;
 
-        var numberOfTiles  = this.source.getNumTiles(level);
 
-        var viewportCenter = this.viewport.pixelFromPoint(this.viewport.getCenter());
+        var numberOfTiles  = this.source.getNumTiles(level);
 
         if (this.getFlip()) {
             // The right-most tile can be narrower than the others. When flipped,
@@ -1690,10 +1680,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 drawBottomRightTile.x  = Math.min(drawBottomRightTile.x, numberOfTiles.x - 1);
             }
         }
-
         var numTiles = Math.max(0, (drawBottomRightTile.x - drawTopLeftTile.x) * (drawBottomRightTile.y - drawTopLeftTile.y));
-        var tiles = new Array(numTiles);
-        var tileIndex = 0;
+
         for (var x = drawTopLeftTile.x; x <= drawBottomRightTile.x; x++) {
             for (var y = drawTopLeftTile.y; y <= drawBottomRightTile.y; y++) {
 
@@ -1705,29 +1693,60 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     flippedX = x;
                 }
 
-                if (drawArea.intersection(this.getTileBounds(level, flippedX, y)) === null) {
+                if (area.intersection(this.getTileBounds(level, flippedX, y)) === null) {
                     // This tile is not in the draw area
                     continue;
                 }
 
-                tiles[tileIndex] = this._updateTile(
-                    flippedX, y,
-                    level,
-                    levelVisibility,
-                    viewportCenter,
-                    numberOfTiles,
-                    currentTime
-                );
-
-                tileIndex += 1;
+                callback(this, flippedX, y, numTiles);
             }
         }
+
+
+    },
+
+      /**
+     * Updates draw information for all tiles at a given level in the area
+     * @private
+     * @param {Number} level
+     * @param {Number} levelOpacity
+     * @param {Number} levelVisibility
+     * @param {OpenSeadragon.Rect} drawArea
+     * @param {Number} currentTime
+     * @param {OpenSeadragon.Tile[]} best Array of the current best tiles
+     * @returns {OpenSeadragon.Tile[]} Updated tiles
+     */
+    _updateDrawArea: function(level,
+                            levelVisibility, drawArea, currentTime) {
+        var numberOfTiles  = this.source.getNumTiles(level);
+        var viewportCenter = this.viewport.pixelFromPoint(this.viewport.getCenter());
+        this._resetCoverage(this.coverage, level);
+
+        var tiles = null;
+        var tileIndex = 0;
+
+        this._visitTiles(level, drawArea, function(tiledImage, x, y, total) {
+            if (!tiles) {
+                tiles = new Array(total);
+            }
+            tiles[tileIndex] = tiledImage._updateTile(
+                x, y,
+                level,
+                levelVisibility,
+                viewportCenter,
+                numberOfTiles,
+                currentTime
+            );
+
+            tileIndex += 1;
+
+        });
 
         return tiles;
     },
 
         /**
-     * Updates all tiles at a given resolution level.
+     * Updates load information for all tiles at a given level in the area
      * @private
      * @param {Number} level
      * @param {OpenSeadragon.Rect} loadArea
@@ -1736,57 +1755,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Tile[]} The new best tiles to load
      */
     _updateLoadArea: function(level, loadArea, currentTime, best) {
-
-        var loadTopLeftBound = loadArea.getBoundingBox().getTopLeft();
-        var loadBottomRightBound = loadArea.getBoundingBox().getBottomRight();
-
         this._resetCoverage(this.loadingCoverage, level);
-
-        //OK, a new drawing so do your calculations
-        var loadCornerTiles = this._getCornerTiles(level, loadTopLeftBound, loadBottomRightBound);
-        var loadTopLeftTile = loadCornerTiles.topLeft;
-        var loadBottomRightTile = loadCornerTiles.bottomRight;
-
         var numberOfTiles  = this.source.getNumTiles(level);
 
-        if (this.getFlip()) {
-            // The right-most tile can be narrower than the others. When flipped,
-            // this tile is now on the left. Because it is narrower than the normal
-            // left-most tile, the subsequent tiles may not be wide enough to completely
-            // fill the viewport. Fix this by rendering an extra column of tiles. If we
-            // are not wrapping, make sure we never render more than the number of tiles
-            // in the image.
-            loadBottomRightTile.x += 1;
-            if (!this.wrapHorizontal) {
-                loadBottomRightTile.x  = Math.min(loadBottomRightTile.x, numberOfTiles.x - 1);
-            }
-        }
+        this._visitTiles(level, loadArea, function(tiledImage, x, y, _) {
+            best = tiledImage._considerTileForLoad(
+                x, y,
+                level,
+                numberOfTiles,
+                currentTime,
+                best
+            );
 
-        for (var x = loadTopLeftTile.x; x <= loadBottomRightTile.x; x++) {
-            for (var y = loadTopLeftTile.y; y <= loadBottomRightTile.y; y++) {
-
-                var flippedX;
-                if (this.getFlip()) {
-                    var xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
-                    flippedX = x + numberOfTiles.x - xMod - xMod - 1;
-                } else {
-                    flippedX = x;
-                }
-
-                if (loadArea.intersection(this.getTileBounds(level, flippedX, y)) === null) {
-                    // This tile is outside of the dest viewport, no need to load it
-                    continue;
-                }
-
-                best = this._considerTileForLoad(
-                    flippedX, y,
-                    level,
-                    numberOfTiles,
-                    currentTime,
-                    best
-                );
-            }
-        }
+        });
 
         return best;
     },
