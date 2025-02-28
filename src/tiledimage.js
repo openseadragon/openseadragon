@@ -1699,8 +1699,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
                 var flippedX;
                 if (this.getFlip()) {
-                    var xMod1 = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
-                    flippedX = x + numberOfTiles.x - xMod1 - xMod1 - 1;
+                    var xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
+                    flippedX = x + numberOfTiles.x - xMod - xMod - 1;
                 } else {
                     flippedX = x;
                 }
