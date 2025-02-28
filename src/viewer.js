@@ -420,6 +420,10 @@ $.Viewer = function( options ) {
         silenceMultiImageWarnings:          this.silenceMultiImageWarnings
     });
 
+    if (this.pixelDensityRatio) {
+        $.pixelDensityRatio = this.pixelDensityRatio;
+    }
+
     this.viewport._setContentBounds(this.world.getHomeBounds(), this.world.getContentFactor());
 
     // Create the image loader
@@ -520,6 +524,7 @@ $.Viewer = function( options ) {
             loadTilesWithAjax: this.loadTilesWithAjax,
             ajaxHeaders:       this.ajaxHeaders,
             ajaxWithCredentials: this.ajaxWithCredentials,
+            pixelDensityRatio: this.pixelDensityRatio,
         });
     }
 
@@ -2581,7 +2586,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
      _updatePixelDensityRatio: function() {
         var previusPixelDensityRatio = $.pixelDensityRatio;
-        var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
+        var currentPixelDensityRatio = this.pixelDensityRatio;
+        if (!currentPixelDensityRatio) {
+            currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
+        }
         if (previusPixelDensityRatio !== currentPixelDensityRatio) {
             $.pixelDensityRatio = currentPixelDensityRatio;
             this.forceResize();
