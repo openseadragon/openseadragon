@@ -355,7 +355,7 @@
   *     Specifies the animation duration per each {@link OpenSeadragon.Spring}
   *     which occur when the image is dragged, zoomed or rotated.
   *
-  * @property {Number} [loadTilesOnAnimationPathTiles=true]
+  * @property {Boolean} [loadTilesOnAnimationPathTiles=true]
   *    If true, tiles are loaded when they are on the path of the animation.
   *    If false, tiles at the animation destination are optimistically loaded
   * @property {OpenSeadragon.GestureSettings} [gestureSettingsMouse]
