@@ -176,6 +176,7 @@ $.TiledImage = function( options ) {
         wrapHorizontal:                    $.DEFAULT_SETTINGS.wrapHorizontal,
         wrapVertical:                      $.DEFAULT_SETTINGS.wrapVertical,
         immediateRender:                   $.DEFAULT_SETTINGS.immediateRender,
+        loadTilesOnAnimationPath:          $.DEFAULT_SETTINGS.loadTilesOnAnimationPath,
         blendTime:                         $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
@@ -1354,7 +1355,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var highestLevel = levelsInterval.highestLevel; // the highest level we should draw at our current zoom
         var bestTiles = [];
         var drawArea = this.getDrawArea();
-        var loadArea = this.getLoadArea();
+        var loadArea = drawArea;
+
+        if (!this.loadTilesOnAnimationPath) {
+          loadArea = this.getLoadArea();
+        }
         var currentTime = $.now();
 
         // reset each tile's beingDrawn flag
