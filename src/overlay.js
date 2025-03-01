@@ -132,11 +132,8 @@
         this.element = options.element;
         this.elementWrapper.appendChild(this.element);
 
-        if (this.element.id) {
-            this.elementWrapper.id = "overlay-wrapper-" + this.element.id;
-        } else {
-            this.elementWrapper.id = "overlay-wrapper";
-        }
+        this.elementWrapper.id = "overlay-wrapper" + (this.element.id ? "-" + this.element.id : "");
+
 
         this.style = this.elementWrapper.style;
         this._init(options);
