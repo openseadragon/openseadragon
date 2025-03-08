@@ -176,7 +176,7 @@ $.TiledImage = function( options ) {
         wrapHorizontal:                    $.DEFAULT_SETTINGS.wrapHorizontal,
         wrapVertical:                      $.DEFAULT_SETTINGS.wrapVertical,
         immediateRender:                   $.DEFAULT_SETTINGS.immediateRender,
-        loadTilesOnAnimationPath:          $.DEFAULT_SETTINGS.loadTilesOnAnimationPath,
+        loadDestinationTilesOnAnimation:   $.DEFAULT_SETTINGS.loadDestinationTilesOnAnimation,
         blendTime:                         $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
@@ -1357,7 +1357,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var drawArea = this.getDrawArea();
         var loadArea = drawArea;
 
-        if (!this.loadTilesOnAnimationPath) {
+        if (this.loadDestinationTilesOnAnimation) {
           loadArea = this.getLoadArea();
         }
         var currentTime = $.now();
