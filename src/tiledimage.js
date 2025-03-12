@@ -1086,10 +1086,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     getLoadArea: function() {
-        var viewport = this.viewport;
-        var bounds = viewport.getBounds(false);
-        var drawArea = bounds.getBoundingBox();
-        return drawArea;
+        var loadArea = this._viewportToTiledImageRectangle(
+            this.viewport.getBoundsWithMargins(false));
+
+        if (!this.wrapHorizontal && !this.wrapVertical) {
+            var tiledImageBounds = this._viewportToTiledImageRectangle(
+            this.getClippedBounds(false));
+            loadArea = loadArea.intersection(tiledImageBounds);
+        }
+
+        return loadArea;
     },
 
     /**
@@ -1647,10 +1653,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var updatedTiles = this._updateDrawArea(level,
             levelVisibility, drawArea, currentTime);
 
-        var bestTiles = this._updateLoadArea(level, loadArea, currentTime, best);
+        if (loadArea) {
+            best = this._updateLoadArea(level, loadArea, currentTime, best);
+        }
 
         return {
-            bestTiles: bestTiles,
+            bestTiles: best,
             updatedTiles: updatedTiles
         };
     },
