@@ -24,7 +24,7 @@ OPENSEADRAGON CHANGELOG
     * New testing/demo utilities (MockSeadragon, DrawerSwitcher for switching drawers in demos, getBuiltInDrawersForTest for testing all drawers), serialization guard in tests to remove circular references.
     * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
     * Misc: updated CSS for dev server, new dev & test commands.
-* New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686 @MichaelWGibson)
+* New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
 * Improved documentation (#2676 @bennlich)
 * Improved unit tests (#2640 @harshkg23)
