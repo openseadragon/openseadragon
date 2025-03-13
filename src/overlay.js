@@ -133,14 +133,18 @@
         this.elementWrapper.appendChild(this.element);
 
         if (this.element.id) {
-            this.elementWrapper.id = "overlay-wrapper-" + this.element.id;
+        this.elementWrapper.id = "overlay-wrapper-" + this.element.id;
         } else {
-            this.elementWrapper.id = "overlay-wrapper";
+        this.elementWrapper.id = "overlay-wrapper-" + crypto.randomUUID(); // Ensure unique ID
         }
+
+        // Always add a class for easier selection
+        this.elementWrapper.classList.add("openseadragon-overlay-wrapper");
+
 
         this.style = this.elementWrapper.style;
         this._init(options);
-    };
+        };
 
     /** @lends OpenSeadragon.Overlay.prototype */
     $.Overlay.prototype = {
