@@ -132,10 +132,6 @@
         this.element = options.element;
         this.elementWrapper.appendChild(this.element);
 
-        // Create the overlay wrapper
-        this.elementWrapper = document.createElement('div');
-        this.elementWrapper.appendChild(this.element);
-
         // Assign a unique ID only if the overlay element has an id
         if (this.element.id) {
             this.elementWrapper.id = "overlay-wrapper-" + this.element.id;
