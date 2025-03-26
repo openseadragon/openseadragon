@@ -133,10 +133,11 @@
         this.elementWrapper.appendChild(this.element);
 
         if (this.element.id) {
-            this.elementWrapper.id = "overlay-wrapper-" + this.element.id;
-        } else {
-            this.elementWrapper.id = "overlay-wrapper";
+            this.elementWrapper.id = "overlay-wrapper-" + this.element.id; // Unique ID if element has one
         }
+        // Always add a class for styling & selection
+        this.elementWrapper.classList.add("openseadragon-overlay-wrapper");
+        
 
         this.style = this.elementWrapper.style;
         this._init(options);
