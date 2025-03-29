@@ -2005,11 +2005,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         // Navigation Controls
         //////////////////////////////////////////////////////////////////////////
-        var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
-            endZoomingHandler       = $.delegate( this, endZooming ),
-            doSingleZoomInHandler   = $.delegate( this, doSingleZoomIn ),
-            beginZoomingOutHandler  = $.delegate( this, beginZoomingOut ),
-            doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
+        var beginZoomingInHandler   = $.delegate( this, this.beginZoomingIn ),
+            endZoomingHandler       = $.delegate( this, this.endZooming ),
+            doSingleZoomInHandler   = $.delegate( this, this.doSingleZoomIn ),
+            beginZoomingOutHandler  = $.delegate( this, this.beginZoomingOut ),
+            doSingleZoomOutHandler  = $.delegate( this, this.doSingleZoomOut ),
             onHomeHandler           = $.delegate( this, onHome ),
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
@@ -2624,6 +2624,69 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     isAnimating: function () {
         return THIS[ this.hash ].animating;
+    },
+
+    /**
+     * Starts continuous zoom-in animation (typically bound to mouse-down on the zoom-in button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    beginZoomingIn: function () {
+        THIS[ this.hash ].lastZoomTime = $.now();
+        THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
+        THIS[ this.hash ].zooming = true;
+        scheduleZoom( this );
+    },
+
+    /**
+     * Starts continuous zoom-out animation (typically bound to mouse-down on the zoom-out button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    beginZoomingOut: function () {
+        THIS[ this.hash ].lastZoomTime = $.now();
+        THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
+        THIS[ this.hash ].zooming = true;
+        scheduleZoom( this );
+    },
+
+    /**
+     * Stops any continuous zoom animation (typically bound to mouse-up/leave events on a button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    endZooming: function () {
+        THIS[ this.hash ].zooming = false;
+    },
+
+    /**
+     * Performs single-step zoom-in operation (typically bound to click/enter on the zoom-in button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    doSingleZoomIn: function () {
+        if ( this.viewport ) {
+            THIS[ this.hash ].zooming = false;
+            this.viewport.zoomBy(
+                this.zoomPerClick / 1.0
+            );
+            this.viewport.applyConstraints();
+        }
+    },
+
+    /**
+     * Performs single-step zoom-out operation (typically bound to click/enter on the zoom-out button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    doSingleZoomOut: function () {
+        if ( this.viewport ) {
+            THIS[ this.hash ].zooming = false;
+            this.viewport.zoomBy(
+                1.0 / this.zoomPerClick
+            );
+            this.viewport.applyConstraints();
+        }
     },
 });
 
@@ -3957,28 +4020,6 @@ function resolveUrl( prefix, url ) {
 }
 
 
-
-function beginZoomingIn() {
-    THIS[ this.hash ].lastZoomTime = $.now();
-    THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
-    THIS[ this.hash ].zooming = true;
-    scheduleZoom( this );
-}
-
-
-function beginZoomingOut() {
-    THIS[ this.hash ].lastZoomTime = $.now();
-    THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
-    THIS[ this.hash ].zooming = true;
-    scheduleZoom( this );
-}
-
-
-function endZooming() {
-    THIS[ this.hash ].zooming = false;
-}
-
-
 function scheduleZoom( viewer ) {
     $.requestAnimationFrame( $.delegate( viewer, doZoom ) );
 }
@@ -3998,28 +4039,6 @@ function doZoom() {
         this.viewport.applyConstraints();
         THIS[ this.hash ].lastZoomTime = currentTime;
         scheduleZoom( this );
-    }
-}
-
-
-function doSingleZoomIn() {
-    if ( this.viewport ) {
-        THIS[ this.hash ].zooming = false;
-        this.viewport.zoomBy(
-            this.zoomPerClick / 1.0
-        );
-        this.viewport.applyConstraints();
-    }
-}
-
-
-function doSingleZoomOut() {
-    if ( this.viewport ) {
-        THIS[ this.hash ].zooming = false;
-        this.viewport.zoomBy(
-            1.0 / this.zoomPerClick
-        );
-        this.viewport.applyConstraints();
     }
 }
 
