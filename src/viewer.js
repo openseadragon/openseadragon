@@ -2625,6 +2625,51 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     isAnimating: function () {
         return THIS[ this.hash ].animating;
     },
+
+    /**
+     * Starts continuous zoom-in animation (typically bound to mouse-down on the zoom-in button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    startZoomInNavButton: function () {
+        beginZoomingIn.call(this);
+    },
+
+    /**
+     * Starts continuous zoom-out animation (typically bound to mouse-down on the zoom-out button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    startZoomOutNavButton: function () {
+        beginZoomingOut.call(this);
+    },
+
+    /**
+     * Stops any continuous zoom animation (typically bound to mouse-up/leave events on a button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    endZoomNavButton: function () {
+        endZooming.call(this);
+    },
+
+    /**
+     * Performs single-step zoom-in operation (typically bound to click/enter on the zoom-in button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    zoomInNavButton: function () {
+        doSingleZoomIn.call(this);
+    },
+
+    /**
+     * Performs single-step zoom-out operation (typically bound to click/enter on the zoom-out button).
+     * @function
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    zoomOutNavButton: function () {
+        doSingleZoomOut.call(this);
+    },
 });
 
 
