@@ -2632,7 +2632,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @memberof OpenSeadragon.Viewer.prototype
      */
     startZoomInNavButton: function () {
-        beginZoomingIn();
+        beginZoomingIn.call(this);
     },
 
     /**
@@ -2641,7 +2641,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @memberof OpenSeadragon.Viewer.prototype
      */
     startZoomOutNavButton: function () {
-        beginZoomingOut();
+        beginZoomingOut.call(this);
     },
 
     /**
@@ -2650,7 +2650,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @memberof OpenSeadragon.Viewer.prototype
      */
     endZoomNavButton: function () {
-        endZooming();
+        endZooming.call(this);
     },
 
     /**
@@ -2659,7 +2659,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @memberof OpenSeadragon.Viewer.prototype
      */
     zoomInNavButton: function () {
-        doSingleZoomIn();
+        doSingleZoomIn.call(this);
     },
 
     /**
@@ -2668,7 +2668,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @memberof OpenSeadragon.Viewer.prototype
      */
     zoomOutNavButton: function () {
-        doSingleZoomOut();
+        doSingleZoomOut.call(this);
     },
 });
 
