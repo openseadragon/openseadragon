@@ -2005,11 +2005,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         // Navigation Controls
         //////////////////////////////////////////////////////////////////////////
-        var beginZoomingInHandler   = $.delegate( this, beginZoomingIn ),
-            endZoomingHandler       = $.delegate( this, endZooming ),
-            doSingleZoomInHandler   = $.delegate( this, doSingleZoomIn ),
-            beginZoomingOutHandler  = $.delegate( this, beginZoomingOut ),
-            doSingleZoomOutHandler  = $.delegate( this, doSingleZoomOut ),
+        var beginZoomingInHandler   = $.delegate( this, this.startZoomInAction ),
+            endZoomingHandler       = $.delegate( this, this.endZoomAction ),
+            doSingleZoomInHandler   = $.delegate( this, this.singleZoomInAction ),
+            beginZoomingOutHandler  = $.delegate( this, this.startZoomOutAction ),
+            doSingleZoomOutHandler  = $.delegate( this, this.singleZoomOutAction ),
             onHomeHandler           = $.delegate( this, onHome ),
             onFullScreenHandler     = $.delegate( this, onFullScreen ),
             onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
@@ -2631,8 +2631,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @memberof OpenSeadragon.Viewer.prototype
      */
-    startZoomInNavButton: function () {
-        beginZoomingIn.call(this);
+    startZoomInAction: function () {
+        THIS[ this.hash ].lastZoomTime = $.now();
+        THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
+        THIS[ this.hash ].zooming = true;
+        scheduleZoom( this );
     },
 
     /**
@@ -2640,8 +2643,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @memberof OpenSeadragon.Viewer.prototype
      */
-    startZoomOutNavButton: function () {
-        beginZoomingOut.call(this);
+    startZoomOutAction: function () {
+        THIS[ this.hash ].lastZoomTime = $.now();
+        THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
+        THIS[ this.hash ].zooming = true;
+        scheduleZoom( this );
     },
 
     /**
@@ -2649,8 +2655,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @memberof OpenSeadragon.Viewer.prototype
      */
-    endZoomNavButton: function () {
-        endZooming.call(this);
+    endZoomAction: function () {
+        THIS[ this.hash ].zooming = false;
     },
 
     /**
@@ -2658,8 +2664,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @memberof OpenSeadragon.Viewer.prototype
      */
-    zoomInNavButton: function () {
-        doSingleZoomIn.call(this);
+    singleZoomInAction: function () {
+        if ( this.viewport ) {
+            THIS[ this.hash ].zooming = false;
+            this.viewport.zoomBy(
+                this.zoomPerClick / 1.0
+            );
+            this.viewport.applyConstraints();
+        }
     },
 
     /**
@@ -2667,8 +2679,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @memberof OpenSeadragon.Viewer.prototype
      */
-    zoomOutNavButton: function () {
-        doSingleZoomOut.call(this);
+    singleZoomOutAction: function () {
+        if ( this.viewport ) {
+            THIS[ this.hash ].zooming = false;
+            this.viewport.zoomBy(
+                1.0 / this.zoomPerClick
+            );
+            this.viewport.applyConstraints();
+        }
     },
 });
 
@@ -4002,28 +4020,6 @@ function resolveUrl( prefix, url ) {
 }
 
 
-
-function beginZoomingIn() {
-    THIS[ this.hash ].lastZoomTime = $.now();
-    THIS[ this.hash ].zoomFactor = this.zoomPerSecond;
-    THIS[ this.hash ].zooming = true;
-    scheduleZoom( this );
-}
-
-
-function beginZoomingOut() {
-    THIS[ this.hash ].lastZoomTime = $.now();
-    THIS[ this.hash ].zoomFactor = 1.0 / this.zoomPerSecond;
-    THIS[ this.hash ].zooming = true;
-    scheduleZoom( this );
-}
-
-
-function endZooming() {
-    THIS[ this.hash ].zooming = false;
-}
-
-
 function scheduleZoom( viewer ) {
     $.requestAnimationFrame( $.delegate( viewer, doZoom ) );
 }
@@ -4043,28 +4039,6 @@ function doZoom() {
         this.viewport.applyConstraints();
         THIS[ this.hash ].lastZoomTime = currentTime;
         scheduleZoom( this );
-    }
-}
-
-
-function doSingleZoomIn() {
-    if ( this.viewport ) {
-        THIS[ this.hash ].zooming = false;
-        this.viewport.zoomBy(
-            this.zoomPerClick / 1.0
-        );
-        this.viewport.applyConstraints();
-    }
-}
-
-
-function doSingleZoomOut() {
-    if ( this.viewport ) {
-        THIS[ this.hash ].zooming = false;
-        this.viewport.zoomBy(
-            1.0 / this.zoomPerClick
-        );
-        this.viewport.applyConstraints();
     }
 }
 
