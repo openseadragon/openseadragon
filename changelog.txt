@@ -26,6 +26,7 @@ OPENSEADRAGON CHANGELOG
     * Misc: updated CSS for dev server, new dev & test commands.
 * New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
 * Overlay wrapper elements now have a "openseadragon-overlay-wrapper" class. If the overlay element has an ID, the wrapper gets a variant on that ID, but if the overlay element does not have an ID, we no longer give the wrapper an ID. (#2698 @lokaesshwar)
+* The functions the viewer uses to operate the zoom in and zoom out buttons are now accessible to be called programatically (#2702 @achu1998)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
 * Improved documentation (#2676 @bennlich)
 * Improved unit tests (#2640 @harshkg23)
