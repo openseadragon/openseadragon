@@ -827,10 +827,14 @@ $.Viewport.prototype = {
      * @fires OpenSeadragon.Viewer.event:pan
      */
     panBy: function( delta, immediately ) {
-        var center = new $.Point(
-            this.centerSpringX.target.value,
-            this.centerSpringY.target.value
-        );
+        var center = new $.Point();
+        if (immediately) {
+            center.x = this.centerSpringX.current.value;
+            center.y = this.centerSpringY.current.value;
+        } else {
+            center.x = this.centerSpringX.target.value;
+            center.y = this.centerSpringY.target.value;
+        }
         return this.panTo( center.plus( delta ), immediately );
     },
 
