@@ -34,6 +34,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: MouseTracker's hasGestureHandlers and hasScrollHandler values were not getting updated upon dynamically adding/removing handlers (#2649 @Seafret)
 * Fixed: Sometimes images wouldn't update when you changed their opacity (#2652 @pearcetm)
 * Fixed: Possible MouseTracker hash collision (#2657 @cff29546)
+* Fixed: Relative panning sometimes used the wrong starting point, causing jumping during touch panning (#2704 @DougTCooke)
 
 5.0.1:
 
