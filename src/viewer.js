@@ -366,7 +366,20 @@ $.Viewer = function( options ) {
         viewer: this
     });
 
-    var self = this; // Capture viewer instance
+    /**
+     * Handles 'add-item' events from the viewer's world.
+     * - Attaches a 'fully-loaded-change' event handler to the newly added TiledImage.
+     * - The handler monitors the TiledImage's loading state and, when triggered,
+     *   checks whether all TiledImages in the viewer are fully loaded.
+     * - If the aggregate fully-loaded state changes, raises a 'fully-loaded-change'
+     *   event at the viewer level with the new state.
+     * - The handler reference is stored on the TiledImage instance for proper
+     *   cleanup when the TiledImage is removed (see the corresponding 'remove-item' handler).
+     * @function
+     * @listens OpenSeadragon.World#add-item
+     * @param {Object} event - Event object containing the added TiledImage
+     * @param {OpenSeadragon.TiledImage} event.item - Newly added TiledImage instance
+     */
     this.world.addHandler('add-item', function(event) {
         // For backwards compatibility, we maintain the source property
         _this.source = _this.world.getItemAt(0).source;
@@ -377,21 +390,42 @@ $.Viewer = function( options ) {
             _this._updateRequestId = scheduleUpdate( _this, updateMulti );
         }
 
-        // Attaches a handler to monitor individual TiledImage loading states
-        // propagate aggregate viewer-level fully-loaded status changes.
         var tiledImage = event.item;
-        tiledImage.addHandler('fully-loaded-change', function() {
-            // Check aggregate loading state across all TiledImages
-            var newFullyLoaded = self.areAllFullyLoaded();
-            // Only trigger event if viewer's loading state has changed
-            if (newFullyLoaded !== self._fullyLoaded) {
-                self._fullyLoaded = newFullyLoaded;
-                self.raiseEvent('fully-loaded-change', { fullyLoaded: newFullyLoaded });
+        var fullyLoadedHandler =  function() {
+            var newFullyLoaded = _this._areAllFullyLoaded();
+            if (newFullyLoaded !== _this._fullyLoaded) {
+                _this._fullyLoaded = newFullyLoaded;
+                _this.raiseEvent('fully-loaded-change', { fullyLoaded: newFullyLoaded });
             }
-        });
+        };
+        tiledImage._fullyLoadedHandler = fullyLoadedHandler;
+        tiledImage.addHandler('fully-loaded-change', fullyLoadedHandler);
     });
 
+    /**
+     * Handles 'remove-item' events from the viewer's world.
+     *
+     * - Safely removes the 'fully-loaded-change' event handler previously attached to the TiledImage
+     *   when it was added, preventing memory leaks and unintended event firing after removal.
+     * - Deletes the handler reference from the TiledImage instance for cleanliness.
+     * - Maintains backwards compatibility by updating the viewer's `source` property
+     *   to reflect the current first item in the world, or null if empty.
+     * - Forces a redraw of the viewer to ensure visual consistency after item removal.
+     *
+     * @function
+     * @listens OpenSeadragon.World#remove-item
+     * @param {Object} event - Event object containing the removed TiledImage
+     * @param {OpenSeadragon.TiledImage} event.item - TiledImage instance being removed
+     */
     this.world.addHandler('remove-item', function(event) {
+        var tiledImage = event.item;
+
+        // SAFE cleanup with existence check
+        if (tiledImage._fullyLoadedHandler) {
+            tiledImage.removeHandler('fully-loaded-change', tiledImage._fullyLoadedHandler);
+            delete tiledImage._fullyLoadedHandler; // Remove the reference
+        }
+
         // For backwards compatibility, we maintain the source property
         if (_this.world.getItemCount()) {
             _this.source = _this.world.getItemAt(0).source;
@@ -580,9 +614,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     /**
      * Checks whether all TiledImage instances in the viewer's world are fully loaded.
      * This determines if the entire viewer content is ready for optimal display without partial tile loading.
-     * @returns {Boolean} True if all TiledImages report being fully loaded, false if any image still has pending tiles
+     * @private
+     * @returns {Boolean} True if all TiledImages report being fully loaded,
+     *                    false if any image still has pending tiles
      */
-    areAllFullyLoaded: function() {
+    _areAllFullyLoaded: function() {
         var tiledImage;
         var count = this.world.getItemCount();
 

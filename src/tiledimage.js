@@ -267,9 +267,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (this.getFullyLoaded()) {
             setTimeout(callback, 1); // Asynchronous execution
         } else {
-            this.addOnceHandler('fully-loaded-change', function() {
-                callback.call(this); // Maintain context
-            });
+            this.addOnceHandler('fully-loaded-change', callback); // Maintain context
         }
     },
 
