@@ -554,7 +554,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }
 
             item = this._items[i];
-            box = item.getBounds();
+            box = item.getBoundsNoRotate();
             if (box.width > box.height) {
                 width = tileSize;
             } else {
