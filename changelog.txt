@@ -35,6 +35,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Sometimes images wouldn't update when you changed their opacity (#2652 @pearcetm)
 * Fixed: Possible MouseTracker hash collision (#2657 @cff29546)
 * Fixed: Relative panning sometimes used the wrong starting point, causing jumping during touch panning (#2704 @DougTCooke)
+* Fixed: World.arrange would misalign images that were rotated (#2709 @yowzadave)
 
 5.0.1:
 
