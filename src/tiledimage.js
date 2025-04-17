@@ -257,6 +257,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this._fullyLoaded;
     },
 
+    /**
+     * Executes the provided callback when the TiledImage is fully loaded. If already loaded,
+     * schedules the callback asynchronously. Otherwise, attaches a one-time event listener
+     * for the 'fully-loaded-change' event.
+     * @param {Function} callback - Function to execute when loading completes
+     */
+    whenFullyLoaded: function(callback) {
+        if (this.getFullyLoaded()) {
+            setTimeout(callback, 1); // Asynchronous execution
+        } else {
+            this.addOnceHandler('fully-loaded-change', function() {
+                callback(); // Maintain context
+            });
+        }
+    },
+
     // private
     _setFullyLoaded: function(flag) {
         if (flag === this._fullyLoaded) {

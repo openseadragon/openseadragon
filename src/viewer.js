@@ -244,6 +244,8 @@ $.Viewer = function( options ) {
 
     this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
 
+    this._fullyLoaded = false; // variable used to track the viewer's aggregate loading state.
+
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
@@ -373,9 +375,42 @@ $.Viewer = function( options ) {
         if (!_this._updateRequestId) {
             _this._updateRequestId = scheduleUpdate( _this, updateMulti );
         }
+
+        var tiledImage = event.item;
+        var fullyLoadedHandler =  function() {
+            var newFullyLoaded = _this._areAllFullyLoaded();
+            if (newFullyLoaded !== _this._fullyLoaded) {
+                _this._fullyLoaded = newFullyLoaded;
+
+                /**
+                 * Fired when the viewer's aggregate "fully loaded" state changes (when all
+                 * TiledImages in the world have loaded tiles for the current view resolution).
+                 *
+                 * @event fully-loaded-change
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {Boolean} fullyLoaded - The new aggregate "fully loaded" value
+                 * @property {OpenSeadragon.Viewer} eventSource - Reference to the Viewer instance
+                 * @property {?Object} userData - Arbitrary subscriber-defined object
+                 */
+                _this.raiseEvent('fully-loaded-change', {
+                    fullyLoaded: newFullyLoaded
+                });
+            }
+        };
+        tiledImage._fullyLoadedHandlerForViewer = fullyLoadedHandler;
+        tiledImage.addHandler('fully-loaded-change', fullyLoadedHandler);
     });
 
     this.world.addHandler('remove-item', function(event) {
+        var tiledImage = event.item;
+
+        // SAFE cleanup with existence check
+        if (tiledImage._fullyLoadedHandlerForViewer) {
+            tiledImage.removeHandler('fully-loaded-change', tiledImage._fullyLoadedHandlerForViewer);
+            delete tiledImage._fullyLoadedHandlerForViewer; // Remove the reference
+        }
+
         // For backwards compatibility, we maintain the source property
         if (_this.world.getItemCount()) {
             _this.source = _this.world.getItemAt(0).source;
@@ -559,6 +594,55 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     isOpen: function () {
         return !!this.world.getItemCount();
+    },
+
+    /**
+     * Checks whether all TiledImage instances in the viewer's world are fully loaded.
+     * This determines if the entire viewer content is ready for optimal display without partial tile loading.
+     * @private
+     * @returns {Boolean} True if all TiledImages report being fully loaded,
+     *                    false if any image still has pending tiles
+     */
+    _areAllFullyLoaded: function() {
+        var tiledImage;
+        var count = this.world.getItemCount();
+
+        // Iterate through all TiledImages in the viewer's world
+        for (var i = 0; i < count; i++) {
+            tiledImage = this.world.getItemAt(i);
+
+            // Return immediately if any image isn't fully loaded
+            if (!tiledImage.getFullyLoaded()) {
+                return false;
+            }
+        }
+        // All images passed the check
+        return true;
+    },
+
+    /**
+     * @function
+     * @returns {Boolean} True if all required tiles are loaded, false otherwise
+     */
+    getFullyLoaded: function() {
+        return this._fullyLoaded;
+    },
+
+    /**
+     * Executes the provided callback when the TiledImage is fully loaded. If already loaded,
+     * schedules the callback asynchronously. Otherwise, attaches a one-time event listener
+     * for the 'fully-loaded-change' event.
+     * @param {Function} callback - Function to execute when loading completes
+     * @memberof OpenSeadragon.Viewer.prototype
+     */
+    whenFullyLoaded: function(callback) {
+        if (this.getFullyLoaded()) {
+            setTimeout(callback, 1); // Asynchronous execution
+        } else {
+            this.addOnceHandler('fully-loaded-change', function() {
+                callback(); // Maintain context
+            });
+        }
     },
 
     // deprecated
