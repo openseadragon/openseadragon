@@ -244,7 +244,7 @@ $.Viewer = function( options ) {
 
     this._lastScrollTime = $.now(); // variable used to help normalize the scroll event speed of different devices
 
-    this._fullyLoaded = false; // variable used to tracks the viewer's aggregate loading state.
+    this._fullyLoaded = false; // variable used to track the viewer's aggregate loading state.
 
     //Inherit some behaviors and properties
     $.EventSource.call( this );
@@ -366,20 +366,6 @@ $.Viewer = function( options ) {
         viewer: this
     });
 
-    /**
-     * Handles 'add-item' events from the viewer's world.
-     * - Attaches a 'fully-loaded-change' event handler to the newly added TiledImage.
-     * - The handler monitors the TiledImage's loading state and, when triggered,
-     *   checks whether all TiledImages in the viewer are fully loaded.
-     * - If the aggregate fully-loaded state changes, raises a 'fully-loaded-change'
-     *   event at the viewer level with the new state.
-     * - The handler reference is stored on the TiledImage instance for proper
-     *   cleanup when the TiledImage is removed (see the corresponding 'remove-item' handler).
-     * @function
-     * @listens OpenSeadragon.World#add-item
-     * @param {Object} event - Event object containing the added TiledImage
-     * @param {OpenSeadragon.TiledImage} event.item - Newly added TiledImage instance
-     */
     this.world.addHandler('add-item', function(event) {
         // For backwards compatibility, we maintain the source property
         _this.source = _this.world.getItemAt(0).source;
@@ -395,35 +381,34 @@ $.Viewer = function( options ) {
             var newFullyLoaded = _this._areAllFullyLoaded();
             if (newFullyLoaded !== _this._fullyLoaded) {
                 _this._fullyLoaded = newFullyLoaded;
-                _this.raiseEvent('fully-loaded-change', { fullyLoaded: newFullyLoaded });
+
+                /**
+                 * Fired when the viewer's aggregate "fully loaded" state changes (when all
+                 * TiledImages in the world have loaded tiles for the current view resolution).
+                 *
+                 * @event fully-loaded-change
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {Boolean} fullyLoaded - The new aggregate "fully loaded" value
+                 * @property {OpenSeadragon.Viewer} eventSource - Reference to the Viewer instance
+                 * @property {?Object} userData - Arbitrary subscriber-defined object
+                 */
+                _this.raiseEvent('fully-loaded-change', {
+                    fullyLoaded: newFullyLoaded
+                });
             }
         };
-        tiledImage._fullyLoadedHandler = fullyLoadedHandler;
+        tiledImage._fullyLoadedHandlerForViewer = fullyLoadedHandler;
         tiledImage.addHandler('fully-loaded-change', fullyLoadedHandler);
     });
 
-    /**
-     * Handles 'remove-item' events from the viewer's world.
-     *
-     * - Safely removes the 'fully-loaded-change' event handler previously attached to the TiledImage
-     *   when it was added, preventing memory leaks and unintended event firing after removal.
-     * - Deletes the handler reference from the TiledImage instance for cleanliness.
-     * - Maintains backwards compatibility by updating the viewer's `source` property
-     *   to reflect the current first item in the world, or null if empty.
-     * - Forces a redraw of the viewer to ensure visual consistency after item removal.
-     *
-     * @function
-     * @listens OpenSeadragon.World#remove-item
-     * @param {Object} event - Event object containing the removed TiledImage
-     * @param {OpenSeadragon.TiledImage} event.item - TiledImage instance being removed
-     */
     this.world.addHandler('remove-item', function(event) {
         var tiledImage = event.item;
 
         // SAFE cleanup with existence check
-        if (tiledImage._fullyLoadedHandler) {
-            tiledImage.removeHandler('fully-loaded-change', tiledImage._fullyLoadedHandler);
-            delete tiledImage._fullyLoadedHandler; // Remove the reference
+        if (tiledImage._fullyLoadedHandlerForViewer) {
+            tiledImage.removeHandler('fully-loaded-change', tiledImage._fullyLoadedHandlerForViewer);
+            delete tiledImage._fullyLoadedHandlerForViewer; // Remove the reference
         }
 
         // For backwards compatibility, we maintain the source property
@@ -655,7 +640,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             setTimeout(callback, 1); // Asynchronous execution
         } else {
             this.addOnceHandler('fully-loaded-change', function() {
-                callback.call(this); // Maintain context
+                callback(); // Maintain context
             });
         }
     },
