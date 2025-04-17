@@ -64,6 +64,8 @@ $.IIIFTileSource = function( options ){
 
     this.version = options.version;
 
+    this.isLevel0 = checkLevel0( options );
+
     // N.B. 2.0 renamed scale_factors to scaleFactors
     if ( this.tile_width && this.tile_height ) {
         options.tileWidth = this.tile_width;
@@ -492,10 +494,10 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 iiifSize = "full";
             } else if ( this.version === 3 && iiifSizeW === this.width && iiifSizeH === this.height ) {
                 iiifSize = "max";
-            } else if (this.version === 3) {
-                iiifSize = iiifSizeW + "," + iiifSizeH;
-            } else {
+            } else if (this.isLevel0) {
                 iiifSize = iiifSizeW + ",";
+            } else {
+                iiifSize = iiifSizeW + "," + iiifSizeH;
             }
         }
         uri = [ this._id, iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
@@ -518,15 +520,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
   });
 
     /**
-     * Determine whether arbitrary tile requests can be made against a service with the given profile
+     * Determine whether we have a level 0 compliance profile
      * @function
      * @param {Object} options
      * @param {Array|String} options.profile
-     * @param {Number} options.version
-     * @param {String[]} options.extraFeatures
      * @returns {Boolean}
      */
-    function canBeTiled ( options ) {
+    function checkLevel0 ( options ) {
         var level0Profiles = [
             "http://library.stanford.edu/iiif/image-api/compliance.html#level0",
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
@@ -536,6 +536,21 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         ];
         var profileLevel = Array.isArray(options.profile) ? options.profile[0] : options.profile;
         var isLevel0 = (level0Profiles.indexOf(profileLevel) !== -1);
+        return isLevel0;
+    }
+
+
+    /**
+     * Determine whether arbitrary tile requests can be made against a service with the given profile
+     * @function
+     * @param {Object} options
+     * @param {Array|String} options.profile
+     * @param {Number} options.version
+     * @param {String[]} options.extraFeatures
+     * @returns {Boolean}
+     */
+    function canBeTiled ( options ) {
+        var isLevel0 = checkLevel0( options );
         var hasCanoncicalSizeFeature = false;
         if ( options.version === 2 && options.profile.length > 1 && options.profile[1].supports ) {
             hasCanoncicalSizeFeature = options.profile[1].supports.indexOf( "sizeByW" ) !== -1;
@@ -545,6 +560,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         }
         return !isLevel0 || hasCanoncicalSizeFeature;
     }
+
 
     /**
      * Build the legacy pyramid URLs (one tile per level)
