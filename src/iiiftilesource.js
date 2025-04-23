@@ -574,14 +574,14 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      */
     function canBeTiled ( options ) {
         var isLevel0 = checkLevel0( options );
-        var hasCanoncicalSizeFeature = false;
+        var hasCanonicalSizeFeature = false;
         if ( options.version === 2 && options.profile.length > 1 && options.profile[1].supports ) {
-            hasCanoncicalSizeFeature = options.profile[1].supports.indexOf( "sizeByW" ) !== -1;
+            hasCanonicalSizeFeature = options.profile[1].supports.indexOf( "sizeByW" ) !== -1;
         }
         if ( options.version === 3 && options.extraFeatures ) {
-            hasCanoncicalSizeFeature = options.extraFeatures.indexOf( "sizeByWh" ) !== -1;
+            hasCanonicalSizeFeature = options.extraFeatures.indexOf( "sizeByWh" ) !== -1;
         }
-        return !isLevel0 || hasCanoncicalSizeFeature;
+        return !isLevel0 || hasCanonicalSizeFeature;
     }
 
 
