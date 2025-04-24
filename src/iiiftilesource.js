@@ -517,7 +517,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 iiifSize = "full";
             } else if ( this.version === 3 && iiifSizeW === this.width && iiifSizeH === this.height ) {
                 iiifSize = "max";
-            } else if (this.isLevel0) {
+            } else if (this.isLevel0 && this.version < 3) {
                 iiifSize = iiifSizeW + ",";
             } else {
                 iiifSize = iiifSizeW + "," + iiifSizeH;
