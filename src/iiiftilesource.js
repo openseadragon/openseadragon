@@ -151,7 +151,7 @@ $.IIIFTileSource = function( options ){
         var sortedSizes = this.sizes.slice().sort(( size1, size2 ) => size1.width - size2.width);
 
         // List may or may not include the full resolution size (should be last after sorting): add it if necessary
-        if( sortedSizes[sizeLength - 1].width !== this.width && sortedSizes[sizeLength - 1].height !== this.height ) {
+        if( sortedSizes[sizeLength - 1].width < this.width && sortedSizes[sizeLength - 1].height < this.height ) {
             sortedSizes.push( {width: this.width, height: this.height} );
             sizeLength++;
         }
