@@ -2,7 +2,7 @@
  * OpenSeadragon - IIIFTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -37,7 +37,7 @@
 /**
  * @class IIIFTileSource
  * @classdesc A client implementation of the International Image Interoperability Framework
- * Format: Image API 1.0 - 2.1
+ * Format: Image API 1.0 - 3.0
  *
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.TileSource
@@ -63,6 +63,8 @@ $.IIIFTileSource = function( options ){
     this.tileFormat = this.tileFormat || 'jpg';
 
     this.version = options.version;
+
+    this.isLevel0 = checkLevel0( options );
 
     // N.B. 2.0 renamed scale_factors to scaleFactors
     if ( this.tile_width && this.tile_height ) {
@@ -141,14 +143,37 @@ $.IIIFTileSource = function( options ){
         }
     }
 
-    // Create an array with our exact resolution sizes if these have been supplied
+    // Create an array with precise resolution sizes if these have been supplied through the 'sizes' object
     if( this.sizes ) {
         var sizeLength = this.sizes.length;
-        if ( (sizeLength === options.maxLevel) || (sizeLength === options.maxLevel + 1) ) {
-            this.levelSizes = this.sizes.slice().sort(( size1, size2 ) => size1.width - size2.width);
-            // Need to take into account that the list may or may not include the full resolution size
-            if( sizeLength === options.maxLevel ) {
-                this.levelSizes.push( {width: this.width, height: this.height} );
+
+        // Create a copy of the sizes list and sort in ascending order
+        var sortedSizes = this.sizes.slice().sort(( size1, size2 ) => size1.width - size2.width);
+
+        // List may or may not include the full resolution size (should be last after sorting): add it if necessary
+        if( sortedSizes[sizeLength - 1].width < this.width && sortedSizes[sizeLength - 1].height < this.height ) {
+            sortedSizes.push( {width: this.width, height: this.height} );
+            sizeLength++;
+        }
+
+        // Only try to use 'sizes' if the number of dimensions within exactly matches the number of resolution levels (maxLevel+1)
+        if ( sizeLength === options.maxLevel + 1 ) {
+
+            // If we have a list of scaleFactors, make sure each of our sizes really corresponds to the listed scales
+            var isResolutionList = 1;
+            if ( this.scale_factors && this.scale_factors.length === sizeLength ) {
+                for ( var i = 0; i < sizeLength; i++ ) {
+                    var factor = this.scale_factors[sizeLength - i - 1]; // Scale factor order is inverted
+                    if ( Math.round( this.width / sortedSizes[i].width ) !== factor ||
+                         Math.round( this.height / sortedSizes[i].height ) !== factor ) {
+                        isResolutionList = 0;
+                        break;
+                    }
+                }
+            }
+            // The 'sizes' array does indeed contain a list of resolution levels, so assign our sorted array
+            if ( isResolutionList === 1 ) {
+                this.levelSizes = sortedSizes;
             }
         }
     }
@@ -492,10 +517,10 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 iiifSize = "full";
             } else if ( this.version === 3 && iiifSizeW === this.width && iiifSizeH === this.height ) {
                 iiifSize = "max";
-            } else if (this.version === 3) {
-                iiifSize = iiifSizeW + "," + iiifSizeH;
-            } else {
+            } else if (this.isLevel0 && this.version < 3) {
                 iiifSize = iiifSizeW + ",";
+            } else {
+                iiifSize = iiifSizeW + "," + iiifSizeH;
             }
         }
         uri = [ this._id, iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
@@ -518,15 +543,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
   });
 
     /**
-     * Determine whether arbitrary tile requests can be made against a service with the given profile
+     * Determine whether we have a level 0 compliance profile
      * @function
      * @param {Object} options
      * @param {Array|String} options.profile
-     * @param {Number} options.version
-     * @param {String[]} options.extraFeatures
      * @returns {Boolean}
      */
-    function canBeTiled ( options ) {
+    function checkLevel0 ( options ) {
         var level0Profiles = [
             "http://library.stanford.edu/iiif/image-api/compliance.html#level0",
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
@@ -536,15 +559,31 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         ];
         var profileLevel = Array.isArray(options.profile) ? options.profile[0] : options.profile;
         var isLevel0 = (level0Profiles.indexOf(profileLevel) !== -1);
-        var hasCanoncicalSizeFeature = false;
+        return isLevel0;
+    }
+
+
+    /**
+     * Determine whether arbitrary tile requests can be made against a service with the given profile
+     * @function
+     * @param {Object} options
+     * @param {Array|String} options.profile
+     * @param {Number} options.version
+     * @param {String[]} options.extraFeatures
+     * @returns {Boolean}
+     */
+    function canBeTiled ( options ) {
+        var isLevel0 = checkLevel0( options );
+        var hasCanonicalSizeFeature = false;
         if ( options.version === 2 && options.profile.length > 1 && options.profile[1].supports ) {
-            hasCanoncicalSizeFeature = options.profile[1].supports.indexOf( "sizeByW" ) !== -1;
+            hasCanonicalSizeFeature = options.profile[1].supports.indexOf( "sizeByW" ) !== -1;
         }
         if ( options.version === 3 && options.extraFeatures ) {
-            hasCanoncicalSizeFeature = options.extraFeatures.indexOf( "sizeByWh" ) !== -1;
+            hasCanonicalSizeFeature = options.extraFeatures.indexOf( "sizeByWh" ) !== -1;
         }
-        return !isLevel0 || hasCanoncicalSizeFeature;
+        return !isLevel0 || hasCanonicalSizeFeature;
     }
+
 
     /**
      * Build the legacy pyramid URLs (one tile per level)
