@@ -146,20 +146,20 @@
             context.drawImage( image, 0, 0 );
 
             //copy URL
-            const URL2 = await Convertor.copy(null, URL, "url");
+            const URL2 = await Convertor.copy({}, URL, "url");
             //we cannot check if they are not the same object, strings are immutable (and we don't copy anyway :D )
             test.equal(URL, URL2, "String copy is equal in data.");
             test.equal(typeof URL, typeof URL2, "Type of copies equals.");
             test.equal(URL.length, URL2.length, "Data length is also equal.");
 
             //copy context
-            const context2 = await Convertor.copy(null, context, "context2d");
+            const context2 = await Convertor.copy({}, context, "context2d");
             test.notEqual(context, context2, "Copy is not the same as original canvas.");
             test.equal(typeof context, typeof context2, "Type of copies equals.");
             test.equal(context.canvas.toDataURL(), context2.canvas.toDataURL(), "Data is equal.");
 
             //copy image
-            const image2 = await Convertor.copy(null, image, "image");
+            const image2 = await Convertor.copy({}, image, "image");
             test.notEqual(image, image2, "Copy is not the same as original image.");
             test.equal(typeof image, typeof image2, "Type of copies equals.");
             test.equal(image.src, image2.src, "Data is equal.");
@@ -183,14 +183,14 @@
             test.equal(urlDestroy, 1, "Url destructor called.");
 
             test.equal(imageDestroy, 0, "Image destructor not called.");
-            return Convertor.convert(null, i, "__TEST__image", "__TEST__canvas");
+            return Convertor.convert({}, i, "__TEST__image", "__TEST__canvas");
         }).then(c => { //path image -> canvas
             test.equal(OpenSeadragon.type(c), "canvas", "Got canvas object after conversion.");
             test.equal(srcToImage, 1, "Conversion ulr->image did not happen.");
             test.equal(imageToCanvas, 1, "Conversion image->canvas happened.");
             test.equal(urlDestroy, 1, "Url destructor not called.");
             test.equal(imageDestroy, 0, "Image destructor not called unless we ask it.");
-            return Convertor.convert(null, c, "__TEST__canvas", "__TEST__image");
+            return Convertor.convert({}, c, "__TEST__canvas", "__TEST__image");
         }).then(i => { //path canvas, image: canvas -> url -> image
             test.equal(OpenSeadragon.type(i), "image", "Got image object after conversion.");
             test.equal(srcToImage, 2, "Conversion ulr->image happened.");

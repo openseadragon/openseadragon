@@ -1043,6 +1043,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Check if the viewer has been destroyed or not yet initialized.
+     * @return {boolean}
+     */
+    isDestroyed() {
+        return !THIS[ this.hash ];
+    },
+
+    /**
      * Request a drawer for this viewer, as a supported string or drawer constructor.
      * @param {String | OpenSeadragon.DrawerBase} drawerCandidate The type of drawer to try to construct.
      * @param { Object } options

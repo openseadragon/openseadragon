@@ -465,7 +465,7 @@
                     this._destroySelfUnsafe(this._data, this._type);
                 } else if (this._promise) {
                     const oldType = this._type;
-                    this._promise.then(x => this._destroySelfUnsafe(x, oldType));
+                    this._promise.then(x => this._destroySelfUnsafe(x, oldType)).catch($.console.error);
                 }
             }
 

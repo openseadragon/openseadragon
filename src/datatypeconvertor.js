@@ -202,6 +202,9 @@ $.DataTypeConvertor = class {
             const img = new Image();
             img.onerror = img.onabort = reject;
             img.onload = () => resolve(img);
+            if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
+                img.crossOrigin = tile.tiledImage.crossOriginPolicy;
+            }
             img.src = url;
         });
         const canvasContextCreator = (tile, imageData) => {
@@ -212,6 +215,28 @@ $.DataTypeConvertor = class {
             context.drawImage( imageData, 0, 0 );
             return context;
         };
+
+        this.learn("rasterBlob", "image", (tile, blob) => new $.Promise((resolve, reject) => {
+            // eslint-disable-next-line compat/compat
+            const url = (window.URL || window.webkitURL).createObjectURL(blob);
+            if (!$.supportsAsync) {
+                reject("Not supported in sync mode!");
+            }
+            const img = new Image();
+            img.onerror = img.onabort = reject;
+            img.onload = () => {
+                // eslint-disable-next-line compat/compat
+                (window.URL || window.webkitURL).revokeObjectURL(blob);
+                resolve(img);
+            };
+            img.src = url;
+        }));
+        this.learn("context2d", "rasterBlob", (tile, ctx) => new $.Promise((resolve, reject) => {
+            if (!$.supportsAsync) {
+                reject("Not supported in sync mode!");
+            }
+            ctx.canvas.toBlob(resolve);
+        }));
 
         this.learn("context2d", "webImageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
         this.learn("image", "webImageUrl", (tile, image) => image.url);
