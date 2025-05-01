@@ -108,7 +108,7 @@
 
       var tmp = data.split( "Max-size:" );
       if(!tmp[1]){
-        throw new Error( "No Max-size returned" );
+        this.raiseEvent( 'open-failed', { message: "No Max-size returned" } );
       }
       var size = tmp[1].split(" ");
       this.width = parseInt( size[0], 10 );
@@ -117,7 +117,7 @@
 
       tmp = data.split( "Tile-size:" );
       if(!tmp[1]){
-        throw new Error( "No Tile-size returned" );
+        this.raiseEvent( 'open-failed', { message: "No Tile-size returned" } );
       }
       size = tmp[1].split(" ");
       this._tileWidth = parseInt(size[0], 10);
