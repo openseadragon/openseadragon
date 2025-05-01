@@ -262,7 +262,7 @@
       if( this.transform ){
 
         if( this.transform.stack ) {
-          url += 'SDS=' + this.transform.stack;
+          url += 'SDS=' + this.transform.stack + '&';
         }
         if( this.transform.contrast ) {
           url += 'CNT=' + this.transform.contrast + '&';
