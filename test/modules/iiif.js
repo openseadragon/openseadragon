@@ -257,7 +257,7 @@
 
         var source2Level1 = getSource(infoJson2level1);
         assert.equal(source2Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/default.jpg");
-        assert.equal(source2Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,512/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,500/0/default.jpg");
         assert.equal(source2Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
         assert.equal(source2Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");
         assert.equal(source2Level1.getTileUrl(8, 3, 0), "http://example.com/identifier/1536,0,464,512/464,512/0/default.jpg");
