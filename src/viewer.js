@@ -3470,8 +3470,8 @@ function onCanvasDragEnd( event ) {
             var target = this.viewport.pointFromPixel(
                 new $.Point(center.x - amplitudeX, center.y - amplitudeY));
             this.viewport.panTo(target, false);
-            this.viewport.applyConstraints(false);
         }
+        this.viewport.applyConstraints(false);
     }
 
 
