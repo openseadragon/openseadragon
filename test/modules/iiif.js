@@ -251,18 +251,18 @@
     QUnit.test('IIIFTileSource.getTileUrl returns the correct URLs', function( assert ) {
         var source11Level1 = getSource(infoJson11level1);
         assert.equal(source11Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/native.jpg");
-        assert.equal(source11Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,/0/native.jpg");
-        assert.equal(source11Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,/0/native.jpg");
-        assert.equal(source11Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,/0/native.jpg");
+        assert.equal(source11Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,500/0/native.jpg");
+        assert.equal(source11Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/native.jpg");
+        assert.equal(source11Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/native.jpg");
 
         var source2Level1 = getSource(infoJson2level1);
         assert.equal(source2Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/default.jpg");
-        assert.equal(source2Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,/0/default.jpg");
-        assert.equal(source2Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,/0/default.jpg");
-        assert.equal(source2Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,/0/default.jpg");
-        assert.equal(source2Level1.getTileUrl(8, 3, 0), "http://example.com/identifier/1536,0,464,512/464,/0/default.jpg");
-        assert.equal(source2Level1.getTileUrl(8, 0, 1), "http://example.com/identifier/0,512,512,488/512,/0/default.jpg");
-        assert.equal(source2Level1.getTileUrl(8, 3, 1), "http://example.com/identifier/1536,512,464,488/464,/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,500/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 3, 0), "http://example.com/identifier/1536,0,464,512/464,512/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 0, 1), "http://example.com/identifier/0,512,512,488/512,488/0/default.jpg");
+        assert.equal(source2Level1.getTileUrl(8, 3, 1), "http://example.com/identifier/1536,512,464,488/464,488/0/default.jpg");
 
         var source2Level0 = getSource(infoJson2level0);
         assert.equal(source2Level0.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,/0/default.jpg");
