@@ -294,6 +294,9 @@ $.Viewer = function( options ) {
 
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.element.appendChild( this.container );
+    this._createdElements = [];
+    this._createdElements.push(this.container);
+
 
     //Used for toggling between fullscreen and default container size
     //TODO: these can be closure private and shared across Viewer
@@ -998,11 +1001,15 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         // Go through top element (passed to us) and remove all children
         // Use removeChild to make sure it handles SVG or any non-html
         // also it performs better - http://jsperf.com/innerhtml-vs-removechild/15
-        if (this.element){
-            while (this.element.firstChild) {
-                this.element.removeChild(this.element.firstChild);
+        if (this.container && this.canvas) {
+            if (this.canvas.parentNode === this.container) {
+                this.container.removeChild(this.canvas);
+            }
+            if (this.container.parentNode === this.element) {
+                this.element.removeChild(this.container);
             }
         }
+
 
         this.container.onsubmit = null;
         this.clearControls();
@@ -1027,6 +1034,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
+        this._createdElements = null;
+
 
         /**
          * Raised when the viewer is destroyed (see {@link OpenSeadragon.Viewer#destroy}).
