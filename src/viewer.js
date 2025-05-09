@@ -898,7 +898,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.world.removeAll();
         this.tileCache.clear();
         this.imageLoader.clear();
-
         /**
          * Raised when the viewer is closed (see {@link OpenSeadragon.Viewer#close}).
          *
@@ -1546,6 +1545,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.element.style.height = '100%';
 
             var onFullScreenChange = function() {
+                if (!THIS[ _this.hash ]) {
+                    $.removeEvent( document, $.fullScreenEventName, onFullScreenChange );
+                    $.removeEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
+                    return;
+                }
+
                 var isFullScreen = $.isFullScreen();
                 if ( !isFullScreen ) {
                     $.removeEvent( document, $.fullScreenEventName, onFullScreenChange );
