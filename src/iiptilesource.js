@@ -106,30 +106,36 @@
      */
     parseIIP: function( data ) {
 
+      // Full image size
       var tmp = data.split( "Max-size:" );
       if(!tmp[1]){
-        this.raiseEvent( 'open-failed', { message: "No Max-size returned" } );
+        throw new Error( "No Max-size returned" );
       }
       var size = tmp[1].split(" ");
       this.width = parseInt( size[0], 10 );
       this.height = parseInt( size[1], 10 );
       this.dimensions = new $.Point( this.width, this.height );
 
+      // Calculate aspect ratio
+      this.aspectRatio = this.width / this.height;
+
+      // Tile size
       tmp = data.split( "Tile-size:" );
       if(!tmp[1]){
-        this.raiseEvent( 'open-failed', { message: "No Tile-size returned" } );
+        throw new Error( "No Tile-size returned" );
       }
       size = tmp[1].split(" ");
       this._tileWidth = parseInt(size[0], 10);
-      this.tileSize = this._tileWidth;
       this._tileHeight = parseInt(size[1], 10);
 
+      // Number of resolution levels
       tmp = data.split( "Resolution-number:" );
       var numRes = parseInt(tmp[1], 10);
       this.minLevel = 0;
       this.maxLevel = numRes - 1;
       this.tileOverlap = 0;
 
+      // Size of each resolution
       tmp = data.split( "Resolutions:" );
       size = tmp[1].split(",");
       var len = size.length;
@@ -161,17 +167,20 @@
         withCredentials: this.ajaxWithCredentials,
         headers: this.ajaxHeaders,
         success: function( xhr ) {
-          OpenSeadragon[ "IIPTileSource" ].prototype.parseIIP.call( _this, xhr.responseText );
-          _this.ready = true;
-          _this.raiseEvent( 'ready', { tileSource: _this } );
+          try {
+            OpenSeadragon[ "IIPTileSource" ].prototype.parseIIP.call( _this, xhr.responseText );
+            _this.ready = true;
+            _this.raiseEvent( 'ready', { tileSource: _this } );
+          }
+          catch( e ) {
+            var msg = "IIPTileSource: Error parsing IIP metadata: " + e.message;
+            _this.raiseEvent( 'open-failed', { message: msg, source: url } );
+          }
         },
         error: function ( xhr, exc ) {
           var msg = "IIPTileSource: Unable to get IIP metadata from " + url;
-          $.console.error(msg);
-          _this.raiseEvent( 'open-failed', {
-            message: msg,
-            source: url
-          });
+          $.console.error( msg );
+          _this.raiseEvent( 'open-failed', { message: msg, source: url });
         }
       });
     },
@@ -201,41 +210,9 @@
      */
     getNumTiles: function( level ) {
         var levelSize = this.levelSizes[level];
-        var x = Math.ceil( levelSize.width / this.getTileWidth(level) ),
-            y = Math.ceil( levelSize.height / this.getTileHeight(level) );
+        var x = Math.ceil( levelSize.width / this._tileWidth ),
+            y = Math.ceil( levelSize.height / this._tileHeight );
         return new $.Point( x, y );
-    },
-
-
-    /**
-     * @function
-     * @param {Number} level
-     * @param {OpenSeadragon.Point} point
-     */
-    getTileAtPoint: function( level, point ) {
-
-        var validPoint = point.x >= 0 && point.x <= 1 &&
-                         point.y >= 0 && point.y <= 1 / this.aspectRatio;
-        $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
-
-        var widthScaled = this.levelSizes[level].width;
-        var pixelX = point.x * widthScaled;
-        var pixelY = point.y * widthScaled;
-
-        var x = Math.floor(pixelX / this.getTileWidth(level));
-        var y = Math.floor(pixelY / this.getTileHeight(level));
-
-        // When point.x == 1 or point.y == 1 / this.aspectRatio we want to
-        // return the last tile of the row/column
-        if (point.x >= 1) {
-          x = this.getNumTiles(level).x - 1;
-        }
-        var EPSILON = 1e-15;
-        if (point.y >= 1 / this.aspectRatio - EPSILON) {
-          y = this.getNumTiles(level).y - 1;
-        }
-
-        return new $.Point(x, y);
     },
 
 
@@ -249,11 +226,9 @@
      */
     getTileUrl: function(level, x, y) {
 
-      // Get the width of the tiles and calculate the number of tiles across
-      var tileWidth = this.getTileWidth(level);
+      // Get the exact size of this level and calculate the number of tiles across
       var levelSize = this.levelSizes[level];
-      var remx = levelSize.width % tileWidth;
-      var ntlx = Math.floor(levelSize.width / tileWidth) + (remx === 0 ? 0 : 1);
+      var ntlx = Math.ceil( levelSize.width / this._tileWidth );
 
       // Set the base URL
       var url = this.iipsrv + '?FIF=' + this.image + '&';
