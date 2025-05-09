@@ -758,11 +758,11 @@ $.TileSource.prototype = {
     tileExists: function( level, x, y ) {
         var numTiles = this.getNumTiles( level );
         return level >= this.minLevel &&
-               level <= this.maxLevel &&
-               x >= 0 &&
-               y >= 0 &&
-               x < numTiles.x &&
-               y < numTiles.y;
+            level <= this.maxLevel &&
+            x >= 0 &&
+            y >= 0 &&
+            x < numTiles.x &&
+            y < numTiles.y;
     },
 
     /**
@@ -806,32 +806,10 @@ $.TileSource.prototype = {
      * @param {string} [context.errorMsg] Private parameter. The final error message, default null (set by finish).
      */
     downloadTileStart: function (context) {
-        const dataStore = context.userData,
-            image = new Image();
-
-        dataStore.image = image;
-        dataStore.request = null;
-
-        const finalize = function(error) {
-            if (error || !image) {
-                context.fail(error || "[downloadTileStart] Image load failed: undefined Image instance.",
-                    dataStore.request);
-                return;
-            }
-            image.onload = image.onerror = image.onabort = null;
-            context.finish(image, dataStore.request, "image");
-        };
-        image.onload = function () {
-            finalize();
-        };
-        image.onabort = image.onerror = function() {
-            finalize("[downloadTileStart] Image load aborted.");
-        };
-
         // Load the tile with an AJAX request if the loadWithAjax option is
         // set. Otherwise load the image by setting the source property of the image object.
         if (context.loadWithAjax) {
-            dataStore.request = $.makeAjaxRequest({
+            $.makeAjaxRequest({
                 url: context.src,
                 withCredentials: context.ajaxWithCredentials,
                 headers: context.ajaxHeaders,
@@ -859,22 +837,17 @@ $.TileSource.prototype = {
                     }
                     // If the blob is empty for some reason consider the image load a failure.
                     if (blb.size === 0) {
-                        finalize("[downloadTileStart] Empty image response.");
+                        context.fail("[downloadTileStart] Empty image response.", request);
                     } else {
-                        // Create a URL for the blob data and make it the source of the image object.
-                        // This will still trigger Image.onload to indicate a successful tile load.
-                        image.src = (window.URL || window.webkitURL).createObjectURL(blb);
+                        context.finish(blb, request, "rasterBlob");
                     }
                 },
                 error: function(request) {
-                    finalize("[downloadTileStart] Image load aborted - XHR error");
+                    context.fail("[downloadTileStart] Image load aborted - XHR error", request);
                 }
             });
         } else {
-            if (context.crossOriginPolicy !== false) {
-                image.crossOrigin = context.crossOriginPolicy;
-            }
-            image.src = context.src;
+            context.finish(context.src, null, "url");
         }
     },
 
@@ -1001,17 +974,17 @@ function processResponse( xhr ){
 
     if( responseText.match(/^\s*<.*/) ){
         try{
-        data = ( xhr.responseXML && xhr.responseXML.documentElement ) ?
-            xhr.responseXML :
-            $.parseXml( responseText );
+            data = ( xhr.responseXML && xhr.responseXML.documentElement ) ?
+                xhr.responseXML :
+                $.parseXml( responseText );
         } catch (e){
             data = xhr.responseText;
         }
     }else if( responseText.match(/\s*[{[].*/) ){
         try{
-          data = $.parseJSON(responseText);
+            data = $.parseJSON(responseText);
         } catch(e){
-          data =  responseText;
+            data =  responseText;
         }
     }else{
         data = responseText;

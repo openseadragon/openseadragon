@@ -86,6 +86,15 @@
         destroyE++;
     });
 
+    const awaitDataGetForRendering = async function(cache, drawer, tile) {
+        let result = cache.getDataForRendering(drawer, tile);
+        while (!result) {
+            await sleep(10);
+            result = cache.getDataForRendering(drawer, tile);
+        }
+        return result;
+    }
+
     // ----------
     QUnit.module('TileCache', {
         beforeEach: function () {
@@ -385,7 +394,9 @@
 
         viewer.addHandler('open', async () => {
             await viewer.waitForFinishedJobsForTest();
-            await sleep(1);  // necessary to make space for a draw call
+            while (tileCache._tilesLoaded.length < 1) {
+                await sleep(10);  // necessary to make space for a draw call
+            }
 
             test.ok(viewer.world.getItemAt(0).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
             test.ok(viewer.world.getItemAt(1).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
@@ -398,7 +409,8 @@
                 const cache = tile.getCache();
                 test.equal(cache.type, T_C, "Cache data was affected, the drawer supports only T_C since there is no way to get to T_E.");
 
-                const internalCache = cache.getDataForRendering(drawer, tile);
+                // We need to wait once the data is ready to be tested
+                const internalCache = await awaitDataGetForRendering(cache, drawer, tile);
                 test.equal(internalCache.type, viewer.drawer.getId(), "Sync conversion routine means T_C is also internal since dataCreate only creates data. However, internal cache keeps type of the drawer ID.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }
@@ -489,7 +501,7 @@
                 test.equal(cache.type, T_A, "Main Cache Converted T_C -> T_A (drawer supports type A) (suite 1)");
                 test.equal(cache.data, 3, "Conversion step increases plugin-stored value 2 to 3");
 
-                const internalCache = cache.getDataForRendering(drawer, tile);
+                const internalCache = await awaitDataGetForRendering(cache, drawer, tile);
                 test.equal(internalCache.type, viewer.drawer.getId(), "Internal cache has type of the drawer ID.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }

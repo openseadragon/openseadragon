@@ -31,6 +31,12 @@
     var OriginalLoader = OpenSeadragon.ImageLoader;
     var OriginalAjax = OpenSeadragon.makeAjaxRequest;
 
+    var closeViewer = function() {
+        if (viewer && viewer.close) {
+            DONE ? viewer.destroy () : viewer.close();
+        }
+    }
+
     QUnit.module('AjaxPostData', {
         beforeEach: function () {
             testLog.reset();
@@ -159,14 +165,11 @@
 
         afterEach: function () {
             ASSERT = null;
-
-            if (viewer && viewer.close) {
-                DONE ? viewer.destroy () : viewer.close();
-            }
             viewer = null;
 
             OpenSeadragon.ImageLoader = OriginalLoader;
             OpenSeadragon.makeAjaxRequest = OriginalAjax;
+            OpenSeadragon.PostTestTileSource = null;
         }
     });
 
@@ -196,6 +199,7 @@
         var openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             openHandlerCalled = true;
+            closeViewer();
         };
 
         var readyHandler = function (event) {
