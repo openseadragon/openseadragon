@@ -294,8 +294,7 @@ $.Viewer = function( options ) {
 
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.element.appendChild( this.container );
-    this._createdElements = [];
-    this._createdElements.push(this.container);
+    
 
 
     //Used for toggling between fullscreen and default container size
