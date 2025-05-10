@@ -311,6 +311,7 @@ $.Viewer = function( options ) {
         clickDistThreshold:       this.clickDistThreshold,
         dblClickTimeThreshold:    this.dblClickTimeThreshold,
         dblClickDistThreshold:    this.dblClickDistThreshold,
+        flipPrimaryMouseButton:   this.flipPrimaryMouseButton,
         contextMenuHandler:       $.delegate( this, onCanvasContextMenu ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
@@ -331,15 +332,16 @@ $.Viewer = function( options ) {
     });
 
     this.outerTracker = new $.MouseTracker({
-        userData:              'Viewer.outerTracker',
-        element:               this.container,
-        startDisabled:         !this.mouseNavEnabled,
-        clickTimeThreshold:    this.clickTimeThreshold,
-        clickDistThreshold:    this.clickDistThreshold,
-        dblClickTimeThreshold: this.dblClickTimeThreshold,
-        dblClickDistThreshold: this.dblClickDistThreshold,
-        enterHandler:          $.delegate( this, onContainerEnter ),
-        leaveHandler:          $.delegate( this, onContainerLeave )
+        userData:               'Viewer.outerTracker',
+        element:                this.container,
+        startDisabled:          !this.mouseNavEnabled,
+        clickTimeThreshold:     this.clickTimeThreshold,
+        clickDistThreshold:     this.clickDistThreshold,
+        dblClickTimeThreshold:  this.dblClickTimeThreshold,
+        dblClickDistThreshold:  this.dblClickDistThreshold,
+        flipPrimaryMouseButton: this.flipPrimaryMouseButton,
+        enterHandler:           $.delegate( this, onContainerEnter ),
+        leaveHandler:           $.delegate( this, onContainerLeave )
     });
 
     if( this.toolbar ){
