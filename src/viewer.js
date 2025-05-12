@@ -997,9 +997,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.paging.destroy();
         }
 
-        // Go through top element (passed to us) and remove all children
-        // Use removeChild to make sure it handles SVG or any non-html
-        // also it performs better - http://jsperf.com/innerhtml-vs-removechild/15
+        // Remove only the OpenSeadragon-created elements (canvas and container)
+        // Use removeChild to properly handle SVG or non-HTML elements
+
         if (this.container && this.canvas) {
             if (this.canvas.parentNode === this.container) {
                 this.container.removeChild(this.canvas);
