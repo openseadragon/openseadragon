@@ -1,7 +1,7 @@
 /* global QUnit, testLog */
 
 (function() {
-    const Convertor = OpenSeadragon.convertor,
+    const Converter = OpenSeadragon.converter,
         T_A = "__TEST__typeA", T_B = "__TEST__typeB", T_C = "__TEST__typeC", T_D = "__TEST__typeD", T_E = "__TEST__typeE";
 
     let viewer;
@@ -23,66 +23,66 @@
     // other tests will interfere
     let typeAtoB = 0, typeBtoC = 0, typeCtoA = 0, typeDtoA = 0, typeCtoE = 0;
     //set all same costs to get easy testing, know which path will be taken
-    Convertor.learn(T_A, T_B, (tile, x) => {
+    Converter.learn(T_A, T_B, (tile, x) => {
         typeAtoB++;
         return x+1;
     });
     // Costly conversion to C simulation
-    Convertor.learn(T_B, T_C, async (tile, x) => {
+    Converter.learn(T_B, T_C, async (tile, x) => {
         typeBtoC++;
         await sleep(5);
         return x+1;
     });
-    Convertor.learn(T_C, T_A, (tile, x) => {
+    Converter.learn(T_C, T_A, (tile, x) => {
         typeCtoA++;
         return x+1;
     });
-    Convertor.learn(T_D, T_A, (tile, x) => {
+    Converter.learn(T_D, T_A, (tile, x) => {
         typeDtoA++;
         return x+1;
     });
-    Convertor.learn(T_C, T_E, (tile, x) => {
+    Converter.learn(T_C, T_E, (tile, x) => {
         typeCtoE++;
         return x+1;
     });
     //'Copy constructors'
     let copyA = 0, copyB = 0, copyC = 0, copyD = 0, copyE = 0;
     //also learn destructors
-    Convertor.learn(T_A, T_A,(tile, x) => {
+    Converter.learn(T_A, T_A,(tile, x) => {
         copyA++;
         return x+1;
     });
-    Convertor.learn(T_B, T_B,(tile, x) => {
+    Converter.learn(T_B, T_B,(tile, x) => {
         copyB++;
         return x+1;
     });
-    Convertor.learn(T_C, T_C,(tile, x) => {
+    Converter.learn(T_C, T_C,(tile, x) => {
         copyC++;
         return x-1;
     });
-    Convertor.learn(T_D, T_D,(tile, x) => {
+    Converter.learn(T_D, T_D,(tile, x) => {
         copyD++;
         return x+1;
     });
-    Convertor.learn(T_E, T_E,(tile, x) => {
+    Converter.learn(T_E, T_E,(tile, x) => {
         copyE++;
         return x+1;
     });
     let destroyA = 0, destroyB = 0, destroyC = 0, destroyD = 0, destroyE = 0;
     //also learn destructors
-    Convertor.learnDestroy(T_A, () => {
+    Converter.learnDestroy(T_A, () => {
         destroyA++;
     });
-    Convertor.learnDestroy(T_B, () => {
+    Converter.learnDestroy(T_B, () => {
         destroyB++;
     });
-    Convertor.learnDestroy(T_C, () => {
+    Converter.learnDestroy(T_C, () => {
         destroyC++;
     });
-    Convertor.learnDestroy(T_D, () => {
+    Converter.learnDestroy(T_D, () => {
         destroyD++;
     });
-    Convertor.learnDestroy(T_E, () => {
+    Converter.learnDestroy(T_E, () => {
         destroyE++;
     });
 
@@ -210,7 +210,7 @@
                 internalCacheFree(data) {
                     super.internalCacheFree(data);
                     // Be nice and truly destroy the data copy
-                    OpenSeadragon.convertor.destroy(data, T_C);
+                    OpenSeadragon.converter.destroy(data, T_C);
                 }
             }
 

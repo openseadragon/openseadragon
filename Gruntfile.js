@@ -50,7 +50,7 @@ module.exports = function(grunt) {
             "src/imagetilesource.js",
             "src/tilesourcecollection.js",
             "src/priorityqueue.js",
-            "src/datatypeconvertor.js",
+            "src/datatypeconverter.js",
             "src/button.js",
             "src/buttongroup.js",
             "src/rectangle.js",

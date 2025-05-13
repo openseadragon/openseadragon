@@ -86,11 +86,11 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         }
 
         // The actual placing logics will not happen at draw event, but when the cache is created:
-        $.convertor.learn("context2d", HTMLDrawer.canvasCacheType, (t, d) => _prepareTile(t, d.canvas), 1, 1);
-        $.convertor.learn("image", HTMLDrawer.imageCacheType, _prepareTile, 1, 1);
+        $.converter.learn("context2d", HTMLDrawer.canvasCacheType, (t, d) => _prepareTile(t, d.canvas), 1, 1);
+        $.converter.learn("image", HTMLDrawer.imageCacheType, _prepareTile, 1, 1);
         // Also learn how to move back, since these elements can be just used as-is
-        $.convertor.learn(HTMLDrawer.canvasCacheType, "context2d", (t, d) => d.data.getContext('2d'), 1, 3);
-        $.convertor.learn(HTMLDrawer.imageCacheType, "image", (t, d) => d.data, 1, 3);
+        $.converter.learn(HTMLDrawer.canvasCacheType, "context2d", (t, d) => d.data.getContext('2d'), 1, 3);
+        $.converter.learn(HTMLDrawer.imageCacheType, "image", (t, d) => d.data, 1, 3);
 
         function _freeTile(data) {
             if ( data.imgElement && data.imgElement.parentNode ) {
@@ -101,8 +101,8 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
             }
         }
 
-        $.convertor.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
-        $.convertor.learnDestroy(HTMLDrawer.imageCacheType, _freeTile);
+        $.converter.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
+        $.converter.learnDestroy(HTMLDrawer.imageCacheType, _freeTile);
     }
 
     static get imageCacheType() {

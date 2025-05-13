@@ -1,5 +1,5 @@
 /*
- * OpenSeadragon.convertor (static property)
+ * OpenSeadragon.converter (static property)
  *
  * Copyright (C) 2009 CodePlex Foundation
  * Copyright (C) 2010-2024 OpenSeadragon contributors
@@ -151,7 +151,7 @@ class WeightedGraph {
  * Edge.transform function on the conversion path in OpenSeadragon.converter.getConversionPath().
  *  It can be also conversion to undefined if used as destructor implementation.
  *
- * @callback TypeConvertor
+ * @callback TypeConverter
  * @memberof OpenSeadragon
  * @param {OpenSeadragon.Tile} tile reference tile that owns the data
  * @param {any} data data in the input format
@@ -178,16 +178,16 @@ class WeightedGraph {
  * @param {OpenSeadragon.PriorityQueue.Node} origin - Origin node of the conversion step.
  *  Its value is the origin format.
  * @param {number} weight cost of the conversion
- * @param {TypeConvertor} transform the conversion itself
+ * @param {TypeConverter} transform the conversion itself
  */
 
 /**
  * Class that orchestrates automated data types conversion. Do not instantiate
- * this class, use OpenSeadragon.convertor - a global instance, instead.
- * @class DataTypeConvertor
+ * this class, use OpenSeadragon.converter - a global instance, instead.
+ * @class DataTypeConverter
  * @memberOf OpenSeadragon
  */
-$.DataTypeConvertor = class {
+$.DataTypeConverter = class {
 
     constructor() {
         this.graph = new WeightedGraph();
@@ -312,7 +312,7 @@ $.DataTypeConvertor = class {
      * Teach the system to convert data type 'from' -> 'to'
      * @param {string} from unique ID of the data item 'from'
      * @param {string} to unique ID of the data item 'to'
-     * @param {OpenSeadragon.TypeConvertor} callback convertor that takes two arguments: a tile reference, and
+     * @param {OpenSeadragon.TypeConverter} callback converter that takes two arguments: a tile reference, and
      *  a data object of a type 'from'; and converts this data object to type 'to'. It can return also the value
      *  wrapped in a Promise (returned in resolve) or it can be async function.
      * @param {Number} [costPower=0] positive cost class of the conversion, smaller or equal than 7.
@@ -326,8 +326,8 @@ $.DataTypeConvertor = class {
      *   use costPower=2, costMultiplier=3; can be between 1 and 10^5
      */
     learn(from, to, callback, costPower = 0, costMultiplier = 1) {
-        $.console.assert(costPower >= 0 && costPower <= 7, "[DataTypeConvertor] Conversion costPower must be between <0, 7>.");
-        $.console.assert($.isFunction(callback), "[DataTypeConvertor:learn] Callback must be a valid function!");
+        $.console.assert(costPower >= 0 && costPower <= 7, "[DataTypeConverter] Conversion costPower must be between <0, 7>.");
+        $.console.assert($.isFunction(callback), "[DataTypeConverter:learn] Callback must be a valid function!");
 
         if (from === to) {
             this.copyings[to] = callback;
@@ -370,7 +370,7 @@ $.DataTypeConvertor = class {
     convert(tile, data, from, ...to) {
         const conversionPath = this.getConversionPath(from, to);
         if (!conversionPath) {
-            $.console.error(`[OpenSeadragon.convertor.convert] Conversion ${from} ---> ${to} cannot be done!`);
+            $.console.error(`[OpenSeadragon.converter.convert] Conversion ${from} ---> ${to} cannot be done!`);
             return $.Promise.resolve();
         }
 
@@ -383,7 +383,7 @@ $.DataTypeConvertor = class {
             let edge = conversionPath[i];
             let y = edge.transform(tile, x);
             if (y === undefined) {
-                $.console.error(`[OpenSeadragon.convertor.convert] data mid result undefined value (while converting using %s)`, edge);
+                $.console.error(`[OpenSeadragon.converter.convert] data mid result undefined value (while converting using %s)`, edge);
                 return $.Promise.resolve();
             }
             //node.value holds the type string
@@ -410,7 +410,7 @@ $.DataTypeConvertor = class {
             const y = copyTransform(tile, data);
             return $.type(y) === "promise" ? y : $.Promise.resolve(y);
         }
-        $.console.warn(`[OpenSeadragon.convertor.copy] is not supported with type %s`, type);
+        $.console.warn(`[OpenSeadragon.converter.copy] is not supported with type %s`, type);
         return $.Promise.resolve(undefined);
     }
 
@@ -437,13 +437,13 @@ $.DataTypeConvertor = class {
      * @return {ConversionStep[]|undefined} array of required conversions (returns empty array
      *  for from===to), or undefined if the system cannot convert between given types.
      *  Each object has 'transform' function that converts between neighbouring types, such
-     *  that x = arr[i].transform(x) is valid input for convertor arr[i+1].transform(), e.g.
+     *  that x = arr[i].transform(x) is valid input for converter arr[i+1].transform(), e.g.
      *  arr[i+1].transform(arr[i].transform( ... )) is a valid conversion procedure.
      *
      *  Note: if a function is returned, it is a callback called once the data is ready.
      */
     getConversionPath(from, to) {
-        let bestConvertorPath, selectedType;
+        let bestConverterPath, selectedType;
         let knownFrom = this._known[from];
         if (!knownFrom) {
             this._known[from] = knownFrom = {};
@@ -460,22 +460,22 @@ $.DataTypeConvertor = class {
             for (const outType of to) {
                 const conversion = knownFrom[outType];
                 if (conversion && bestCost > conversion.cost) {
-                    bestConvertorPath = conversion;
+                    bestConverterPath = conversion;
                     bestCost = conversion.cost;
                     selectedType = outType;
                 }
             }
         } else {
             $.console.assert(typeof to === "string", "[getConversionPath] conversion 'to' type must be defined.");
-            bestConvertorPath = knownFrom[to];
+            bestConverterPath = knownFrom[to];
             selectedType = to;
         }
 
-        if (!bestConvertorPath) {
-            bestConvertorPath = this.graph.dijkstra(from, selectedType);
-            this._known[from][selectedType] = bestConvertorPath;
+        if (!bestConverterPath) {
+            bestConverterPath = this.graph.dijkstra(from, selectedType);
+            this._known[from][selectedType] = bestConverterPath;
         }
-        return bestConvertorPath ? bestConvertorPath.path : undefined;
+        return bestConverterPath ? bestConverterPath.path : undefined;
     }
 
     /**
@@ -487,7 +487,7 @@ $.DataTypeConvertor = class {
     }
 
     /**
-     * Check whether given type is known to the convertor
+     * Check whether given type is known to the converter
      * @param {string} type type to test
      * @return {boolean}
      */
@@ -497,7 +497,7 @@ $.DataTypeConvertor = class {
 };
 
 /**
- * Static convertor available throughout OpenSeadragon.
+ * Static converter available throughout OpenSeadragon.
  *
  * Built-in conversions include types:
  *  - context2d    canvas 2d context
@@ -505,9 +505,9 @@ $.DataTypeConvertor = class {
  *  - url    url string carrying or pointing to 2D raster data
  *  - canvas       HTMLCanvas element
  *
- * @type OpenSeadragon.DataTypeConvertor
+ * @type OpenSeadragon.DataTypeConverter
  * @memberOf OpenSeadragon
  */
-$.convertor = new $.DataTypeConvertor();
+$.converter = new $.DataTypeConverter();
 
 }(OpenSeadragon));
