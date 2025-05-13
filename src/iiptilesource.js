@@ -66,7 +66,7 @@
 
     $.EventSource.call( this );
 
-    if( options && options.image ){
+    if( options && options.iipsrv && options.image ){
       $.extend( this, options );
       this.aspectRatio = 1;
       this.dimensions  = new $.Point( 10, 10 );
@@ -78,13 +78,23 @@
       this.ready       = false;
 
       // Query server for image metadata
-      var url = this.iipsrv + '?FIF=' + this.image + '&obj=IIP,1.0&obj=Max-size&obj=Tile-size&obj=Resolution-number&obj=Resolutions';
+      var url = this.getMetadataUrl();
       this.getImageInfo( url );
     }
   };
 
 
   $.extend($.IIPTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.IIPTileSource.prototype */ {
+
+    /**
+     * Return URL string for image metadata
+     * @function
+     * @returns {String} url - The IIP URL needed for image metadata
+     */
+    getMetadataUrl: function() {
+      return this.iipsrv + '?FIF=' + this.image + '&obj=IIP,1.0&obj=Max-size&obj=Tile-size&obj=Resolution-number&obj=Resolutions';
+    },
+
 
     /**
      * Determine if the data and/or url imply the image service is supported by
