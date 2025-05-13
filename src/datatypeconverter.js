@@ -184,6 +184,27 @@ class WeightedGraph {
 /**
  * Class that orchestrates automated data types conversion. Do not instantiate
  * this class, use OpenSeadragon.converter - a global instance, instead.
+ *
+ * Types are defined to closely describe the data type, e.g. "url" is insufficient,
+ * because url can point to many different data types. Another bad example is 'canvas'
+ * as canvas can have different underlying rendering implementations and thus differ
+ * in behavior. The following data types supported by
+ * OpenSeadragon core are:
+ * - "image" - HTMLImageElement, an <image> object
+ * - "context2d" - HtmlRenderingContext2D, a 2D canvas context
+ * - "imageUrl" - string, a URL to a resource carrying image data
+ * - "rasterBlob" - Blob, a binary file-like object carrying image data
+ *
+ * The system uses these to deliver desired data from TileSource (which implements fetching logics)
+ * through plugins to the renderer with preserving data type compatibility. Typical example is:
+ *  TiledImage downloads without ajax a data present at url 'myUrl'. It submits
+ *  to the system object of data type 'imageUrl'. The system runs this object through
+ *  possible plugins integrated into the invalidation routine (by default none),
+ *  and finishes by conversion for the WebGL renderer, which would most likely be "image"
+ *  object, because the conversion is the cheapest starting from "imageUrl" type.
+ *  If some plugin required context2d type, the pipeline would deliver this type and used
+ *  it also for WebGL, as texture loading function accepts canvas object as well as image.
+ *
  * @class DataTypeConverter
  * @memberOf OpenSeadragon
  */
@@ -208,7 +229,7 @@ $.DataTypeConverter = class {
             img.src = url;
         });
         const canvasContextCreator = (tile, imageData) => {
-            const canvas = document.createElement( 'canvas' );
+            const canvas = document.createElement('canvas');
             canvas.width = imageData.width;
             canvas.height = imageData.height;
             const context = canvas.getContext('2d', { willReadFrequently: true });
@@ -238,15 +259,16 @@ $.DataTypeConverter = class {
             ctx.canvas.toBlob(resolve);
         }));
 
-        this.learn("context2d", "webImageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
+        this.learn("context2d", "imageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
         this.learn("image", "webImageUrl", (tile, image) => image.url);
         this.learn("image", "context2d", canvasContextCreator, 1, 1);
-        this.learn("url", "image", imageCreator, 1, 1);
+        this.learn("imageUrl", "image", imageCreator, 1, 1);
 
         //Copies
         this.learn("image", "image", (tile, image) => imageCreator(tile, image.src), 1, 1);
-        this.learn("url", "url", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
+        this.learn("imageUrl", "imageUrl", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
         this.learn("context2d", "context2d", (tile, ctx) => canvasContextCreator(tile, ctx.canvas));
+        this.learn("rasterBlob", "rasterBlob", (tile, blob) => blob, 0, 1); //blobs are immutable, no need to copy
 
         /**
          * Free up canvas memory
