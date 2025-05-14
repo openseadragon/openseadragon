@@ -851,7 +851,6 @@ function OpenSeadragon( options ){
 
 (function( $ ){
 
-
     /**
      * The OpenSeadragon version.
      *
@@ -1566,6 +1565,29 @@ function OpenSeadragon( options ){
             NEVER:        0,
             ONLY_AT_REST: 1,
             ALWAYS:       2
+        },
+
+        /**
+         * Global settings, shared across all viewers.
+         * @static
+         * @type {Object}
+         * @property {Number} ajaxLoaderLimit The maximum number of AJAX requests to make concurrently. By default it is set to 0 allowing an unlimited number of concurrent requests.
+         */
+        settings: {
+            ajaxLoaderLimit: 0
+        },
+
+        /**
+         * Sets the global concurrency limit for AJAX requests
+         * @function
+         * @param {Number} maxNumAjaxRequests The maximum number of AJAX requests to make concurrently. Setting this to 0 will allow an unlimited number of requests.
+         */
+        setAjaxLoaderLimit: function ( maxNumAjaxRequests ) {
+            if( maxNumAjaxRequests < 0) {
+                throw new Error("The ajax loader limit must be >= 0");
+            }
+
+            $.settings.ajaxLoaderLimit = maxNumAjaxRequests;
         },
 
         /**
@@ -2371,6 +2393,62 @@ function OpenSeadragon( options ){
         },
 
         /**
+         * An object holding the AJAX queue state.
+         * @static
+         * @type {Object}
+         * @property {Array} requestFuncs Array of functions representing queued AJAX requests
+         * @property {Array} numIncompleteRequests The number of incomplete AJAX requests, including queued and active (but not completed) requests
+         * @property {Array} numActiveRequests The number of AJAX requests currently in-flight
+         */
+        AjaxQueue: {
+            requestFuncs: [],
+            numIncompleteRequests: 0,
+            numActiveRequests: 0,
+        },
+
+        /**
+         * Queues an AJAX request.
+         * @param {XMLHttpRequest} request The request to be queued
+         * @param {Function} sendRequestFunc A function which, when called, will send the request
+         */
+        queueAjaxRequest: function (request, sendRequestFunc) {
+            if(!$.settings.ajaxLoaderLimit) {
+                sendRequestFunc();
+            }
+
+            var oldOnStateChange = request.onreadystatechange;
+
+            var onCompleteRequest = function() {
+                $.AjaxQueue.numIncompleteRequests--;
+
+                if (
+                    $.AjaxQueue.numActiveRequests === $.settings.ajaxLoaderLimit &&
+                    $.AjaxQueue.requestFuncs.length > 0
+                ) {
+                    $.AjaxQueue.requestFuncs.shift()();
+                } else {
+                    $.AjaxQueue.numActiveRequests--;
+                }
+            };
+
+            request.onreadystatechange = function() {
+                if ( request.readyState === 4 ) {
+                    onCompleteRequest();
+                    oldOnStateChange();
+                }
+            };
+
+            $.AjaxQueue.numIncompleteRequests++;
+
+            if ($.AjaxQueue.numActiveRequests === $.settings.ajaxLoaderLimit) {
+                $.AjaxQueue.requestFuncs.push(sendRequestFunc);
+            } else {
+                $.AjaxQueue.numActiveRequests++;
+                sendRequestFunc();
+            }
+        },
+
+        /**
          * Makes an AJAX request.
          * @param {String} url - the url to request
          * @param {Function} onSuccess
@@ -2442,7 +2520,8 @@ function OpenSeadragon( options ){
             };
 
             var method = postData ? "POST" : "GET";
-            try {
+
+            var sendRequest = function () {
                 request.open( method, url, true );
 
                 if (responseType) {
@@ -2462,6 +2541,10 @@ function OpenSeadragon( options ){
                 }
 
                 request.send(postData);
+            };
+
+            try {
+                $.queueAjaxRequest(request, sendRequest);
             } catch (e) {
                 $.console.error( "%s while making AJAX request: %s", e.name, e.message );
 
