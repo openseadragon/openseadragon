@@ -1022,7 +1022,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
-        
+
 
 
         /**
