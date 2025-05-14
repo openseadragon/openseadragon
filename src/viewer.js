@@ -995,6 +995,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         // Remove both the canvas and container elements added by OpenSeadragon
+        // This will also remove its children (like the canvas)
         if (this.container && this.container.parentNode === this.element) {
             this.element.removeChild(this.container);
         }
