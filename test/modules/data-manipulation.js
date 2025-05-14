@@ -88,7 +88,9 @@
         // we test middle of the canvas, so that we can test both tiles or the output canvas of canvas drawer :)
         async function readTileData(tileRef = null) {
             // Get some time for viewer to load data
-            await sleep(50);
+            while (viewer.world.getItemAt(0).getTilesToDraw().length < 1) {
+                await sleep(10);
+            }
             // make sure at least one tile loaded
             const tile = tileRef || viewer.world.getItemAt(0).getTilesToDraw()[0];
             await tile[PROMISE_REF_KEY];

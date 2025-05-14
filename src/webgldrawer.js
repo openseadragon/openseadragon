@@ -505,11 +505,6 @@
             context.restore();
         }
 
-        // private
-        _getTextureDataFromTile(tile){
-            return tile.getCanvasContext().canvas;
-        }
-
         /**
         * Draw data from the rendering canvas onto the output canvas, with clipping,
         * cropping and/or debug info as requested.
@@ -870,9 +865,14 @@
             let position;
 
             let data = cache.data;
+            let isCanvas = false;
+            if (data instanceof CanvasRenderingContext2D) {
+                data = data.canvas;
+                isCanvas = true;
+            }
 
             if (!tiledImage.isTainted()) {
-                if((data instanceof CanvasRenderingContext2D) && $.isCanvasTainted(data.canvas)){
+                if (isCanvas && $.isCanvasTainted(data)){
                     tiledImage.setTainted(true);
                     $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
                     this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
@@ -980,14 +980,6 @@
                 y: heightOverlapFraction
             };
         }
-
-        // private
-//         _unloadTextures(){
-//             let canvases = Array.from(this._TextureMap.keys());
-//             canvases.forEach(canvas => {
-//                 this._cleanupImageData(canvas); // deletes texture, removes from _TextureMap
-//             });
-//         }
 
         _setClip(){
             // no-op: called by _renderToClippingCanvas when tiledImage._clip is truthy
