@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 /*
  * OpenSeadragon - Viewer
  *
