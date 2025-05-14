@@ -995,15 +995,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         // Remove both the canvas and container elements added by OpenSeadragon
-        // Use removeChild to properly handle SVG or non-HTML elements
-
-        if (this.container && this.canvas) {
-            if (this.canvas.parentNode === this.container) {
-                this.container.removeChild(this.canvas);
-            }
-            if (this.container.parentNode === this.element) {
-                this.element.removeChild(this.container);
-            }
+        if (this.container && this.container.parentNode === this.element) {
+            this.element.removeChild(this.container);
         }
         this.container.onsubmit = null;
         this.clearControls();
