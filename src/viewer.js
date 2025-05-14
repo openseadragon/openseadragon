@@ -263,6 +263,11 @@ $.Viewer = function( options ) {
     }
 
     this.element              = this.element || document.getElementById( this.id );
+
+    if (!this.element) {
+        return;
+    }
+
     this.canvas               = $.makeNeutralElement( "div" );
 
     this.canvas.className = "openseadragon-canvas";
