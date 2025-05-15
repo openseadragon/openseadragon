@@ -1382,7 +1382,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return this._fullyLoaded;
         }
 
-        // make a list of levels to use for the current zoom level
+        // // make a list of levels to use for the current zoom level
         var levelList = new Array(highestLevel - lowestLevel + 1);
         // go from highest to lowest resolution
         for(let i = 0, level = highestLevel; level >= lowestLevel; level--, i++){
@@ -1403,7 +1403,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 break;
             }
         }
-
+        if (this.immediateRender) {
+            console.log("immediateRender");
+            levelList = [highestLevel];
+        }
 
         // Update any level that will be drawn.
         // We are iterating from highest resolution to lowest resolution
