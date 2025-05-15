@@ -1,4 +1,3 @@
-
 /*
  * OpenSeadragon - Viewer
  *
@@ -2963,7 +2962,6 @@ function getOverlayObject( viewer, overlay ) {
  * @param {Element} element - The DOM element of the overlay to find.
  * @returns {number} The index of the matching overlay in the array, or -1 if not found.
  */
-
 function getOverlayIndex( overlays, element ) {
     var i;
     for ( i = overlays.length - 1; i >= 0; i-- ) {
