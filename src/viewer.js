@@ -264,8 +264,19 @@ $.Viewer = function( options ) {
 
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
-
     this.canvas.className = "openseadragon-canvas";
+
+    // Inject mobile-only CSS to remove focus outline
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) {
+        const style = document.createElement('style');
+        style.innerHTML = `
+      .openseadragon-canvas:focus {
+        outline: none !important;
+      }
+    `;
+        document.head.appendChild(style);
+    }
+
     (function( style ){
         style.width    = "100%";
         style.height   = "100%";
