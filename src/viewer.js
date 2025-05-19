@@ -267,13 +267,17 @@ $.Viewer = function( options ) {
     this.canvas.className = "openseadragon-canvas";
 
     // Inject mobile-only CSS to remove focus outline
-    if (window.matchMedia && window.matchMedia('(hover: none)').matches) {
-        const style = document.createElement('style');
-        style.innerHTML = `
-      .openseadragon-canvas:focus {
-        outline: none !important;
-      }
-    `;
+    if (typeof window !== 'undefined' &&
+        window.matchMedia &&
+        window.matchMedia('(hover: none)').matches) {
+
+        var style = document.createElement('style');
+        style.textContent =
+            '@media (hover: none) {' +
+            '    .openseadragon-canvas:focus {' +
+            '        outline: none !important;' +
+            '    }' +
+            '}';
         document.head.appendChild(style);
     }
 
