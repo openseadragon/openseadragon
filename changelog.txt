@@ -32,6 +32,7 @@ OPENSEADRAGON CHANGELOG
 * The Viewer and TiledImage now both have a whenFullyLoaded function that will call you back when they are fully loaded (#2707 @achu1998)
 * Improved IIIF tile requests in certain edge cases (#2710 @ruven)
 * Now only removing OSD-created elements on destroy (rather than emptying out the entire container) (#2724 @Vinith1919)
+* Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
 * Improved documentation (#2676 @bennlich, #2729 @shaswata-26)
 * Improved unit tests (#2640 @harshkg23)
