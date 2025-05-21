@@ -267,11 +267,9 @@ $.Viewer = function( options ) {
     this.canvas.className = "openseadragon-canvas";
 
     // Inject mobile-only CSS to remove focus outline
-    if (typeof window !== 'undefined' &&
-        window.matchMedia &&
-        window.matchMedia('(hover: none)').matches) {
-
+    if (!document.querySelector('style[data-openseadragon-mobile-css]')) {
         var style = document.createElement('style');
+        style.setAttribute('data-openseadragon-mobile-css', 'true');
         style.textContent =
             '@media (hover: none) {' +
             '    .openseadragon-canvas:focus {' +
