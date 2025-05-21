@@ -1771,7 +1771,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         });
 
-        return tiles;
+        return tiles || [];
     },
 
         /**
