@@ -1751,7 +1751,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         var viewportCenter = this.viewport.pixelFromPoint(this.viewport.getCenter());
         this._resetCoverage(this.coverage, level);
 
-        var tiles = new Array(0);
+        var tiles = null;
         var tileIndex = 0;
 
         this._visitTiles(level, drawArea, function(tiledImage, x, y, total) {
@@ -1771,7 +1771,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         });
 
-        return tiles;
+        return tiles || [];
     },
 
         /**
