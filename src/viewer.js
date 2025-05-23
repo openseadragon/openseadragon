@@ -246,6 +246,8 @@ $.Viewer = function( options ) {
 
     this._fullyLoaded = false; // variable used to track the viewer's aggregate loading state.
 
+    this._keysDown = {}; // variable to keep track of currently pressed keys
+
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
@@ -325,6 +327,7 @@ $.Viewer = function( options ) {
         dblClickDistThreshold:    this.dblClickDistThreshold,
         contextMenuHandler:       $.delegate( this, onCanvasContextMenu ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
+        keyUpHandler:             $.delegate(this, onCanvasKeyUp),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
         dblClickHandler:          $.delegate( this, onCanvasDblClick ),
@@ -3097,7 +3100,12 @@ function onCanvasContextMenu( event ) {
     event.preventDefault = eventArgs.preventDefault;
 }
 
+function onCanvasKeyUp(event) {
+    this._keysDown[event.key] = false;
+}
+
 function onCanvasKeyDown( event ) {
+    this._keysDown[event.key] = true;
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
@@ -3992,6 +4000,23 @@ function doViewerResize(viewer, containerSize){
 }
 function updateOnce( viewer ) {
 
+    // Pan speed adjustment (modify this value as needed)
+    const PAN_SPEED = 0.01;
+
+    // Arrow key panning
+    if (viewer._keysDown['ArrowLeft']) {
+        viewer.viewport.panBy(new OpenSeadragon.Point(-PAN_SPEED, 0));
+    }
+    if (viewer._keysDown['ArrowRight']) {
+        viewer.viewport.panBy(new OpenSeadragon.Point(PAN_SPEED, 0));
+    }
+    if (viewer._keysDown['ArrowUp']) {
+        viewer.viewport.panBy(new OpenSeadragon.Point(0, -PAN_SPEED));
+    }
+    if (viewer._keysDown['ArrowDown']) {
+        viewer.viewport.panBy(new OpenSeadragon.Point(0, PAN_SPEED));
+    }
+
     //viewer.profiler.beginUpdate();
 
     if (viewer._opening || !THIS[viewer.hash]) {
@@ -4101,6 +4126,8 @@ function updateOnce( viewer ) {
     THIS[ viewer.hash ].animating = animated;
 
     //viewer.profiler.endUpdate();
+    viewer.viewport.applyConstraints();
+    viewer.draw();
 }
 
 function drawWorld( viewer ) {
