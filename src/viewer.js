@@ -4126,8 +4126,6 @@ function updateOnce( viewer ) {
     THIS[ viewer.hash ].animating = animated;
 
     //viewer.profiler.endUpdate();
-    viewer.viewport.applyConstraints();
-    viewer.draw();
 }
 
 function drawWorld( viewer ) {
