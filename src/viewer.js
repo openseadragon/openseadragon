@@ -3100,12 +3100,20 @@ function onCanvasContextMenu( event ) {
     event.preventDefault = eventArgs.preventDefault;
 }
 
+
+/**
+ * Handles the keyup event on the viewer's canvas element.
+ * Marks the specified key as no longer pressed in the _keysDown tracking object,
+ * allowing keyboard navigation logic to respond appropriately to key releases.
+ */
 function onCanvasKeyUp(event) {
     this._keysDown[event.key] = false;
 }
 
 function onCanvasKeyDown( event ) {
-    this._keysDown[event.key] = true;
+    if (!event.preventDefaultAction) {
+        this._keysDown[event.key] = true;
+    }
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
@@ -3998,24 +4006,56 @@ function doViewerResize(viewer, containerSize){
     THIS[viewer.hash].needsResize = false;
     THIS[viewer.hash].forceResize = false;
 }
+
+function handleArrowKeys(viewer) {
+    // Use the viewer's configured pan amount
+    const pixels = viewer.pixelsPerArrowPress || 40;
+    const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
+
+    // Helper for key state (supports both object and Set)
+    function isDown(key) {
+        return viewer._keysDown && (viewer._keysDown[key] || (viewer._keysDown.has && viewer._keysDown.has(key)));
+    }
+
+    // Shift key state
+    const shift = isDown('Shift') || isDown('ShiftLeft') || isDown('ShiftRight');
+
+    // Up Arrow
+    if (!viewer.preventVerticalPan && isDown('ArrowUp')) {
+        if (shift) {
+            viewer.viewport.zoomBy(1.1);
+        } else {
+            viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta.y));
+        }
+        viewer.viewport.applyConstraints();
+    }
+
+    // Down Arrow
+    if (!viewer.preventVerticalPan && isDown('ArrowDown')) {
+        if (shift) {
+            viewer.viewport.zoomBy(0.9);
+        } else {
+            viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta.y));
+        }
+        viewer.viewport.applyConstraints();
+    }
+
+    // Left Arrow
+    if (isDown('ArrowLeft') && !viewer.preventHorizontalPan) {
+        viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta.x, 0));
+        viewer.viewport.applyConstraints();
+    }
+
+    // Right Arrow
+    if (isDown('ArrowRight') && !viewer.preventHorizontalPan) {
+        viewer.viewport.panBy(new OpenSeadragon.Point(panDelta.x, 0));
+        viewer.viewport.applyConstraints();
+    }
+}
+
 function updateOnce( viewer ) {
 
-    // Pan speed adjustment (modify this value as needed)
-    const PAN_SPEED = 0.01;
-
-    // Arrow key panning
-    if (viewer._keysDown['ArrowLeft']) {
-        viewer.viewport.panBy(new OpenSeadragon.Point(-PAN_SPEED, 0));
-    }
-    if (viewer._keysDown['ArrowRight']) {
-        viewer.viewport.panBy(new OpenSeadragon.Point(PAN_SPEED, 0));
-    }
-    if (viewer._keysDown['ArrowUp']) {
-        viewer.viewport.panBy(new OpenSeadragon.Point(0, -PAN_SPEED));
-    }
-    if (viewer._keysDown['ArrowDown']) {
-        viewer.viewport.panBy(new OpenSeadragon.Point(0, PAN_SPEED));
-    }
+    handleArrowKeys(viewer);
 
     //viewer.profiler.beginUpdate();
 
