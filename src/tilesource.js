@@ -847,7 +847,7 @@ $.TileSource.prototype = {
                 }
             });
         } else {
-            context.finish(context.src, null, "url");
+            context.finish(context.src, null, "imageUrl");
         }
     },
 
