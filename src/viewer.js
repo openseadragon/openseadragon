@@ -2,7 +2,7 @@
  * OpenSeadragon - Viewer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -264,8 +264,21 @@ $.Viewer = function( options ) {
 
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
-
     this.canvas.className = "openseadragon-canvas";
+
+    // Injecting mobile-only CSS to remove focus outline
+    if (!document.querySelector('style[data-openseadragon-mobile-css]')) {
+        var style = document.createElement('style');
+        style.setAttribute('data-openseadragon-mobile-css', 'true');
+        style.textContent =
+            '@media (hover: none) {' +
+            '    .openseadragon-canvas:focus {' +
+            '        outline: none !important;' +
+            '    }' +
+            '}';
+        document.head.appendChild(style);
+    }
+
     (function( style ){
         style.width    = "100%";
         style.height   = "100%";
@@ -294,7 +307,6 @@ $.Viewer = function( options ) {
 
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.element.appendChild( this.container );
-
     //Used for toggling between fullscreen and default container size
     //TODO: these can be closure private and shared across Viewer
     //      instances.
@@ -994,15 +1006,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.paging.destroy();
         }
 
-        // Go through top element (passed to us) and remove all children
-        // Use removeChild to make sure it handles SVG or any non-html
-        // also it performs better - http://jsperf.com/innerhtml-vs-removechild/15
-        if (this.element){
-            while (this.element.firstChild) {
-                this.element.removeChild(this.element.firstChild);
-            }
+        // Remove both the canvas and container elements added by OpenSeadragon
+        // This will also remove its children (like the canvas)
+        if (this.container && this.container.parentNode === this.element) {
+            this.element.removeChild(this.container);
         }
-
         this.container.onsubmit = null;
         this.clearControls();
 
@@ -1026,6 +1034,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
+
+
 
         /**
          * Raised when the viewer is destroyed (see {@link OpenSeadragon.Viewer#destroy}).
@@ -2805,8 +2815,17 @@ function _getSafeElemSize (oElement) {
 
 
 /**
+ * Attempts to initialize a TileSource from various input types and configuration formats.
+ * Handles string URLs, raw XML/JSON strings, inline configuration objects, or custom TileSource implementations.
+ *
  * @function
  * @private
+ * @param {OpenSeadragon.Viewer} viewer - The OpenSeadragon viewer instance.
+ * @param {string|Object|Element|OpenSeadragon.TileSource} tileSource - The tile source input, which can be a URL string,
+ *        an inline configuration object, raw XML/JSON string, or an existing TileSource instance.
+ * @param {Object} imgOptions - Additional options for tile loading (e.g. CORS policy, headers).
+ * @param {Function} successCallback - Called with the initialized TileSource once ready.
+ * @param {Function} failCallback - Called if initialization fails. Receives an error object with a message and source.
  */
 function getTileSourceImplementation( viewer, tileSource, imgOptions, successCallback,
     failCallback ) {
@@ -2961,9 +2980,13 @@ function getOverlayObject( viewer, overlay ) {
 }
 
 /**
+ * Determines the index of a specific overlay element within an array of overlays.
+ *
  * @private
  * @inner
- * Determines the index of the given overlay in the given overlays array.
+ * @param {Array<Object>} overlays - The array of overlay objects, each containing an `element` property.
+ * @param {Element} element - The DOM element of the overlay to find.
+ * @returns {number} The index of the matching overlay in the array, or -1 if not found.
  */
 function getOverlayIndex( overlays, element ) {
     var i;

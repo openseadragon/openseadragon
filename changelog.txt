@@ -24,14 +24,17 @@ OPENSEADRAGON CHANGELOG
     * New testing/demo utilities (MockSeadragon, DrawerSwitcher for switching drawers in demos, getBuiltInDrawersForTest for testing all drawers), serialization guard in tests to remove circular references.
     * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
     * Misc: updated CSS for dev server, new dev & test commands.
+* New tile source: IIP (Internet Imaging Protocol) (#2719 @ruven)
 * New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
 * Overlay wrapper elements now have a "openseadragon-overlay-wrapper" class. If the overlay element has an ID, the wrapper gets a variant on that ID, but if the overlay element does not have an ID, we no longer give the wrapper an ID. (#2698 @lokaesshwar)
 * The functions the viewer uses to operate the zoom in and zoom out buttons are now accessible to be called programatically (#2702 @achu1998)
 * The Viewer now has a getFullyLoaded function and a fully-loaded-change event, so you can know when all of the images in the viewer are loaded (#2707 @achu1998)
 * The Viewer and TiledImage now both have a whenFullyLoaded function that will call you back when they are fully loaded (#2707 @achu1998)
 * Improved IIIF tile requests in certain edge cases (#2710 @ruven)
+* Now only removing OSD-created elements on destroy (rather than emptying out the entire container) (#2724 @Vinith1919)
+* Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
-* Improved documentation (#2676 @bennlich)
+* Improved documentation (#2676 @bennlich, #2729 @shaswata-26)
 * Improved unit tests (#2640 @harshkg23)
 * Fixed: Transparency detection didn't always work properly (#2636 @pcram-techcyte)
 * Fixed: MouseTracker's hasGestureHandlers and hasScrollHandler values were not getting updated upon dynamically adding/removing handlers (#2649 @Seafret)
@@ -39,6 +42,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Possible MouseTracker hash collision (#2657 @cff29546)
 * Fixed: Relative panning sometimes used the wrong starting point, causing jumping during touch panning (#2704 @DougTCooke)
 * Fixed: World.arrange would misalign images that were rotated (#2709 @yowzadave)
+* Fixed: In some cases TiledImage would throw an exception if there were no tiles to update (#2733 @DougTCooke)
 
 5.0.1:
 
