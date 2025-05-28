@@ -37,6 +37,12 @@
 // dictionary from hash to private properties
 var THIS = {};
 var nextHash = 1;
+    setKeyboardNavEnabled: function(enabled) {
+    this.keyboardNavEnabled = enabled;
+    this.innerTracker.keyDownHandler = enabled ? onCanvasKeyDown : null;
+    this.innerTracker.keyPressHandler = enabled ? onCanvasKeyPress : null;
+}
+
 
 /**
  *
@@ -1906,6 +1912,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         }
 
+
+          
+
+        
         getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
 
             myQueueItem.tileSource = tileSource;
