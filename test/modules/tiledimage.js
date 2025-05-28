@@ -205,10 +205,13 @@
 
             viewer.addHandler('tiled-image-drawn', function updateHandler2() {
                 viewer.removeHandler('tiled-image-drawn', updateHandler2);
-                assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'more tiles load');
-                viewer.world.getItemAt(0).destroy();
-                assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after destroy');
-                done();
+
+                setTimeout(() => {
+                    assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'more tiles load');
+                    viewer.world.getItemAt(0).destroy();
+                    assert.equal(viewer.tileCache.numTilesLoaded(), 0, 'no tiles after destroy');
+                    done();
+                }, 20);
             });
         });
 

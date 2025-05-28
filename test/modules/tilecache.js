@@ -1,7 +1,7 @@
 /* global QUnit, testLog */
 
 (function() {
-    const Convertor = OpenSeadragon.convertor,
+    const Converter = OpenSeadragon.converter,
         T_A = "__TEST__typeA", T_B = "__TEST__typeB", T_C = "__TEST__typeC", T_D = "__TEST__typeD", T_E = "__TEST__typeE";
 
     let viewer;
@@ -23,68 +23,77 @@
     // other tests will interfere
     let typeAtoB = 0, typeBtoC = 0, typeCtoA = 0, typeDtoA = 0, typeCtoE = 0;
     //set all same costs to get easy testing, know which path will be taken
-    Convertor.learn(T_A, T_B, (tile, x) => {
+    Converter.learn(T_A, T_B, (tile, x) => {
         typeAtoB++;
         return x+1;
     });
     // Costly conversion to C simulation
-    Convertor.learn(T_B, T_C, async (tile, x) => {
+    Converter.learn(T_B, T_C, async (tile, x) => {
         typeBtoC++;
         await sleep(5);
         return x+1;
     });
-    Convertor.learn(T_C, T_A, (tile, x) => {
+    Converter.learn(T_C, T_A, (tile, x) => {
         typeCtoA++;
         return x+1;
     });
-    Convertor.learn(T_D, T_A, (tile, x) => {
+    Converter.learn(T_D, T_A, (tile, x) => {
         typeDtoA++;
         return x+1;
     });
-    Convertor.learn(T_C, T_E, (tile, x) => {
+    Converter.learn(T_C, T_E, (tile, x) => {
         typeCtoE++;
         return x+1;
     });
     //'Copy constructors'
     let copyA = 0, copyB = 0, copyC = 0, copyD = 0, copyE = 0;
     //also learn destructors
-    Convertor.learn(T_A, T_A,(tile, x) => {
+    Converter.learn(T_A, T_A,(tile, x) => {
         copyA++;
         return x+1;
     });
-    Convertor.learn(T_B, T_B,(tile, x) => {
+    Converter.learn(T_B, T_B,(tile, x) => {
         copyB++;
         return x+1;
     });
-    Convertor.learn(T_C, T_C,(tile, x) => {
+    Converter.learn(T_C, T_C,(tile, x) => {
         copyC++;
         return x-1;
     });
-    Convertor.learn(T_D, T_D,(tile, x) => {
+    Converter.learn(T_D, T_D,(tile, x) => {
         copyD++;
         return x+1;
     });
-    Convertor.learn(T_E, T_E,(tile, x) => {
+    Converter.learn(T_E, T_E,(tile, x) => {
         copyE++;
         return x+1;
     });
     let destroyA = 0, destroyB = 0, destroyC = 0, destroyD = 0, destroyE = 0;
     //also learn destructors
-    Convertor.learnDestroy(T_A, () => {
+    Converter.learnDestroy(T_A, () => {
         destroyA++;
     });
-    Convertor.learnDestroy(T_B, () => {
+    Converter.learnDestroy(T_B, () => {
         destroyB++;
     });
-    Convertor.learnDestroy(T_C, () => {
+    Converter.learnDestroy(T_C, () => {
         destroyC++;
     });
-    Convertor.learnDestroy(T_D, () => {
+    Converter.learnDestroy(T_D, () => {
         destroyD++;
     });
-    Convertor.learnDestroy(T_E, () => {
+    Converter.learnDestroy(T_E, () => {
         destroyE++;
     });
+
+    const awaitDataGetForRendering = async function(cache, drawer, tile) {
+        let result = cache.getDataForRendering(drawer, tile);
+        while (!result) {
+            await sleep(10);
+            result = cache.getDataForRendering(drawer, tile);
+        }
+        return result;
+    }
 
     // ----------
     QUnit.module('TileCache', {
@@ -201,7 +210,7 @@
                 internalCacheFree(data) {
                     super.internalCacheFree(data);
                     // Be nice and truly destroy the data copy
-                    OpenSeadragon.convertor.destroy(data, T_C);
+                    OpenSeadragon.converter.destroy(data, T_C);
                 }
             }
 
@@ -385,7 +394,9 @@
 
         viewer.addHandler('open', async () => {
             await viewer.waitForFinishedJobsForTest();
-            await sleep(1);  // necessary to make space for a draw call
+            while (tileCache._tilesLoaded.length < 1) {
+                await sleep(10);  // necessary to make space for a draw call
+            }
 
             test.ok(viewer.world.getItemAt(0).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
             test.ok(viewer.world.getItemAt(1).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
@@ -398,7 +409,8 @@
                 const cache = tile.getCache();
                 test.equal(cache.type, T_C, "Cache data was affected, the drawer supports only T_C since there is no way to get to T_E.");
 
-                const internalCache = cache.getDataForRendering(drawer, tile);
+                // We need to wait once the data is ready to be tested
+                const internalCache = await awaitDataGetForRendering(cache, drawer, tile);
                 test.equal(internalCache.type, viewer.drawer.getId(), "Sync conversion routine means T_C is also internal since dataCreate only creates data. However, internal cache keeps type of the drawer ID.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }
@@ -489,7 +501,7 @@
                 test.equal(cache.type, T_A, "Main Cache Converted T_C -> T_A (drawer supports type A) (suite 1)");
                 test.equal(cache.data, 3, "Conversion step increases plugin-stored value 2 to 3");
 
-                const internalCache = cache.getDataForRendering(drawer, tile);
+                const internalCache = await awaitDataGetForRendering(cache, drawer, tile);
                 test.equal(internalCache.type, viewer.drawer.getId(), "Internal cache has type of the drawer ID.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
             }
