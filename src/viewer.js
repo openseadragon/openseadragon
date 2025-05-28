@@ -832,6 +832,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 checkCompletion();
             };
 
+                if (!options || typeof options !== 'object') {
+                throw new Error("Invalid options passed to doOne()");
+                }    
+
+            
             var originalError = options.error;
             options.error = function(event) {
                 failures++;
