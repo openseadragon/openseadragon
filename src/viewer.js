@@ -37,6 +37,12 @@
 // dictionary from hash to private properties
 var THIS = {};
 var nextHash = 1;
+    setKeyboardNavEnabled: function(enabled) {
+    this.keyboardNavEnabled = enabled;
+    this.innerTracker.keyDownHandler = enabled ? onCanvasKeyDown : null;
+    this.innerTracker.keyPressHandler = enabled ? onCanvasKeyPress : null;
+}
+
 
 /**
  *
@@ -1907,11 +1913,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
 
-            viewer.setKeyboardNavEnabled: function(enabled) {
-        this.keyboardNavEnabled = enabled;
-        this.innerTracker.keyDownHandler = enabled ? onCanvasKeyDown : null;
-        this.innerTracker.keyPressHandler = enabled ? onCanvasKeyPress : null;
-        }
+          
 
         
         getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
