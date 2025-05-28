@@ -1911,7 +1911,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.keyboardNavEnabled = enabled;
         this.innerTracker.keyDownHandler = enabled ? onCanvasKeyDown : null;
         this.innerTracker.keyPressHandler = enabled ? onCanvasKeyPress : null;
-        },
+        }
 
         
         getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
