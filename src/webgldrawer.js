@@ -733,12 +733,11 @@
             attribute vec2 a_output_position;
             attribute vec2 a_texture_position;
 
-            uniform mat3 u_matrix;
-
             varying vec2 v_texture_position;
 
             void main() {
-                gl_Position = vec4(u_matrix * vec3(a_output_position, 1), 1);
+                // Transform to clip space
+                gl_Position = vec4(vec3(a_output_position * 2.0 - 0.5, 1), 1);
 
                 v_texture_position = a_texture_position;
             }
@@ -772,7 +771,6 @@
                 shaderProgram: program,
                 aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
                 aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
-                uMatrix: gl.getUniformLocation(program, 'u_matrix'),
                 uImage: gl.getUniformLocation(program, 'u_image'),
                 uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
                 bufferOutputPosition: gl.createBuffer(),
@@ -789,10 +787,6 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
             gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
-
-            // set the matrix that transforms the framebuffer to clip space  // todo delete
-            let matrix = $.Mat3.makeScaling(2, 2).multiply($.Mat3.makeTranslation(-0.5, -0.5));
-            gl.uniformMatrix3fv(this._secondPass.uMatrix, false, matrix.values);
         }
 
         // private
