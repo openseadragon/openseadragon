@@ -558,37 +558,35 @@
             let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
             let xOffset = tile.positionedBounds.width * overlapFraction.x;
             let yOffset = tile.positionedBounds.height * overlapFraction.y;
-
-            // x, y, w, h in viewport coords
             let x = tile.positionedBounds.x + (tile.x === 0 ? 0 : xOffset);
             let y = tile.positionedBounds.y + (tile.y === 0 ? 0 : yOffset);
             let right = tile.positionedBounds.x + tile.positionedBounds.width - (tile.isRightMost ? 0 : xOffset);
             let bottom = tile.positionedBounds.y + tile.positionedBounds.height - (tile.isBottomMost ? 0 : yOffset);
-            let w = right - x;
-            let h = bottom - y;
 
-            let matrix = new $.Mat3([
-                w, 0, 0,
-                0, h, 0,
-                x, y, 1,
+            const model = new $.Mat3([
+                right - x, 0, 0, // sx = width
+                0, bottom - y, 0, // sy = height
+                x, y, 1
             ]);
 
-            if(tile.flipped){
-                // flip the tile around the center of the unit quad
-                let t1 = $.Mat3.makeTranslation(0.5, 0);
-                let t2 = $.Mat3.makeTranslation(-0.5, 0);
+            if (tile.flipped) {
+                // For documentation:
+                // // flip the tile around the center of the unit quad
+                // let t1 = $.Mat3.makeTranslation(0.5, 0);
+                // let t2 = $.Mat3.makeTranslation(-0.5, 0);
+                //
+                // // update the view matrix to account for this image's rotation
+                // let localMatrix = t1.multiply($.Mat3.makeScaling(-1, 1)).multiply(t2);
+                // matrix = matrix.multiply(localMatrix);
 
-                // update the view matrix to account for this image's rotation
-                let localMatrix = t1.multiply($.Mat3.makeScaling(-1, 1)).multiply(t2);
-                matrix = matrix.multiply(localMatrix);
+                //Optimized: this works since matrix only contains main diagonal values & translation
+                model.scaleAndTranslateSelf(-1, 1, 1, 0);
             }
 
-            let overallMatrix = viewMatrix.multiply(matrix);
-
+            model.scaleAndTranslateOtherSetSelf(viewMatrix);
             opacityArray[index] = tile.opacity;
             textureDataArray[index] = texture;
-            matrixArray[index] = overallMatrix.values;
-
+            matrixArray[index] = model.values;
         }
 
         // private
@@ -792,7 +790,7 @@
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
             gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
 
-            // set the matrix that transforms the framebuffer to clip space
+            // set the matrix that transforms the framebuffer to clip space  // todo delete
             let matrix = $.Mat3.makeScaling(2, 2).multiply($.Mat3.makeTranslation(-0.5, -0.5));
             gl.uniformMatrix3fv(this._secondPass.uMatrix, false, matrix.values);
         }
