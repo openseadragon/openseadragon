@@ -3109,7 +3109,7 @@ function onCanvasContextMenu( event ) {
  * allowing keyboard navigation logic to respond appropriately to key releases.
  */
 function onCanvasKeyUp(event) {
-    this._keysDown[event.key] = false;
+    this._keysDown[event.originalEvent.code] = false;
 }
 
 function onCanvasKeyDown( event ) {
@@ -3138,8 +3138,7 @@ function onCanvasKeyDown( event ) {
     this.raiseEvent('canvas-key', canvasKeyDownEventArgs);
 
     if (!canvasKeyDownEventArgs.preventDefaultAction) {
-        this._keysDown[event.key] = true; // Mark this key as held down in the viewer's internal tracking object
-        event.preventDefault(); // Prevent the browser's default action for this key
+        this._keysDown[canvasKeyDownEventArgs.originalEvent.code] = true; // Mark this key as held down in the viewer's internal tracking object
     }
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
@@ -4015,8 +4014,8 @@ function doViewerResize(viewer, containerSize){
 function handleArrowKeys(viewer) {
 
     // Helper for key state
-    function isDown(key) {
-        return viewer._keysDown && viewer._keysDown[key];
+    function isDown(code) {
+        return viewer._keysDown && viewer._keysDown[code];
     }
 
      // Use the viewer's configured pan amount
