@@ -3103,6 +3103,8 @@ function onCanvasContextMenu( event ) {
 
 /**
  * Handles the keyup event on the viewer's canvas element.
+ *
+ * @private
  * Marks the specified key as no longer pressed in the _keysDown tracking object,
  * allowing keyboard navigation logic to respond appropriately to key releases.
  */
@@ -3111,9 +3113,7 @@ function onCanvasKeyUp(event) {
 }
 
 function onCanvasKeyDown( event ) {
-    if (!event.preventDefaultAction) {
-        this._keysDown[event.key] = true;
-    }
+
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
@@ -3136,6 +3136,11 @@ function onCanvasKeyDown( event ) {
      */
 
     this.raiseEvent('canvas-key', canvasKeyDownEventArgs);
+
+    if (!canvasKeyDownEventArgs.preventDefaultAction) {
+        this._keysDown[event.key] = true; // Mark this key as held down in the viewer's internal tracking object
+        event.preventDefault(); // Prevent the browser's default action for this key
+    }
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
         switch( event.keyCode ){
@@ -4008,48 +4013,125 @@ function doViewerResize(viewer, containerSize){
 }
 
 function handleArrowKeys(viewer) {
-    // Use the viewer's configured pan amount
-    const pixels = viewer.pixelsPerArrowPress || 40;
-    const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
 
-    // Helper for key state (supports both object and Set)
+    // Helper for key state
     function isDown(key) {
-        return viewer._keysDown && (viewer._keysDown[key] || (viewer._keysDown.has && viewer._keysDown.has(key)));
+        return viewer._keysDown && viewer._keysDown[key];
     }
+
+     // Use the viewer's configured pan amount
+    const pixels = viewer.pixelsPerArrowPress;
+    const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
+    const panDelta40 = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(40, 40));
+    const rotationIncrement = viewer.rotationIncrement;
 
     // Shift key state
     const shift = isDown('Shift') || isDown('ShiftLeft') || isDown('ShiftRight');
 
-    // Up Arrow
-    if (!viewer.preventVerticalPan && isDown('ArrowUp')) {
-        if (shift) {
-            viewer.viewport.zoomBy(1.1);
-        } else {
-            viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta.y));
+    // Up Arrow and Down Arrow
+    if (!viewer.preventVerticalPan) {
+        if (isDown('ArrowUp')) {
+            if (shift) {
+                viewer.viewport.zoomBy(1.1);
+            } else {
+                viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta.y));
+            }
+            viewer.viewport.applyConstraints();
         }
-        viewer.viewport.applyConstraints();
-    }
-
-    // Down Arrow
-    if (!viewer.preventVerticalPan && isDown('ArrowDown')) {
-        if (shift) {
-            viewer.viewport.zoomBy(0.9);
-        } else {
-            viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta.y));
+        if (isDown('ArrowDown')) {
+            if (shift) {
+                viewer.viewport.zoomBy(0.9);
+            } else {
+                viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta.y));
+            }
+            viewer.viewport.applyConstraints();
         }
+    }
+
+    // Left Arrow and Right Arrow
+    if (!viewer.preventHorizontalPan) {
+        if (isDown('ArrowLeft')) {
+            viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta.x, 0));
+            viewer.viewport.applyConstraints();
+        }
+        if (isDown('ArrowRight')) {
+            viewer.viewport.panBy(new OpenSeadragon.Point(panDelta.x, 0));
+            viewer.viewport.applyConstraints();
+        }
+    }
+
+    // WASD
+    if (!viewer.preventVerticalPan) {
+        if (isDown('KeyW')) {
+            if (shift) {
+                viewer.viewport.zoomBy(1.1);
+            } else {
+                viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta40.y));
+            }
+            viewer.viewport.applyConstraints();
+        }
+        if (isDown('KeyS')) {
+            if (shift) {
+                viewer.viewport.zoomBy(0.9);
+            } else {
+                viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta40.y));
+            }
+            viewer.viewport.applyConstraints();
+        }
+    }
+
+    if (!viewer.preventHorizontalPan) {
+        if (isDown('KeyA')) {
+            viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta40.x, 0));
+            viewer.viewport.applyConstraints();
+        }
+        if (isDown('KeyD')) {
+            viewer.viewport.panBy(new OpenSeadragon.Point(panDelta40.x, 0));
+            viewer.viewport.applyConstraints();
+        }
+    }
+
+    // Zoom Controls +/=  -/_
+    if (isDown('Equal') || isDown('NumpadAdd')) {
+        viewer.viewport.zoomBy(1.1);
+        viewer.viewport.applyConstraints();
+    }
+    if (isDown('Minus') || isDown('NumpadSubtract')) {
+        viewer.viewport.zoomBy(0.9);
         viewer.viewport.applyConstraints();
     }
 
-    // Left Arrow
-    if (isDown('ArrowLeft') && !viewer.preventHorizontalPan) {
-        viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta.x, 0));
+    // Home Reset 0 key
+    if (isDown('Digit0')) {
+        viewer.viewport.goHome();
         viewer.viewport.applyConstraints();
     }
 
-    // Right Arrow
-    if (isDown('ArrowRight') && !viewer.preventHorizontalPan) {
-        viewer.viewport.panBy(new OpenSeadragon.Point(panDelta.x, 0));
+    // Rotation Controls
+    if (isDown('KeyR')) {
+        let increment = rotationIncrement;
+        if (shift) {
+            increment *= -1;
+        }
+        if (viewer.viewport.flipped) {
+            increment *= -1;
+        }
+        viewer.viewport.setRotation(viewer.viewport.getRotation() + increment);
         viewer.viewport.applyConstraints();
+    }
+
+    // Flip Control
+    if (isDown('KeyF')) {
+        viewer.viewport.toggleFlip();
+        viewer.viewport.applyConstraints();
+    }
+
+    // Page Navigation
+    if (isDown('KeyJ')) {
+        viewer.goToPreviousPage();
+    }
+    if (isDown('KeyK')) {
+        viewer.goToNextPage();
     }
 }
 
