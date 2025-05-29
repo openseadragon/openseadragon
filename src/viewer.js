@@ -4022,7 +4022,6 @@ function handleArrowKeys(viewer) {
     const pixels = viewer.pixelsPerArrowPress;
     const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
     const panDelta40 = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(40, 40));
-    const rotationIncrement = viewer.rotationIncrement;
 
     // Shift key state
     const shift = isDown('Shift') || isDown('ShiftLeft') || isDown('ShiftRight');
@@ -4100,38 +4099,6 @@ function handleArrowKeys(viewer) {
         viewer.viewport.applyConstraints();
     }
 
-    // Home Reset 0 key
-    if (isDown('Digit0')) {
-        viewer.viewport.goHome();
-        viewer.viewport.applyConstraints();
-    }
-
-    // Rotation Controls
-    if (isDown('KeyR')) {
-        let increment = rotationIncrement;
-        if (shift) {
-            increment *= -1;
-        }
-        if (viewer.viewport.flipped) {
-            increment *= -1;
-        }
-        viewer.viewport.setRotation(viewer.viewport.getRotation() + increment);
-        viewer.viewport.applyConstraints();
-    }
-
-    // Flip Control
-    if (isDown('KeyF')) {
-        viewer.viewport.toggleFlip();
-        viewer.viewport.applyConstraints();
-    }
-
-    // Page Navigation
-    if (isDown('KeyJ')) {
-        viewer.goToPreviousPage();
-    }
-    if (isDown('KeyK')) {
-        viewer.goToNextPage();
-    }
 }
 
 function updateOnce( viewer ) {
