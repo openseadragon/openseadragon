@@ -446,35 +446,28 @@
         let _currentTestVal = undefined;
         drawer.testEvents.addHandler('test-tile', e => {
             test.ok(e.dataToDraw, "Tile data is ready to be drawn");
-            console.log("Tile drawn with value: %s", e.dataToDraw)
             if (_currentTestVal !== undefined) {
                 testTileCalled = true;
                 test.equal(e.dataToDraw, _currentTestVal, "Value is correct on the drawn data.");
-            } else {
-                console.log("Tile drawn without test value, this is expected only at the beginning of the test.");
             }
             tileLoaded = true;
         });
 
         function testDrawingRoutine(value) {
-            console.log("Start drawing routine with value: %s", value);
             _currentTestVal = value;
             viewer.world.needsDraw();
             viewer.world.draw();
             _currentTestVal = undefined;
-            console.log("FInish drawing routine");
         }
 
         viewer.addHandler('open', async () => {
             await viewer.waitForFinishedJobsForTest();
             while (!tileLoaded) {
-                await sleep(10);  // necessary to make space for a draw call
+                await sleep(10);
             }
 
             // Test simple data set -> creates main cache
-
             let testHandler = async e => {
-                console.log("start processing", e.tile)
                 // data comes in as T_A
                 test.equal(typeDtoA, 0, "No conversion needed to get type A.");
                 test.equal(typeCtoA, 0, "No conversion needed to get type A.");
@@ -488,7 +481,6 @@
                 test.notOk(e.outdated(), "Event is still valid.");
 
                 e.tile._processed = true;
-                console.log("finish processing", e.tile)
             };
 
             viewer.addHandler('tile-invalidated', testHandler);
@@ -496,7 +488,6 @@
 
             //test for each level only single cache was processed
             const processedLevels = {};
-            console.log(tileCache._tilesLoaded.length)
             for (let tile of tileCache._tilesLoaded) {
                 const level = tile.level;
 
@@ -504,10 +495,7 @@
                     test.ok(!processedLevels[level], "Only single tile processed per level.");
                     processedLevels[level] = true;
                     delete tile.__TEST_PROCESSED;
-                    console.log("Tile processed in one level: %s", level, tile);
                 }
-
-                console.log("Tile processed %s -> tile %s", tile._processed, tile)
 
                 const origCache = tile.getCache(tile.originalCacheKey);
                 test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses internal cache.");
