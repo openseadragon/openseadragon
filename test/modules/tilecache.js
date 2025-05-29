@@ -394,8 +394,8 @@
 
         viewer.addHandler('open', async () => {
             await viewer.waitForFinishedJobsForTest();
-            while (tileCache._tilesLoaded.length < 1) {
-                await sleep(10);  // necessary to make space for a draw call
+            while (!testTileCalled) {
+                await sleep(10);
             }
 
             test.ok(viewer.world.getItemAt(0).source instanceof OpenSeadragon.EmptyTestT_ATileSource, "Tests are done with empty test source type T_A.");
@@ -441,15 +441,16 @@
         const drawer = viewer.drawer;
 
         let testTileCalled = false;
+        let tileLoaded = false;
 
         let _currentTestVal = undefined;
-        let previousTestValue = undefined;
         drawer.testEvents.addHandler('test-tile', e => {
             test.ok(e.dataToDraw, "Tile data is ready to be drawn");
             if (_currentTestVal !== undefined) {
                 testTileCalled = true;
                 test.equal(e.dataToDraw, _currentTestVal, "Value is correct on the drawn data.");
             }
+            tileLoaded = true;
         });
 
         function testDrawingRoutine(value) {
@@ -461,10 +462,11 @@
 
         viewer.addHandler('open', async () => {
             await viewer.waitForFinishedJobsForTest();
-            await sleep(1);  // necessary to make space for a draw call
+            while (!tileLoaded) {
+                await sleep(10);
+            }
 
             // Test simple data set -> creates main cache
-
             let testHandler = async e => {
                 // data comes in as T_A
                 test.equal(typeDtoA, 0, "No conversion needed to get type A.");
@@ -477,6 +479,8 @@
                 // Test value 2 since we set T_C no need to convert
                 await e.setData(2, T_C);
                 test.notOk(e.outdated(), "Event is still valid.");
+
+                e.tile._processed = true;
             };
 
             viewer.addHandler('tile-invalidated', testHandler);
@@ -504,6 +508,7 @@
                 const internalCache = await awaitDataGetForRendering(cache, drawer, tile);
                 test.equal(internalCache.type, viewer.drawer.getId(), "Internal cache has type of the drawer ID.");
                 test.ok(internalCache.loaded, "Internal cache ready.");
+
             }
             // Internal cache will have value 5: main cache is 3, type is T_A,
             testDrawingRoutine(5); // internal cache transforms to T_C: two steps, TA->TB->TC 3+2
@@ -542,7 +547,7 @@
             };
             viewer.addHandler('tile-invalidated', testHandler);
             await viewer.world.requestInvalidate(true);
-            await sleep(1);  // necessary to make space for a draw call
+            await sleep(20);  // necessary to make space for a draw call
             testDrawingRoutine(2); // Value +2 rendering from original data
 
             for (let tile of tileCache._tilesLoaded) {
