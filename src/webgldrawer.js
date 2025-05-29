@@ -733,11 +733,13 @@
             attribute vec2 a_output_position;
             attribute vec2 a_texture_position;
 
+            uniform mat3 u_matrix;
+
             varying vec2 v_texture_position;
 
             void main() {
-                // Transform to clip space
-                gl_Position = vec4(vec3(a_output_position * 2.0 - 0.5, 1), 1);
+                // Transform to clip space (0:1 --> -1:1)
+                gl_Position = vec4(vec3(a_output_position * 2.0 - 1.0, 1), 1);
 
                 v_texture_position = a_texture_position;
             }
@@ -771,6 +773,7 @@
                 shaderProgram: program,
                 aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
                 aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                uMatrix: gl.getUniformLocation(program, 'u_matrix'),
                 uImage: gl.getUniformLocation(program, 'u_image'),
                 uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
                 bufferOutputPosition: gl.createBuffer(),
