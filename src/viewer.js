@@ -3103,6 +3103,20 @@ function onCanvasContextMenu( event ) {
     event.preventDefault = eventArgs.preventDefault;
 }
 
+/**
+ * Determines if the given key code is used for panning or zooming.
+ *
+ * @private
+ * Returns true if the key triggers panning (arrow keys, WASD) or zooming (+, -),
+ * otherwise returns false.
+ */
+function isPanOrZoomKey(code) {
+    return [
+        'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+        'KeyW', 'KeyA', 'KeyS', 'KeyD',
+        'Equal', 'Minus'
+    ].includes(code);
+}
 
 /**
  * Handles the keyup event on the viewer's canvas element.
@@ -3148,94 +3162,18 @@ function onCanvasKeyDown( event ) {
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
 
-        this._keysDown[canvasKeyDownEventArgs.originalEvent.code] = true; // Mark this key as held down in the viewer's internal tracking object
+        const code = event.originalEvent.code;
+
+        if (isPanOrZoomKey(code)) {
+            this._keysDown[code] = true; // Mark this key as held down in the viewer's internal tracking object
+            event.preventDefault = true; // prevent browser scroll/zoom, etc
+            return;
+        }
 
         switch( event.keyCode ){
-            case 38://up arrow/shift uparrow
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(1.1);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -this.pixelsPerArrowPress)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 40://down arrow/shift downarrow
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, this.pixelsPerArrowPress)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 37://left arrow
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 39://right arrow
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 187://=|+
-                this.viewport.zoomBy(1.1);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 189://-|_
-                this.viewport.zoomBy(0.9);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
             case 48://0|)
                 this.viewport.goHome();
                 this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 87://W/w
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                    if ( event.shift ) {
-                        this.viewport.zoomBy(1.1);
-                    } else {
-                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
-                    }
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 83://S/s
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                    if ( event.shift ) {
-                        this.viewport.zoomBy(0.9);
-                    } else {
-                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
-                    }
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 65://a/A
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 68://d/D
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                    this.viewport.applyConstraints();
-                }
                 event.preventDefault = true;
                 break;
             case 82: //r - clockwise rotation/R - counterclockwise rotation
@@ -4026,92 +3964,62 @@ function handleArrowKeys(viewer) {
         return (viewer._keysDown && viewer._keysDown[code]) || (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld[code]);
     }
 
-     // Use the viewer's configured pan amount
+    // Helper to process pan keys: handles pan, pan distance, and virtual hold logic
+    function handlePan(codeList, deltaPoint) {
+        for (const code of codeList) {
+            if (isDown(code)) {
+                viewer.viewport.panBy(deltaPoint);
+                viewer.viewport.applyConstraints();
+                viewer._keyPanDistance[code] = (viewer._keyPanDistance[code] || 0) + viewer.pixelsPerArrowPress;
+                if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld[code] && viewer._keyPanDistance[code] >= viewer.minPanDistance) {
+                    viewer._keyVirtuallyHeld[code] = false;
+                    viewer._keyPanDistance[code] = 0;
+                }
+                break; // Only pan once per group
+            }
+        }
+    }
+
+    // Helper to process zoom keys
+    function handleZoom(codeList, factor) {
+        for (const code of codeList) {
+            if (isDown(code)) {
+                viewer.viewport.zoomBy(factor);
+                viewer.viewport.applyConstraints();
+                break;
+            }
+        }
+    }
+
+    // Use the viewer's configured pan amount
     const pixels = viewer.pixelsPerArrowPress;
     const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
-    const minPanDistance = viewer.minPanDistance;
 
     // Shift key state
     const shift = isDown('Shift') || isDown('ShiftLeft') || isDown('ShiftRight');
 
-    // Up Arrow,  Down Arrow, WS Keys
-    // Handle zoom first (should always work regardless of pan settings)
+    // 1. Zoom with shift + up/down (WS or arrows)
     if (shift) {
-        if (isDown('ArrowUp') || isDown('KeyW')) {
-            viewer.viewport.zoomBy(1.1);
-            viewer.viewport.applyConstraints();
-            return; // Exit early to prevent panning
-        }
-        if (isDown('ArrowDown') || isDown('KeyS')) {
-            viewer.viewport.zoomBy(0.9);
-            viewer.viewport.applyConstraints();
-            return; // Exit early to prevent panning
-        }
+        handleZoom(['ArrowUp', 'KeyW'], 1.1);
+        handleZoom(['ArrowDown', 'KeyS'], 0.9);
+        return; // Exit early to prevent panning
     }
 
-    // Handle vertical panning (only when not zooming)
+    // 2. Vertical panning
     if (!viewer.preventVerticalPan) {
-        if (isDown('ArrowUp') || isDown('KeyW')) {
-            viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta.y));
-            viewer.viewport.applyConstraints();
-            // Track pan distance
-            viewer._keyPanDistance['ArrowUp'] += pixels;
-            // Stop virtual hold if minimum distance is reached
-            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowUp'] && viewer._keyPanDistance['ArrowUp'] >= minPanDistance) {
-                viewer._keyVirtuallyHeld['ArrowUp'] = false;
-                viewer._keyPanDistance['ArrowUp'] = 0;
-            }
-        }
-        if (isDown('ArrowDown') || isDown('KeyS')) {
-            viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta.y));
-            viewer.viewport.applyConstraints();
-            // Track pan distance
-            viewer._keyPanDistance['ArrowDown'] += pixels;
-            // Stop virtual hold if minimum distance is reached
-            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowDown'] && viewer._keyPanDistance['ArrowDown'] >= minPanDistance) {
-                viewer._keyVirtuallyHeld['ArrowDown'] = false;
-                viewer._keyPanDistance['ArrowDown'] = 0;
-            }
-        }
+        handlePan(['ArrowUp', 'KeyW'], new OpenSeadragon.Point(0, -panDelta.y));
+        handlePan(['ArrowDown', 'KeyS'], new OpenSeadragon.Point(0, panDelta.y));
     }
 
-    // Left Arrow, Right Arrow, AD keys
-    // Handle horizontal panning
+    // 3. Horizontal panning
     if (!viewer.preventHorizontalPan) {
-        if (isDown('ArrowLeft') || isDown('KeyA')) {
-            viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta.x, 0));
-            viewer.viewport.applyConstraints();
-            // Track pan distance
-            viewer._keyPanDistance['ArrowLeft'] += pixels;
-            // Stop virtual hold if minimum distance is reached
-            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowLeft'] && viewer._keyPanDistance['ArrowLeft'] >= minPanDistance) {
-                viewer._keyVirtuallyHeld['ArrowLeft'] = false;
-                viewer._keyPanDistance['ArrowLeft'] = 0;
-            }
-        }
-        if (isDown('ArrowRight') || isDown('KeyD')) {
-            viewer.viewport.panBy(new OpenSeadragon.Point(panDelta.x, 0));
-            viewer.viewport.applyConstraints();
-            // Track pan distance
-            viewer._keyPanDistance['ArrowRight'] += pixels;
-            // Stop virtual hold if minimum distance is reached
-            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowRight'] && viewer._keyPanDistance['ArrowRight'] >= minPanDistance) {
-                viewer._keyVirtuallyHeld['ArrowRight'] = false;
-                viewer._keyPanDistance['ArrowRight'] = 0;
-            }
-        }
+        handlePan(['ArrowLeft', 'KeyA'], new OpenSeadragon.Point(-panDelta.x, 0));
+        handlePan(['ArrowRight', 'KeyD'], new OpenSeadragon.Point(panDelta.x, 0));
     }
 
-    // Zoom Controls +/=  -/_
-    if (isDown('Equal') || isDown('NumpadAdd')) {
-        viewer.viewport.zoomBy(1.1);
-        viewer.viewport.applyConstraints();
-    }
-    if (isDown('Minus') || isDown('NumpadSubtract')) {
-        viewer.viewport.zoomBy(0.9);
-        viewer.viewport.applyConstraints();
-    }
-
+    // 4. Zoom in/out (+ =, - _)
+    handleZoom(['Equal', 'NumpadAdd'], 1.1);
+    handleZoom(['Minus', 'NumpadSubtract'], 0.9);
 }
 
 function updateOnce( viewer ) {
