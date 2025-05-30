@@ -3137,11 +3137,10 @@ function onCanvasKeyDown( event ) {
 
     this.raiseEvent('canvas-key', canvasKeyDownEventArgs);
 
-    if (!canvasKeyDownEventArgs.preventDefaultAction) {
-        this._keysDown[canvasKeyDownEventArgs.originalEvent.code] = true; // Mark this key as held down in the viewer's internal tracking object
-    }
-
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+
+        this._keysDown[canvasKeyDownEventArgs.originalEvent.code] = true; // Mark this key as held down in the viewer's internal tracking object
+
         switch( event.keyCode ){
             case 38://up arrow/shift uparrow
                 if (!canvasKeyDownEventArgs.preventVerticalPan) {
@@ -4021,70 +4020,46 @@ function handleArrowKeys(viewer) {
      // Use the viewer's configured pan amount
     const pixels = viewer.pixelsPerArrowPress;
     const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
-    const panDelta40 = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(40, 40));
 
     // Shift key state
     const shift = isDown('Shift') || isDown('ShiftLeft') || isDown('ShiftRight');
 
-    // Up Arrow and Down Arrow
+    // Up Arrow,  Down Arrow, WS Keys
+    // Handle zoom first (should always work regardless of pan settings)
+    if (shift) {
+        if (isDown('ArrowUp') || isDown('KeyW')) {
+            viewer.viewport.zoomBy(1.1);
+            viewer.viewport.applyConstraints();
+            return; // Exit early to prevent panning
+        }
+        if (isDown('ArrowDown') || isDown('KeyS')) {
+            viewer.viewport.zoomBy(0.9);
+            viewer.viewport.applyConstraints();
+            return; // Exit early to prevent panning
+        }
+    }
+
+    // Handle vertical panning (only when not zooming)
     if (!viewer.preventVerticalPan) {
-        if (isDown('ArrowUp')) {
-            if (shift) {
-                viewer.viewport.zoomBy(1.1);
-            } else {
-                viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta.y));
-            }
+        if (isDown('ArrowUp') || isDown('KeyW')) {
+            viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta.y));
             viewer.viewport.applyConstraints();
         }
-        if (isDown('ArrowDown')) {
-            if (shift) {
-                viewer.viewport.zoomBy(0.9);
-            } else {
-                viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta.y));
-            }
+        if (isDown('ArrowDown') || isDown('KeyS')) {
+            viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta.y));
             viewer.viewport.applyConstraints();
         }
     }
 
-    // Left Arrow and Right Arrow
+    // Left Arrow, Right Arrow, AD keys
+    // Handle horizontal panning
     if (!viewer.preventHorizontalPan) {
-        if (isDown('ArrowLeft')) {
+        if (isDown('ArrowLeft') || isDown('KeyA')) {
             viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta.x, 0));
             viewer.viewport.applyConstraints();
         }
-        if (isDown('ArrowRight')) {
+        if (isDown('ArrowRight') || isDown('KeyD')) {
             viewer.viewport.panBy(new OpenSeadragon.Point(panDelta.x, 0));
-            viewer.viewport.applyConstraints();
-        }
-    }
-
-    // WASD
-    if (!viewer.preventVerticalPan) {
-        if (isDown('KeyW')) {
-            if (shift) {
-                viewer.viewport.zoomBy(1.1);
-            } else {
-                viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta40.y));
-            }
-            viewer.viewport.applyConstraints();
-        }
-        if (isDown('KeyS')) {
-            if (shift) {
-                viewer.viewport.zoomBy(0.9);
-            } else {
-                viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta40.y));
-            }
-            viewer.viewport.applyConstraints();
-        }
-    }
-
-    if (!viewer.preventHorizontalPan) {
-        if (isDown('KeyA')) {
-            viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta40.x, 0));
-            viewer.viewport.applyConstraints();
-        }
-        if (isDown('KeyD')) {
-            viewer.viewport.panBy(new OpenSeadragon.Point(panDelta40.x, 0));
             viewer.viewport.applyConstraints();
         }
     }
