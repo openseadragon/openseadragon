@@ -247,6 +247,9 @@ $.Viewer = function( options ) {
     this._fullyLoaded = false; // variable used to track the viewer's aggregate loading state.
 
     this._keysDown = {}; // variable to keep track of currently pressed keys
+    this._keyPanDistance = {};     // tracks cumulative pan distance per key press
+    this._keyVirtuallyHeld = {};   // marks keys virtually held after early release
+    this.minPanDistance = 50;      // minimum pan distance per tap or key press
 
     //Inherit some behaviors and properties
     $.EventSource.call( this );
@@ -3105,11 +3108,17 @@ function onCanvasContextMenu( event ) {
  * Handles the keyup event on the viewer's canvas element.
  *
  * @private
- * Marks the specified key as no longer pressed in the _keysDown tracking object,
- * allowing keyboard navigation logic to respond appropriately to key releases.
+ * Marks the specified key as no longer pressed in the _keysDown tracking object.
+ * If the key is released before the minimum pan distance is reached,
+ * sets the key as "virtually held" in _keyVirtuallyHeld to ensure the
+ * viewer continues panning until the minimum distance is completed.
  */
 function onCanvasKeyUp(event) {
-    this._keysDown[event.originalEvent.code] = false;
+    const code = event.originalEvent.code;
+    this._keysDown[code] = false;
+    if (this._keyPanDistance[code] < this.minPanDistance) {
+        this._keyVirtuallyHeld[code] = true;
+    }
 }
 
 function onCanvasKeyDown( event ) {
@@ -4014,12 +4023,13 @@ function handleArrowKeys(viewer) {
 
     // Helper for key state
     function isDown(code) {
-        return viewer._keysDown && viewer._keysDown[code];
+        return (viewer._keysDown && viewer._keysDown[code]) || (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld[code]);
     }
 
      // Use the viewer's configured pan amount
     const pixels = viewer.pixelsPerArrowPress;
     const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
+    const minPanDistance = viewer.minPanDistance;
 
     // Shift key state
     const shift = isDown('Shift') || isDown('ShiftLeft') || isDown('ShiftRight');
@@ -4044,10 +4054,24 @@ function handleArrowKeys(viewer) {
         if (isDown('ArrowUp') || isDown('KeyW')) {
             viewer.viewport.panBy(new OpenSeadragon.Point(0, -panDelta.y));
             viewer.viewport.applyConstraints();
+            // Track pan distance
+            viewer._keyPanDistance['ArrowUp'] += pixels;
+            // Stop virtual hold if minimum distance is reached
+            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowUp'] && viewer._keyPanDistance['ArrowUp'] >= minPanDistance) {
+                viewer._keyVirtuallyHeld['ArrowUp'] = false;
+                viewer._keyPanDistance['ArrowUp'] = 0;
+            }
         }
         if (isDown('ArrowDown') || isDown('KeyS')) {
             viewer.viewport.panBy(new OpenSeadragon.Point(0, panDelta.y));
             viewer.viewport.applyConstraints();
+            // Track pan distance
+            viewer._keyPanDistance['ArrowDown'] += pixels;
+            // Stop virtual hold if minimum distance is reached
+            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowDown'] && viewer._keyPanDistance['ArrowDown'] >= minPanDistance) {
+                viewer._keyVirtuallyHeld['ArrowDown'] = false;
+                viewer._keyPanDistance['ArrowDown'] = 0;
+            }
         }
     }
 
@@ -4057,10 +4081,24 @@ function handleArrowKeys(viewer) {
         if (isDown('ArrowLeft') || isDown('KeyA')) {
             viewer.viewport.panBy(new OpenSeadragon.Point(-panDelta.x, 0));
             viewer.viewport.applyConstraints();
+            // Track pan distance
+            viewer._keyPanDistance['ArrowLeft'] += pixels;
+            // Stop virtual hold if minimum distance is reached
+            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowLeft'] && viewer._keyPanDistance['ArrowLeft'] >= minPanDistance) {
+                viewer._keyVirtuallyHeld['ArrowLeft'] = false;
+                viewer._keyPanDistance['ArrowLeft'] = 0;
+            }
         }
         if (isDown('ArrowRight') || isDown('KeyD')) {
             viewer.viewport.panBy(new OpenSeadragon.Point(panDelta.x, 0));
             viewer.viewport.applyConstraints();
+            // Track pan distance
+            viewer._keyPanDistance['ArrowRight'] += pixels;
+            // Stop virtual hold if minimum distance is reached
+            if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld['ArrowRight'] && viewer._keyPanDistance['ArrowRight'] >= minPanDistance) {
+                viewer._keyVirtuallyHeld['ArrowRight'] = false;
+                viewer._keyPanDistance['ArrowRight'] = 0;
+            }
         }
     }
 
@@ -4077,6 +4115,21 @@ function handleArrowKeys(viewer) {
 }
 
 function updateOnce( viewer ) {
+
+    // Iterate over all keys to handle keyboard-based panning.
+    // If a key is held down or virtually held, increment its pan distance by panStep.
+    // Once the minimum pan distance is reached, stop virtually holding the key and reset the counter.
+
+    for (let code in viewer._keysDown) {
+        if (viewer._keysDown[code] || viewer._keyVirtuallyHeld[code]) {
+            // pan by step
+            viewer._keyPanDistance[code] += viewer.panStep;
+            if (viewer._keyPanDistance[code] >= viewer.minPanDistance) {
+                viewer._keyVirtuallyHeld[code] = false;
+                viewer._keyPanDistance[code] = 0;
+            }
+        }
+    }
 
     handleArrowKeys(viewer);
 
