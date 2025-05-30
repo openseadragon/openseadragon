@@ -3970,7 +3970,7 @@ function handleArrowKeys(viewer) {
             if (isDown(code)) {
                 viewer.viewport.panBy(deltaPoint);
                 viewer.viewport.applyConstraints();
-                viewer._keyPanDistance[code] = (viewer._keyPanDistance[code] || 0) + viewer.pixelsPerArrowPress;
+                viewer._keyPanDistance[code] += viewer.pixelsPerArrowPress;
                 if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld[code] && viewer._keyPanDistance[code] >= viewer.minPanDistance) {
                     viewer._keyVirtuallyHeld[code] = false;
                     viewer._keyPanDistance[code] = 0;
