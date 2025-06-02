@@ -733,8 +733,6 @@
             attribute vec2 a_output_position;
             attribute vec2 a_texture_position;
 
-            uniform mat3 u_matrix;
-
             varying vec2 v_texture_position;
 
             void main() {
@@ -773,7 +771,6 @@
                 shaderProgram: program,
                 aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
                 aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
-                uMatrix: gl.getUniformLocation(program, 'u_matrix'),
                 uImage: gl.getUniformLocation(program, 'u_image'),
                 uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
                 bufferOutputPosition: gl.createBuffer(),
