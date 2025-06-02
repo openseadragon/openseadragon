@@ -382,9 +382,12 @@
 
                         if (textureInfo && textureInfo.texture) {
                             this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
-                        } else {
-                            // console.log('No tile info', tile);
                         }
+                        // else {
+                        //   If the texture info is not available, we cannot draw this tile. This is either because
+                        //   the tile data is still being processed, or the data was not correct - in that case,
+                        //   internalCacheCreate(..) already logged an error.
+                        // }
 
                         if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
                             // We've filled up the buffers: time to draw this set of tiles
@@ -550,12 +553,12 @@
 
             let texture = textureInfo.texture;
             let textureQuad = textureInfo.position;
+            let overlapFraction = textureInfo.overlapFraction;
 
             // set the position of this texture
             texturePositionArray.set(textureQuad, index * 12);
 
             // compute offsets that account for tile overlap; needed for calculating the transform matrix appropriately
-            let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
             let xOffset = tile.positionedBounds.width * overlapFraction.x;
             let yOffset = tile.positionedBounds.height * overlapFraction.y;
             let x = tile.positionedBounds.x + (tile.x === 0 ? 0 : xOffset);
@@ -564,8 +567,8 @@
             let bottom = tile.positionedBounds.y + tile.positionedBounds.height - (tile.isBottomMost ? 0 : yOffset);
 
             const model = new $.Mat3([
-                right - x, 0, 0, // sx = width
-                0, bottom - y, 0, // sy = height
+                right - x, 0, 0, // right - x = width
+                0, bottom - y, 0, // bottom - y = height
                 x, y, 1
             ]);
 
@@ -882,11 +885,10 @@
                     // create a gl Texture for this tile and bind the canvas with the image data
                     texture = gl.createTexture();
                     let overlap = tiledImage.source.tileOverlap;
+                    let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
                     if( overlap > 0){
                         // calculate the normalized position of the rect to actually draw
                         // discarding overlap.
-                        let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
-
                         let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
                         let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
                         let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
@@ -915,6 +917,7 @@
                         return {
                             texture: texture,
                             position: position,
+                            overlapFraction: overlapFraction
                         };
                     } catch (e){
                         // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
