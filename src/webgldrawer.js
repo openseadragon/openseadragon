@@ -382,9 +382,12 @@
 
                         if (textureInfo && textureInfo.texture) {
                             this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
-                        } else {
-                            // console.log('No tile info', tile);
                         }
+                        // else {
+                        //   If the texture info is not available, we cannot draw this tile. This is either because
+                        //   the tile data is still being processed, or the data was not correct - in that case,
+                        //   internalCacheCreate(..) already logged an error.
+                        // }
 
                         if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
                             // We've filled up the buffers: time to draw this set of tiles
@@ -545,45 +548,43 @@
 
             let texture = textureInfo.texture;
             let textureQuad = textureInfo.position;
+            let overlapFraction = textureInfo.overlapFraction;
 
             // set the position of this texture
             texturePositionArray.set(textureQuad, index * 12);
 
             // compute offsets that account for tile overlap; needed for calculating the transform matrix appropriately
-            let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
             let xOffset = tile.positionedBounds.width * overlapFraction.x;
             let yOffset = tile.positionedBounds.height * overlapFraction.y;
-
-            // x, y, w, h in viewport coords
             let x = tile.positionedBounds.x + (tile.x === 0 ? 0 : xOffset);
             let y = tile.positionedBounds.y + (tile.y === 0 ? 0 : yOffset);
             let right = tile.positionedBounds.x + tile.positionedBounds.width - (tile.isRightMost ? 0 : xOffset);
             let bottom = tile.positionedBounds.y + tile.positionedBounds.height - (tile.isBottomMost ? 0 : yOffset);
-            let w = right - x;
-            let h = bottom - y;
 
-            let matrix = new $.Mat3([
-                w, 0, 0,
-                0, h, 0,
-                x, y, 1,
+            const model = new $.Mat3([
+                right - x, 0, 0, // right - x = width
+                0, bottom - y, 0, // bottom - y = height
+                x, y, 1
             ]);
 
-            if(tile.flipped){
-                // flip the tile around the center of the unit quad
-                let t1 = $.Mat3.makeTranslation(0.5, 0);
-                let t2 = $.Mat3.makeTranslation(-0.5, 0);
+            if (tile.flipped) {
+                // For documentation:
+                // // flip the tile around the center of the unit quad
+                // let t1 = $.Mat3.makeTranslation(0.5, 0);
+                // let t2 = $.Mat3.makeTranslation(-0.5, 0);
+                //
+                // // update the view matrix to account for this image's rotation
+                // let localMatrix = t1.multiply($.Mat3.makeScaling(-1, 1)).multiply(t2);
+                // matrix = matrix.multiply(localMatrix);
 
-                // update the view matrix to account for this image's rotation
-                let localMatrix = t1.multiply($.Mat3.makeScaling(-1, 1)).multiply(t2);
-                matrix = matrix.multiply(localMatrix);
+                //Optimized: this works since matrix only contains main diagonal values & translation
+                model.scaleAndTranslateSelf(-1, 1, 1, 0);
             }
 
-            let overallMatrix = viewMatrix.multiply(matrix);
-
+            model.scaleAndTranslateOtherSetSelf(viewMatrix);
             opacityArray[index] = tile.opacity;
             textureDataArray[index] = texture;
-            matrixArray[index] = overallMatrix.values;
-
+            matrixArray[index] = model.values;
         }
 
         // private
@@ -730,12 +731,11 @@
             attribute vec2 a_output_position;
             attribute vec2 a_texture_position;
 
-            uniform mat3 u_matrix;
-
             varying vec2 v_texture_position;
 
             void main() {
-                gl_Position = vec4(u_matrix * vec3(a_output_position, 1), 1);
+                // Transform to clip space (0:1 --> -1:1)
+                gl_Position = vec4(vec3(a_output_position * 2.0 - 1.0, 1), 1);
 
                 v_texture_position = a_texture_position;
             }
@@ -769,7 +769,6 @@
                 shaderProgram: program,
                 aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
                 aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
-                uMatrix: gl.getUniformLocation(program, 'u_matrix'),
                 uImage: gl.getUniformLocation(program, 'u_image'),
                 uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
                 bufferOutputPosition: gl.createBuffer(),
@@ -786,10 +785,6 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
             gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
-
-            // set the matrix that transforms the framebuffer to clip space
-            let matrix = $.Mat3.makeScaling(2, 2).multiply($.Mat3.makeTranslation(-0.5, -0.5));
-            gl.uniformMatrix3fv(this._secondPass.uMatrix, false, matrix.values);
         }
 
         // private
@@ -890,11 +885,10 @@
                     // create a gl Texture for this tile and bind the canvas with the image data
                     texture = gl.createTexture();
                     let overlap = tiledImage.source.tileOverlap;
+                    let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
                     if( overlap > 0){
                         // calculate the normalized position of the rect to actually draw
                         // discarding overlap.
-                        let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
-
                         let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
                         let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
                         let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
@@ -923,6 +917,7 @@
                         return {
                             texture: texture,
                             position: position,
+                            overlapFraction: overlapFraction
                         };
                     } catch (e){
                         // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
