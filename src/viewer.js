@@ -246,10 +246,10 @@ $.Viewer = function( options ) {
 
     this._fullyLoaded = false; // variable used to track the viewer's aggregate loading state.
 
-    this._keysDown = {}; // variable to keep track of currently pressed keys
-    this._keyPanDistance = {};     // tracks cumulative pan distance per key press
-    this._keyVirtuallyHeld = {};   // marks keys virtually held after early release
-    this.minPanDistance = 50;      // minimum pan distance per tap or key press
+    this._navKeysDown = {}; // variable to keep track of currently pressed keys
+    this._navKeyFrames = {};     // tracks cumulative pan distance per key press
+    this._navKeysVirtuallyHeld = {};   // marks keys virtually held after early release
+    this._minNavKeyFrames = 10;      // minimum pan distance per tap or key press
 
     //Inherit some behaviors and properties
     $.EventSource.call( this );
@@ -3110,11 +3110,11 @@ function onCanvasContextMenu( event ) {
  * Returns true if the key triggers panning (arrow keys, WASD) or zooming (+, -),
  * otherwise returns false.
  */
-function isPanOrZoomKey(code) {
+function isNavKey(code) {
     return [
         'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
         'KeyW', 'KeyA', 'KeyS', 'KeyD',
-        'Equal', 'Minus'
+        'Equal', 'Minus', 'Shift', 'ShiftLeft', 'ShiftRight'
     ].includes(code);
 }
 
@@ -3122,16 +3122,18 @@ function isPanOrZoomKey(code) {
  * Handles the keyup event on the viewer's canvas element.
  *
  * @private
- * Marks the specified key as no longer pressed in the _keysDown tracking object.
+ * Marks the specified key as no longer pressed in the _navKeysDown tracking object.
  * If the key is released before the minimum pan distance is reached,
- * sets the key as "virtually held" in _keyVirtuallyHeld to ensure the
+ * sets the key as "virtually held" in _navKeysVirtuallyHeld to ensure the
  * viewer continues panning until the minimum distance is completed.
  */
 function onCanvasKeyUp(event) {
     const code = event.originalEvent.code;
-    this._keysDown[code] = false;
-    if (this._keyPanDistance[code] < this.minPanDistance) {
-        this._keyVirtuallyHeld[code] = true;
+    if (isNavKey(code)) {
+        this._navKeysDown[code] = false;
+        if (this._navKeyFrames[code] < this._minNavKeyFrames) {
+            this._navKeysVirtuallyHeld[code] = true;
+        }
     }
 }
 
@@ -3164,8 +3166,9 @@ function onCanvasKeyDown( event ) {
 
         const code = event.originalEvent.code;
 
-        if (isPanOrZoomKey(code)) {
-            this._keysDown[code] = true; // Mark this key as held down in the viewer's internal tracking object
+        if (isNavKey(code)) {
+            this._navKeysDown[code] = true; // Mark this key as held down in the viewer's internal tracking object
+            this._navKeyFrames[code] = 0; // Reset key frames
             event.preventDefault = true; // prevent browser scroll/zoom, etc
             return;
         }
@@ -3957,23 +3960,38 @@ function doViewerResize(viewer, containerSize){
     THIS[viewer.hash].forceResize = false;
 }
 
-function handleArrowKeys(viewer) {
+function handleNavKeys(viewer) {
+
+    // Iterate over all keys to handle keyboard-based panning.
+    // If a key is held down or virtually held, increment its pan distance by panStep.
+    // Once the minimum pan distance is reached, stop virtually holding the key and reset the counter.
+
+    for (let code in viewer._navKeysDown) {
+        if (viewer._navKeysDown[code] || viewer._navKeysVirtuallyHeld[code]) {
+            // pan by step
+            viewer._navKeyFrames[code]++;
+            if (viewer._navKeyFrames[code] >= viewer._minNavKeyFrames) {
+                viewer._navKeysVirtuallyHeld[code] = false;
+                viewer._navKeyFrames[code] = 0;
+            }
+        }
+    }
 
     // Helper for key state
     function isDown(code) {
-        return (viewer._keysDown && viewer._keysDown[code]) || (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld[code]);
+        return viewer._navKeysDown[code] || viewer._navKeysVirtuallyHeld[code];
     }
 
     // Helper to process pan keys: handles pan, pan distance, and virtual hold logic
     function handlePan(codeList, deltaPoint) {
         for (const code of codeList) {
             if (isDown(code)) {
-                viewer.viewport.panBy(deltaPoint);
+                viewer.viewport.panBy(deltaPoint, true);
                 viewer.viewport.applyConstraints();
-                viewer._keyPanDistance[code] += viewer.pixelsPerArrowPress;
-                if (viewer._keyVirtuallyHeld && viewer._keyVirtuallyHeld[code] && viewer._keyPanDistance[code] >= viewer.minPanDistance) {
-                    viewer._keyVirtuallyHeld[code] = false;
-                    viewer._keyPanDistance[code] = 0;
+                viewer._navKeyFrames[code] += viewer.pixelsPerArrowPress;
+                if (viewer._navKeysVirtuallyHeld && viewer._navKeysVirtuallyHeld[code] && viewer._navKeyFrames[code] >= viewer._minNavKeyFrames) {
+                    viewer._navKeysVirtuallyHeld[code] = false;
+                    viewer._navKeyFrames[code] = 0;
                 }
                 break; // Only pan once per group
             }
@@ -3984,7 +4002,7 @@ function handleArrowKeys(viewer) {
     function handleZoom(codeList, factor) {
         for (const code of codeList) {
             if (isDown(code)) {
-                viewer.viewport.zoomBy(factor);
+                viewer.viewport.zoomBy(factor, null, true);
                 viewer.viewport.applyConstraints();
                 break;
             }
@@ -3992,16 +4010,17 @@ function handleArrowKeys(viewer) {
     }
 
     // Use the viewer's configured pan amount
-    const pixels = viewer.pixelsPerArrowPress;
+    const pixels = viewer.pixelsPerArrowPress / 10;
     const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
 
     // Shift key state
     const shift = isDown('Shift') || isDown('ShiftLeft') || isDown('ShiftRight');
+    const isArrowKeyDown = isDown('ArrowUp') || isDown('ArrowDown') || isDown('KeyW') || isDown('KeyS');
 
     // 1. Zoom with shift + up/down (WS or arrows)
-    if (shift) {
-        handleZoom(['ArrowUp', 'KeyW'], 1.1);
-        handleZoom(['ArrowDown', 'KeyS'], 0.9);
+    if (shift && isArrowKeyDown) {
+        handleZoom(['ArrowUp', 'KeyW'], 1.01);
+        handleZoom(['ArrowDown', 'KeyS'], 0.99);
         return; // Exit early to prevent panning
     }
 
@@ -4018,28 +4037,13 @@ function handleArrowKeys(viewer) {
     }
 
     // 4. Zoom in/out (+ =, - _)
-    handleZoom(['Equal', 'NumpadAdd'], 1.1);
-    handleZoom(['Minus', 'NumpadSubtract'], 0.9);
+    handleZoom(['Equal', 'NumpadAdd'], 1.01);
+    handleZoom(['Minus', 'NumpadSubtract'], 0.99);
 }
 
 function updateOnce( viewer ) {
 
-    // Iterate over all keys to handle keyboard-based panning.
-    // If a key is held down or virtually held, increment its pan distance by panStep.
-    // Once the minimum pan distance is reached, stop virtually holding the key and reset the counter.
-
-    for (let code in viewer._keysDown) {
-        if (viewer._keysDown[code] || viewer._keyVirtuallyHeld[code]) {
-            // pan by step
-            viewer._keyPanDistance[code] += viewer.panStep;
-            if (viewer._keyPanDistance[code] >= viewer.minPanDistance) {
-                viewer._keyVirtuallyHeld[code] = false;
-                viewer._keyPanDistance[code] = 0;
-            }
-        }
-    }
-
-    handleArrowKeys(viewer);
+    handleNavKeys(viewer);
 
     //viewer.profiler.beginUpdate();
 
