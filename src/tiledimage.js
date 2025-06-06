@@ -2,7 +2,7 @@
  * OpenSeadragon - TiledImage
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -1499,11 +1499,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         // Load the new 'best' n tiles
         if (bestTiles && bestTiles.length > 0) {
-            for (let tile of bestTiles) {
-                if (tile) {
-                    this._loadTile(tile, currentTime);
+            // Avoid executing this in the frame loop
+            setTimeout(() => {
+                for (let tile of bestTiles) {
+                    if (tile) {
+                        this._loadTile(tile, currentTime);
+                    }
                 }
-            }
+            });
             this._needsDraw = true;
             return false;
         } else {
@@ -1771,7 +1774,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         });
 
-        return tiles;
+        return tiles || [];
     },
 
         /**
@@ -1798,7 +1801,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         });
 
-        return best;
+        return best || [];
     },
 
     /**
@@ -2222,6 +2225,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType) {
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // does nothing if tile.cacheKey already present
+
+        $.console.assert(dataType !== undefined, "TileSource::downloadTileStart must return a dataType.");
 
         let tileCacheCreated = false;
         tile.addCache(tile.cacheKey, () => {

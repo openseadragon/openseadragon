@@ -2,7 +2,7 @@
  * OpenSeadragon - World
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -376,7 +376,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return eventTarget.raiseEventAwaiting('tile-invalidated', {
                 tile: tile,
                 tiledImage: tiledImage,
-                outdated: () => originalCache.__invStamp !== tStamp || (!tile.loaded && !tile.loading),
+                outdated: () => this.viewer.isDestroyed() || originalCache.__invStamp !== tStamp || (!tile.loaded && !tile.loading),
                 getData: getWorkingCacheData,
                 setData: setWorkingCacheData,
                 resetData: () => {
@@ -386,6 +386,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     }
                 }
             }).then(_ => {
+                if (this.viewer.isDestroyed()) {
+                    return null;
+                }
+
                 if (originalCache.__invStamp === tStamp && (tile.loaded || tile.loading)) {
                     if (workingCache) {
                         return workingCache.prepareForRendering(drawer).then(c => {
@@ -428,7 +432,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             for (let resolve of tileFinishResolvers) {
                 resolve();
             }
-            this.draw();
+
+            if (!this.viewer.isDestroyed()) {
+                this.draw();
+            }
         });
     },
 

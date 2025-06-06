@@ -2,7 +2,7 @@
  * OpenSeadragon - TileCache
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -66,7 +66,7 @@
 
         /**
          * Read the cache type. The type can dynamically change, but should be consistent at
-         * one point in the time. For available types see the OpenSeadragon.Convertor, or the tutorials.
+         * one point in the time. For available types see the OpenSeadragon.Converter, or the tutorials.
          * @returns {string}
          */
         get type() {
@@ -130,7 +130,7 @@
         getDataAs(type = undefined, copy = true) {
             if (this.loaded) {
                 if (type === this._type) {
-                    return copy ? $.convertor.copy(this._tRef, this._data, type || this._type) : this._promise;
+                    return copy ? $.converter.copy(this._tRef, this._data, type || this._type) : this._promise;
                 }
                 return this._transformDataIfNeeded(this._tRef, this._data, type || this._type, copy) || this._promise;
             }
@@ -145,14 +145,14 @@
 
             let result;
             if (type !== this._type) {
-                result = $.convertor.convert(referenceTile, data, this._type, type);
+                result = $.converter.convert(referenceTile, data, this._type, type);
             } else if (copy) { //convert does not copy data if same type, do explicitly
-                result = $.convertor.copy(referenceTile, data, type);
+                result = $.converter.copy(referenceTile, data, type);
             }
             if (result) {
                 return result.then(finalData => {
                     if (this._destroyed) {
-                        $.convertor.destroy(finalData, type);
+                        $.converter.destroy(finalData, type);
                         return undefined;
                     }
                     return finalData;
@@ -465,7 +465,7 @@
                     this._destroySelfUnsafe(this._data, this._type);
                 } else if (this._promise) {
                     const oldType = this._type;
-                    this._promise.then(x => this._destroySelfUnsafe(x, oldType));
+                    this._promise.then(x => this._destroySelfUnsafe(x, oldType)).catch($.console.error);
                 }
             }
 
@@ -473,7 +473,7 @@
 
         _destroySelfUnsafe(data, type) {
             // ensure old data destroyed
-            $.convertor.destroy(data, type);
+            $.converter.destroy(data, type);
             this.destroyInternalCache();
             // might've got revived in meanwhile if async ...
             if (!this._destroyed) {
@@ -613,7 +613,7 @@
         _overwriteData(data, type) {
             if (this._destroyed) {
                 //we have received the ownership of the data, destroy it too since we are destroyed
-                $.convertor.destroy(data, type);
+                $.converter.destroy(data, type);
                 return $.Promise.resolve();
             }
             if (this.loaded) {
@@ -621,7 +621,7 @@
                 if (this._data === data && this._type === type) {
                     return this._promise;
                 }
-                $.convertor.destroy(this._data, this._type);
+                $.converter.destroy(this._data, this._type);
                 this._type = type;
                 this._data = data;
                 this._promise = $.Promise.resolve(data);
@@ -639,7 +639,7 @@
                 if (this._data === data && this._type === type) {
                     return this._data;
                 }
-                $.convertor.destroy(this._data, this._type);
+                $.converter.destroy(this._data, this._type);
                 this._type = type;
                 this._data = data;
                 this._promise = $.Promise.resolve(data);
@@ -661,8 +661,8 @@
          * @private
          */
         _convert(from, to) {
-            const convertor = $.convertor,
-                conversionPath = convertor.getConversionPath(from, to);
+            const converter = $.converter,
+                conversionPath = converter.getConversionPath(from, to);
             if (!conversionPath) {
                 $.console.error(`[CacheRecord._convert] Conversion ${from} ---> ${to} cannot be done!`);
                 return; //no-op
@@ -684,7 +684,7 @@
                         _this.loaded = false;
                         throw `[CacheRecord._convert] data mid result undefined value (while converting using ${edge}})`;
                     }
-                    convertor.destroy(x, edge.origin.value);
+                    converter.destroy(x, edge.origin.value);
                     const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
                     return result.then(res => convert(res, i + 1));
                 };
@@ -897,7 +897,7 @@
                     $.console.error("[TileCache.cacheTile] options.dataType is mandatory " +
                         " when data item is a callback!");
                 }
-                options.dataType = $.convertor.guessType(options.data);
+                options.dataType = $.converter.guessType(options.data);
             }
 
             cacheRecord.addTile(theTile, options.data, options.dataType);
