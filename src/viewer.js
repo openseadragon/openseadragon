@@ -3166,7 +3166,7 @@ function onCanvasKeyDown( event ) {
 
         const code = event.originalEvent.code;
 
-        if (isNavKey(code)) {
+        if (isNavKey(code) && !this._navKeysDown[code]) {
             this._navKeysDown[code] = true; // Mark this key as held down in the viewer's internal tracking object
             this._navKeyFrames[code] = 0; // Reset key frames
             event.preventDefault = true; // prevent browser scroll/zoom, etc
@@ -3772,6 +3772,15 @@ function onCanvasFocus( event ) {
 }
 
 function onCanvasBlur( event ) {
+
+    // When canvas loses focus, clear all navigation key states.
+    for (let code in this._navKeysDown) {
+        this._navKeysDown[code] = false;
+    }
+    for (let code in this._navKeysVirtuallyHeld) {
+        this._navKeysVirtuallyHeld[code] = false;
+    }
+
     /**
      * Raised when the {@link OpenSeadragon.Viewer#canvas} element loses keyboard focus.
      *
@@ -3962,17 +3971,15 @@ function doViewerResize(viewer, containerSize){
 
 function handleNavKeys(viewer) {
 
-    // Iterate over all keys to handle keyboard-based panning.
-    // If a key is held down or virtually held, increment its pan distance by panStep.
-    // Once the minimum pan distance is reached, stop virtually holding the key and reset the counter.
+    // Iterate over all navigation keys.
+    // If a key is held down or virtually held, increment its frame counter.
+    // Once the minimum frame count is reached, stop virtually holding the key.
 
     for (let code in viewer._navKeysDown) {
         if (viewer._navKeysDown[code] || viewer._navKeysVirtuallyHeld[code]) {
-            // pan by step
             viewer._navKeyFrames[code]++;
             if (viewer._navKeyFrames[code] >= viewer._minNavKeyFrames) {
                 viewer._navKeysVirtuallyHeld[code] = false;
-                viewer._navKeyFrames[code] = 0;
             }
         }
     }
@@ -3988,11 +3995,6 @@ function handleNavKeys(viewer) {
             if (isDown(code)) {
                 viewer.viewport.panBy(deltaPoint, true);
                 viewer.viewport.applyConstraints();
-                viewer._navKeyFrames[code] += viewer.pixelsPerArrowPress;
-                if (viewer._navKeysVirtuallyHeld && viewer._navKeysVirtuallyHeld[code] && viewer._navKeyFrames[code] >= viewer._minNavKeyFrames) {
-                    viewer._navKeysVirtuallyHeld[code] = false;
-                    viewer._navKeyFrames[code] = 0;
-                }
                 break; // Only pan once per group
             }
         }
