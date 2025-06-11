@@ -41,6 +41,17 @@ The OpenSeadragon codebase is organized as follows:
 
 To build, just run (on the command line, in the openseadragon folder):
 
+<<<<<<< HEAD
+    grunt
+
+If you want Grunt to watch your source files and rebuild every time you change one, use:
+
+    grunt watch
+
+To have it watch your source files and also run a server for you to test in:
+
+    grunt dev
+=======
   - grunt
 
 If you want Grunt to watch your source files and rebuild every time you change one, use:
@@ -50,8 +61,14 @@ If you want Grunt to watch your source files and rebuild every time you change o
 To have it watch your source files and also run a server for you to test in:
 
    - grunt dev
+>>>>>>> 665bf38869219939278066ac6aa9b96365af6d08
 
 The built files appear in the `build` folder.
+
+If you want to build tar and zip files for distribution (they will also appear in the build folder), use:
+
+    grunt package
+
 
 ### Testing
 
@@ -67,15 +84,23 @@ You can run tests using either Grunt or npm commands:
 
 For interactive testing:
 1. Run `grunt dev` (or `npm run dev`)
+<<<<<<< HEAD
+2. Open `http://localhost:8000/test/test.html` in your browser
+3. For a basic demo, visit `http://localhost:8000/test/demo/basic.html`
+
+You can also get a report of the tests' code coverage:
+    grunt coverage
+=======
 1. Open `http://localhost:8000/test/test.html` in your browser
 1. For a basic demo, visit `http://localhost:8000/test/demo/basic.html`
 
 You can also get a report of the tests' code coverage:
 - grunt coverage
+>>>>>>> 665bf38869219939278066ac6aa9b96365af6d08
 
 The report shows up at `coverage/html/index.html` viewable in a browser.
 
-### Installing from forked Github repo/branch
+### Installing from forked GitHub repo/branch
 
 This project is now compatible with direct installation of forked Github repos/branches via npm/yarn (possible because of the new [prepare](https://docs.npmjs.com/misc/scripts) command).  This enables quick testing of a bugfix or feature addition via a forked repo.  In order to do this:
 
