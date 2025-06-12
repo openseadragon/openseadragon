@@ -251,15 +251,15 @@ $.Viewer = function( options ) {
     this._minNavActionFrames = 10;      // minimum pan distance per tap or key press
 
     this._activeActions = { // variable to keep track of currently pressed action
-    // Basic arrow key panning (no modifiers)
-    panUp: false,
-    panDown: false,
-    panLeft: false,
-    panRight: false,
+        // Basic arrow key panning (no modifiers)
+        panUp: false,
+        panDown: false,
+        panLeft: false,
+        panRight: false,
 
-    // Modifier-based actions
-    zoomIn: false,    // Shift + Up
-    zoomOut: false    // Shift + Down
+        // Modifier-based actions
+        zoomIn: false,    // Shift + Up
+        zoomOut: false    // Shift + Down
     };
 
 
@@ -3116,21 +3116,6 @@ function onCanvasContextMenu( event ) {
 }
 
 /**
- * Determines if the given key code is used for panning or zooming.
- *
- * @private
- * Returns true if the key triggers panning (arrow keys, WASD) or zooming (+, -),
- * otherwise returns false.
- */
-function isNavKey(code) {
-    return [
-        'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
-        'KeyW', 'KeyA', 'KeyS', 'KeyD',
-        'Equal', 'Minus'
-    ].includes(code);
-}
-
-/**
  * Maps keyboard events to corresponding navigation actions,
  * accounting for Shift modifier state.
  *
@@ -3143,10 +3128,7 @@ function isNavKey(code) {
  * - Arrow/WASD keys without Shift for panning
  * - Equal(=)/Minus(-) keys for zoom
  */
-function getActiveActionFromKey(event) {
-    const code = event.originalEvent.code; // Get standardized code
-    const shift = event.shift; // Check shift state directly
-
+function getActiveActionFromKey(code, shift) {
     switch (code) {
         case 'ArrowUp':
         case 'KeyW':
@@ -3173,30 +3155,33 @@ function getActiveActionFromKey(event) {
  * Handles the keyup event on the viewer's canvas element.
  *
  * @private
- * Marks the specified action as no longer pressed in the _activeActions tracking object.
- * If the action is released before the minimum pan distance is reached,
- * sets the action as "virtually held" in _navActionVirtuallyHeld to ensure the
- * viewer continues panning until the minimum distance is completed.
+ * For the released key, marks both the shifted and non-shifted navigation actions as inactive in the _activeActions object.
+ * If either action is released before reaching the minimum frame threshold, sets that action as "virtually held" in _navActionVirtuallyHeld,
+ * ensuring smooth completion of the minimum pan or zoom distance regardless of modifier key release order.
  */
 function onCanvasKeyUp(event) {
+
+    // Using arrow function to inherit 'this' from parent scope
+    const processCombo = (code, shift) => {
+        const action = getActiveActionFromKey(code, shift);
+
+        if (action && this._activeActions[action]) {
+            this._activeActions[action] = false;
+            // If the action was released before the minimum frame threshold,
+            // keep it "virtually held" for smoothness
+            if (this._navActionFrames[action] < this._minNavActionFrames) {
+                this._navActionVirtuallyHeld[action] = true;
+            }
+        }
+    };
+
+    // We don't know if the shift key was held down originally, so we check them both.
+    // Clear both possible actions for this key
     const code = event.originalEvent.code;
-    if (isNavKey(code)) {
-        const action = getActiveActionFromKey(event);
-        this._activeActions[action] = false;
-        if (this._navActionFrames[action] < this._minNavActionFrames) {
-            this._navActionVirtuallyHeld[action] = true;
-        }
-    } else {
-        this._activeActions.zoomIn = false;
-        this._activeActions.zoomOut = false;
-        if (this._navActionFrames.zoomIn < this._minNavActionFrames) {
-            this._navActionVirtuallyHeld.zoomIn = true;
-        }
-        if (this._navActionFrames.zoomOut < this._minNavActionFrames) {
-            this._navActionVirtuallyHeld.zoomOut = true;
-        }
-    }
+    processCombo(code, true);
+    processCombo(code, false);
 }
+
 
 function onCanvasKeyDown( event ) {
 
@@ -3226,9 +3211,10 @@ function onCanvasKeyDown( event ) {
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
 
         const code = event.originalEvent.code;
-        const action = getActiveActionFromKey(event);
+        const shift = event.shift;
+        const action = getActiveActionFromKey(code, shift);
 
-        if (isNavKey(code) && !this._activeActions[action]) {
+        if (action && !this._activeActions[action]) {
             this._activeActions[action] = true; // Mark this action as held down in the viewer's internal tracking object
             this._navActionFrames[action] = 0; // Reset action frames
             event.preventDefault = true; // prevent browser scroll/zoom, etc
