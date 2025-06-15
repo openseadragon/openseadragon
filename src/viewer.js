@@ -580,6 +580,11 @@ $.Viewer = function( options ) {
         this.open( this.tileSources );
     }
 
+    // Open initial collectionsources
+    if (this.collectionSources) {
+        this.openCollection( this.collectionSources );
+    }
+
     // Add custom controls
     for ( i = 0; i < this.customControls.length; i++ ) {
         this.addControl(
@@ -854,6 +859,38 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         for (var i = 0; i < tileSources.length; i++) {
             doOne(tileSources[i]);
         }
+
+        return this;
+    },
+
+    /**
+     * Opens a collection of tiled images in the viewer.
+     * @function
+     * @param {Array|String} collectionSources - A single URL or an array of URLs to the collection sources (DZC files).
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:open
+     * @fires OpenSeadragon.Viewer.event:open-failed
+     */
+    openCollection: function (collectionSources, batch = 300) {
+        //var _this = this;
+        if (!$.isArray(collectionSources)) {
+            collectionSources = [collectionSources];
+        }
+
+        // use createCollectionSource
+        $.createCollectionSource({
+            url: collectionSources[0],
+            ajaxWithCredentials: this.ajaxWithCredentials,
+            ajaxHeaders: this.ajaxHeaders,
+            success: function(tileSources) {
+               this.open(tileSources, this.initialPage);
+            }.bind(this),
+            error: function(err) {
+                if (this.error) {
+                    this.error(err);
+                }
+            }.bind(this)
+        });
 
         return this;
     },

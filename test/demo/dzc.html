@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Basic Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 100%;
+            height: 92%;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show a default OpenSeadragon viewer.
+    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            collectionSources: "../data/conceptcars-Seadragon-21/conceptcars.dzc",
+            showNavigator: true,
+            collectionMode: true,
+            collectionImmediately: true,
+            collectionRows: 16,
+            collectionTileSize: 1,
+            collectionTileMargin: 0.05,
+        });
+    </script>
+</body>
+</html>

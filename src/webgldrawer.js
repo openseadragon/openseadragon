@@ -873,10 +873,15 @@
                     this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
                     this.setInternalCacheNeedsRefresh();
                 } else {
-                    let sourceWidthFraction, sourceHeightFraction;
+                    let sourceWidthFraction;
+                    let sourceHeightFraction;
+                    let sourceXOffsetFraction = 0;
+                    let sourceYOffsetFraction = 0;
                     if (tile.sourceBounds) {
                         sourceWidthFraction = Math.min(tile.sourceBounds.width, data.width) / data.width;
                         sourceHeightFraction = Math.min(tile.sourceBounds.height, data.height) / data.height;
+                        sourceXOffsetFraction = Math.min(tile.sourceBounds.x, data.width) / data.width;
+                        sourceYOffsetFraction = Math.min(tile.sourceBounds.y, data.height) / data.height;
                     } else {
                         sourceWidthFraction = 1;
                         sourceHeightFraction = 1;
@@ -884,21 +889,38 @@
 
                     // create a gl Texture for this tile and bind the canvas with the image data
                     texture = gl.createTexture();
-                    let overlap = tiledImage.source.tileOverlap;
-                    let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
-                    if( overlap > 0){
-                        // calculate the normalized position of the rect to actually draw
-                        // discarding overlap.
-                        let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
-                        let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
-                        let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
-                        let bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
+                    const overlap = tiledImage.source.tileOverlap;
+                    const overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
+
+                    if (overlap > 0) {
+                        // calculate the normalized position of the rect to actually draw discarding overlap
+                        const baseLeft   = (tile.x === 0 ? 0 : overlapFraction.x);
+                        const baseTop    = (tile.y === 0 ? 0 : overlapFraction.y);
+                        const baseRight  = (tile.isRightMost ? 1 : 1 - overlapFraction.x);
+                        const baseBottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y);
+
+                        const left   = sourceXOffsetFraction + baseLeft * sourceWidthFraction;
+                        const top    = sourceYOffsetFraction + baseTop * sourceHeightFraction;
+                        const right  = sourceXOffsetFraction + baseRight * sourceWidthFraction;
+                        const bottom = sourceYOffsetFraction + baseBottom * sourceHeightFraction;
+
                         position = this._makeQuadVertexBuffer(left, right, top, bottom);
-                    } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
-                        // no overlap and no padding: this texture can use the unit quad as its position data
+                    } else if (
+                        sourceWidthFraction === 1 &&
+                        sourceHeightFraction === 1 &&
+                        sourceXOffsetFraction === 0 &&
+                        sourceYOffsetFraction === 0
+                    ) {
+                        // no overlap, no cropping, no offset: use the unit quad
                         position = this._unitQuad;
                     } else {
-                        position = this._makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
+                        // cropping (and/or offset) but no overlap
+                        const left   = sourceXOffsetFraction;
+                        const right  = sourceXOffsetFraction + sourceWidthFraction;
+                        const top    = sourceYOffsetFraction;
+                        const bottom = sourceYOffsetFraction + sourceHeightFraction;
+
+                        position = this._makeQuadVertexBuffer(left, right, top, bottom);
                     }
 
                     gl.activeTexture(gl.TEXTURE0);
