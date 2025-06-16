@@ -11,6 +11,14 @@ See it in action and get started using it at [https://openseadragon.github.io/][
 
 See the [GitHub releases page][github-releases].
 
+## Learning Course
+
+The official OpenSeadragon course is now live! Taught by @iangilman, creator and maintainer, this is your best introduction to working with OpenSeadragon, from basic concepts to coordinate systems, animation, and beyond.
+
+https://www.newline.co/courses/openseadragon-deep-dive
+
+<a href="https://www.newline.co/courses/openseadragon-deep-dive"><img alt="OpenSeadragon Deep Dive" src="assets/osdnewline.jpg" height="280" /></a>
+
 ## Development
 
 If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at [https://openseadragon.github.io/][openseadragon]. If you want to modify OpenSeadragon and/or contribute to its development, read the [contributing guide][github-contributing] for instructions.
