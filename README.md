@@ -13,7 +13,7 @@ See the [GitHub releases page][github-releases].
 
 ## Learning Course
 
-The official OpenSeadragon course is now live! Taught by @iangilman, creator and maintainer, this is your best introduction to working with OpenSeadragon, from basic concepts to coordinate systems, animation, and beyond.
+The official OpenSeadragon course is now live! Taught by [@iangilman](https://github.com/iangilman/), creator and maintainer, this is your best introduction to working with OpenSeadragon, from basic concepts to coordinate systems, animation, and beyond.
 
 https://www.newline.co/courses/openseadragon-deep-dive
 
