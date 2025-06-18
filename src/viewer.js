@@ -246,6 +246,23 @@ $.Viewer = function( options ) {
 
     this._fullyLoaded = false; // variable used to track the viewer's aggregate loading state.
 
+    this._navActionFrames = {};     // tracks cumulative pan distance per key press
+    this._navActionVirtuallyHeld = {};   // marks keys virtually held after early release
+    this._minNavActionFrames = 10;      // minimum pan distance per tap or key press
+
+    this._activeActions = { // variable to keep track of currently pressed action
+        // Basic arrow key panning (no modifiers)
+        panUp: false,
+        panDown: false,
+        panLeft: false,
+        panRight: false,
+
+        // Modifier-based actions
+        zoomIn: false,    // Shift + Up
+        zoomOut: false    // Shift + Down
+    };
+
+
     //Inherit some behaviors and properties
     $.EventSource.call( this );
 
@@ -325,6 +342,7 @@ $.Viewer = function( options ) {
         dblClickDistThreshold:    this.dblClickDistThreshold,
         contextMenuHandler:       $.delegate( this, onCanvasContextMenu ),
         keyDownHandler:           $.delegate( this, onCanvasKeyDown ),
+        keyUpHandler:             $.delegate(this, onCanvasKeyUp),
         keyHandler:               $.delegate( this, onCanvasKeyPress ),
         clickHandler:             $.delegate( this, onCanvasClick ),
         dblClickHandler:          $.delegate( this, onCanvasDblClick ),
@@ -3147,7 +3165,76 @@ function onCanvasContextMenu( event ) {
     event.preventDefault = eventArgs.preventDefault;
 }
 
+/**
+ * Maps keyboard events to corresponding navigation actions,
+ * accounting for Shift modifier state.
+ *
+ * @private
+ * @param {Object} event - Keyboard event object
+ * Returns string Navigation action name (e.g. 'panUp') or null if unmapped
+ *
+ * Handles:
+ * - Arrow/WASD keys with Shift for zoom
+ * - Arrow/WASD keys without Shift for panning
+ * - Equal(=)/Minus(-) keys for zoom
+ */
+function getActiveActionFromKey(code, shift) {
+    switch (code) {
+        case 'ArrowUp':
+        case 'KeyW':
+            return shift ? 'zoomIn' : 'panUp';
+        case 'ArrowDown':
+        case 'KeyS':
+            return shift ? 'zoomOut' : 'panDown';
+        case 'ArrowLeft':
+        case 'KeyA':
+            return 'panLeft';
+        case 'ArrowRight':
+        case 'KeyD':
+            return 'panRight';
+        case 'Equal':
+            return 'zoomIn';
+        case 'Minus':
+            return 'zoomOut';
+        default:
+            return null;
+    }
+}
+
+/**
+ * Handles the keyup event on the viewer's canvas element.
+ *
+ * @private
+ * For the released key, marks both the shifted and non-shifted navigation actions as inactive in the _activeActions object.
+ * If either action is released before reaching the minimum frame threshold, sets that action as "virtually held" in _navActionVirtuallyHeld,
+ * ensuring smooth completion of the minimum pan or zoom distance regardless of modifier key release order.
+ */
+function onCanvasKeyUp(event) {
+
+    // Using arrow function to inherit 'this' from parent scope
+    const processCombo = (code, shift) => {
+        const action = getActiveActionFromKey(code, shift);
+
+        if (action && this._activeActions[action]) {
+            this._activeActions[action] = false;
+            // If the action was released before the minimum frame threshold,
+            // keep it "virtually held" for smoothness
+            if (this._navActionFrames[action] < this._minNavActionFrames) {
+                this._navActionVirtuallyHeld[action] = true;
+            }
+        }
+    };
+
+    // We don't know if the shift key was held down originally, so we check them both.
+    // Clear both possible actions for this key
+    const code = event.originalEvent.code;
+    processCombo(code, true);
+    processCombo(code, false);
+}
+
+
 function onCanvasKeyDown( event ) {
+
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
       preventDefaultAction: false,
@@ -3172,92 +3259,22 @@ function onCanvasKeyDown( event ) {
     this.raiseEvent('canvas-key', canvasKeyDownEventArgs);
 
     if ( !canvasKeyDownEventArgs.preventDefaultAction && !event.ctrl && !event.alt && !event.meta ) {
+
+        const code = event.originalEvent.code;
+        const shift = event.shift;
+        const action = getActiveActionFromKey(code, shift);
+
+        if (action && !this._activeActions[action]) {
+            this._activeActions[action] = true; // Mark this action as held down in the viewer's internal tracking object
+            this._navActionFrames[action] = 0; // Reset action frames
+            event.preventDefault = true; // prevent browser scroll/zoom, etc
+            return;
+        }
+
         switch( event.keyCode ){
-            case 38://up arrow/shift uparrow
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(1.1);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -this.pixelsPerArrowPress)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 40://down arrow/shift downarrow
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                  if ( event.shift ) {
-                    this.viewport.zoomBy(0.9);
-                  } else {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, this.pixelsPerArrowPress)));
-                  }
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 37://left arrow
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-this.pixelsPerArrowPress, 0)));
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 39://right arrow
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                  this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(this.pixelsPerArrowPress, 0)));
-                  this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 187://=|+
-                this.viewport.zoomBy(1.1);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 189://-|_
-                this.viewport.zoomBy(0.9);
-                this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
             case 48://0|)
                 this.viewport.goHome();
                 this.viewport.applyConstraints();
-                event.preventDefault = true;
-                break;
-            case 87://W/w
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                    if ( event.shift ) {
-                        this.viewport.zoomBy(1.1);
-                    } else {
-                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, -40)));
-                    }
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 83://S/s
-                if (!canvasKeyDownEventArgs.preventVerticalPan) {
-                    if ( event.shift ) {
-                        this.viewport.zoomBy(0.9);
-                    } else {
-                        this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(0, 40)));
-                    }
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 65://a/A
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(-40, 0)));
-                    this.viewport.applyConstraints();
-                }
-                event.preventDefault = true;
-                break;
-            case 68://d/D
-                if (!canvasKeyDownEventArgs.preventHorizontalPan) {
-                    this.viewport.panBy(this.viewport.deltaPointsFromPixels(new $.Point(40, 0)));
-                    this.viewport.applyConstraints();
-                }
                 event.preventDefault = true;
                 break;
             case 82: //r - clockwise rotation/R - counterclockwise rotation
@@ -3853,6 +3870,15 @@ function onCanvasFocus( event ) {
 }
 
 function onCanvasBlur( event ) {
+
+    // When canvas loses focus, clear all navigation key states.
+    for (let action in this._activeActions) {
+        this._activeActions[action] = false;
+    }
+    for (let action in this._navActionVirtuallyHeld) {
+        this._navActionVirtuallyHeld[action] = false;
+    }
+
     /**
      * Raised when the {@link OpenSeadragon.Viewer#canvas} element loses keyboard focus.
      *
@@ -4040,7 +4066,70 @@ function doViewerResize(viewer, containerSize){
     THIS[viewer.hash].needsResize = false;
     THIS[viewer.hash].forceResize = false;
 }
+
+function handleNavKeys(viewer) {
+    // Iterate over all navigation actions.
+    for (let action in viewer._activeActions) {
+        if (viewer._activeActions[action] || viewer._navActionVirtuallyHeld[action]) {
+            viewer._navActionFrames[action]++;
+            if (viewer._navActionFrames[action] >= viewer._minNavActionFrames) {
+                viewer._navActionVirtuallyHeld[action] = false;
+            }
+        }
+    }
+
+    // Helper for action state
+    function isDown(action) {
+        return viewer._activeActions[action] || viewer._navActionVirtuallyHeld[action];
+    }
+
+    // Use the viewer's configured pan amount
+    const pixels = viewer.pixelsPerArrowPress / 10;
+    const panDelta = viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(pixels, pixels));
+
+    // 1. Zoom actions (priority: zoom disables pan)
+    if (isDown('zoomIn')) {
+        viewer.viewport.zoomBy(1.01, null, true);
+        viewer.viewport.applyConstraints();
+        return;
+    }
+    if (isDown('zoomOut')) {
+        viewer.viewport.zoomBy(0.99, null, true);
+        viewer.viewport.applyConstraints();
+        return;
+    }
+
+    // 2. Pan actions
+    let dx = 0;
+    let dy = 0;
+
+    if (!viewer.preventVerticalPan) {
+        if (isDown('panUp')) {
+            dy -= panDelta.y;
+        }
+        if (isDown('panDown')) {
+            dy += panDelta.y;
+        }
+    }
+
+    if (!viewer.preventHorizontalPan) {
+        if (isDown('panLeft')) {
+            dx -= panDelta.x;
+        }
+        if (isDown('panRight')) {
+            dx += panDelta.x;
+        }
+    }
+
+    if (dx !== 0 || dy !== 0) {
+        viewer.viewport.panBy(new OpenSeadragon.Point(dx, dy), true);
+        viewer.viewport.applyConstraints();
+    }
+}
+
 function updateOnce( viewer ) {
+
+    handleNavKeys(viewer);
 
     //viewer.profiler.beginUpdate();
 
