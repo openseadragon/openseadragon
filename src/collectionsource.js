@@ -245,20 +245,28 @@ $.CollectionSource.prototype = {
             var sizeNode = item.getElementsByTagName('Size')[0];
             var width  = sizeNode ? parseInt(sizeNode.getAttribute('Width'), 10) : 0;
             var height = sizeNode ? parseInt(sizeNode.getAttribute('Height'), 10) : 0;
-            tileSources.push({
-                url: baseUrl + source,
-                width: width,
-                height: height,
-                tileSize: self.tileSize,
-                dzc: self,
-                mortonNumber: mortonNumber,
-            });
+            var options = {
+                tileSource: {
+                    url: baseUrl + source,
+                    width: width,
+                    height: height,
+                    tileSize: self.tileSize,
+                    dzc: self,
+                    mortonNumber: mortonNumber
+                }
+            };
+            var viewportNode = item.getElementsByTagName('Viewport')[0];
+            if (viewportNode) {
+                options.x = parseFloat(viewportNode.getAttribute('X') || 0);
+                options.y = parseFloat(viewportNode.getAttribute('Y') || 0);
+                options.width = parseFloat(viewportNode.getAttribute('Width') || 1);
+            }
+            tileSources.push(options);
         }
-        var firstDziUrl = tileSources.length ? tileSources[0].url : null;
-
+        var firstDziUrl = tileSources.length ? tileSources[0].tileSource.url : null;
         function finish(overlap) {
             for (var k = 0; k < tileSources.length; k++) {
-                tileSources[k].tileOverlap = overlap;
+                tileSources[k].tileSource.tileOverlap = overlap;
             }
             self.items = tileSources;
             if (self.success) {
