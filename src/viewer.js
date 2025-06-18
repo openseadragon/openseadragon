@@ -267,25 +267,21 @@ $.Viewer = function( options ) {
     this.canvas.className = "openseadragon-canvas";
 
     // BEGIN: Visibility Redraw Observer
-    const self = this;
-
-    if (typeof IntersectionObserver !== 'undefined') {
+    if (typeof window.IntersectionObserver !== 'undefined') {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    const width = self.container.clientWidth;
-                    const height = self.container.clientHeight;
+                    const width = _this.container.clientWidth;
+                    const height = _this.container.clientHeight;
 
                     if (width > 0 && height > 0) {
-                        self.viewport.resize(width, height, true);
-                        self.forceRedraw();
-                        console.log("[OpenSeadragon] Auto-resized on visibility.");
+                        _this.forceResize();
                     }
                 }
             });
         }, { threshold: 0.1 });
 
-        observer.observe(this.container);
+        observer.observe(_this.container);
     }
     // END: Visibility Redraw Observer
 
@@ -878,14 +874,6 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         for (var i = 0; i < tileSources.length; i++) {
             doOne(tileSources[i]);
         }
-
-        setTimeout(() => {
-            if (this.container && this.container.clientWidth > 0 && this.container.clientHeight > 0) {
-                this.viewport.resize(this.container.clientWidth, this.container.clientHeight, true);
-                this.forceRedraw();
-                console.log("[fix-2660] Forced resize and redraw on open.");
-            }
-        }, 100);
 
         return this;
     },
