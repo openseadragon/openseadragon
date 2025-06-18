@@ -62,7 +62,7 @@
         this.height       = Number(options.height) || 0;
         this.tileSize     = Number(options.tileSize);
         this.tileOverlap  = Number(options.tileOverlap || this.dzc.tileOverlap) || 0;
-        this.fileFormat   = options.fileFormat || this.dzc.format || 'jpg';
+        this.fileFormat   = options.fileFormat || this.dzc.fileFormat || 'jpg';
 
         this.urlDzi          = options.url || '';
         this.tilesUrl     = options.tilesUrl || this.urlDzi;
@@ -226,7 +226,9 @@
         },
 
         getTileUrl: function (level, x, y) {
-            return this.urlDzi + '/' + level + '/' + x + '-' + y;
+            //return this.urlDzi + '/' + level + '/' + x + '-' + y;
+            return this.tilesUrl + '/' + level + '/' +
+                x + '_' + y + '.' + this.fileFormat + (this.queryParams || '');
         },
 
         getTilePostData: function (level, x, y) {
@@ -317,8 +319,7 @@
                 lvl  = pd.level,
                 dx   = pd.dx,
                 dy   = pd.dy;
-            context.src = this.tilesUrl + '/' + lvl + '/' +
-                dx + '_' + dy + '.' + this.fileFormat + (this.queryParams || '');
+            context.src = this.getTileUrl(lvl, dx, dy);
 
             if (context.loadWithAjax) {
                 $.makeAjaxRequest({
@@ -413,10 +414,10 @@
                 xMax = xMin + rect.width * scale;
                 yMax = yMin + rect.height * scale;
 
-                xMin = Math.floor( xMin / this._tileWidth );
-                yMin = Math.floor( yMin / this._tileWidth ); // DZI tiles are square, so we just use _tileWidth
-                xMax = Math.ceil( xMax / this._tileWidth );
-                yMax = Math.ceil( yMax / this._tileWidth );
+                xMin = Math.floor( xMin / this.getTileWidth(level) );
+                yMin = Math.floor( yMin / this.getTileWidth(level) ); // DZI tiles are square, so we just use _tileWidth
+                xMax = Math.ceil( xMax / this.getTileWidth(level) );
+                yMax = Math.ceil( yMax / this.getTileWidth(level) );
 
                 if ( xMin <= x && x < xMax && yMin <= y && y < yMax ) {
                     return true;
@@ -488,23 +489,5 @@ function mortonToXY(morton) {
     }
     return {x: x, y: y};
 }
-
-/*function getThumbnail(morton, level, maxLevel, scale) {
-    if (level > maxLevel) {
-        throw new Error('level exceeds maxLevel');
-    }
-
-    var thumbW  = Math.ceil( this.width * scale );
-    var thumbH  = Math.ceil( this.height * scale );
-    var full   = mortonToXY(morton);
-    var scale  = 1 << (maxLevel - level);
-    var tileX  = Math.floor(full.x / scale);
-    var tileY  = Math.floor(full.y / scale);
-    var offX   = (full.x % scale) * (thumbW / scale);
-    var offY   = (full.y % scale) * (thumbH / scale);
-    var offset = new OpenSeadragon.Point(offX, offY);
-
-    return {level: level, x: tileX, y: tileY, offset: offset};
-}*/
 
 }(OpenSeadragon));
