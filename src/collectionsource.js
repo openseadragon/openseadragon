@@ -62,7 +62,7 @@ $.CollectionSource = function(options) {
     // DZC-level attributes
     this.maxLevel  = null;
     this.tileSize  = null;
-    this.format    = null;
+    this.fileFormat    = null;
 
     $.extend(true, this, {
         tilesMatrix:         Object.create(null), // level → x → y → Blob
@@ -133,7 +133,6 @@ $.CollectionSource.prototype = {
             this.ajaxHeaders,
             this.ajaxWithCredentials,
             function(err, blob) {
-                delete this.pendingTileDownloads[key];
 
                 if (err) {
                     console.error(
@@ -143,6 +142,7 @@ $.CollectionSource.prototype = {
                     );
                     var badQueue = this.tileRequestQueues[key];
                     delete this.tileRequestQueues[key];
+                    delete this.pendingTileDownloads[key];
                     if (badQueue) {
                         badQueue.forEach(function(rq) {
                             rq.fail(err, null);
@@ -157,13 +157,22 @@ $.CollectionSource.prototype = {
                 if (!this.tilesMatrix[level][x]) {
                     this.tilesMatrix[level][x] = Object.create(null);
                 }
-                this.tilesMatrix[level][x][y] = blob;
 
                 var goodQueue = this.tileRequestQueues[key];
-                goodQueue.forEach(function(rq) {
-                    rq.finish(blob, null, 'rasterBlob');
+                createImageBitmap(blob).then((imageBitmap) => {
+                    // Save the imageBitmap instead of the blob
+                    this.tilesMatrix[level][x][y] = imageBitmap;
+
+                    delete this.tileRequestQueues[key];
+                    delete this.pendingTileDownloads[key];
+                    goodQueue.forEach(function(rq) {
+                        rq.finish(imageBitmap, null, 'image');
+                    });
+                }).catch((err) => {
+                    goodQueue.forEach(function(rq) {
+                        rq.fail(err, null);
+                    });
                 });
-                delete this.tileRequestQueues[key];
             }.bind(this)
         );
     },
@@ -220,8 +229,7 @@ $.CollectionSource.prototype = {
 
         self.maxLevel  = parseInt(collection.getAttribute('MaxLevel'), 10) || 0;
         self.tileSize  = parseInt(collection.getAttribute('TileSize'), 10) || 256;
-        self.format    = collection.getAttribute('Format') || 'jpg';
-        self.fileFormat = self.format;
+        self.fileFormat    = collection.getAttribute('Format') || 'jpg';
 
         var itemsNode = collection.getElementsByTagName('Items')[0];
         if (!itemsNode) {
