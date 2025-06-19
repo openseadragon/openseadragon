@@ -267,7 +267,7 @@ $.Viewer = function( options ) {
     this.canvas.className = "openseadragon-canvas";
 
     // BEGIN: Visibility Redraw Observer
-    if (typeof window.IntersectionObserver !== 'undefined') {
+    if (typeof window.IntersectionObserver !== "undefined") {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -281,7 +281,7 @@ $.Viewer = function( options ) {
             });
         }, { threshold: 0.1 });
 
-        observer.observe(_this.container);
+        observer.observe(this.container);
     }
     // END: Visibility Redraw Observer
 
