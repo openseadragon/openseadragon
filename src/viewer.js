@@ -1535,7 +1535,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        var fullScreeEventArgs = {
+        var fullScreenEventArgs = {
             fullScreen: fullScreen,
             preventDefaultAction: false
         };
@@ -1553,8 +1553,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
          * @property {Boolean} preventDefaultAction - Set to true to prevent full-screen mode change. Default: false.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
-        this.raiseEvent( 'pre-full-screen', fullScreeEventArgs );
-        if ( fullScreeEventArgs.preventDefaultAction ) {
+        this.raiseEvent( 'pre-full-screen', fullScreenEventArgs );
+        if ( fullScreenEventArgs.preventDefaultAction ) {
             return this;
         }
 
