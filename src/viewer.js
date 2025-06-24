@@ -283,6 +283,26 @@ $.Viewer = function( options ) {
     this.canvas               = $.makeNeutralElement( "div" );
     this.canvas.className = "openseadragon-canvas";
 
+    // BEGIN: Visibility Redraw Observer
+    if (typeof window.IntersectionObserver !== "undefined") {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const width = _this.container.clientWidth;
+                    const height = _this.container.clientHeight;
+
+                    if (width > 0 && height > 0) {
+                        _this.forceResize();
+                    }
+                }
+            });
+        }, { threshold: 0.1 });
+
+        observer.observe(this.container);
+    }
+    // END: Visibility Redraw Observer
+
+
     // Injecting mobile-only CSS to remove focus outline
     if (!document.querySelector('style[data-openseadragon-mobile-css]')) {
         var style = document.createElement('style');
