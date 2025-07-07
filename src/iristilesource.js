@@ -164,7 +164,6 @@
         return;
       }
 
-      // Update internal properties with new options
       if (options.serverUrl) {
         this.serverUrl = options.serverUrl;
       }
@@ -172,7 +171,6 @@
         this.slideId = options.slideId;
       }
 
-      // Re-fetch metadata if configuration changes
       this.ready = false;
       const url = this.getMetadataUrl();
       this.fetchMetadata(url, this);
