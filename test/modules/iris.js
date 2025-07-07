@@ -62,7 +62,7 @@
 
         // Check level sizes and scales
         assert.ok(test.levelSizes, "Level sizes exist");
-        assert.equal(typeof test.levelSizes, "object", "Level sizes is an array");
+        assert.ok(Array.isArray(test.levelSizes), "Level sizes is an array");
         assert.equal(test.levelSizes.length, 4, "Number of levels is correct");
         assert.equal(test.maxLevel, 3, "Max level is correctly set");
 

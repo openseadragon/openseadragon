@@ -52,22 +52,21 @@
    */
 
   $.IrisTileSource = function(options) {
-    $.EventSource.call(this);
+
+    this.aspectRatio = 1;
+    this.dimensions = new $.Point(0, 0);
+    this._tileWidth = 0;
+    this._tileHeight = 0;
+    this.tileOverlap = 0;
+    this.minLevel = 0;
+    this.maxLevel = 0;
+    this.ready = false;
+
+    this.fetchMetadata = options.fetchMetadata || this.defaultFetchMetadata;
+
+    $.TileSource.apply(this, [options]);
 
     if (options && options.serverUrl && options.slideId) {
-      $.extend(this, options);
-
-      this.aspectRatio = 1;
-      this.dimensions  = new $.Point(0, 0);
-      this._tileWidth  = 0;
-      this._tileHeight = 0;
-      this.tileOverlap = 0;
-      this.minLevel    = 0;
-      this.maxLevel    = 0;
-      this.ready       = false;
-
-      this.fetchMetadata = options.fetchMetadata || this.defaultFetchMetadata;
-
       var url = this.getMetadataUrl();
       this.fetchMetadata(url, this);
     }
@@ -90,7 +89,10 @@
       this.height = data.extent.height;
 
       if (this.width <= 0 || this.height <= 0) {
-        console.error("Invalid dimensions received from metadata.");
+        const msg = "Invalid dimensions received from metadata.";
+        $.console.error(msg);
+        this.raiseEvent('open-failed', { message: msg });
+        return;
       }
 
       this.dimensions = new $.Point(this.width, this.height);
@@ -120,13 +122,13 @@
           }
           catch (e) {
             var msg = "IrisTileSource: Error parsing metadata: " + e.message;
-            console.error(msg);
+            $.console.error(msg);
             context.raiseEvent('open-failed', { message: msg, source: url });
           }
         },
         error: function(xhr, exc) {
           var msg = "IrisTileSource: Unable to get metadata from " + url;
-          console.error(msg);
+          $.console.error(msg);
           context.raiseEvent('open-failed', { message: msg, source: url });
         }
       });
@@ -153,10 +155,13 @@
 
     configure: function(options) {
       if (!options) {
-        console.error('No options provided to configure.');
+        const msg = 'No options provided to configure.';
+        $.console.error(msg);
+        this.raiseEvent('open-failed', { message: msg });
         return;
       }
 
+      // Update internal properties with new options
       if (options.serverUrl) {
         this.serverUrl = options.serverUrl;
       }
@@ -164,6 +169,7 @@
         this.slideId = options.slideId;
       }
 
+      // Re-fetch metadata if configuration changes
       this.ready = false;
       const url = this.getMetadataUrl();
       this.fetchMetadata(url, this);
