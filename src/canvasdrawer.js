@@ -586,23 +586,25 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
         this._raiseTileDrawingEvent(tiledImage, context, tile, rendered);
 
-        let sourceWidth, sourceHeight;
+        let sourceWidth, sourceHeight,
+            sourceX, sourceY;
         if (tile.sourceBounds) {
             sourceWidth = Math.min(tile.sourceBounds.width, rendered.canvas.width);
             sourceHeight = Math.min(tile.sourceBounds.height, rendered.canvas.height);
+            sourceX = tile.sourceBounds.x || 0;
+            sourceY = tile.sourceBounds.y || 0;
         } else {
             sourceWidth = rendered.canvas.width;
             sourceHeight = rendered.canvas.height;
+            sourceX = 0;
+            sourceY = 0;
         }
 
         context.translate(position.x + size.x / 2, 0);
-        if (tile.flipped) {
-            context.scale(-1, 1);
-        }
         context.drawImage(
             rendered.canvas,
-            0,
-            0,
+            sourceX,
+            sourceY,
             sourceWidth,
             sourceHeight,
             -size.x / 2,
