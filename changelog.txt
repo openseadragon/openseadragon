@@ -24,6 +24,7 @@ OPENSEADRAGON CHANGELOG
     * New testing/demo utilities (MockSeadragon, DrawerSwitcher for switching drawers in demos, getBuiltInDrawersForTest for testing all drawers), serialization guard in tests to remove circular references.
     * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
     * Misc: updated CSS for dev server, new dev & test commands.
+* NEW BEHAVIOR: The per-image ajaxHeaders (specified when opening) are now being merged with the viewer's ajaxHeaders (overriding as appropriate), rather than replacing them (#2757 @hrocha1)
 * New tile source: IIP (Internet Imaging Protocol) (#2719 @ruven)
 * New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
 * Overlay wrapper elements now have a "openseadragon-overlay-wrapper" class. If the overlay element has an ID, the wrapper gets a variant on that ID, but if the overlay element does not have an ID, we no longer give the wrapper an ID. (#2698 @lokaesshwar)
