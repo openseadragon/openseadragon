@@ -1922,9 +1922,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     });
                 }
 
-                // This is necessary since drawer might react upon finalized tiled image, after
-                // all events have been processed.
-                _this.drawer.tiledImageCreated(tiledImage);
+                // It might happen processReadyItems() is called after viewer.destroy()
+                if (_this.drawer) {
+                    // This is necessary since drawer might react upon finalized tiled image, after
+                    // all events have been processed.
+                    _this.drawer.tiledImageCreated(tiledImage);
+                }
             }
         }
 
