@@ -42,10 +42,12 @@
    * @memberof OpenSeadragon
    * @extends OpenSeadragon.TileSource
    *
+   * @param {String} type       - iris
    * @param {String} serverUrl  - Iris host server path (ex: "http://localhost:3000")
    * @param {String} slideId    - Image id (ex: "12345" for 12345.iris)
    *
    * Example: tileSources: {
+   *            type:         "iris",
    *            serverUrl:    "http://localhost:3000",
    *            slideId:      "12345"
    *          }
@@ -60,7 +62,6 @@
     this.tileOverlap = 0;
     this.minLevel = 0;
     this.maxLevel = 0;
-    this.maxZoomLevel = 0;
     this.ready = false;
 
     this.fetchMetadata = options.fetchMetadata || this.defaultFetchMetadata;
@@ -107,8 +108,6 @@
 
       this.levelScales = data.extent.layers.map(level => level.scale);
       this.maxLevel = data.extent.layers.length - 1;
-
-      this.maxZoomLevel = Math.max(...this.levelScales);
     },
 
     defaultFetchMetadata: function(url, context) {

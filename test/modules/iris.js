@@ -65,7 +65,6 @@
         assert.ok(Array.isArray(test.levelSizes), "Level sizes is an array");
         assert.equal(test.levelSizes.length, 4, "Number of levels is correct");
         assert.equal(test.maxLevel, 3, "Max level is correctly set");
-        assert.equal(test.maxZoomLevel, 64.0141, "Max zoom level is correctly set");
 
         assert.ok(test.levelScales, "Level scales exist");
         assert.equal(test.levelScales.length, 4, "Number of scales matches number of levels");
