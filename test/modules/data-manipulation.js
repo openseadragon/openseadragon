@@ -1,4 +1,4 @@
-/* global QUnit, testLog */
++/* global QUnit, testLog */
 
 (function() {
 
@@ -94,8 +94,6 @@
             // make sure at least one tile loaded
             const tile = tileRef || viewer.world.getItemAt(0).getTilesToDraw()[0];
             await tile[PROMISE_REF_KEY];
-            // Get some time for viewer to load data
-            await sleep(50);
 
             if (type === "canvas") {
                 //test with the underlying canvas instead
