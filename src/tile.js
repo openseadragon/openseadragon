@@ -89,7 +89,7 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     this.positionedBounds  = new OpenSeadragon.Rect(bounds.x, bounds.y, bounds.width, bounds.height);
     /**
      * The portion of the tile to use as the source of the drawing operation, in pixels. Note that
-     * this only works when drawing with canvas; when drawing with HTML the entire tile is always used.
+     * this property is ignored with HTML drawer where the whole tile is always drawn.
      * @member {OpenSeadragon.Rect} sourceBounds
      * @memberof OpenSeadragon.Tile#
      */

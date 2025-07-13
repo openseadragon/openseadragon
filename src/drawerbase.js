@@ -283,6 +283,15 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this._dataNeedsRefresh = $.now();
     }
 
+    /**
+     * When a Tiled Image is initialized and ready, this method is called.
+     * Unlike with events, here it is guaranteed that all external code has finished
+     * processing (under normal circumstances) and the tiled image should not change.
+     */
+    tiledImageCreated() {
+        // pass
+    }
+
     // Private functions
 
     /**

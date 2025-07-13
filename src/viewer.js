@@ -582,6 +582,7 @@ $.Viewer = function( options ) {
             crossOriginPolicy: this.crossOriginPolicy,
             animationTime:     this.animationTime,
             drawer:            this.drawer.getType(),
+            drawerOptions:     this.drawerOptions,
             loadTilesWithAjax: this.loadTilesWithAjax,
             ajaxHeaders:       this.ajaxHeaders,
             ajaxWithCredentials: this.ajaxWithCredentials,
@@ -1110,8 +1111,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             Drawer = $.determineDrawer(drawerCandidate);
         }
 
-        if(!Drawer){
-            $.console.warn('Unsupported drawer! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.');
+        if (!Drawer) {
+            $.console.warn('Unsupported drawer %s! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.', drawerCandidate);
         }
 
         // if the drawer is supported, create it and return true
@@ -1920,6 +1921,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     queueItem.options.success({
                         item: tiledImage
                     });
+                }
+
+                // It might happen processReadyItems() is called after viewer.destroy()
+                if (_this.drawer) {
+                    // This is necessary since drawer might react upon finalized tiled image, after
+                    // all events have been processed.
+                    _this.drawer.tiledImageCreated(tiledImage);
                 }
             }
         }
