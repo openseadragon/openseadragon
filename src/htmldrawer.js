@@ -85,6 +85,10 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
             };
         }
 
+        // In theory, HTML drawer should cope well with canvas node type too,
+        // but tests fail - if this conversion is used, it outputs uninitialized zeroed data
+        // (data manipulation test module).
+
         // The actual placing logics will not happen at draw event, but when the cache is created:
         // $.converter.learn("context2d", HTMLDrawer.canvasCacheType, (t, d) => _prepareTile(t, d.canvas), 1, 1);
         $.converter.learn("image", HTMLDrawer.imageCacheType, _prepareTile, 1, 1);
