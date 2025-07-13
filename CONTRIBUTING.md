@@ -41,7 +41,7 @@ The OpenSeadragon codebase is organized as follows:
 
 To build, just run (on the command line, in the openseadragon folder):
 
-<<<<<<< HEAD
+To build, just run (on the command line, in the openseadragon folder):
     grunt
 
 If you want Grunt to watch your source files and rebuild every time you change one, use:
