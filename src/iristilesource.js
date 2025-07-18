@@ -59,7 +59,6 @@
     this.dimensions = new $.Point(0, 0);
     this._tileWidth = 0;
     this._tileHeight = 0;
-    this.tileOverlap = 0;
     this.minLevel = 0;
     this.maxLevel = 0;
     this.ready = false;
@@ -67,7 +66,6 @@
     this.fetchMetadata = options.fetchMetadata || this.defaultFetchMetadata;
 
     $.TileSource.apply(this, [options]);
-
     if (options && options.serverUrl && options.slideId) {
       var url = this.getMetadataUrl();
       this.fetchMetadata(url, this);
@@ -87,33 +85,29 @@
       this._tileWidth = 256;
       this._tileHeight = 256;
 
-      this.tileSize = this._tileWidth;
-      this.tileOverlap = 0;
-
       const layers = data.extent.layers;
 
       const maxLayer = layers.length - 1;
       const maxScale = layers[maxLayer].scale;
-      this.width = data.extent.width * maxScale;
-      this.height = data.extent.height * maxScale;
+
+      this.width = parseInt(Math.ceil(data.extent.width * maxScale), 10);
+      this.height = parseInt(Math.ceil(data.extent.height * maxScale), 10);
 
       this.dimensions = new $.Point(this.width, this.height);
       this.aspectRatio = this.width / this.height;
       this.levelSizes = layers.map(level => ({
-        width: level.x_tiles * this._tileWidth,
-        height: level.y_tiles * this._tileHeight,
-        xTiles: level.x_tiles,
-        yTiles: level.y_tiles
+        width: parseInt(Math.ceil(level.x_tiles * level.scale), 10),
+        height: parseInt(Math.ceil(level.y_tiles * level.scale), 10),
+        xTiles: parseInt(Math.ceil(level.x_tiles), 10),
+        yTiles: parseInt(Math.ceil(level.y_tiles), 10)
       }));
 
-      const fullResWidth = this.levelSizes[this.levelSizes.length - 1].width;
-
-      this.levelScales = this.levelSizes.map(level =>
-        level.width / fullResWidth
+      this.levelScales = layers.map(level =>
+        level.scale / maxScale
       );
 
       this.minLevel = 0;
-      this.maxLevel = this.levelSizes.length - 1;
+      this.maxLevel = parseInt(Math.ceil(this.levelSizes.length - 1), 10);
     },
 
     defaultFetchMetadata: function(url, context) {
@@ -146,7 +140,10 @@
       if (level < this.minLevel || level > this.maxLevel || !this.levelSizes[level]) {
         return new $.Point(0, 0);
       }
-      return new $.Point(this.levelSizes[level].xTiles, this.levelSizes[level].yTiles);
+      return new $.Point(
+        parseInt(Math.ceil(this.levelSizes[level].xTiles), 10),
+        parseInt(Math.ceil(this.levelSizes[level].yTiles), 10)
+      );
     },
 
     getTileUrl: function(level, x, y) {

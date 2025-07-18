@@ -28,7 +28,12 @@
         });
 
         assert.ok(test.ready, "IrisTileSource should be ready after mock metadata");
-        assert.equal(test.width, mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale, "Width should be correctly parsed from mock metadata");
+
+        const expectedWidth = parseInt(Math.ceil(
+            mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
+        ), 10);
+
+        assert.equal(test.width, expectedWidth, "Width should be correctly parsed from mock metadata");
 
         const expectedUrl = "http://localhost/slides/12345/metadata";
         assert.equal(test.getMetadataUrl(), expectedUrl, "Metadata URL should match expected format");
@@ -44,9 +49,16 @@
         test.parseMetadata(mockMetadata);
 
         // Check dimensions
+        const expectedWidth = parseInt(Math.ceil(
+            mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
+        ), 10);
+        const expectedHeight = parseInt(Math.ceil(
+            mockMetadata.extent.height * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
+        ), 10);
+
         assert.ok(test.width, "Width exists");
-        assert.equal(test.width, mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale, "Parsing width correctly");
-        assert.equal(test.height, mockMetadata.extent.height * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale, "Parsing height correctly");
+        assert.equal(test.width, expectedWidth, "Parsing width correctly");
+        assert.equal(test.height, expectedHeight, "Parsing height correctly");
 
         // Check level sizes and scales
         assert.ok(test.levelSizes, "Level sizes exist");
@@ -59,10 +71,10 @@
         assert.deepEqual(
             test.levelScales,
             [
-                mockMetadata.extent.layers[0].x_tiles / (mockMetadata.extent.layers[3].x_tiles),
-                mockMetadata.extent.layers[1].x_tiles / (mockMetadata.extent.layers[3].x_tiles),
-                mockMetadata.extent.layers[2].x_tiles / (mockMetadata.extent.layers[3].x_tiles),
-                mockMetadata.extent.layers[3].x_tiles / (mockMetadata.extent.layers[3].x_tiles)
+                (mockMetadata.extent.layers[0].scale / mockMetadata.extent.layers[3].scale),
+                (mockMetadata.extent.layers[1].scale / mockMetadata.extent.layers[3].scale),
+                (mockMetadata.extent.layers[2].scale / mockMetadata.extent.layers[3].scale),
+                (mockMetadata.extent.layers[3].scale / mockMetadata.extent.layers[3].scale)
             ],
             "Parsing scales correctly"
         );
@@ -75,7 +87,6 @@
             fetchMetadata: mockFetchMetadata
         });
 
-        // Test tile URL generation
         assert.equal(
             test.getTileUrl(0, 0, 0),
             "http://localhost/slides/12345/layers/0/tiles/0",
