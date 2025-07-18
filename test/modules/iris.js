@@ -48,7 +48,7 @@
 
         test.parseMetadata(mockMetadata);
 
-        // Check dimensions
+        // Check the dimensions
         const expectedWidth = parseInt(Math.ceil(
             mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
         ), 10);
