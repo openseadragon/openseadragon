@@ -23,6 +23,8 @@ https://www.newline.co/courses/openseadragon-deep-dive
 
 If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at [https://openseadragon.github.io/][openseadragon]. If you want to modify OpenSeadragon and/or contribute to its development, read the [contributing guide][github-contributing] for instructions.
 
+> 💡 Tip: Developers can enhance user experience by customizing tiles during rendering using the `tile-drawing` hook. This is especially useful for applying overlays, annotations, or debugging individual tiles in advanced image viewers.
+
 ## License
 
 OpenSeadragon is released under the New BSD license. For details, see the [LICENSE.txt file][github-license].
