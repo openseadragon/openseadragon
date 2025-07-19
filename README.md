@@ -23,6 +23,32 @@ https://www.newline.co/courses/openseadragon-deep-dive
 
 If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at [https://openseadragon.github.io/][openseadragon]. If you want to modify OpenSeadragon and/or contribute to its development, read the [contributing guide][github-contributing] for instructions.
 
+## Custom Tile Rendering Example
+
+OpenSeadragon allows you to customize how each tile is rendered by listening to the `tile-drawing` event.
+
+Here’s an example that overlays a red transparent color on each tile as it loads:
+
+```html
+<script src="https://unpkg.com/openseadragon@4.1.0/build/openseadragon/openseadragon.min.js"></script>
+<div id="openseadragon" style="width: 100%; height: 500px;"></div>
+<script>
+  const viewer = OpenSeadragon({
+    id: "openseadragon",
+    prefixUrl: "https://openseadragon.github.io/openseadragon/images/",
+    tileSources: "https://openseadragon.github.io/example-images/highsmith/highsmith.dzi"
+  });
+
+  viewer.addHandler('tile-drawing', function(event) {
+    const ctx = event.rendered;
+    if (ctx) {
+      ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    }
+  });
+</script>
+```
+
 ## License
 
 OpenSeadragon is released under the New BSD license. For details, see the [LICENSE.txt file][github-license].
