@@ -29,9 +29,9 @@
 
         assert.ok(test.ready, "IrisTileSource should be ready after mock metadata");
 
-        const expectedWidth = parseInt(Math.ceil(
+        const expectedWidth = Math.ceil(
             mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
-        ), 10);
+        );
 
         assert.equal(test.width, expectedWidth, "Width should be correctly parsed from mock metadata");
 
@@ -49,12 +49,12 @@
         test.parseMetadata(mockMetadata);
 
         // Check dimensions
-        const expectedWidth = parseInt(Math.ceil(
+        const expectedWidth = Math.ceil(
             mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
-        ), 10);
-        const expectedHeight = parseInt(Math.ceil(
+        );
+        const expectedHeight = Math.ceil(
             mockMetadata.extent.height * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
-        ), 10);
+        );
 
         assert.ok(test.width, "Width exists");
         assert.equal(test.width, expectedWidth, "Parsing width correctly");

@@ -90,16 +90,16 @@
       const maxLayer = layers.length - 1;
       const maxScale = layers[maxLayer].scale;
 
-      this.width = parseInt(Math.ceil(data.extent.width * maxScale), 10);
-      this.height = parseInt(Math.ceil(data.extent.height * maxScale), 10);
+      this.width = Math.ceil(data.extent.width * maxScale);
+      this.height = Math.ceil(data.extent.height * maxScale);
 
       this.dimensions = new $.Point(this.width, this.height);
       this.aspectRatio = this.width / this.height;
       this.levelSizes = layers.map(level => ({
-        width: parseInt(Math.ceil(level.x_tiles * level.scale), 10),
-        height: parseInt(Math.ceil(level.y_tiles * level.scale), 10),
-        xTiles: parseInt(Math.ceil(level.x_tiles), 10),
-        yTiles: parseInt(Math.ceil(level.y_tiles), 10)
+        width: Math.ceil(level.x_tiles * level.scale),
+        height: Math.ceil(level.y_tiles * level.scale),
+        xTiles: Math.ceil(level.x_tiles),
+        yTiles: Math.ceil(level.y_tiles)
       }));
 
       this.levelScales = layers.map(level =>
@@ -107,7 +107,7 @@
       );
 
       this.minLevel = 0;
-      this.maxLevel = parseInt(Math.ceil(this.levelSizes.length - 1), 10);
+      this.maxLevel = Math.ceil(this.levelSizes.length - 1);
     },
 
     defaultFetchMetadata: function(url, context) {
@@ -141,8 +141,8 @@
         return new $.Point(0, 0);
       }
       return new $.Point(
-        parseInt(Math.ceil(this.levelSizes[level].xTiles), 10),
-        parseInt(Math.ceil(this.levelSizes[level].yTiles), 10)
+        Math.ceil(this.levelSizes[level].xTiles),
+        Math.ceil(this.levelSizes[level].yTiles)
       );
     },
 
