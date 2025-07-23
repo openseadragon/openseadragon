@@ -1,4 +1,4 @@
-+/* global QUnit, testLog */
+/* global QUnit, testLog */
 
 (function() {
 
