@@ -64,8 +64,8 @@
         options.gridSize = [this._getGridSize(options.width, options.height, options.tileSize)];
 
         while (parseInt(currentImageSize.x, 10) > options.tileSize || parseInt(currentImageSize.y, 10) > options.tileSize) {
-            currentImageSize.x = Math.floor(currentImageSize.x / 2);
-            currentImageSize.y = Math.floor(currentImageSize.y / 2);
+            currentImageSize.x = Math.ceil(currentImageSize.x / 2);
+            currentImageSize.y = Math.ceil(currentImageSize.y / 2);
             options.imageSizes.push({
                 x: currentImageSize.x,
                 y: currentImageSize.y
