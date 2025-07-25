@@ -55,21 +55,16 @@
 
   $.IrisTileSource = function(options) {
 
-    this.aspectRatio = 1;
-    this.dimensions = new $.Point(0, 0);
-    this._tileWidth = 0;
-    this._tileHeight = 0;
-    this.minLevel = 0;
-    this.maxLevel = 0;
-    this.ready = false;
-
-    this.fetchMetadata = options.fetchMetadata || this.defaultFetchMetadata;
-
     $.TileSource.apply(this, [options]);
-    if (options && options.serverUrl && options.slideId) {
-      var url = this.getMetadataUrl();
-      this.fetchMetadata(url, this);
+    if (!options.serverUrl || !options.slideId) {
+      throw new Error("IrisTileSource requires serverUrl and slideId");
     }
+    this.serverUrl = options.serverUrl;
+    this.slideId = options.slideId;
+    this.ready = false;
+    this.fetchMetadata = options.fetchMetadata || this.defaultFetchMetadata;
+    var url = this.getMetadataUrl();
+    this.fetchMetadata(url, this);
   };
 
   $.extend($.IrisTileSource.prototype, $.TileSource.prototype, {
@@ -78,12 +73,15 @@
     },
 
     supports: function(data) {
-      return (data && ("serverUrl" in data) && ("slideId" in data));
+      return (data && data.type === "iris" && data.serverUrl && data.slideId);
     },
 
     parseMetadata: function(data) {
       this._tileWidth = 256;
       this._tileHeight = 256;
+
+      this.tileSize = this._tileWidth;
+      this.tileOverlap = 0;
 
       const layers = data.extent.layers;
 
@@ -96,15 +94,13 @@
       this.dimensions = new $.Point(this.width, this.height);
       this.aspectRatio = this.width / this.height;
       this.levelSizes = layers.map(level => ({
-        width: Math.ceil(level.x_tiles * level.scale),
-        height: Math.ceil(level.y_tiles * level.scale),
+        width: Math.ceil(level.x_tiles * this._tileWidth),
+        height: Math.ceil(level.y_tiles * this._tileHeight),
         xTiles: Math.ceil(level.x_tiles),
         yTiles: Math.ceil(level.y_tiles)
       }));
 
-      this.levelScales = layers.map(level =>
-        level.scale / maxScale
-      );
+      this.levelScales = layers.map(level => level.scale / maxScale);
 
       this.minLevel = 0;
       this.maxLevel = Math.ceil(this.levelSizes.length - 1);
@@ -155,26 +151,9 @@
       return this.levelScales[level];
     },
 
-    configure: function(options) {
-      if (!options) {
-        const msg = 'No options provided to configure.';
-        $.console.error(msg);
-        this.raiseEvent('open-failed', { message: msg });
-        return;
-      }
-
-      if (options.serverUrl) {
-        this.serverUrl = options.serverUrl;
-      }
-      if (options.slideId) {
-        this.slideId = options.slideId;
-      }
-
-      this.ready = false;
-      const url = this.getMetadataUrl();
-      this.fetchMetadata(url, this);
+    configure: function (options) {
+      return options;
     }
-
   });
 
   $.extend(true, $.IrisTileSource.prototype, $.EventSource.prototype);
