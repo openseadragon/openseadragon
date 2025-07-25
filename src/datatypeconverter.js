@@ -465,7 +465,7 @@ $.DataTypeConverter = class {
      *  Note: if a function is returned, it is a callback called once the data is ready.
      */
     getConversionPath(from, to) {
-        let bestConverterPath, selectedType;
+        let bestConverterPath;
         let knownFrom = this._known[from];
         if (!knownFrom) {
             this._known[from] = knownFrom = {};
@@ -475,28 +475,25 @@ $.DataTypeConverter = class {
             $.console.assert(to.length > 0, "[getConversionPath] conversion 'to' type must be defined.");
             let bestCost = Infinity;
 
-            //FIXME: pre-compute all paths in 'to' array? could be efficient for multiple
-            // type system, but overhead for simple use cases... now we just use the first type if costs unknown
-            selectedType = to[0];
-
             for (const outType of to) {
-                const conversion = knownFrom[outType];
+                let conversion = knownFrom[outType];
+                if (conversion === undefined) {
+                    knownFrom[outType] = conversion = this.graph.dijkstra(from, outType);
+                }
                 if (conversion && bestCost > conversion.cost) {
                     bestConverterPath = conversion;
                     bestCost = conversion.cost;
-                    selectedType = outType;
                 }
             }
         } else {
             $.console.assert(typeof to === "string", "[getConversionPath] conversion 'to' type must be defined.");
             bestConverterPath = knownFrom[to];
-            selectedType = to;
+            if (bestConverterPath === undefined) {
+                bestConverterPath = this.graph.dijkstra(from, to);
+                this._known[from][to] = bestConverterPath;
+            }
         }
 
-        if (!bestConverterPath) {
-            bestConverterPath = this.graph.dijkstra(from, selectedType);
-            this._known[from][selectedType] = bestConverterPath;
-        }
         return bestConverterPath ? bestConverterPath.path : undefined;
     }
 
