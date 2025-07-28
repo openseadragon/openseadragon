@@ -14,26 +14,20 @@
         }
     };
 
-    const mockFetchMetadata = function(url, context) {
-        context.parseMetadata(mockMetadata);
-        context.ready = true;
-        context.raiseEvent('ready', { tileSource: context });
-    };
-
     QUnit.test('IrisTileSource getMetadataUrl', function(assert) {
         const test = new OpenSeadragon.IrisTileSource({
             serverUrl: "http://localhost",
             slideId: "12345",
-            fetchMetadata: mockFetchMetadata
+            metadata: mockMetadata
         });
 
-        assert.ok(test.ready, "IrisTileSource should be ready after mock metadata");
+        assert.ok(test.ready, "IrisTileSource should be ready after metadata");
 
         const expectedWidth = Math.ceil(
             mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
         );
 
-        assert.equal(test.width, expectedWidth, "Width should be correctly parsed from mock metadata");
+        assert.equal(test.width, expectedWidth, "Width should be correctly parsed from metadata");
 
         const expectedUrl = "http://localhost/slides/12345/metadata";
         assert.equal(test.getMetadataUrl(), expectedUrl, "Metadata URL should match expected format");
@@ -43,10 +37,8 @@
         const test = new OpenSeadragon.IrisTileSource({
             serverUrl: "http://localhost",
             slideId: "12345",
-            fetchMetadata: () => {}
+            metadata: mockMetadata
         });
-
-        test.parseMetadata(mockMetadata);
 
         // Check dimensions
         const expectedWidth = Math.ceil(
@@ -84,7 +76,7 @@
         const test = new OpenSeadragon.IrisTileSource({
             serverUrl: "http://localhost",
             slideId: "12345",
-            fetchMetadata: mockFetchMetadata
+            metadata: mockMetadata
         });
 
         assert.equal(

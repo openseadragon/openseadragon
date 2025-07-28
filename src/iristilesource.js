@@ -45,6 +45,7 @@
    * @param {String} type       - iris
    * @param {String} serverUrl  - Iris host server path (ex: "http://localhost:3000")
    * @param {String} slideId    - Image id (ex: "12345" for 12345.iris)
+   * @param {Object} metadata   - Optional metadata object to use instead of fetching
    *
    * Example: tileSources: {
    *            type:         "iris",
@@ -62,9 +63,15 @@
     this.serverUrl = options.serverUrl;
     this.slideId = options.slideId;
     this.ready = false;
-    this.fetchMetadata = options.fetchMetadata || this.defaultFetchMetadata;
-    var url = this.getMetadataUrl();
-    this.fetchMetadata(url, this);
+
+    if (options.metadata) {
+      this.parseMetadata(options.metadata);
+      this.ready = true;
+      this.raiseEvent('ready', { tileSource: this });
+    } else {
+      var url = this.getMetadataUrl();
+      this.getImageInfo(url);
+    }
   };
 
   $.extend($.IrisTileSource.prototype, $.TileSource.prototype, {
@@ -90,7 +97,7 @@
     /**
      * Parse Iris protocol metadata response
      * @function
-     * @param {Object} data - Raw metadata from an Iris server
+     * @param {Object} data - Raw metadata from Iris server
      */
     parseMetadata: function(data) {
       this._tileWidth = 256;
@@ -123,12 +130,13 @@
     },
 
     /**
-     * Default method to retrieve image metadata from an Iris-compatible server
+     * Retrieve image metadata from an Iris-compatible server
      * @function
      * @param {String} url - The metadata URL
-     * @param {Object} context - The context (the tile source instance)
      */
-    defaultFetchMetadata: function(url, context) {
+    getImageInfo: function(url) {
+      var _this = this;
+
       $.makeAjaxRequest({
         url: url,
         type: "GET",
@@ -136,20 +144,20 @@
         success: function(xhr) {
           try {
             const data = JSON.parse(xhr.responseText);
-            context.parseMetadata(data);
-            context.ready = true;
-            context.raiseEvent('ready', { tileSource: context });
+            _this.parseMetadata(data);
+            _this.ready = true;
+            _this.raiseEvent('ready', { tileSource: _this });
           }
           catch (e) {
             var msg = "IrisTileSource: Error parsing metadata: " + e.message;
             $.console.error(msg);
-            context.raiseEvent('open-failed', { message: msg, source: url });
+            _this.raiseEvent('open-failed', { message: msg, source: url });
           }
         },
         error: function(xhr, exc) {
           var msg = "IrisTileSource: Unable to get metadata from " + url;
           $.console.error(msg);
-          context.raiseEvent('open-failed', { message: msg, source: url });
+          _this.raiseEvent('open-failed', { message: msg, source: url });
         }
       });
     },
