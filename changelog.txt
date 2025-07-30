@@ -26,6 +26,7 @@ OPENSEADRAGON CHANGELOG
     * Misc: updated CSS for dev server, new dev & test commands.
 * NEW BEHAVIOR: The per-image ajaxHeaders (specified when opening) are now being merged with the viewer's ajaxHeaders (overriding as appropriate), rather than replacing them (#2757 @hrocha1)
 * New tile source: IIP (Internet Imaging Protocol) (#2719 @ruven)
+* New tile source: Iris (#2759 @nkathawa)
 * New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
 * Overlay wrapper elements now have a "openseadragon-overlay-wrapper" class. If the overlay element has an ID, the wrapper gets a variant on that ID, but if the overlay element does not have an ID, we no longer give the wrapper an ID. (#2698 @lokaesshwar)
 * The functions the viewer uses to operate the zoom in and zoom out buttons are now accessible to be called programatically (#2702 @achu1998)
