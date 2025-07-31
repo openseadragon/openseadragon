@@ -1181,6 +1181,38 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @returns {Boolean}
      */
+    isKeyboardNavEnabled: function () {
+        return this.keyboardNavEnabled;
+    },
+
+    /**
+     * @function
+     * @param {Boolean} enabled - true to enable, false to disable
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:keyboard-enabled
+     */
+    setKeyboardNavEnabled: function( enabled ){
+        this.keyboardNavEnabled = enabled;
+
+        /**
+         * Raised when keyboard navigation is enabled or disabled (see {@link OpenSeadragon.Viewer#setKeyboardNavEnabled}).
+         *
+         * @event keyboard-enabled
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} enabled
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'keyboard-enabled', { enabled: enabled } );
+        return this;
+    },
+
+
+    /**
+     * @function
+     * @returns {Boolean}
+     */
     areControlsEnabled: function () {
         var enabled = this.controls.length,
             i;
@@ -3207,7 +3239,7 @@ function onCanvasKeyDown( event ) {
 
     var canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: false,
+      preventDefaultAction: !this.keyboardNavEnabled,
       preventVerticalPan: event.preventVerticalPan || !this.panVertical,
       preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
