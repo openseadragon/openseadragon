@@ -678,57 +678,14 @@ $.Viewport.prototype = {
             newBounds.width = newBounds.height * aspect;
         }
 
-        // Compute x and y from width, height and center position
-        newBounds.x = center.x - newBounds.width / 2;
-        newBounds.y = center.y - newBounds.height / 2;
         var newZoom = 1.0 / newBounds.width;
 
-        if (immediately) {
-            this.panTo(center, true);
-            this.zoomTo(newZoom, null, true);
-            if(constraints){
-                this.applyConstraints(true);
-            }
-            return this;
-        }
-
-        var currentCenter = this.getCenter(true);
-        var currentZoom = this.getZoom(true);
-        this.panTo(currentCenter, true);
-        this.zoomTo(currentZoom, null, true);
-
-        var oldBounds = this.getBounds();
-        var oldZoom   = this.getZoom();
-
-        if (oldZoom === 0 || Math.abs(newZoom / oldZoom - 1) < 0.00000001) {
-            this.zoomTo(newZoom, null, true);
-            this.panTo(center, immediately);
-            if(constraints){
-                this.applyConstraints(false);
-            }
-            return this;
-        }
-
+        this.panTo(center, immediately);
+        this.zoomTo(newZoom, null, immediately);
         if(constraints){
-            this.panTo(center, false);
-
-            newZoom = this._applyZoomConstraints(newZoom);
-            this.zoomTo(newZoom, null, false);
-
-            var constrainedBounds = this.getConstrainedBounds();
-
-            this.panTo(currentCenter, true);
-            this.zoomTo(currentZoom, null, true);
-
-            this.fitBounds(constrainedBounds);
-        } else {
-            var rotatedNewBounds = newBounds.rotate(-this.getRotation());
-            var referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
-                .minus(oldBounds.getTopLeft().times(oldZoom))
-                .divide(newZoom - oldZoom);
-
-            this.zoomTo(newZoom, referencePoint, immediately);
+            this.applyConstraints(immediately);
         }
+
         return this;
     },
 
