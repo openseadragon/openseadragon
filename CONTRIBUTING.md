@@ -34,7 +34,7 @@ The OpenSeadragon codebase is organized as follows:
 - `src/` - Source code for the core library
 - `build/` - Output directory for builds (not checked into git)
 - `test/` - Test files and demos
-- `images/` - Images that are part of library, used in the UI
+- `images/` - Images that are part of the library, used in the UI
 
 
 ### Building from Source
