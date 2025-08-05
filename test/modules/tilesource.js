@@ -147,5 +147,22 @@
         assertLevelScale(5, 1 / 16);
         assertLevelScale(3, 1 / 64);
     });
+    
+    // Test for issue #2772
+    QUnit.test('Zoomify _getGridSize calculation for 513x513 image', function(assert) {
+    
+        var zoomifyTileSource = new OpenSeadragon.ZoomifyTileSource({
+        width: 513,
+        height: 513,
+        tileSize: 256
+        });
+
+        var gridSize = zoomifyTileSource._getGridSize(513, 513, 256);
+
+        var expectedGridSize = { x: 3, y: 3 };
+
+        assert.deepEqual(gridSize, expectedGridSize, 'gridSize for 513x513 should match Zoomify CLI output');
+    });
+
 
 }());
