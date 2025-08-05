@@ -114,7 +114,7 @@ Please provide a clear description in your pull request that explains:
 
 #### Common Testing Issues
 
-- **Tests failing in headless mode only**: This can sometimes be related to timing issues. Try running with `--no-headless` flag for debugging
+- **Tests failing in headless mode only**: This can sometimes be related to timing issues. Try running `grunt test --no-headless` for debugging
 - **Browser compatibility issues**: Ensure you're testing with the supported browsers
 - **Timeout errors**: May indicate performance issues or blocking operations in the code
 
