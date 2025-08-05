@@ -128,7 +128,7 @@ Please provide a clear description in your pull request that explains:
 #### Common Build Issues
 
 - **Missing dependencies**: Run `npm install` to update all dependencies
-- **Grunt errors**: Ensure you're using a compatible Node.js version (check package.json)
+- **Grunt errors**: Ensure you're using a compatible Node.js version (see the `engines` field in `package.json` for the required version)
 - **Build failing silently**: Check for JavaScript errors in your browser's console
 
 ### Developer Resources
