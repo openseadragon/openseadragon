@@ -2,7 +2,7 @@
  * OpenSeadragon - Tile
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -555,16 +555,16 @@ $.Tile.prototype = {
             if (typeof data === 'function') {
                 $.console.error("[TileCache.cacheTile] options.data as a callback requires type argument! Current is " + type);
             }
-            type = $.convertor.guessType(data);
+            type = $.converter.guessType(data);
         }
 
         const overwritesMainCache = key === this.cacheKey;
         if (_safely && (overwritesMainCache || setAsMain)) {
             // Need to get the supported type for rendering out of the active drawer.
             const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
-            const conversion = $.convertor.getConversionPath(type, supportedTypes);
+            const conversion = $.converter.getConversionPath(type, supportedTypes);
             $.console.assert(conversion, "[Tile.addCache] data was set for the default tile cache we are unable" +
-                `to render. Make sure OpenSeadragon.convertor was taught to convert ${type} to (one of): ${conversion.toString()}`);
+                `to render. Make sure OpenSeadragon.converter was taught to convert ${type} to (one of): ${conversion.toString()}`);
         }
 
         const cachedItem = tiledImage._tileCache.cacheTile({
@@ -613,9 +613,9 @@ $.Tile.prototype = {
             if (overwritesMainCache || setAsMain) {
                 // Need to get the supported type for rendering out of the active drawer.
                 const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
-                const conversion = $.convertor.getConversionPath(cache.type, supportedTypes);
+                const conversion = $.converter.getConversionPath(cache.type, supportedTypes);
                 $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
-                    `to render. Make sure OpenSeadragon.convertor was taught to convert ${cache.type} to (one of): ${conversion.toString()}`);
+                    `to render. Make sure OpenSeadragon.converter was taught to convert ${cache.type} to (one of): ${conversion.toString()}`);
             }
         }
 
