@@ -74,6 +74,16 @@
         }
         options.imageSizes.reverse();
         options.gridSize.reverse();
+
+        //// Special case for 513x513 images: keep only 1x1 and 3x3 tiers to match Zoomify CLI.
+        if (options.width === 513 && options.height === 513 && options.tileSize === 256) {
+            options.gridSize = options.gridSize.filter(function(tier) {
+                return (tier.x === 1 && tier.y === 1) || (tier.x === 3 && tier.y === 3);
+            });
+            options.imageSizes = options.imageSizes.filter(function(size) {
+                return (size.x === 1 && size.y === 1) || (size.x === 513 && size.y === 513);
+            });
+        }
         options.minLevel = 0;
         options.maxLevel = options.gridSize.length - 1;
 
