@@ -198,7 +198,7 @@
             // unable to provide the rendering data immediatelly - return.
             const supportedTypes = drawer.getSupportedDataFormats();
             if (!supportedTypes.includes(this.type)) {
-                $.console.error("Attempt to draw tile with unsupported target drawer type!");
+                $.console.error("Attempt to draw tile with unsupported type for the target drawer!");
                 this.prepareForRendering(drawer);
                 return undefined;
             }
@@ -795,6 +795,7 @@
             options = options || {};
 
             this._maxCacheItemCount = options.maxImageCacheCount || $.DEFAULT_SETTINGS.maxImageCacheCount;
+            // requestInvalidate() touches this private property due to performance reasons
             this._tilesLoaded = [];
             this._zombiesLoaded = [];
             this._zombiesLoadedCount = 0;
@@ -870,7 +871,7 @@
                     } else {
                         // if zombie ready, do not overwrite its data, in that case try to call
                         // we need to trigger invalidation routine, data was not part of the system!
-                        if (typeof data === 'function') {
+                        if (typeof options.data === 'function') {
                             options.data();
                         }
                         delete options.data;
@@ -1310,9 +1311,9 @@
         }
 
         /**
-         * @param tile tile to unload
-         * @param destroy destroy tile cache if the cache tile counts falls to zero
-         * @param deleteAtIndex index to remove the tile record at, will not remove from _tilesLoaded if not set
+         * @param {OpenSeadragon.Tile} tile tile to unload
+         * @param {boolean} destroy destroy tile cache if the cache tile counts falls to zero
+         * @param {Number} deleteAtIndex index to remove the tile record at, will not remove from _tilesLoaded if not set
          * @private
          */
         _unloadTile(tile, destroy, deleteAtIndex) {
