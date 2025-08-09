@@ -276,8 +276,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }
         }
         tilesToRestore.length = restoreIndex;
-        const priorityTiles = this._items.map(item => item._lastDrawn.map(x => x.tile)).flat();
-        return this.requestTileInvalidateEvent(priorityTiles, tStamp, restoreTiles);
+        return this.requestTileInvalidateEvent(tilesToRestore, tStamp, restoreTiles);
 
         // const promise = this.requestTileInvalidateEvent(priorityTiles, tStamp, restoreTiles);
         // return promise.then(() => this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles));

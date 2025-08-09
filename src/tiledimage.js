@@ -1782,15 +1782,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Function} callback - TiledImage, x, y, total
      */
     _visitTiles: function(level, area, callback) {
-        var topLeftBound = area.getBoundingBox().getTopLeft();
-        var bottomRightBound = area.getBoundingBox().getBottomRight();
+        const bbox = area.getBoundingBox();
+        const drawCornerTiles = this._getCornerTiles(level, bbox.getTopLeft(), bbox.getBottomRight());
+        const drawTopLeftTile = drawCornerTiles.topLeft;
+        const drawBottomRightTile = drawCornerTiles.bottomRight;
 
-        var drawCornerTiles = this._getCornerTiles(level, topLeftBound, bottomRightBound);
-        var drawTopLeftTile = drawCornerTiles.topLeft;
-        var drawBottomRightTile = drawCornerTiles.bottomRight;
-
-
-        var numberOfTiles  = this.source.getNumTiles(level);
+        const numberOfTiles  = this.source.getNumTiles(level);
 
         if (this.getFlip()) {
             // The right-most tile can be narrower than the others. When flipped,
@@ -1804,14 +1801,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 drawBottomRightTile.x  = Math.min(drawBottomRightTile.x, numberOfTiles.x - 1);
             }
         }
-        var numTiles = Math.max(0, (drawBottomRightTile.x - drawTopLeftTile.x) * (drawBottomRightTile.y - drawTopLeftTile.y));
+        const numTiles = Math.max(0, (drawBottomRightTile.x - drawTopLeftTile.x) * (drawBottomRightTile.y - drawTopLeftTile.y));
 
-        for (var x = drawTopLeftTile.x; x <= drawBottomRightTile.x; x++) {
-            for (var y = drawTopLeftTile.y; y <= drawBottomRightTile.y; y++) {
+        for (let x = drawTopLeftTile.x; x <= drawBottomRightTile.x; x++) {
+            for (let y = drawTopLeftTile.y; y <= drawBottomRightTile.y; y++) {
 
-                var flippedX;
+                let flippedX;
                 if (this.getFlip()) {
-                    var xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
+                    const xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
                     flippedX = x + numberOfTiles.x - xMod - xMod - 1;
                 } else {
                     flippedX = x;
@@ -1825,8 +1822,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 callback(flippedX, y, numTiles);
             }
         }
-
-
     },
 
     /**
