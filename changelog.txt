@@ -18,6 +18,7 @@ OPENSEADRAGON CHANGELOG
     * CacheRecord supports 'internal cache' of 'SimpleCache' type. This cache can be used by drawers to hide complex types used for rendering. Such caches are stored internally on CacheRecord objects.
     * CacheRecord drives asynchronous data management and ensures correct behavior through awaiting Promises.
     * TileCache adds new methods for cache modification: renameCache, cloneCache, injectCache, replaceCache, restoreTilesThatShareOriginalCache, safeUnloadCache, unloadCacheForTile and more. Used internally within invalidation events
+* Added: WebGLDrawer option to unpack textures with premultiplied alpha.
     * Tiles have up to two 'originalCacheKey' and 'cacheKey' caches, which keep original data and target drawn data (if modified).
     * Invalidation Pipeline: New event 'tile-invalidated' and requestInvalidate methods on World and TiledImage. Tiles get methods to modify data to draw, system prepares data for drawing and swaps them with the current main tile cache.
     * New test suites for the new cache system, conversion pipeline and invalidation events.
