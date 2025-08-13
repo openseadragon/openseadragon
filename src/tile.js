@@ -401,6 +401,7 @@ $.Tile.prototype = {
     /**
      * Get the Image object for this tile.
      * @returns {?Image}
+     * @deprecated
      */
     getImage: function() {
         $.console.error("[Tile.getImage] property has been deprecated. Use 'tile-invalidated' routine event instead.");
@@ -428,6 +429,7 @@ $.Tile.prototype = {
     /**
      * Get the CanvasRenderingContext2D instance for tile image data drawn
      * onto Canvas if enabled and available
+     * @deprecated
      * @returns {CanvasRenderingContext2D|undefined}
      */
     getCanvasContext: function() {
@@ -777,7 +779,7 @@ $.Tile.prototype = {
 
     /**
      * Removes tile from the system: it will still be present in the
-     * OSD memory, but marked as loaded=false, and its data will be erased.
+     * OSD memory, but marked as loaded=false, and its data will be erased if erase set to true.
      * @param {boolean} [erase=false]
      */
     unload: function(erase = false) {

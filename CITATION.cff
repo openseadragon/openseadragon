@@ -16,6 +16,8 @@ authors:
     family-names: Vandecreme
   - given-names: Thomas
     family-names: Pearce
+  - given-names: Jiří "Jirka"
+    family-names: Horák
 identifiers:
   - type: url
     value: https://openseadragon.github.io/
