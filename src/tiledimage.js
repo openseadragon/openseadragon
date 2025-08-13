@@ -2188,6 +2188,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image the tile belongs to.
              * @property {number} time - The time in milliseconds when the tile load began.
              * @property {string} message - The error message.
+             * @property {number} tries - The number of times the tile has been retried.
+             * @property {boolean} maxReached - Whether the maximum number of retries has been reached.
              * @property {XMLHttpRequest} tileRequest - The XMLHttpRequest used to load the tile if available.
              */
             this.viewer.raiseEvent("tile-load-failed", {
