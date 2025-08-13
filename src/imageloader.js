@@ -296,7 +296,7 @@ function completeJob(loader, job, callback) {
         }
     }
 
-    callback(job.data, job.errorMsg, job.request, job.dataType);
+    callback(job.data, job.errorMsg, job.request, job.dataType, job.tries);
 }
 
 }(OpenSeadragon));

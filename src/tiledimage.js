@@ -2139,8 +2139,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ajaxHeaders: tile.ajaxHeaders,
             crossOriginPolicy: this.crossOriginPolicy,
             ajaxWithCredentials: this.ajaxWithCredentials,
-            callback: function( data, errorMsg, tileRequest, dataType ){
-                _this._onTileLoad( tile, time, data, errorMsg, tileRequest, dataType );
+            callback: function( data, errorMsg, tileRequest, dataType, tries ){
+                _this._onTileLoad( tile, time, data, errorMsg, tileRequest, dataType, tries );
             },
             abort: function() {
                 tile.loading = false;
@@ -2173,8 +2173,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {String} errorMsg
      * @param {XMLHttpRequest} tileRequest
      * @param {String} [dataType=undefined] data type, derived automatically if not set
+     * @param {number} tries - The number of times the tile has been retried.
      */
-    _onTileLoad: function( tile, time, data, errorMsg, tileRequest, dataType ) {
+    _onTileLoad: function( tile, time, data, errorMsg, tileRequest, dataType, tries ) {
         //data is set to null on error by image loader, allow custom falsey values (e.g. 0)
         if ( data === null || data === undefined ) {
             $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.getUrl(), errorMsg );
@@ -2197,7 +2198,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 tiledImage: this,
                 time: time,
                 message: errorMsg,
-                tileRequest: tileRequest
+                tileRequest: tileRequest,
+                tries: tries,
+                maxReached: this.viewer.tileRetryMax === 0 ? true : tries >= this.viewer.tileRetryMax
             });
             tile.loading = false;
             tile.exists = false;
