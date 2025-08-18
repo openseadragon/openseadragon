@@ -1501,6 +1501,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.navigator.update( this.viewport );
         }
 
+        //TODO reference strip auto resize
+        // if ( this.referenceStrip ) {
+        //     this.referenceStrip.update();
+        // }
+
         /**
          * Raised when the viewer has changed to/from full-page mode (see {@link OpenSeadragon.Viewer#setFullPage}).
          *
@@ -1597,6 +1602,18 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         _this.navigator.update( _this.viewport );
                     });
                 }
+                //TODO reference strip auto resize
+                // if ( (_this.navigator && _this.viewport) || _this.referenceStrip ) {
+                //     //09/08/2018 - Fabroh : Fix issue #1504 : Ensure to get the navigator updated on fullscreen out with custom location with a timeout
+                //     setTimeout(function(){
+                //         if ( _this.navigator && _this.viewport ) {
+                //             _this.navigator.update( _this.viewport );
+                //         }
+                //         if ( _this.referenceStrip ) {
+                //             _this.referenceStrip.update();
+                //         }
+                //     });
+                // }
                 /**
                  * Raised when the viewer has changed to/from full-screen mode (see {@link OpenSeadragon.Viewer#setFullScreen}).
                  *
@@ -2674,15 +2691,26 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if (this.tileSources.length && this.tileSources.length > 1) {
                 this.referenceStrip = new $.ReferenceStrip({
-                    id:          this.referenceStripElement,
-                    position:    this.referenceStripPosition,
-                    sizeRatio:   this.referenceStripSizeRatio,
-                    scroll:      this.referenceStripScroll,
-                    height:      this.referenceStripHeight,
-                    width:       this.referenceStripWidth,
-                    tileSources: this.tileSources,
-                    prefixUrl:   this.prefixUrl,
-                    viewer:      this
+                    viewer:            this,
+                    element:           this.referenceStripElement,
+                    id:                this.referenceStripId,
+                    scroll:            this.referenceStripScroll,
+                    position:          this.referenceStripPosition,
+                    sizeRatio:         this.referenceStripSizeRatio,
+                    maintainSizeRatio: this.referenceStripMaintainSizeRatio,
+                    top:               this.referenceStripTop,
+                    left:              this.referenceStripLeft,
+                    width:             this.referenceStripWidth,
+                    height:            this.referenceStripHeight,
+                    autoResize:        this.referenceStripAutoResize,
+                    autoHide:          this.referenceStripAutoHide,
+                    autoHideFactor:    this.referenceStripAutoHideFactor,
+                    autoFade:          this.referenceStripAutoFade,
+                    background:        this.referenceStripBackground,
+                    opacity:           this.referenceStripOpacity,
+                    borderColor:       this.referenceStripBorderColor,
+                    //TODO
+                    //crossOriginPolicy: this.crossOriginPolicy,
                 });
 
                 this.referenceStrip.setFocus( this._sequenceIndex );
@@ -4140,8 +4168,9 @@ function updateOnce( viewer ) {
         viewer.raiseEvent('viewport-change');
     }
 
-    if( viewer.referenceStrip ){
-        animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
+    //TODO reference strip auto resize
+    if ( viewer.referenceStrip ) {
+        animated = viewer.referenceStrip.update() || animated;
     }
 
     var currentAnimating = THIS[ viewer.hash ].animating;
