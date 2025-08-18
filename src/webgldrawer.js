@@ -77,6 +77,7 @@
             // private members
             this._destroyed = false;
             this._gl = null;
+            this._glNumTextures = null;
             this._firstPass = null;
             this._secondPass = null;
             this._glFrameBuffer = null;
@@ -356,27 +357,15 @@
                         overallMatrix = viewMatrix.multiply(localMatrix);
                     }
 
-                    let maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
-                    if(maxTextures <= 0){
-                        // This can apparently happen on some systems if too many WebGL contexts have been created
-                        // in which case maxTextures can be null, leading to out of bounds errors with the array.
-                        // For example, when viewers were created and not destroyed in the test suite, this error
-                        // occurred in the TravisCI tests, though it did not happen when testing locally either in
-                        // a browser or on the command line via grunt test.
-
-                        throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
-                        if too many contexts have been created and not released, or there is another problem with the graphics card.`));
-                    }
-
-                    let texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
-                    let textureDataArray = new Array(maxTextures);
-                    let matrixArray = new Array(maxTextures);
-                    let opacityArray = new Array(maxTextures);
+                    let texturePositionArray = new Float32Array(this._glNumTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
+                    let textureDataArray = new Array(this._glNumTextures);
+                    let matrixArray = new Array(this._glNumTextures);
+                    let opacityArray = new Array(this._glNumTextures);
 
                     // iterate over tiles and add data for each one to the buffers
                     for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
                         let tile = tilesToDraw[tileIndex].tile;
-                        let indexInDrawArray = tileIndex % maxTextures;
+                        let indexInDrawArray = tileIndex % this._glNumTextures;
                         let numTilesToDraw =  indexInDrawArray + 1;
                         const textureInfo = this.getDataToDraw(tile);
 
@@ -389,7 +378,7 @@
                         //   internalCacheCreate(..) already logged an error.
                         // }
 
-                        if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
+                        if( (numTilesToDraw === this._glNumTextures) || (tileIndex === tilesToDraw.length - 1)){
                             // We've filled up the buffers: time to draw this set of tiles
 
                             // bind each tile's texture to the appropriate gl.TEXTURE#
@@ -600,7 +589,19 @@
             }
             this._unitQuad = this._makeQuadVertexBuffer(0, 1, 0, 1); // used a few places; create once and store the result
 
-            this._makeFirstPassShaderProgram();
+            let compiled = false;
+            do{
+                try{
+                    this._makeFirstPassShaderProgram();
+                    compiled = true;
+                } catch(exception){
+                    this._glNumTextures = Math.floor(this._glNumTextures /= 2);
+                    if(this._glNumTextures === 0){
+                        throw(new Error(`WegGL error: The shader could not be compiled.`));
+                    }
+                }
+            } while ( !compiled );
+
             this._makeSecondPassShaderProgram();
 
             // set up the texture to render to in the first pass, and which will be used for rendering the second pass
@@ -630,7 +631,7 @@
 
         //private
         _makeFirstPassShaderProgram(){
-            let numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+            let numTextures = this._glNumTextures;
             let makeMatrixUniforms = () => {
                 return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
             };
@@ -825,6 +826,18 @@
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
             this._gl = this._renderingCanvas.getContext('webgl');
+
+            this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+            if(this._glNumTextures <= 0){
+                // This can apparently happen on some systems if too many WebGL contexts have been created
+                // in which case _glNumTextures can be null, leading to out of bounds errors with the array.
+                // For example, when viewers were created and not destroyed in the test suite, this error
+                // occurred in the TravisCI tests, though it did not happen when testing locally either in
+                // a browser or on the command line via grunt test.
+
+                throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${this._glNumTextures}). This could happen
+                if too many contexts have been created and not released, or there is another problem with the graphics card.`));
+            }
 
             this._resizeHandler = function(){
 
