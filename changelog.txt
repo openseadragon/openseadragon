@@ -35,6 +35,7 @@ OPENSEADRAGON CHANGELOG
 * Improved IIIF tile requests in certain edge cases (#2710 @ruven)
 * Now only removing OSD-created elements on destroy (rather than emptying out the entire container) (#2724 @Vinith1919)
 * Now if you hold down navigation keys (pan or zoom), the movement is continuous rather than having a pause after the initial start (#2735 @achu1998)
+* Added tries and maxReached properties to tile-load-failed event (#2777 @Tobio89)
 * Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
 * Improved documentation and code naming (#2676 @bennlich, #2729 @shaswata-26, #2754 @ganglike248)
