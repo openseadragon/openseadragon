@@ -270,7 +270,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             if (isRecentlyTouched || isAboveCutoff) {
                 tilesToRestore[restoreIndex++] = tile;
             } else {
-                console.assert(cache._tilesLoaded[i - deletedTiles] === tile, "Not equal!"); //test
                 cache._unloadTile(tile, false, i - deletedTiles);
                 deletedTiles++;
             }

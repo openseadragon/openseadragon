@@ -1779,7 +1779,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      * @param {Number} level
      * @param {OpenSeadragon.Rect} area
-     * @param {Function} callback - TiledImage, x, y, total
+     * @param {Function} callback - x, y, total - tile x, y position and total number of tiles
      */
     _visitTiles: function(level, area, callback) {
         const bbox = area.getBoundingBox();
