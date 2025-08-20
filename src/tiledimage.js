@@ -2281,7 +2281,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * tile in question. Keeps the best tiles sorted according to visibility and distance.
      * @private
      *
-     * @param {OpenSeadragon.Tile[]} previousBest The best tiles so far. Must be sorted.
+     * @param {OpenSeadragon.Tile[]} previousBest The best tiles so far. Must be sorted. If not,
+     *    call previousBest.sort(this._sortTilesComparator) first.
      * @param {OpenSeadragon.Tile} tile The new tile to consider.
      * @param {Number} maxNTiles The max number of best tiles.
      * @returns {OpenSeadragon.Tile[]} The new best tiles.
