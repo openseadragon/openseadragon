@@ -245,12 +245,42 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      */
     requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
         $.__updated = tStamp;
-        // const priorityTiles = this._items.map(item => item._lastDrawn.map(x => x.tile)).flat();
+
+        // Find the earliest needed timestamp
+        let drawnTstamp = Infinity;
+        for (let item of this._items) {
+            if (item._lastDrawn.length) {
+                drawnTstamp = Math.min(drawnTstamp, item._lastDrawn[0].tile.lastTouchTime);
+            }
+        }
+
+        const allTiles = this.viewer.tileCache.getLoadedTilesFor(null);
+        const tilesToRestore = new Array(allTiles.length);
+
+        let restoreIndex = 0;
+        let deletedTiles = 0;
+
+        const cache = this.viewer.tileCache;
+        for (let i = 0; i < allTiles.length; i++) {
+            const tile = allTiles[i];
+            const isRecentlyTouched = tile.lastTouchTime >= drawnTstamp;
+            const isAboveCutoff = tile.level <= (tile.tiledImage.source.getClosestLevel() || 0);
+
+            if (isRecentlyTouched || isAboveCutoff) {
+                tilesToRestore[restoreIndex++] = tile;
+            } else {
+                cache._unloadTile(tile, false, i - deletedTiles);
+                deletedTiles++;
+            }
+        }
+        tilesToRestore.length = restoreIndex;
+        return this.requestTileInvalidateEvent(tilesToRestore, tStamp, restoreTiles);
+
         // const promise = this.requestTileInvalidateEvent(priorityTiles, tStamp, restoreTiles);
         // return promise.then(() => this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles));
 
         // Tile-first retrieval fires computation on tiles that share cache, which are filtered out by processing property
-        return this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles);
+        // return this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles);
 
         // Cache-first update tile retrieval is nicer since there might be many tiles sharing
         // return this.requestTileInvalidateEvent(new Set(Object.values(this.viewer.tileCache._cachesLoaded)

@@ -284,6 +284,7 @@ $.Tile.prototype = {
      *  from the given tiledImage.source.getTileHashKey(...) implementation.
      * @member {String} cacheKey
      * @memberof OpenSeadragon.Tile#
+     * @private
      */
     get cacheKey() {
         return this._cKey;
@@ -309,6 +310,7 @@ $.Tile.prototype = {
      * this cache key exists in the cache it is loaded.
      * @member {String} originalCacheKey
      * @memberof OpenSeadragon.Tile#
+     * @private
      */
     set originalCacheKey(value) {
         throw "Original Cache Key cannot be managed manually!";
@@ -401,6 +403,7 @@ $.Tile.prototype = {
     /**
      * Get the Image object for this tile.
      * @returns {?Image}
+     * @deprecated
      */
     getImage: function() {
         $.console.error("[Tile.getImage] property has been deprecated. Use 'tile-invalidated' routine event instead.");
@@ -428,6 +431,7 @@ $.Tile.prototype = {
     /**
      * Get the CanvasRenderingContext2D instance for tile image data drawn
      * onto Canvas if enabled and available
+     * @deprecated
      * @returns {CanvasRenderingContext2D|undefined}
      */
     getCanvasContext: function() {
@@ -508,6 +512,7 @@ $.Tile.prototype = {
      * Read tile cache data object (CacheRecord)
      * @param {string} [key=this.cacheKey] cache key to read that belongs to this tile
      * @return {OpenSeadragon.CacheRecord}
+     * @private
      */
     getCache: function(key = this._cKey) {
         const cache = this._caches[key];
@@ -539,6 +544,7 @@ $.Tile.prototype = {
      *   no effect if key === this.cacheKey
      * @param [_safely=true] private
      * @returns {OpenSeadragon.CacheRecord|null} - The cache record the tile was attached to.
+     * @private
      */
     addCache: function(key, data, type = undefined, setAsMain = false, _safely = true) {
         const tiledImage = this.tiledImage;
@@ -600,6 +606,7 @@ $.Tile.prototype = {
      *   no effect if key === this.cacheKey
      * @param [_safely=true] private
      * @returns {OpenSeadragon.CacheRecord|null} - Returns cache parameter reference if attached.
+     * @private
      */
     setCache(key, cache, setAsMain = false, _safely = true) {
         const tiledImage = this.tiledImage;
@@ -665,6 +672,7 @@ $.Tile.prototype = {
      * @param {boolean} [freeIfUnused=true] set to false if zombie should be created
      * @return {OpenSeadragon.CacheRecord|undefined} reference to the cache record if it was removed,
      *   undefined if removal was refused to perform (e.g. does not exist, it is an original data target etc.)
+     * @private
      */
     removeCache: function(key, freeIfUnused = true) {
         const deleteTarget = this._caches[key];
@@ -777,7 +785,7 @@ $.Tile.prototype = {
 
     /**
      * Removes tile from the system: it will still be present in the
-     * OSD memory, but marked as loaded=false, and its data will be erased.
+     * OSD memory, but marked as loaded=false, and its data will be erased if erase set to true.
      * @param {boolean} [erase=false]
      */
     unload: function(erase = false) {

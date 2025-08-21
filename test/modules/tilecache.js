@@ -241,6 +241,12 @@
                 downloadTileStart(context) {
                     context.finish(0, null, T_A);
                 }
+
+                getClosestLevel() {
+                    // Tile invalidation is forced to fire for all tiles since we set cutoff to infinity here.
+                    // This is because invalidation routine tests against getClosestLevel() return value.
+                    return Infinity;
+                }
             }
         },
         afterEach: function () {
