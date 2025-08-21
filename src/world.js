@@ -246,12 +246,11 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
         $.__updated = tStamp;
 
+        // Find the earliest needed timestamp
         let drawnTstamp = Infinity;
         for (let item of this._items) {
-            // Find the earliest needed timestamp
-            for (let tile of item._lastDrawn) {
-                drawnTstamp = Math.min(drawnTstamp, tile.tile.lastTouchTime);
-                break;
+            if (item._lastDrawn.length) {
+                drawnTstamp = Math.min(drawnTstamp, item._lastDrawn[0].tile.lastTouchTime);
             }
         }
 
