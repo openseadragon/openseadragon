@@ -539,6 +539,9 @@
   *     interactions include draging the image in a plane, and zooming in toward
   *     and away from the image.
   *
+  * @property {boolean} [keyboardNavEnabled=true]
+  *     Is the user able to interact with the image via keyboard.
+  *
   * @property {Boolean} [showNavigationControl=true]
   *     Set to false to prevent the appearance of the default navigation controls.<br>
   *     Note that if set to false, the customs buttons set by the options
@@ -1367,6 +1370,7 @@ function OpenSeadragon( options ){
             controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
+            keyboardNavEnabled:      true,  //GENERAL KEYBOARD INTERACTIVITY
 
             //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:              false,
