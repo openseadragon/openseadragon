@@ -116,16 +116,16 @@ $.TiledImage = function( options ) {
 
     delete options.clip;
 
-    var x = options.x || 0;
+    const x = options.x || 0;
     delete options.x;
-    var y = options.y || 0;
+    const y = options.y || 0;
     delete options.y;
 
     // Ratio of zoomable image height to width.
     this.normHeight = options.source.dimensions.y / options.source.dimensions.x;
     this.contentAspectX = options.source.dimensions.x / options.source.dimensions.y;
 
-    var scale = 1;
+    let scale = 1;
     if ( options.width ) {
         scale = options.width;
         delete options.width;
@@ -139,15 +139,15 @@ $.TiledImage = function( options ) {
         delete options.height;
     }
 
-    var fitBounds = options.fitBounds;
+    const fitBounds = options.fitBounds;
     delete options.fitBounds;
-    var fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
+    const fitBoundsPlacement = options.fitBoundsPlacement || OpenSeadragon.Placement.CENTER;
     delete options.fitBoundsPlacement;
 
-    var degrees = options.degrees || 0;
+    const degrees = options.degrees || 0;
     delete options.degrees;
 
-    var ajaxHeaders = options.ajaxHeaders;
+    const ajaxHeaders = options.ajaxHeaders;
     delete options.ajaxHeaders;
 
     $.extend( true, this, {
@@ -331,15 +331,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean} Whether the TiledImage needs to be drawn.
      */
     update: function(viewportChanged) {
-        let xUpdated = this._xSpring.update();
-        let yUpdated = this._ySpring.update();
-        let scaleUpdated = this._scaleSpring.update();
-        let degreesUpdated = this._degreesSpring.update();
+        const xUpdated = this._xSpring.update();
+        const yUpdated = this._ySpring.update();
+        const scaleUpdated = this._scaleSpring.update();
+        const degreesUpdated = this._degreesSpring.update();
 
-        let updated = (xUpdated || yUpdated || scaleUpdated || degreesUpdated || this._needsUpdate);
+        const updated = (xUpdated || yUpdated || scaleUpdated || degreesUpdated || this._needsUpdate);
 
         if (updated || viewportChanged || !this._fullyLoaded){
-            let fullyLoadedFlag = this._updateLevelsForViewport();
+            const fullyLoadedFlag = this._updateLevelsForViewport();
             this._setFullyLoaded(fullyLoadedFlag);
         }
 
@@ -439,12 +439,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {$.Rect} The clipped bounds in viewport coordinates.
      */
     getClippedBounds: function(current) {
-        var bounds = this.getBoundsNoRotate(current);
+        let bounds = this.getBoundsNoRotate(current);
         if (this._clip) {
-            var worldWidth = current ?
+            const worldWidth = current ?
                 this._worldWidthCurrent : this._worldWidthTarget;
-            var ratio = worldWidth / this.source.dimensions.x;
-            var clip = this._clip.times(ratio);
+            const ratio = worldWidth / this.source.dimensions.x;
+            const clip = this._clip.times(ratio);
             bounds = new $.Rect(
                 bounds.x + clip.x,
                 bounds.y + clip.y,
@@ -462,10 +462,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Rect} Where this tile fits (in normalized coordinates).
      */
     getTileBounds: function( level, x, y ) {
-        var numTiles = this.source.getNumTiles(level);
-        var xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
-        var yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
-        var bounds = this.source.getTileBounds(level, xMod, yMod);
+        const numTiles = this.source.getNumTiles(level);
+        const xMod    = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
+        const yMod    = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
+        const bounds = this.source.getTileBounds(level, xMod, yMod);
         if (this.getFlip()) {
             bounds.x = Math.max(0, 1 - bounds.x - bounds.width);
         }
@@ -485,14 +485,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Point} The TiledImage's content size, in window coordinates.
      */
     getSizeInWindowCoordinates: function() {
-        var topLeft = this.imageToWindowCoordinates(new $.Point(0, 0));
-        var bottomRight = this.imageToWindowCoordinates(this.getContentSize());
+        const topLeft = this.imageToWindowCoordinates(new $.Point(0, 0));
+        const bottomRight = this.imageToWindowCoordinates(this.getContentSize());
         return new $.Point(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
     },
 
     // private
     _viewportToImageDelta: function( viewerX, viewerY, current ) {
-        var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
+        const scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
         return new $.Point(viewerX * (this.source.dimensions.x / scale),
             viewerY * ((this.source.dimensions.y * this.contentAspectX) / scale));
     },
@@ -506,7 +506,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Point} A point representing the coordinates in the image.
      */
     viewportToImageCoordinates: function(viewerX, viewerY, current) {
-        var point;
+        let point;
         if (viewerX instanceof $.Point) {
             //they passed a point instead of individual components
             current = viewerY;
@@ -527,7 +527,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     // private
     _imageToViewportDelta: function( imageX, imageY, current ) {
-        var scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
+        const scale = (current ? this._scaleSpring.current.value : this._scaleSpring.target.value);
         return new $.Point((imageX / this.source.dimensions.x) * scale,
             (imageY / this.source.dimensions.y / this.contentAspectX) * scale);
     },
@@ -548,7 +548,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             imageX = imageX.x;
         }
 
-        var point = this._imageToViewportDelta(imageX, imageY, current);
+        const point = this._imageToViewportDelta(imageX, imageY, current);
         if (current) {
             point.x += this._xSpring.current.value;
             point.y += this._ySpring.current.value;
@@ -572,7 +572,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Rect} A rect representing the coordinates in the viewport.
      */
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight, current) {
-        var rect = imageX;
+        let rect = imageX;
         if (rect instanceof $.Rect) {
             //they passed a rect instead of individual components
             current = imageY;
@@ -580,8 +580,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
         }
 
-        var coordA = this.imageToViewportCoordinates(rect.getTopLeft(), current);
-        var coordB = this._imageToViewportDelta(rect.width, rect.height, current);
+        const coordA = this.imageToViewportCoordinates(rect.getTopLeft(), current);
+        const coordB = this._imageToViewportDelta(rect.width, rect.height, current);
 
         return new $.Rect(
             coordA.x,
@@ -604,7 +604,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Rect} A rect representing the coordinates in the image.
      */
     viewportToImageRectangle: function( viewerX, viewerY, pointWidth, pointHeight, current ) {
-        var rect = viewerX;
+        let rect = viewerX;
         if (viewerX instanceof $.Rect) {
             //they passed a rect instead of individual components
             current = viewerY;
@@ -612,8 +612,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
         }
 
-        var coordA = this.viewportToImageCoordinates(rect.getTopLeft(), current);
-        var coordB = this._viewportToImageDelta(rect.width, rect.height, current);
+        const coordA = this.viewportToImageCoordinates(rect.getTopLeft(), current);
+        const coordB = this._viewportToImageDelta(rect.width, rect.height, current);
 
         return new $.Rect(
             coordA.x,
@@ -631,7 +631,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Point}
      */
     viewerElementToImageCoordinates: function( pixel ) {
-        var point = this.viewport.pointFromPixel( pixel, true );
+        const point = this.viewport.pointFromPixel( pixel, true );
         return this.viewportToImageCoordinates( point );
     },
 
@@ -642,7 +642,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Point}
      */
     imageToViewerElementCoordinates: function( pixel ) {
-        var point = this.imageToViewportCoordinates( pixel );
+        const point = this.imageToViewportCoordinates( pixel );
         return this.viewport.pixelFromPoint( point, true );
     },
 
@@ -652,7 +652,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Point}
      */
     windowToImageCoordinates: function( pixel ) {
-        var viewerCoordinates = pixel.minus(
+        const viewerCoordinates = pixel.minus(
             OpenSeadragon.getElementPosition( this.viewer.element ));
         return this.viewerElementToImageCoordinates( viewerCoordinates );
     },
@@ -663,7 +663,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {OpenSeadragon.Point}
      */
     imageToWindowCoordinates: function( pixel ) {
-        var viewerCoordinates = this.imageToViewerElementCoordinates( pixel );
+        const viewerCoordinates = this.imageToViewerElementCoordinates( pixel );
         return viewerCoordinates.plus(
             OpenSeadragon.getElementPosition( this.viewer.element ));
     },
@@ -672,7 +672,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     // Convert rectangle in viewport coordinates to this tiled image point
     // coordinates (x in [0, 1] and y in [0, aspectRatio])
     _viewportToTiledImageRectangle: function(rect) {
-        var scale = this._scaleSpring.current.value;
+        const scale = this._scaleSpring.current.value;
         rect = rect.rotate(-this.getRotation(true), this._getRotationPoint(true));
         return new $.Rect(
             (rect.x - this._xSpring.current.value) / scale,
@@ -693,7 +693,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Number} imageZoom The image zoom
      */
     viewportToImageZoom: function( viewportZoom ) {
-        var ratio = this._scaleSpring.current.value *
+        const ratio = this._scaleSpring.current.value *
             this.viewport._containerInnerSize.x / this.source.dimensions.x;
         return ratio * viewportZoom;
     },
@@ -710,7 +710,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Number} viewportZoom The viewport zoom
      */
     imageToViewportZoom: function( imageZoom ) {
-        var ratio = this._scaleSpring.current.value *
+        const ratio = this._scaleSpring.current.value *
             this.viewport._containerInnerSize.x / this.source.dimensions.x;
         return imageZoom / ratio;
     },
@@ -722,7 +722,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @fires OpenSeadragon.TiledImage.event:bounds-change
      */
     setPosition: function(position, immediately) {
-        var sameTarget = (this._xSpring.target.value === position.x &&
+        const sameTarget = (this._xSpring.target.value === position.x &&
             this._ySpring.target.value === position.y);
 
         if (immediately) {
@@ -782,11 +782,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * ]
      */
     setCroppingPolygons: function( polygons ) {
-        var isXYObject = function(obj) {
+        const isXYObject = function(obj) {
             return obj instanceof $.Point || (typeof obj.x === 'number' && typeof obj.y === 'number');
         };
 
-        var objectToSimpleXYObject = function(objs) {
+        const objectToSimpleXYObject = function(objs) {
             return objs.map(function(obj) {
                 try {
                     if (isXYObject(obj)) {
@@ -837,12 +837,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     fitBounds: function(bounds, anchor, immediately) {
         anchor = anchor || $.Placement.CENTER;
-        var anchorProperties = $.Placement.properties[anchor];
-        var aspectRatio = this.contentAspectX;
-        var xOffset = 0;
-        var yOffset = 0;
-        var displayedWidthRatio = 1;
-        var displayedHeightRatio = 1;
+        const anchorProperties = $.Placement.properties[anchor];
+        let aspectRatio = this.contentAspectX;
+        let xOffset = 0;
+        let yOffset = 0;
+        let displayedWidthRatio = 1;
+        let displayedHeightRatio = 1;
+
         if (this._clip) {
             aspectRatio = this._clip.getAspectRatio();
             displayedWidthRatio = this._clip.width / this.source.dimensions.x;
@@ -858,8 +859,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (bounds.getAspectRatio() > aspectRatio) {
             // We will have margins on the X axis
-            var height = bounds.height / displayedHeightRatio;
-            var marginLeft = 0;
+            const height = bounds.height / displayedHeightRatio;
+            let marginLeft = 0;
             if (anchorProperties.isHorizontallyCentered) {
                 marginLeft = (bounds.width - bounds.height * aspectRatio) / 2;
             } else if (anchorProperties.isRight) {
@@ -871,8 +872,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this.setHeight(height, immediately);
         } else {
             // We will have margins on the Y axis
-            var width = bounds.width / displayedWidthRatio;
-            var marginTop = 0;
+            const width = bounds.width / displayedWidthRatio;
+            let marginTop = 0;
             if (anchorProperties.isVerticallyCentered) {
                 marginTop = (bounds.height - bounds.width / aspectRatio) / 2;
             } else if (anchorProperties.isBottom) {
@@ -946,7 +947,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this._flipped;
     },
     set flipped(flipped) {
-        let changed = this._flipped !== !!flipped;
+        const changed = this._flipped !== !!flipped;
         this._flipped = !!flipped;
         if (changed && this._initialized) {
             this.update(true);
@@ -959,7 +960,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this._wrapHorizontal;
     },
     set wrapHorizontal(wrap){
-        let changed = this._wrapHorizontal !== !!wrap;
+        const changed = this._wrapHorizontal !== !!wrap;
         this._wrapHorizontal = !!wrap;
         if(this._initialized && changed){
             this.update(true);
@@ -972,7 +973,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this._wrapVertical;
     },
     set wrapVertical(wrap){
-        let changed = this._wrapVertical !== !!wrap;
+        const changed = this._wrapVertical !== !!wrap;
         this._wrapVertical = !!wrap;
         if(this._initialized && changed){
             this.update(true);
@@ -1090,11 +1091,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return false;
         }
 
-        var drawArea = this._viewportToTiledImageRectangle(
+        let drawArea = this._viewportToTiledImageRectangle(
             this.viewport.getBoundsWithMargins(true));
 
         if (!this.wrapHorizontal && !this.wrapVertical) {
-            var tiledImageBounds = this._viewportToTiledImageRectangle(
+            const tiledImageBounds = this._viewportToTiledImageRectangle(
                 this.getClippedBounds(true));
             drawArea = drawArea.intersection(tiledImageBounds);
         }
@@ -1103,11 +1104,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     getLoadArea: function() {
-        var loadArea = this._viewportToTiledImageRectangle(
+        let loadArea = this._viewportToTiledImageRectangle(
             this.viewport.getBoundsWithMargins(false));
 
         if (!this.wrapHorizontal && !this.wrapVertical) {
-            var tiledImageBounds = this._viewportToTiledImageRectangle(
+            const tiledImageBounds = this._viewportToTiledImageRectangle(
                 this.getClippedBounds(false));
             loadArea = loadArea.intersection(tiledImageBounds);
         }
@@ -1128,9 +1129,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const lastDrawn = this._lastDrawn;
 
         let insertionIndex = 0;
-        for (let nested of this._tilesToDraw) {
+        for (const nested of this._tilesToDraw) {
             if (Array.isArray(nested)) {
-                for (let item of nested) {
+                for (const item of nested) {
                     lastDrawn[insertionIndex++] = item;
                 }
             } else if (nested) {
@@ -1145,9 +1146,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // mark the tiles as being drawn, so that they won't be discarded from
         // the tileCache
         insertionIndex = 0;
-        for (let nested of this._tilesToDraw) {
+        for (const nested of this._tilesToDraw) {
             if (Array.isArray(nested)) {
-                for (let item of nested) {
+                for (const item of nested) {
                     item.tile.beingDrawn = true;
                     lastDrawn[insertionIndex++] = item;
                 }
@@ -1267,14 +1268,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (propagate) {
             let numTiles, xMod, yMod, tile;
 
-            for (let level in this.tilesMatrix) {
+            for (const level in this.tilesMatrix) {
                 numTiles = this.source.getNumTiles(level);
                 const matrixLevel = this.tilesMatrix[level];
 
-                for (let x in matrixLevel) {
+                for (const x in matrixLevel) {
                     xMod = ( numTiles.x + ( x % numTiles.x ) ) % numTiles.x;
 
-                    for (let y in matrixLevel[x]) {
+                    for (const y in matrixLevel[x]) {
                         yMod = ( numTiles.y + ( y % numTiles.y ) ) % numTiles.y;
                         tile = matrixLevel[x][y];
 
@@ -1289,8 +1290,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
             }
 
-            for (var i = 0; i < this._imageLoader.jobQueue.length; i++) {
-                var job = this._imageLoader.jobQueue[i];
+            for (let i = 0; i < this._imageLoader.jobQueue.length; i++) {
+                const job = this._imageLoader.jobQueue[i];
                 job.loadWithAjax = job.tile.loadWithAjax;
                 job.ajaxHeaders = job.tile.loadWithAjax ? job.tile.ajaxHeaders : null;
             }
@@ -1311,7 +1312,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     // private
     _setScale: function(scale, immediately) {
-        var sameTarget = (this._scaleSpring.target.value === scale);
+        const sameTarget = (this._scaleSpring.target.value === scale);
         if (immediately) {
             if (sameTarget && this._scaleSpring.current.value === scale) {
                 return;
@@ -1368,14 +1369,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     // private
     _getLevelsInterval: function() {
-        var lowestLevel = Math.max(
+        let lowestLevel = Math.max(
             this.source.minLevel,
             Math.floor(Math.log(this.minZoomImageRatio) / Math.log(2))
         );
-        var currentZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
+        const currentZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(0), true).x *
             this._scaleSpring.current.value;
-        var highestLevel = Math.min(
+        let highestLevel = Math.min(
             Math.abs(this.source.maxLevel),
             Math.abs(Math.floor(
                 Math.log(currentZeroRatio / this.minPixelRatio) / Math.log(2)
@@ -1408,7 +1409,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const currentTime = $.now();
 
         // reset each tile's beingDrawn flag
-        for (let tileInfo of this._lastDrawn) {
+        for (const tileInfo of this._lastDrawn) {
             tileInfo.tile.beingDrawn = false;
         }
         // clear the list of tiles to draw
@@ -1450,7 +1451,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // lower-resolution levels are skipped
         let useLevel = false;
         for (let i = 0; i < levelList.length; i++) {
-            let level = levelList[i];
+            const level = levelList[i];
 
             const currentRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(level),
@@ -1512,7 +1513,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (bestLoadTileCandidates && bestLoadTileCandidates.length > 0) {
             // Avoid executing this in the frame loop
             setTimeout(() => {
-                for (let tile of bestLoadTileCandidates) {
+                for (const tile of bestLoadTileCandidates) {
                     if (tile) {
                         this._loadTile(tile, currentTime);
                     }
@@ -1531,15 +1532,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      *
      */
     _updateTilesInViewport: function(tiles) {
-        let currentTime = $.now();
-        let _this = this;
+        const currentTime = $.now();
+        const _this = this;
         this._tilesLoading = 0;
         this._wasBlending = this._isBlending;
         this._isBlending = false;
         this.loadingCoverage = {};
-        let lowestLevel = tiles.length ? tiles[0].level : 0;
+        const lowestLevel = tiles.length ? tiles[0].level : 0;
 
-        let drawArea = this.getDrawArea();
+        const drawArea = this.getDrawArea();
         if(!drawArea){
             return;
         }
@@ -1548,10 +1549,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // the coverage provided is also updated. If a level provides coverage
         // as part of this process, discard tiles from lower levels
         let level = 0;
-        for (let info of tiles) {
-            let tile = info.tile;
+        for (const info of tiles) {
+            const tile = info.tile;
             if (tile && tile.loaded) {
-                let tileIsBlending = _this._blendTile(
+                const tileIsBlending = _this._blendTile(
                     tile,
                     tile.x,
                     tile.y,
@@ -1569,7 +1570,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
         }
         if (level > 0) {
-            for (let levelKey in this._tilesToDraw) {
+            for (const levelKey in this._tilesToDraw) {
                 if (levelKey < level) {
                     this._tilesToDraw[levelKey] = undefined;
                 }
@@ -1642,8 +1643,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _updateLevel: function(level, levelOpacity,
                             levelVisibility, drawArea, loadArea, currentTime, bestLoadTileCandidates) {
 
-        var drawTopLeftBound = drawArea.getBoundingBox().getTopLeft();
-        var drawBottomRightBound = drawArea.getBoundingBox().getBottomRight();
+        const drawTopLeftBound = drawArea.getBoundingBox().getTopLeft();
+        const drawBottomRightBound = drawArea.getBoundingBox().getBottomRight();
         if (this.viewer) {
             /**
              * <em>- Needs documentation -</em>
@@ -1852,14 +1853,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} levelVisibility
      */
     _positionTile: function( tile, overlap, viewport, viewportCenter, levelVisibility ){
-        var boundsTL = tile.bounds.getTopLeft();
+        const boundsTL = tile.bounds.getTopLeft();
 
         boundsTL.x *= this._scaleSpring.current.value;
         boundsTL.y *= this._scaleSpring.current.value;
         boundsTL.x += this._xSpring.current.value;
         boundsTL.y += this._ySpring.current.value;
 
-        var boundsSize   = tile.bounds.getSize();
+        const boundsSize   = tile.bounds.getSize();
 
         boundsSize.x *= this._scaleSpring.current.value;
         boundsSize.y *= this._scaleSpring.current.value;
@@ -1869,12 +1870,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         tile.positionedBounds.width = boundsSize.x;
         tile.positionedBounds.height = boundsSize.y;
 
-        var positionC = viewport.pixelFromPointNoRotate(boundsTL, true),
-            positionT = viewport.pixelFromPointNoRotate(boundsTL, false),
-            sizeC = viewport.deltaPixelsFromPointsNoRotate(boundsSize, true),
-            sizeT = viewport.deltaPixelsFromPointsNoRotate(boundsSize, false),
-            tileCenter = positionT.plus( sizeT.divide( 2 ) ),
-            tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
+        const positionC = viewport.pixelFromPointNoRotate(boundsTL, true);
+        const positionT = viewport.pixelFromPointNoRotate(boundsTL, false);
+        let sizeC = viewport.deltaPixelsFromPointsNoRotate(boundsSize, true);
+        const sizeT = viewport.deltaPixelsFromPointsNoRotate(boundsSize, false);
+        const tileCenter = positionT.plus( sizeT.divide( 2 ) );
+        const tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
         if(this.viewer.drawer.minimumOverlapRequired(this)){
             if ( !overlap ) {
@@ -1898,8 +1899,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     // private
     _getCornerTiles: function(level, topLeftBound, bottomRightBound) {
-        var leftX;
-        var rightX;
+        let leftX;
+        let rightX;
         if (this.wrapHorizontal) {
             leftX = $.positiveModulo(topLeftBound.x, 1);
             rightX = $.positiveModulo(bottomRightBound.x, 1);
@@ -1907,9 +1908,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             leftX = Math.max(0, topLeftBound.x);
             rightX = Math.min(1, bottomRightBound.x);
         }
-        var topY;
-        var bottomY;
-        var aspectRatio = 1 / this.source.aspectRatio;
+        let topY;
+        let bottomY;
+        const aspectRatio = 1 / this.source.aspectRatio;
         if (this.wrapVertical) {
             topY = $.positiveModulo(topLeftBound.y, aspectRatio);
             bottomY = $.positiveModulo(bottomRightBound.y, aspectRatio);
@@ -1918,9 +1919,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             bottomY = Math.min(aspectRatio, bottomRightBound.y);
         }
 
-        var topLeftTile = this.source.getTileAtPoint(level, new $.Point(leftX, topY));
-        var bottomRightTile = this.source.getTileAtPoint(level, new $.Point(rightX, bottomY));
-        var numTiles  = this.source.getNumTiles(level);
+        const topLeftTile = this.source.getTileAtPoint(level, new $.Point(leftX, topY));
+        const bottomRightTile = this.source.getTileAtPoint(level, new $.Point(rightX, bottomY));
+        const numTiles  = this.source.getNumTiles(level);
 
         if (this.wrapHorizontal) {
             topLeftTile.x += numTiles.x * Math.floor(topLeftBound.x);
@@ -1944,7 +1945,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Tile} tile
      */
     _tryFindTileCacheRecord: function(tile) {
-        let record = this._tileCache.getCacheRecord(tile.originalCacheKey);
+        const record = this._tileCache.getCacheRecord(tile.originalCacheKey);
 
         if (!record) {
             return false;
@@ -2059,7 +2060,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} time
      */
     _loadTile: function(tile, time ) {
-        var _this = this;
+        const _this = this;
         tile.loading = true;
         tile.tiledImage = this;
         if (!this._imageLoader.addJob({
@@ -2256,7 +2257,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         } else {
             // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             const origCache = tile.getCache(tile.originalCacheKey);
-            for (let t of origCache._tiles) {
+            for (const t of origCache._tiles) {
 
                 // if there exists a tile that has different main cache, inherit it as a main cache
                 if (t.cacheKey !== tile.cacheKey) {
@@ -2299,7 +2300,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         let inserted = false;
         for (let tileIndex = 0; tileIndex < previousBest.length; tileIndex++) {
-            let nextTile = previousBest[tileIndex];
+            const nextTile = previousBest[tileIndex];
             if (this._sortTilesComparator(nextTile, tile) > 0) {
                 previousBest.splice(tileIndex, 0, tile);
                 inserted = true;
@@ -2376,9 +2377,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean}
      */
     _providesCoverage: function( coverage, level, x, y ) {
-        var rows,
-            cols,
-            i, j;
+        let rows;
+        let cols;
+        let i, j;
 
         if ( !coverage[ level ] ) {
             return false;

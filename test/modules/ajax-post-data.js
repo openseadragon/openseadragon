@@ -3,35 +3,35 @@
 //Testing of POST data propagation through the system
 
 (function() {
-    var POST_CAN_BE_MISSING = false;
-    var POST_DATA = "";
-    var URL_USED = "";
-    var ASSERT = null;
-    var testPostData = function(data, context) {
+    let POST_CAN_BE_MISSING = false;
+    let POST_DATA = "";
+    let URL_USED = "";
+    let ASSERT = null;
+    const testPostData = function(data, context) {
         ASSERT.ok((POST_CAN_BE_MISSING && (data === undefined || data === null))
             || data === POST_DATA,
             `${context} ${POST_CAN_BE_MISSING ? "has no POST data" : "receives expected POST data"}`);
     };
-    var testUrl = function (url, context) {
+    const testUrl = function (url, context) {
         ASSERT.ok((!POST_CAN_BE_MISSING && URL_USED.startsWith(url) && (url.indexOf(POST_DATA) === -1 || POST_DATA === ""))
             || url === URL_USED,
             `${context} ${POST_CAN_BE_MISSING ? "URL was not modified" : "URL was stripped of POST data"}`);
     };
 
     //each test must call these
-    var configure = function(postDataNotAccepted, postDataUsed, urlUsed, assert) {
+    const configure = function(postDataNotAccepted, postDataUsed, urlUsed, assert) {
         POST_CAN_BE_MISSING = postDataNotAccepted;
         POST_DATA = postDataUsed;
         URL_USED = urlUsed;
         ASSERT = assert;
     };
 
-    var viewer = null;
-    var DONE = false;
-    var OriginalLoader = OpenSeadragon.ImageLoader;
-    var OriginalAjax = OpenSeadragon.makeAjaxRequest;
+    let viewer = null;
+    let DONE = false;
+    const OriginalLoader = OpenSeadragon.ImageLoader;
+    const OriginalAjax = OpenSeadragon.makeAjaxRequest;
 
-    var closeViewer = function() {
+    const closeViewer = function() {
         if (viewer && viewer.close) {
             DONE ? viewer.destroy () : viewer.close();
         }
@@ -90,7 +90,7 @@
                 },
             });
 
-            var Loader = function(options) {
+            const Loader = function(options) {
                 OriginalLoader.apply(this, [options]);
             };
 
@@ -111,13 +111,13 @@
             });
             OpenSeadragon.ImageLoader = Loader;
 
-            var ajaxCounter = 0;
+            let ajaxCounter = 0;
             OpenSeadragon.makeAjaxRequest = function( url, onSuccess, onError ) {
-                var withCredentials;
-                var headers;
-                var responseType;
-                var postData;
-                var options;
+                let withCredentials;
+                let headers;
+                let responseType;
+                let postData;
+                let leoptions;
 
                 // Note that our preferred API is that you pass in a single object; the named
                 // arguments are for legacy support.
@@ -153,7 +153,7 @@
                     return null;
                 }
 
-                var request = Promise.resolve(url);
+                const request = Promise.resolve(url);
                 //some required properties to pass through processResponse(...)
                 request.responseText = "some text";
                 request.status = 200;
@@ -175,12 +175,12 @@
 
 
     // ----------
-    var testOpenUrl = function(withPost, withAjax) {
+    const testOpenUrl = function(withPost, withAjax) {
         testOpen(URL_USED, withPost, withAjax);
     };
 
-    var testOpen = function(tileSource, withPost, withAjax) {
-        var timeWatcher = Util.timeWatcher(ASSERT, 7000);
+    const testOpen = function(tileSource, withPost, withAjax) {
+        const timeWatcher = Util.timeWatcher(ASSERT, 7000);
 
         viewer = OpenSeadragon({
             id:            'example',
@@ -190,25 +190,25 @@
             splitHashDataForPost: withPost,
         });
 
-        var failHandler = function (event) {
+        const failHandler = function (event) {
             ASSERT.ok(false, 'Open-failed shoud not be called. We have custom function of fetching the data that succeeds.');
         };
         viewer.addHandler('open-failed', failHandler);
 
-        var openHandlerCalled = false;
-        var openHandler = function(event) {
+        let openHandlerCalled = false;
+        const openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             openHandlerCalled = true;
             closeViewer();
         };
 
-        var readyHandler = function (event) {
+        const readyHandler = function (event) {
             testPostData(event.item.source.getTilePostData(0, 0, 0), "event: 'add-item'");
             viewer.world.removeHandler('add-item', readyHandler);
             viewer.addHandler('close', closeHandler);
         };
 
-        var closeHandler = function(event) {
+        const closeHandler = function(event) {
             ASSERT.ok(openHandlerCalled, 'Open event was sent.');
 
             viewer.removeHandler('close', closeHandler);

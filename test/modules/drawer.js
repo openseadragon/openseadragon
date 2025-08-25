@@ -1,7 +1,7 @@
 /* global QUnit, $, Util, testLog */
 
 (function() {
-    var viewer;
+    let viewer;
     OpenSeadragon.getBuiltInDrawersForTest().forEach(runDrawerTests);
 
     function runDrawerTests(drawerType){
@@ -21,7 +21,7 @@
         });
 
         // ----------
-        var createViewer = function(options) {
+        const createViewer = function(options) {
             options = options || {};
             // eslint-disable-next-line new-cap
             viewer = OpenSeadragon(OpenSeadragon.extend({
@@ -34,7 +34,7 @@
 
         // ----------
         QUnit.test('basics', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
             createViewer();
             assert.ok(viewer.drawer, 'Drawer exists');
             assert.equal(viewer.drawer.canRotate(), ['webgl','canvas'].includes(drawerType), 'we can rotate if we have canvas');
@@ -43,7 +43,7 @@
 
         // ----------
         QUnit.test('rotation', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
 
             createViewer({
                 tileSources: '/test/data/testpattern.dzi'
@@ -70,7 +70,7 @@
 
         // ----------
         QUnit.test('debug', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
             createViewer({
                 tileSources: '/test/data/testpattern.dzi',
                 debugMode: true
@@ -89,12 +89,12 @@
 
         // ----------
         QUnit.test('sketchCanvas', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
 
             createViewer({
                 tileSources: '/test/data/testpattern.dzi',
             });
-            var drawer = viewer.drawer;
+            const drawer = viewer.drawer;
 
             // this test only makes sense for canvas drawer
             if(viewer.drawer.getType() !== 'canvas'){
@@ -112,7 +112,7 @@
             });
 
             function testOpacityDecimal() {
-                var tiledImage;
+                let tiledImage;
                 viewer.addTiledImage({
                     tileSource: '/test/data/testpattern.dzi',
                     opacity: 0.5,
@@ -137,7 +137,7 @@
 
         // ----------
         QUnit.test('deprecations', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
 
             createViewer({
                 tileSources: '/test/data/testpattern.dzi'

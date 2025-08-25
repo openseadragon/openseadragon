@@ -84,9 +84,9 @@ $.IIIFTileSource = function( options ){
         } else {
             // Multiple tile sizes at different levels
             this.scale_factors = [];
-            for (var t = 0; t < this.tiles.length; t++ ) {
-                for (var sf = 0; sf < this.tiles[t].scaleFactors.length; sf++) {
-                    var scaleFactor = this.tiles[t].scaleFactors[sf];
+            for (let t = 0; t < this.tiles.length; t++ ) {
+                for (let sf = 0; sf < this.tiles[t].scaleFactors.length; sf++) {
+                    const scaleFactor = this.tiles[t].scaleFactors[sf];
                     this.scale_factors.push(scaleFactor);
                     options.tileSizePerScaleFactor[scaleFactor] = {
                         width: this.tiles[t].width,
@@ -97,11 +97,11 @@ $.IIIFTileSource = function( options ){
         }
     } else if ( canBeTiled(options) ) {
         // use the largest of tileOptions that is smaller than the short dimension
-        var shortDim = Math.min( this.height, this.width ),
-            tileOptions = [256, 512, 1024],
-            smallerTiles = [];
+        const shortDim = Math.min( this.height, this.width );
+        const tileOptions = [256, 512, 1024];
+        const smallerTiles = [];
 
-        for ( var c = 0; c < tileOptions.length; c++ ) {
+        for ( let c = 0; c < tileOptions.length; c++ ) {
             if ( tileOptions[c] <= shortDim ) {
                 smallerTiles.push( tileOptions[c] );
             }
@@ -138,17 +138,17 @@ $.IIIFTileSource = function( options ){
         if (!this.scale_factors) {
             options.maxLevel = Number(Math.round(Math.log(Math.max(this.width, this.height), 2)));
         } else {
-            var maxScaleFactor = Math.max.apply(null, this.scale_factors);
+            const maxScaleFactor = Math.max.apply(null, this.scale_factors);
             options.maxLevel = Math.round(Math.log(maxScaleFactor) * Math.LOG2E);
         }
     }
 
     // Create an array with precise resolution sizes if these have been supplied through the 'sizes' object
     if( this.sizes ) {
-        var sizeLength = this.sizes.length;
+        let sizeLength = this.sizes.length;
 
         // Create a copy of the sizes list and sort in ascending order
-        var sortedSizes = this.sizes.slice().sort(( size1, size2 ) => size1.width - size2.width);
+        const sortedSizes = this.sizes.slice().sort(( size1, size2 ) => size1.width - size2.width);
 
         // List may or may not include the full resolution size (should be last after sorting): add it if necessary
         if( sortedSizes[sizeLength - 1].width < this.width && sortedSizes[sizeLength - 1].height < this.height ) {
@@ -160,10 +160,10 @@ $.IIIFTileSource = function( options ){
         if ( sizeLength === options.maxLevel + 1 ) {
 
             // If we have a list of scaleFactors, make sure each of our sizes really corresponds to the listed scales
-            var isResolutionList = 1;
+            let isResolutionList = 1;
             if ( this.scale_factors && this.scale_factors.length === sizeLength ) {
-                for ( var i = 0; i < sizeLength; i++ ) {
-                    var factor = this.scale_factors[sizeLength - i - 1]; // Scale factor order is inverted
+                for ( let i = 0; i < sizeLength; i++ ) {
+                    const factor = this.scale_factors[sizeLength - i - 1]; // Scale factor order is inverted
                     if ( Math.round( this.width / sortedSizes[i].width ) !== factor ||
                          Math.round( this.height / sortedSizes[i].height ) !== factor ) {
                         isResolutionList = 0;
@@ -248,7 +248,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     configure: function( data, url, postData ){
         // Try to deduce our version and fake it upwards if needed
         if ( !$.isPlainObject(data) ) {
-            var options = configureFromXml10( data );
+            const options = configureFromXml10( data );
             options['@context'] = "http://iiif.io/api/image/1.0/context.json";
             options["@id"] = url.replace('/info.xml', '');
             options.version = 1;
@@ -259,9 +259,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 data["@id"] = url.replace('/info.json', '');
                 data.version = 1;
             } else {
-                var context = data['@context'];
+                let context = data['@context'];
                 if (Array.isArray(context)) {
-                    for (var i = 0; i < context.length; i++) {
+                    for (let i = 0; i < context.length; i++) {
                         if (typeof context[i] === 'string' &&
                             ( /^http:\/\/iiif\.io\/api\/image\/[1-3]\/context\.json$/.test(context[i]) ||
                             context[i] === 'http://library.stanford.edu/iiif/image-api/1.1/context.json' ) ) {
@@ -287,7 +287,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             }
 
             if (data.preferredFormats) {
-                for (var f = 0; f < data.preferredFormats.length; f++ ) {
+                for (let f = 0; f < data.preferredFormats.length; f++ ) {
                     if ( $.imageFormatSupported(data.preferredFormats[f]) ) {
                         data.tileFormat = data.preferredFormats[f];
                         break;
@@ -309,7 +309,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             return $.TileSource.prototype.getTileWidth.call(this, level);
         }
 
-        var scaleFactor = Math.pow(2, this.maxLevel - level);
+        const scaleFactor = Math.pow(2, this.maxLevel - level);
 
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
             return this.tileSizePerScaleFactor[scaleFactor].width;
@@ -328,7 +328,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             return $.TileSource.prototype.getTileHeight.call(this, level);
         }
 
-        var scaleFactor = Math.pow(2, this.maxLevel - level);
+        const scaleFactor = Math.pow(2, this.maxLevel - level);
 
         if (this.tileSizePerScaleFactor && this.tileSizePerScaleFactor[scaleFactor]) {
             return this.tileSizePerScaleFactor[scaleFactor].height;
@@ -343,7 +343,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     getLevelScale: function ( level ) {
 
         if(this.emulateLegacyImagePyramid) {
-            var levelScale = NaN;
+            let levelScale = NaN;
             if (this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel) {
                 levelScale =
                     this.levels[level].width /
@@ -362,7 +362,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     getNumTiles: function( level ) {
 
         if(this.emulateLegacyImagePyramid) {
-            var scale = this.getLevelScale(level);
+            const scale = this.getLevelScale(level);
             if (scale) {
                 return new $.Point(1, 1);
             } else {
@@ -372,9 +372,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
 
         // Use supplied list of scaled resolution sizes if these exist
         if( this.levelSizes ) {
-            var levelSize = this.levelSizes[level];
-            var x = Math.ceil( levelSize.width / this.getTileWidth(level) ),
-                y = Math.ceil( levelSize.height / this.getTileHeight(level) );
+            const levelSize = this.levelSizes[level];
+            const x = Math.ceil( levelSize.width / this.getTileWidth(level) );
+            const y = Math.ceil( levelSize.height / this.getTileHeight(level) );
             return new $.Point( x, y );
         }
         // Otherwise call default TileSource->getNumTiles() function
@@ -398,23 +398,23 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         // Use supplied list of scaled resolution sizes if these exist
         if( this.levelSizes ) {
 
-            var validPoint = point.x >= 0 && point.x <= 1 &&
+            const validPoint = point.x >= 0 && point.x <= 1 &&
                              point.y >= 0 && point.y <= 1 / this.aspectRatio;
             $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
 
-            var widthScaled = this.levelSizes[level].width;
-            var pixelX = point.x * widthScaled;
-            var pixelY = point.y * widthScaled;
+            const widthScaled = this.levelSizes[level].width;
+            const pixelX = point.x * widthScaled;
+            const pixelY = point.y * widthScaled;
 
-            var x = Math.floor(pixelX / this.getTileWidth(level));
-            var y = Math.floor(pixelY / this.getTileHeight(level));
+            let x = Math.floor(pixelX / this.getTileWidth(level));
+            let y = Math.floor(pixelY / this.getTileHeight(level));
 
             // When point.x == 1 or point.y == 1 / this.aspectRatio we want to
             // return the last tile of the row/column
             if (point.x >= 1) {
                 x = this.getNumTiles(level).x - 1;
             }
-            var EPSILON = 1e-15;
+            const EPSILON = 1e-15;
             if (point.y >= 1 / this.aspectRatio - EPSILON) {
                 y = this.getNumTiles(level).y - 1;
             }
@@ -439,7 +439,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     getTileUrl: function( level, x, y ){
 
         if(this.emulateLegacyImagePyramid) {
-            var url = null;
+            let url = null;
             if ( this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel ) {
                 url = this.levels[ level ].url;
             }
@@ -447,28 +447,27 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         }
 
         //# constants
-        var IIIF_ROTATION = '0',
+        const IIIF_ROTATION = '0';
             //## get the scale (level as a decimal)
-            scale = Math.pow( 0.5, this.maxLevel - level ),
+        const scale = Math.pow( 0.5, this.maxLevel - level );
             //# image dimensions at this level
-            levelWidth,
-            levelHeight,
+        let levelWidth;
+        let levelHeight;
 
             //## iiif region
-            tileWidth,
-            tileHeight,
-            iiifTileSizeWidth,
-            iiifTileSizeHeight,
-            iiifRegion,
-            iiifTileX,
-            iiifTileY,
-            iiifTileW,
-            iiifTileH,
-            iiifSize,
-            iiifSizeW,
-            iiifSizeH,
-            iiifQuality,
-            uri;
+        let tileWidth;
+        let tileHeight;
+        let iiifTileSizeWidth;
+        let iiifTileSizeHeight;
+        let iiifRegion;
+        let iiifTileX;
+        let iiifTileY;
+        let iiifTileW;
+        let iiifTileH;
+        let iiifSize;
+        let iiifSizeW;
+        let iiifSizeH;
+        let iiifQuality;
 
         // Use supplied list of scaled resolution sizes if these exist
         if( this.levelSizes ) {
@@ -523,7 +522,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 iiifSize = iiifSizeW + "," + iiifSizeH;
             }
         }
-        uri = [ this._id, iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
+        const uri = [ this._id, iiifRegion, iiifSize, IIIF_ROTATION, iiifQuality ].join( '/' );
 
         return uri;
     },
@@ -550,15 +549,15 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @returns {Boolean}
      */
     function checkLevel0 ( options ) {
-        var level0Profiles = [
+        const level0Profiles = [
             "http://library.stanford.edu/iiif/image-api/compliance.html#level0",
             "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level0",
             "http://iiif.io/api/image/2/level0.json",
             "level0",
             "https://iiif.io/api/image/3/level0.json"
         ];
-        var profileLevel = Array.isArray(options.profile) ? options.profile[0] : options.profile;
-        var isLevel0 = (level0Profiles.indexOf(profileLevel) !== -1);
+        const profileLevel = Array.isArray(options.profile) ? options.profile[0] : options.profile;
+        const isLevel0 = (level0Profiles.indexOf(profileLevel) !== -1);
         return isLevel0;
     }
 
@@ -573,8 +572,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @returns {Boolean}
      */
     function canBeTiled ( options ) {
-        var isLevel0 = checkLevel0( options );
-        var hasCanonicalSizeFeature = false;
+        const isLevel0 = checkLevel0( options );
+        let hasCanonicalSizeFeature = false;
         if ( options.version === 2 && options.profile.length > 1 && options.profile[1].supports ) {
             hasCanonicalSizeFeature = options.profile[1].supports.indexOf( "sizeByW" ) !== -1;
         }
@@ -592,8 +591,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * @throws {Error}
      */
     function constructLevels(options) {
-        var levels = [];
-        for(var i = 0; i < options.sizes.length; i++) {
+        const levels = [];
+        for(let i = 0; i < options.sizes.length; i++) {
             levels.push({
                 url: options._id + '/full/' + options.sizes[i].width + ',' +
                     (options.version === 3 ? options.sizes[i].height : '') +
@@ -614,9 +613,9 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
             throw new Error( $.getString( "Errors.Xml" ) );
         }
 
-        var root            = xmlDoc.documentElement,
-            rootName        = root.tagName,
-            configuration   = null;
+        const root            = xmlDoc.documentElement;
+        const rootName        = root.tagName;
+        let configuration   = null;
 
         if ( rootName === "info" ) {
             try {
@@ -634,10 +633,8 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
     }
 
     function parseXML10( node, configuration, property ) {
-        var i,
-            value;
         if ( node.nodeType === 3 && property ) {//text node
-            value = node.nodeValue.trim();
+            let value = node.nodeValue.trim();
             if( value.match(/^\d*$/)){
                 value = Number( value );
             }
@@ -650,7 +647,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
                 configuration[ property ].push( value );
             }
         } else if( node.nodeType === 1 ){
-            for( i = 0; i < node.childNodes.length; i++ ){
+            for( let i = 0; i < node.childNodes.length; i++ ){
                 parseXML10( node.childNodes[ i ], configuration, node.nodeName );
             }
         }

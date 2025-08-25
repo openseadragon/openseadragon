@@ -11,7 +11,7 @@
     // ----------
     QUnit.test( 'pageScroll', function(assert) {
         // Setup
-        var origWidth = $( "body" ).width(),
+        const origWidth = $( "body" ).width(),
             origHeight = $( "body" ).height();
         $( "body" ).width( origWidth + 10000 );
         $( "body" ).height( origHeight + 10000 );
@@ -20,9 +20,9 @@
         // End setup
 
         // Test get
-        var originalGetPageScroll = OpenSeadragon.getPageScroll;
+        const originalGetPageScroll = OpenSeadragon.getPageScroll;
 
-        var scroll = OpenSeadragon.getPageScroll();
+        let scroll = OpenSeadragon.getPageScroll();
         assert.equal( scroll.x, 0, "Scroll should be 0 at beginning." );
         assert.equal( scroll.y, 0, "Scroll should be 0 at beginning." );
 
@@ -54,11 +54,11 @@
 
         // Test set, must be imperatively be done after tests for get to not
         // break them.
-        var originalSetPageScroll = OpenSeadragon.setPageScroll;
+        const originalSetPageScroll = OpenSeadragon.setPageScroll;
 
         $( document ).scrollLeft( 0 );
         $( document ).scrollTop( 0 );
-        var scroll = new OpenSeadragon.Point( 0, 0 );
+        scroll = new OpenSeadragon.Point( 0, 0 );
         OpenSeadragon.setPageScroll( scroll );
         assert.equal( $( document ).scrollLeft(), 0, "First call to 0,0 while already on 0,0." );
         assert.equal( $( document ).scrollTop(), 0, "First call to 0,0 while already on 0,0." );
@@ -77,7 +77,7 @@
         OpenSeadragon.setPageScroll = originalSetPageScroll;
         $( document ).scrollLeft( 100 );
         $( document ).scrollTop( 200 );
-        var scroll = new OpenSeadragon.Point( 100, 200 );
+        scroll = new OpenSeadragon.Point( 100, 200 );
         OpenSeadragon.setPageScroll( scroll );
         assert.equal( $( document ).scrollLeft(), 100, "First call to 100,200 while already on 100,200." );
         assert.equal( $( document ).scrollTop(), 200, "First call to 100,200 while already on 100,200." );
@@ -96,11 +96,11 @@
         OpenSeadragon.setPageScroll = originalSetPageScroll;
         $( document ).scrollLeft( 20000 );
         $( document ).scrollTop( 20000 );
-        var actualScrollLeft = $( document ).scrollLeft();
-        var actualScrollTop = $( document ).scrollTop();
+        const actualScrollLeft = $( document ).scrollLeft();
+        const actualScrollTop = $( document ).scrollTop();
         $( document ).scrollLeft( 0 );
         $( document ).scrollTop( 0 );
-        var scroll = new OpenSeadragon.Point( 20000, 20000 );
+        scroll = new OpenSeadragon.Point( 20000, 20000 );
         OpenSeadragon.setPageScroll( scroll );
         assert.equal( $( document ).scrollLeft(), actualScrollLeft, "First call to position above limits." );
         assert.equal( $( document ).scrollTop(), actualScrollTop, "First call to position above limits." );
@@ -109,8 +109,8 @@
             "reassigned on first call." );
 
 
-        var currentSetPageScroll = OpenSeadragon.setPageScroll;
-        var scroll = new OpenSeadragon.Point( 200, 200 );
+        const currentSetPageScroll = OpenSeadragon.setPageScroll;
+        scroll = new OpenSeadragon.Point( 200, 200 );
         OpenSeadragon.setPageScroll( scroll );
         assert.equal( $( document ).scrollLeft(), 200, "Second call." );
         assert.equal( $( document ).scrollTop(), 200, "Second call." );

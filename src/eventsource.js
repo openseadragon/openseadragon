@@ -135,8 +135,8 @@ $.EventSource.prototype = {
      * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to be removed.
      */
     removeHandler: function ( eventName, handler ) {
-        const events = this.events[ eventName ],
-            handlers = [];
+        const events = this.events[ eventName ];
+        const handlers = [];
         if ( !events ) {
             return;
         }

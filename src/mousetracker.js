@@ -35,10 +35,10 @@
 (function ( $ ) {
 
     // All MouseTracker instances
-    var MOUSETRACKERS  = [];
+    const MOUSETRACKERS  = [];
 
     // dictionary from hash to private properties
-    var THIS           = {};
+    const THIS           = {};
 
 
     /**
@@ -125,7 +125,7 @@
 
         MOUSETRACKERS.push( this );
 
-        var args = arguments;
+        const args = arguments;
 
         if ( !$.isPlainObject( options ) ) {
             options = {
@@ -201,7 +201,7 @@
         /*eslint-enable no-multi-spaces*/
 
         //Store private properties in a scope sealed hash map
-        var _this = this;
+        const _this = this;
 
         /**
          * @private
@@ -298,12 +298,10 @@
          * @function
          */
         destroy: function () {
-            var i;
-
             stopTracking( this );
             this.element = null;
 
-            for ( i = 0; i < MOUSETRACKERS.length; i++ ) {
+            for ( let i = 0; i < MOUSETRACKERS.length; i++ ) {
                 if ( MOUSETRACKERS[ i ] === this ) {
                     MOUSETRACKERS.splice( i, 1 );
                     break;
@@ -348,12 +346,11 @@
          * @returns {OpenSeadragon.MouseTracker.GesturePointList}
          */
         getActivePointersListByType: function ( type ) {
-            var delegate = THIS[ this.hash ],
-                i,
-                len = delegate ? delegate.activePointersLists.length : 0,
-                list;
+            const delegate = THIS[ this.hash ];
+            const len = delegate ? delegate.activePointersLists.length : 0;
+            let list;
 
-            for ( i = 0; i < len; i++ ) {
+            for ( let i = 0; i < len; i++ ) {
                 if ( delegate.activePointersLists[ i ].type === type ) {
                     return delegate.activePointersLists[ i ];
                 }
@@ -372,12 +369,11 @@
          * @returns {Number}
          */
         getActivePointerCount: function () {
-            var delegate = THIS[ this.hash ],
-                i,
-                len = delegate.activePointersLists.length,
-                count = 0;
+            const delegate = THIS[ this.hash ];
+            const len = delegate.activePointersLists.length;
+            let count = 0;
 
-            for ( i = 0; i < len; i++ ) {
+            for ( let i = 0; i < len; i++ ) {
                 count += delegate.activePointersLists[ i ].getLength();
             }
 
@@ -1010,7 +1006,7 @@
      * @private
      * @inner
      */
-    var isInIframe = (function() {
+    const isInIframe = (function() {
         try {
             return window.self !== window.top;
         } catch (e) {
@@ -1043,32 +1039,28 @@
      * @memberof OpenSeadragon.MouseTracker
      */
     $.MouseTracker.gesturePointVelocityTracker = (function () {
-        var trackerPoints = [],
-            intervalId = 0,
-            lastTime = 0;
+        const trackerPoints = [];
+        let intervalId = 0;
+        let lastTime = 0;
 
         // Generates a unique identifier for a tracked gesture point
-        var _generateGuid = function ( tracker, gPoint ) {
+        const _generateGuid = function ( tracker, gPoint ) {
             return tracker.hash.toString() + gPoint.type + gPoint.id.toString();
         };
 
         // Interval timer callback. Computes velocity for all tracked gesture points.
-        var _doTracking = function () {
-            var i,
-                len = trackerPoints.length,
-                trackPoint,
-                gPoint,
-                now = $.now(),
-                elapsedTime,
-                distance,
-                speed;
+        const _doTracking = function () {
+            const len = trackerPoints.length;
+            const now = $.now();
+            let distance;
+            let speed;
 
-            elapsedTime = now - lastTime;
+            const elapsedTime = now - lastTime;
             lastTime = now;
 
-            for ( i = 0; i < len; i++ ) {
-                trackPoint = trackerPoints[ i ];
-                gPoint = trackPoint.gPoint;
+            for ( let i = 0; i < len; i++ ) {
+                const trackPoint = trackerPoints[ i ];
+                const gPoint = trackPoint.gPoint;
                 // Math.atan2 gives us just what we need for a velocity vector, as we can simply
                 //   use cos()/sin() to extract the x/y velocity components.
                 gPoint.direction = Math.atan2( gPoint.currentPos.y - trackPoint.lastPos.y, gPoint.currentPos.x - trackPoint.lastPos.x );
@@ -1082,8 +1074,8 @@
         };
 
         // Public. Add a gesture point to be tracked
-        var addPoint = function ( tracker, gPoint ) {
-            var guid = _generateGuid( tracker, gPoint );
+        const addPoint = function ( tracker, gPoint ) {
+            const guid = _generateGuid( tracker, gPoint );
 
             trackerPoints.push(
                 {
@@ -1100,11 +1092,11 @@
         };
 
         // Public. Stop tracking a gesture point
-        var removePoint = function ( tracker, gPoint ) {
-            var guid = _generateGuid( tracker, gPoint ),
-                i,
-                len = trackerPoints.length;
-            for ( i = 0; i < len; i++ ) {
+        const removePoint = function ( tracker, gPoint ) {
+            const guid = _generateGuid( tracker, gPoint );
+            let len = trackerPoints.length;
+
+            for ( let i = 0; i < len; i++ ) {
                 if ( trackerPoints[ i ].guid === guid ) {
                     trackerPoints.splice( i, 1 );
                     // Only run the interval timer if theres gesture pointers to track
@@ -1153,7 +1145,7 @@
         $.MouseTracker.subscribeEvents.push( "pointerenter", "pointerleave", "pointerover", "pointerout", "pointerdown", "pointerup", "pointermove", "pointercancel" );
         // Pointer events capture support
         $.MouseTracker.havePointerCapture = (function () {
-            var divElement = document.createElement( 'div' );
+            const divElement = document.createElement( 'div' );
             return $.isFunction( divElement.setPointerCapture ) && $.isFunction( divElement.releasePointerCapture );
         }());
         if ( $.MouseTracker.havePointerCapture ) {
@@ -1166,7 +1158,7 @@
         $.MouseTracker.mousePointerId = "legacy-mouse";
         // Legacy mouse events capture support (IE/Firefox only?)
         $.MouseTracker.havePointerCapture = (function () {
-            var divElement = document.createElement( 'div' );
+            const divElement = document.createElement( 'div' );
             return $.isFunction( divElement.setCapture ) && $.isFunction( divElement.releaseCapture );
         }());
         if ( $.MouseTracker.havePointerCapture ) {
@@ -1346,9 +1338,8 @@
          * @returns {Number} Number of gesture points in the list.
          */
         removeById: function ( id ) {
-            var i,
-                len = this._gPoints.length;
-            for ( i = 0; i < len; i++ ) {
+            const len = this._gPoints.length;
+            for ( let i = 0; i < len; i++ ) {
                 if ( this._gPoints[ i ].id === id ) {
                     this._gPoints.splice( i, 1 );
                     break;
@@ -1374,9 +1365,8 @@
          * @returns {OpenSeadragon.MouseTracker.GesturePoint|null} The gesture point with the given id, or null if not found.
          */
         getById: function ( id ) {
-            var i,
-                len = this._gPoints.length;
-            for ( i = 0; i < len; i++ ) {
+            const len = this._gPoints.length;
+            for ( let i = 0; i < len; i++ ) {
                 if ( this._gPoints[ i ].id === id ) {
                     return this._gPoints[ i ];
                 }
@@ -1388,9 +1378,8 @@
          * @returns {OpenSeadragon.MouseTracker.GesturePoint|null} The primary gesture point in the list, or null if not found.
          */
         getPrimary: function ( id ) {
-            var i,
-                len = this._gPoints.length;
-            for ( i = 0; i < len; i++ ) {
+            const len = this._gPoints.length;
+            for ( let i = 0; i < len; i++ ) {
                 if ( this._gPoints[ i ].isPrimary ) {
                     return this._gPoints[ i ];
                 }
@@ -1437,33 +1426,29 @@
      * @inner
      */
     function clearTrackedPointers( tracker ) {
-        var delegate = THIS[ tracker.hash ],
-            i, j,
-            pointsList,
-            gPoints,
-            gPointsToRemove,
-            pointerListCount = delegate.activePointersLists.length;
+        const delegate = THIS[ tracker.hash ];
+        const pointerListCount = delegate.activePointersLists.length;
 
-        for ( i = 0; i < pointerListCount; i++ ) {
-            pointsList = delegate.activePointersLists[ i ];
+        for ( let i = 0; i < pointerListCount; i++ ) {
+            const pointsList = delegate.activePointersLists[ i ];
 
             if ( pointsList.getLength() > 0 ) {
                 // Make an array containing references to the gPoints in the pointer list
                 //   (because calls to stopTrackingPointer() are going to modify the pointer list)
-                gPointsToRemove = [];
-                gPoints = pointsList.asArray();
-                for ( j = 0; j < gPoints.length; j++ ) {
+                const gPointsToRemove = [];
+                const gPoints = pointsList.asArray();
+                for ( let j = 0; j < gPoints.length; j++ ) {
                     gPointsToRemove.push( gPoints[ j ] );
                 }
 
                 // Release and remove all gPoints from the pointer list
-                for ( j = 0; j < gPointsToRemove.length; j++ ) {
+                for ( let j = 0; j < gPointsToRemove.length; j++ ) {
                     stopTrackingPointer( tracker, pointsList, gPointsToRemove[ j ] );
                 }
             }
         }
 
-        for ( i = 0; i < pointerListCount; i++ ) {
+        for ( let i = 0; i < pointerListCount; i++ ) {
             delegate.activePointersLists.pop();
         }
 
@@ -1476,13 +1461,11 @@
      * @inner
      */
     function startTracking( tracker ) {
-        var delegate = THIS[ tracker.hash ],
-            event,
-            i;
+        const delegate = THIS[ tracker.hash ];
 
         if ( !delegate.tracking ) {
-            for ( i = 0; i < $.MouseTracker.subscribeEvents.length; i++ ) {
-                event = $.MouseTracker.subscribeEvents[ i ];
+            for ( let i = 0; i < $.MouseTracker.subscribeEvents.length; i++ ) {
+                const event = $.MouseTracker.subscribeEvents[ i ];
                 $.addEvent(
                     tracker.element,
                     event,
@@ -1503,13 +1486,11 @@
      * @inner
      */
     function stopTracking( tracker ) {
-        var delegate = THIS[ tracker.hash ],
-            event,
-            i;
+        const delegate = THIS[ tracker.hash ];
 
         if ( delegate.tracking ) {
-            for ( i = 0; i < $.MouseTracker.subscribeEvents.length; i++ ) {
-                event = $.MouseTracker.subscribeEvents[ i ];
+            for ( let i = 0; i < $.MouseTracker.subscribeEvents.length; i++ ) {
+                const event = $.MouseTracker.subscribeEvents[ i ];
                 $.removeEvent(
                     tracker.element,
                     event,
@@ -1529,7 +1510,7 @@
      * @inner
      */
     function getCaptureEventParams( tracker, pointerType ) {
-        var delegate = THIS[ tracker.hash ];
+        const delegate = THIS[ tracker.hash ];
 
         if ( pointerType === 'pointerevent' ) {
             return {
@@ -1563,8 +1544,6 @@
      * @inner
      */
     function capturePointer( tracker, gPoint ) {
-        var eventParams;
-
         if ( $.MouseTracker.havePointerCapture ) {
             if ( $.MouseTracker.havePointerEvents ) {
                 // Can throw NotFoundError (InvalidPointerId Firefox < 82)
@@ -1585,7 +1564,7 @@
             //    (Note we listen on the capture phase so the captured handlers will get called first)
             // eslint-disable-next-line no-use-before-define
             //$.console.log('Emulated mouse capture set');
-            eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
+            const eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
             // https://github.com/openseadragon/openseadragon/pull/790
             if (isInIframe && canAccessEvents(window.top)) {
                 $.addEvent(
@@ -1619,14 +1598,10 @@
      * @inner
      */
     function releasePointer( tracker, gPoint ) {
-        var eventParams;
-        var pointsList;
-        var cachedGPoint;
-
         if ( $.MouseTracker.havePointerCapture ) {
             if ( $.MouseTracker.havePointerEvents ) {
-                pointsList = tracker.getActivePointersListByType( gPoint.type );
-                cachedGPoint = pointsList.getById( gPoint.id );
+                const pointsList = tracker.getActivePointersListByType( gPoint.type );
+                const cachedGPoint = pointsList.getById( gPoint.id );
                 if ( !cachedGPoint || !cachedGPoint.captured ) {
                     return;
                 }
@@ -1646,7 +1621,7 @@
             // Emulate mouse capture by hanging listeners on the document object.
             //    (Note we listen on the capture phase so the captured handlers will get called first)
             //$.console.log('Emulated mouse capture release');
-            eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
+            const eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
             // https://github.com/openseadragon/openseadragon/pull/790
             if (isInIframe && canAccessEvents(window.top)) {
                 $.removeEvent(
@@ -1730,7 +1705,7 @@
      * @inner
      */
     function getPointRelativeToAbsolute( point, element ) {
-        var offset = $.getElementOffset( element );
+        const offset = $.getElementOffset( element );
         return point.minus( offset );
     }
 
@@ -1754,7 +1729,7 @@
     function onClick( tracker, event ) {
         //$.console.log('click ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'click',
             pointerType: 'mouse',
@@ -1778,7 +1753,7 @@
     function onDblClick( tracker, event ) {
         //$.console.log('dblclick ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'dblclick',
             pointerType: 'mouse',
@@ -1801,9 +1776,9 @@
      */
     function onKeyDown( tracker, event ) {
         //$.console.log( "keydown %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
-        var eventArgs = null;
+        let eventArgs = null;
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'keydown',
             pointerType: '',
@@ -1843,9 +1818,9 @@
     function onKeyUp( tracker, event ) {
         //$.console.log( "keyup %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
 
-        var eventArgs = null;
+        let eventArgs = null;
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'keyup',
             pointerType: '',
@@ -1885,9 +1860,9 @@
     function onKeyPress( tracker, event ) {
         //$.console.log( "keypress %s %s %s %s %s", event.keyCode, event.charCode, event.ctrlKey, event.shiftKey, event.altKey );
 
-        var eventArgs = null;
+        let eventArgs = null;
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'keypress',
             pointerType: '',
@@ -1930,7 +1905,7 @@
         // focus doesn't bubble and is not cancelable, but we call
         //   preProcessEvent() so it's dispatched to preProcessEventHandler
         //   if necessary
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'focus',
             pointerType: '',
@@ -1960,7 +1935,7 @@
         // blur doesn't bubble and is not cancelable, but we call
         //   preProcessEvent() so it's dispatched to preProcessEventHandler
         //   if necessary
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'blur',
             pointerType: '',
@@ -1987,9 +1962,9 @@
     function onContextMenu( tracker, event ) {
         //$.console.log('contextmenu ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var eventArgs = null;
+        let eventArgs = null;
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'contextmenu',
             pointerType: 'mouse',
@@ -2038,7 +2013,7 @@
      */
     function onMouseWheel( tracker, event ) {
         // Simulate a 'wheel' event
-        var simulatedEvent = {
+        const simulatedEvent = {
             target:     event.target || event.srcElement,
             type:       "wheel",
             shiftKey:   event.shiftKey || false,
@@ -2070,10 +2045,10 @@
      * @inner
      */
     function handleWheelEvent( tracker, event, originalEvent ) {
-        var nDelta = 0,
-            eventInfo;
+        let nDelta = 0;
+        let eventInfo;
 
-        var eventArgs = null;
+        let eventArgs = null;
 
         // The nDelta variable is gated to provide smooth z-index scrolling
         //   since the mouse wheel allows for substantial deltas meant for rapid
@@ -2124,12 +2099,12 @@
     function onLoseCapture( tracker, event ) {
         //$.console.log('losecapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var gPoint = {
+        const gPoint = {
             id: $.MouseTracker.mousePointerId,
             type: 'mouse'
         };
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'lostpointercapture',
             pointerType: 'mouse',
@@ -2152,13 +2127,10 @@
      * @inner
      */
     function onTouchStart( tracker, event ) {
-        var time,
-            i,
-            touchCount = event.changedTouches.length,
-            gPoint,
-            pointsList = tracker.getActivePointersListByType( 'touch' );
+        const touchCount = event.changedTouches.length;
+        const pointsList = tracker.getActivePointersListByType( 'touch' );
 
-        time = $.now();
+        const time = $.now();
 
         //$.console.log('touchstart ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
@@ -2166,7 +2138,7 @@
             $.console.warn('Tracked touch contact count doesn\'t match event.touches.length');
         }
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerdown',
             pointerType: 'touch',
@@ -2174,8 +2146,8 @@
         };
         preProcessEvent( tracker, eventInfo );
 
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoint = {
+        for ( let i = 0; i < touchCount; i++ ) {
+            const gPoint = {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
                 // Simulate isPrimary
@@ -2206,16 +2178,12 @@
      * @inner
      */
     function onTouchEnd( tracker, event ) {
-        var time,
-            i,
-            touchCount = event.changedTouches.length,
-            gPoint;
-
-        time = $.now();
+        const touchCount = event.changedTouches.length;
+        const time = $.now();
 
         //$.console.log('touchend ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerup',
             pointerType: 'touch',
@@ -2223,8 +2191,8 @@
         };
         preProcessEvent( tracker, eventInfo );
 
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoint = {
+        for ( let i = 0; i < touchCount; i++ ) {
+            const gPoint = {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
                 currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
@@ -2253,14 +2221,10 @@
      * @inner
      */
     function onTouchMove( tracker, event ) {
-        var time,
-            i,
-            touchCount = event.changedTouches.length,
-            gPoint;
+        const touchCount = event.changedTouches.length;
+        const time = $.now();
 
-        time = $.now();
-
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointermove',
             pointerType: 'touch',
@@ -2268,8 +2232,8 @@
         };
         preProcessEvent( tracker, eventInfo );
 
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoint = {
+        for ( let i = 0; i < touchCount; i++ ) {
+            const gPoint = {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch',
                 currentPos: getMouseAbsolute( event.changedTouches[ i ] ),
@@ -2293,13 +2257,10 @@
      * @inner
      */
     function onTouchCancel( tracker, event ) {
-        var touchCount = event.changedTouches.length,
-            i,
-            gPoint;
-
+        const touchCount = event.changedTouches.length;
         //$.console.log('touchcancel ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointercancel',
             pointerType: 'touch',
@@ -2307,8 +2268,8 @@
         };
         preProcessEvent( tracker, eventInfo );
 
-        for ( i = 0; i < touchCount; i++ ) {
-            gPoint = {
+        for ( let i = 0; i < touchCount; i++ ) {
+            const gPoint = {
                 id: event.changedTouches[ i ].identifier,
                 type: 'touch'
             };
@@ -2354,7 +2315,7 @@
     function onGotPointerCapture( tracker, event ) {
         //$.console.log('gotpointercapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'gotpointercapture',
             pointerType: getPointerType( event ),
@@ -2383,7 +2344,7 @@
     function onLostPointerCapture( tracker, event ) {
         //$.console.log('lostpointercapture ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'lostpointercapture',
             pointerType: getPointerType( event ),
@@ -2415,7 +2376,7 @@
     function onPointerEnter( tracker, event ) {
         //$.console.log('pointerenter ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        var gPoint = {
+        const gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2426,7 +2387,7 @@
         // pointerenter doesn't bubble and is not cancelable, but we call
         //   preProcessEvent() so it's dispatched to preProcessEventHandler
         //   if necessary
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerenter',
             pointerType: gPoint.type,
@@ -2448,7 +2409,7 @@
     function onPointerLeave( tracker, event ) {
         //$.console.log('pointerleave ' + (tracker.userData ? tracker.userData.toString() : ''));
 
-        var gPoint = {
+        const gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2459,7 +2420,7 @@
         // pointerleave doesn't bubble and is not cancelable, but we call
         //   preProcessEvent() so it's dispatched to preProcessEventHandler
         //   if necessary
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerleave',
             pointerType: gPoint.type,
@@ -2481,7 +2442,7 @@
     function onPointerOver( tracker, event ) {
         //$.console.log('pointerover ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var gPoint = {
+        const gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2489,7 +2450,7 @@
             currentTime: $.now()
         };
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerover',
             pointerType: gPoint.type,
@@ -2518,7 +2479,7 @@
     function onPointerOut( tracker, event ) {
         //$.console.log('pointerout ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var gPoint = {
+        const gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2526,7 +2487,7 @@
             currentTime: $.now()
         };
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerout',
             pointerType: gPoint.type,
@@ -2553,7 +2514,7 @@
      * @inner
      */
     function onPointerDown( tracker, event ) {
-        var gPoint = {
+        const gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2568,12 +2529,12 @@
         //                         event.target.hasPointerCapture &&
         //                         $.Browser.vendor !== $.BROWSERS.IE) ?
         //                         event.target.hasPointerCapture(event.pointerId) : false;
-        var implicitlyCaptured = $.MouseTracker.havePointerEvents &&
+        const implicitlyCaptured = $.MouseTracker.havePointerEvents &&
                                 gPoint.type === 'touch';
 
         //$.console.log('pointerdown ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerdown',
             pointerType: gPoint.type,
@@ -2622,7 +2583,7 @@
      * @inner
      */
     function onPointerUpCaptured( tracker, event ) {
-        var pointsList = tracker.getActivePointersListByType( getPointerType( event ) );
+        const pointsList = tracker.getActivePointersListByType( getPointerType( event ) );
         if ( pointsList.getById( event.pointerId ) ) {
             handlePointerUp( tracker, event );
         }
@@ -2638,11 +2599,9 @@
      * @inner
      */
     function handlePointerUp( tracker, event ) {
-        var gPoint;
-
         //$.console.log('pointerup ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        gPoint = {
+        const gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2650,7 +2609,7 @@
             currentTime: $.now()
         };
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointerup',
             pointerType: gPoint.type,
@@ -2703,7 +2662,7 @@
      * @inner
      */
     function onPointerMoveCaptured( tracker, event ) {
-        var pointsList = tracker.getActivePointersListByType( getPointerType( event ) );
+        const pointsList = tracker.getActivePointersListByType( getPointerType( event ) );
         if ( pointsList.getById( event.pointerId ) ) {
             handlePointerMove( tracker, event );
         }
@@ -2721,7 +2680,7 @@
     function handlePointerMove( tracker, event ) {
         // Pointer changed coordinates, button state, pressure, tilt, or contact geometry (e.g. width and height)
 
-        var gPoint = {
+        const gPoint = {
             id: getPointerId( event ),
             type: getPointerType( event ),
             isPrimary: getIsPrimary( event ),
@@ -2729,7 +2688,7 @@
             currentTime: $.now()
         };
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointermove',
             pointerType: gPoint.type,
@@ -2755,12 +2714,12 @@
     function onPointerCancel( tracker, event ) {
         //$.console.log('pointercancel ' + (tracker.userData ? tracker.userData.toString() : '') + ' ' + (event.target === tracker.element ? 'tracker.element' : ''));
 
-        var gPoint = {
+        const gPoint = {
             id: event.pointerId,
             type: getPointerType( event )
         };
 
-        var eventInfo = {
+        const eventInfo = {
             originalEvent: event,
             eventType: 'pointercancel',
             pointerType: gPoint.type,
@@ -2818,9 +2777,8 @@
      */
     function stopTrackingPointer( tracker, pointsList, gPoint ) {
         //$.console.log('stopTrackingPointer *** ' + pointsList.type + ' ' + gPoint.id.toString());
-        var listLength;
-
-        var trackedGPoint = pointsList.getById( gPoint.id );
+        let listLength;
+        const trackedGPoint = pointsList.getById( gPoint.id );
 
         if ( trackedGPoint ) {
             if ( trackedGPoint.captured ) {
@@ -2975,8 +2933,8 @@
      *      Value to set the captured property to.
      */
     function updatePointerCaptured( tracker, gPoint, isCaptured ) {
-        var pointsList = tracker.getActivePointersListByType( gPoint.type );
-        var updateGPoint = pointsList.getById( gPoint.id );
+        const pointsList = tracker.getActivePointersListByType( gPoint.type );
+        const updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             if ( isCaptured && !updateGPoint.captured ) {
@@ -3008,10 +2966,8 @@
      *      Gesture point associated with the event.
      */
     function updatePointerEnter( tracker, eventInfo, gPoint ) {
-        var pointsList = tracker.getActivePointersListByType( gPoint.type ),
-            updateGPoint;
-
-        updateGPoint = pointsList.getById( gPoint.id );
+        const pointsList = tracker.getActivePointersListByType( gPoint.type );
+        const updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             // Already tracking the pointer...update it
@@ -3062,11 +3018,8 @@
      *      Gesture point associated with the event.
      */
     function updatePointerLeave( tracker, eventInfo, gPoint ) {
-        var pointsList = tracker.getActivePointersListByType(gPoint.type),
-            updateGPoint,
-            dispatchEventObj;
-
-        updateGPoint = pointsList.getById( gPoint.id );
+        const pointsList = tracker.getActivePointersListByType(gPoint.type);
+        const updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             // Already tracking the pointer. If captured then update it, else stop tracking it
@@ -3089,7 +3042,7 @@
         // Leave (doesn't bubble and not cancelable)
         //   Note: exitHandler is deprecated (v2.5.0), replaced by leaveHandler
         if ( tracker.leaveHandler || tracker.exitHandler ) {
-            dispatchEventObj = {
+            const dispatchEventObj = {
                 eventSource:          tracker,
                 pointerType:          gPoint.type,
                 // GitHub PR: https://github.com/openseadragon/openseadragon/pull/1754 (gPoint.currentPos && )
@@ -3126,12 +3079,8 @@
      *      Gesture point associated with the event.
      */
     function updatePointerOver( tracker, eventInfo, gPoint ) {
-        var pointsList,
-            updateGPoint;
-
-        pointsList = tracker.getActivePointersListByType( gPoint.type );
-
-        updateGPoint = pointsList.getById( gPoint.id );
+        const pointsList = tracker.getActivePointersListByType( gPoint.type );
+        const updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             gPoint = updateGPoint;
@@ -3172,12 +3121,8 @@
      *      Gesture point associated with the event.
      */
     function updatePointerOut( tracker, eventInfo, gPoint ) {
-        var pointsList,
-            updateGPoint;
-
-        pointsList = tracker.getActivePointersListByType(gPoint.type);
-
-        updateGPoint = pointsList.getById( gPoint.id );
+        const pointsList = tracker.getActivePointersListByType(gPoint.type);
+        const updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             gPoint = updateGPoint;
@@ -3221,9 +3166,8 @@
      *      only one pointerdown/pointerup event combo is fired. Chorded button state changes instead fire pointermove events.
      */
     function updatePointerDown( tracker, eventInfo, gPoint, buttonChanged ) {
-        var delegate = THIS[ tracker.hash ],
-            pointsList = tracker.getActivePointersListByType( gPoint.type ),
-            updateGPoint;
+        const delegate = THIS[ tracker.hash ];
+        const pointsList = tracker.getActivePointersListByType( gPoint.type );
 
         if ( typeof eventInfo.originalEvent.buttons !== 'undefined' ) {
             pointsList.buttons = eventInfo.originalEvent.buttons;
@@ -3277,7 +3221,7 @@
             return;
         }
 
-        updateGPoint = pointsList.getById( gPoint.id );
+        const updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             // Already tracking the pointer...update it
@@ -3361,13 +3305,12 @@
      *      only one pointerdown/pointerup event combo is fired. Chorded button state changes instead fire pointermove events.
      */
     function updatePointerUp( tracker, eventInfo, gPoint, buttonChanged ) {
-        var delegate = THIS[ tracker.hash ],
-            pointsList = tracker.getActivePointersListByType( gPoint.type ),
-            releasePoint,
-            releaseTime,
-            updateGPoint,
-            wasCaptured = false,
-            quick;
+        const delegate = THIS[ tracker.hash ];
+        const pointsList = tracker.getActivePointersListByType( gPoint.type );
+        let releasePoint;
+        let releaseTime;
+        let wasCaptured = false;
+        let quick;
 
         if ( typeof eventInfo.originalEvent.buttons !== 'undefined' ) {
             pointsList.buttons = eventInfo.originalEvent.buttons;
@@ -3422,7 +3365,7 @@
             return;
         }
 
-        updateGPoint = pointsList.getById( gPoint.id );
+        let updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             pointsList.removeContact();
@@ -3605,17 +3548,15 @@
      *      Gesture points associated with the event.
      */
     function updatePointerMove( tracker, eventInfo, gPoint ) {
-        var delegate = THIS[ tracker.hash ],
-            pointsList = tracker.getActivePointersListByType( gPoint.type ),
-            updateGPoint,
-            gPointArray,
-            delta;
+        const delegate = THIS[ tracker.hash ];
+        const pointsList = tracker.getActivePointersListByType( gPoint.type );
+        let delta;
 
         if ( typeof eventInfo.originalEvent.buttons !== 'undefined' ) {
             pointsList.buttons = eventInfo.originalEvent.buttons;
         }
 
-        updateGPoint = pointsList.getById( gPoint.id );
+        let updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             // Already tracking the pointer...update it
@@ -3696,7 +3637,7 @@
         } else if ( pointsList.contacts === 2 ) {
             // Move (2 contacts, use center)
             if ( tracker.moveHandler ) {
-                gPointArray = pointsList.asArray();
+                const gPointArray = pointsList.asArray();
                 tracker.moveHandler(
                     {
                         eventSource:          tracker,
@@ -3752,10 +3693,8 @@
      *      Gesture points associated with the event.
      */
     function updatePointerCancel( tracker, eventInfo, gPoint ) {
-        var pointsList = tracker.getActivePointersListByType( gPoint.type ),
-            updateGPoint;
-
-        updateGPoint = pointsList.getById( gPoint.id );
+        const pointsList = tracker.getActivePointersListByType( gPoint.type );
+        const updateGPoint = pointsList.getById( gPoint.id );
 
         if ( updateGPoint ) {
             stopTrackingPointer( tracker, pointsList, updateGPoint );

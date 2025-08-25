@@ -1,7 +1,7 @@
 /* global QUnit, $, TouchUtil, Util, testLog */
 
 (function () {
-    var context, result=[], eName = "test", eventCounter = 0, finished = false;
+    let context, result=[], eName = "test", eventCounter = 0, finished = false;
 
     function evaluateTest(e) {
         if (finished) return;

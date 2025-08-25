@@ -40,9 +40,7 @@
      * @memberof OpenSeadragon
      */
     $.ControlDock = function( options ){
-        var layouts = [ 'topleft', 'topright', 'bottomright', 'bottomleft'],
-            layout,
-            i;
+        const layouts = [ 'topleft', 'topright', 'bottomright', 'bottomleft'];
 
         $.extend( true, this, {
             id: 'controldock-' + $.now() + '-' + Math.floor(Math.random() * 1000000),
@@ -66,8 +64,8 @@
             this.container.style.height = '100%';
         }
 
-        for( i = 0; i < layouts.length; i++ ){
-            layout = layouts[ i ];
+        for( let i = 0; i < layouts.length; i++ ){
+            let layout = layouts[ i ];
             this.controls[ layout ] = $.makeNeutralElement( "div" );
             this.controls[ layout ].style.position = 'absolute';
             if ( layout.match( 'left' ) ){
@@ -98,7 +96,7 @@
          */
         addControl: function ( element, controlOptions ) {
             element = $.getElement( element );
-            var div = null;
+            let div = null;
 
             if ( getControlIndex( this, element ) >= 0 ) {
                 return;     // they're trying to add a duplicate control
@@ -155,7 +153,7 @@
          */
         removeControl: function ( element ) {
             element = $.getElement( element );
-            var i = getControlIndex( this, element );
+            const i = getControlIndex( this, element );
 
             if ( i >= 0 ) {
                 this.controls[ i ].destroy();
@@ -183,9 +181,7 @@
          * @returns {Boolean}
          */
         areControlsEnabled: function () {
-            var i;
-
-            for ( i = this.controls.length - 1; i >= 0; i-- ) {
+            for ( let i = this.controls.length - 1; i >= 0; i-- ) {
                 if ( this.controls[ i ].isVisible() ) {
                     return true;
                 }
@@ -200,9 +196,7 @@
          * @returns {OpenSeadragon.ControlDock} Chainable.
          */
         setControlsEnabled: function( enabled ) {
-            var i;
-
-            for ( i = this.controls.length - 1; i >= 0; i-- ) {
+            for (let i = this.controls.length - 1; i >= 0; i-- ) {
                 this.controls[ i ].setVisible( enabled );
             }
 
@@ -216,10 +210,9 @@
     // Utility methods
     ///////////////////////////////////////////////////////////////////////////////
     function getControlIndex( dock, element ) {
-        var controls = dock.controls,
-            i;
+        const controls = dock.controls;
 
-        for ( i = controls.length - 1; i >= 0; i-- ) {
+        for (let i = controls.length - 1; i >= 0; i-- ) {
             if ( controls[ i ].element === element ) {
                 return i;
             }

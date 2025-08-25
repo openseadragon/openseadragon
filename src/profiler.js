@@ -86,7 +86,7 @@ $.Profiler.prototype = {
             return;     // this is the first update
         }
 
-        var time = this.lastBeginTime - this.lastEndTime;
+        const time = this.lastBeginTime - this.lastEndTime;
 
         this.avgIdleTime = (this.avgIdleTime * (this.numUpdates - 1) + time) / this.numUpdates;
 
@@ -109,7 +109,7 @@ $.Profiler.prototype = {
         this.lastEndTime = $.now();
         this.midUpdate = false;
 
-        var time = this.lastEndTime - this.lastBeginTime;
+        const time = this.lastEndTime - this.lastBeginTime;
 
         this.numUpdates++;
         this.avgUpdateTime = (this.avgUpdateTime * (this.numUpdates - 1) + time) / this.numUpdates;

@@ -1,7 +1,7 @@
 /* global QUnit, $, testLog */
 
 (function () {
-    var viewer;
+    let viewer;
 
     QUnit.module('Controls', {
         beforeEach: function () {
@@ -25,8 +25,8 @@
     });
 
     QUnit.test('ZoomControlOff', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(!viewer.showZoomControl, 'showZoomControl should be off');
             assert.ok(!viewer.zoomInButton, "zoomIn button should be null");
@@ -47,8 +47,8 @@
     });
 
     QUnit.test('ZoomControlOn', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(viewer.showZoomControl, 'showZoomControl should be on');
             assert.ok(!!viewer.zoomInButton, "zoomIn button should not be null");
@@ -58,9 +58,9 @@
             assert.notEqual(viewer.buttonGroup.buttons.indexOf(viewer.zoomOutButton), -1,
                 "The zoomOut button should be present");
 
-            var oldZoom = viewer.viewport.getZoom();
+            let oldZoom = viewer.viewport.getZoom();
             viewer.zoomInButton.onClick();
-            var newZoom = viewer.viewport.getZoom();
+            let newZoom = viewer.viewport.getZoom();
             assert.ok(oldZoom < newZoom, "OSD should have zoomed in.");
             oldZoom = newZoom;
             viewer.zoomOutButton.onClick();
@@ -82,8 +82,8 @@
     });
 
     QUnit.test('HomeControlOff', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(!viewer.showHomeControl, 'showHomeControl should be off');
             assert.ok(!viewer.homeButton, "Home button should be null");
@@ -103,8 +103,8 @@
     });
 
     QUnit.test('HomeControlOn', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(viewer.showHomeControl, 'showHomeControl should be on');
             assert.ok(!!viewer.homeButton, "Home button should not be null");
@@ -112,8 +112,8 @@
                 "The home button should be present");
 
             viewer.viewport.zoomBy(1.1);
-            var bounds = viewer.viewport.getBounds();
-            var homeBounds = viewer.viewport.getHomeBounds();
+            let bounds = viewer.viewport.getBounds();
+            const homeBounds = viewer.viewport.getHomeBounds();
             assert.ok(bounds.x !== homeBounds.x ||
                 bounds.y !== homeBounds.y ||
                 bounds.width !== homeBounds.width ||
@@ -141,8 +141,8 @@
     });
 
     QUnit.test('FullPageControlOff', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(!viewer.showFullPageControl, 'showFullPageControl should be off');
             assert.ok(!viewer.fullPageButton, "FullPage button should be null");
@@ -162,8 +162,8 @@
     });
 
     QUnit.test('FullPageControlOn', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(viewer.showHomeControl, 'showFullPageControl should be on');
             assert.ok(!!viewer.fullPageButton, "FullPage button should not be null");
@@ -191,8 +191,8 @@
     });
 
     QUnit.test('RotateControlOff', function (assert) {
-        var done = assert.async();
-        var openHandler = function (event) {
+        const done = assert.async();
+        const openHandler = function (event) {
             viewer.removeHandler('open', openHandler);
             assert.ok(true, 'Open event was sent');
             assert.ok(viewer.drawer, 'Drawer exists');
@@ -216,8 +216,8 @@
     });
 
     QUnit.test('RotateControlOn', function (assert) {
-        var done = assert.async();
-        var openHandler = function (event) {
+        const done = assert.async();
+        const openHandler = function (event) {
             viewer.removeHandler('open', openHandler);
             assert.ok(true, 'Open event was sent');
             assert.ok(viewer.drawer, 'Drawer exists');
@@ -251,8 +251,8 @@
     });
 
     QUnit.test('SequenceControlOff', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(!viewer.showSequenceControl, 'showSequenceControl should be off');
             assert.ok(!viewer.previousButton, "Previous button should be null");
@@ -277,8 +277,8 @@
     });
 
     QUnit.test('SequenceControlOnPrevNextWrapOff', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(viewer.showSequenceControl, 'showSequenceControl should be on');
             assert.ok(!!viewer.previousButton, "Previous button should not be null");
@@ -336,8 +336,8 @@
     });
 
     QUnit.test('SequenceControlOnPrevNextWrapOn', function (assert) {
-        var done = assert.async();
-        var openHandler = function () {
+        const done = assert.async();
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             assert.ok(viewer.showSequenceControl, 'showSequenceControl should be on');
             assert.ok(!!viewer.previousButton, "Previous button should not be null");

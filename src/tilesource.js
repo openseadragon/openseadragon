@@ -95,11 +95,11 @@
  *      The maximum level to attempt to load.
  */
 $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
-    var _this = this;
+    const _this = this;
 
-    var args = arguments,
-        options,
-        i;
+    const args = arguments;
+    let options;
+    let i;
 
     if( $.isPlainObject( width ) ){
         options = width;
@@ -317,8 +317,8 @@ $.TileSource.prototype = {
         // see https://github.com/openseadragon/openseadragon/issues/22
         // we use the tilesources implementation of getLevelScale to generate
         // a memoized re-implementation
-        var levelScaleCache = {},
-            i;
+        const levelScaleCache = {};
+        let i;
         for( i = 0; i <= this.maxLevel; i++ ){
             levelScaleCache[ i ] = 1 / Math.pow(2, this.maxLevel - i);
         }
@@ -332,9 +332,9 @@ $.TileSource.prototype = {
      * @param {Number} level
      */
     getNumTiles: function( level ) {
-        var scale = this.getLevelScale( level ),
-            x = Math.ceil( scale * this.dimensions.x / this.getTileWidth(level) ),
-            y = Math.ceil( scale * this.dimensions.y / this.getTileHeight(level) );
+        const scale = this.getLevelScale( level );
+        const x = Math.ceil( scale * this.dimensions.x / this.getTileWidth(level) );
+        const y = Math.ceil( scale * this.dimensions.y / this.getTileHeight(level) );
 
         return new $.Point( x, y );
     },
@@ -344,9 +344,9 @@ $.TileSource.prototype = {
      * @param {Number} level
      */
     getPixelRatio: function( level ) {
-        var imageSizeScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            rx = 1.0 / imageSizeScaled.x * $.pixelDensityRatio,
-            ry = 1.0 / imageSizeScaled.y * $.pixelDensityRatio;
+        const imageSizeScaled = this.dimensions.times( this.getLevelScale( level ) );
+        const rx = 1.0 / imageSizeScaled.x * $.pixelDensityRatio;
+        const ry = 1.0 / imageSizeScaled.y * $.pixelDensityRatio;
 
         return new $.Point(rx, ry);
     },
@@ -357,8 +357,8 @@ $.TileSource.prototype = {
      * @returns {Number} The highest level in this tile source that can be contained in a single tile.
      */
     getClosestLevel: function() {
-        var i,
-            tiles;
+        let i;
+        let tiles;
 
         for (i = this.minLevel + 1; i <= this.maxLevel; i++){
             tiles = this.getNumTiles(i);
@@ -376,24 +376,24 @@ $.TileSource.prototype = {
      * @param {OpenSeadragon.Point} point
      */
     getTileAtPoint: function(level, point) {
-        var validPoint = point.x >= 0 && point.x <= 1 &&
+        const validPoint = point.x >= 0 && point.x <= 1 &&
             point.y >= 0 && point.y <= 1 / this.aspectRatio;
         $.console.assert(validPoint, "[TileSource.getTileAtPoint] must be called with a valid point.");
 
 
-        var widthScaled = this.dimensions.x * this.getLevelScale(level);
-        var pixelX = point.x * widthScaled;
-        var pixelY = point.y * widthScaled;
+        const widthScaled = this.dimensions.x * this.getLevelScale(level);
+        const pixelX = point.x * widthScaled;
+        const pixelY = point.y * widthScaled;
 
-        var x = Math.floor(pixelX / this.getTileWidth(level));
-        var y = Math.floor(pixelY / this.getTileHeight(level));
+        let x = Math.floor(pixelX / this.getTileWidth(level));
+        let y = Math.floor(pixelY / this.getTileHeight(level));
 
         // When point.x == 1 or point.y == 1 / this.aspectRatio we want to
         // return the last tile of the row/column
         if (point.x >= 1) {
             x = this.getNumTiles(level).x - 1;
         }
-        var EPSILON = 1e-15;
+        const EPSILON = 1e-15;
         if (point.y >= 1 / this.aspectRatio - EPSILON) {
             y = this.getNumTiles(level).y - 1;
         }
@@ -412,14 +412,14 @@ $.TileSource.prototype = {
      * the isSource parameter.
      */
     getTileBounds: function( level, x, y, isSource ) {
-        var dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) ),
-            tileWidth = this.getTileWidth(level),
-            tileHeight = this.getTileHeight(level),
-            px = ( x === 0 ) ? 0 : tileWidth * x - this.tileOverlap,
-            py = ( y === 0 ) ? 0 : tileHeight * y - this.tileOverlap,
-            sx = tileWidth + ( x === 0 ? 1 : 2 ) * this.tileOverlap,
-            sy = tileHeight + ( y === 0 ? 1 : 2 ) * this.tileOverlap,
-            scale = 1.0 / dimensionsScaled.x;
+        const dimensionsScaled = this.dimensions.times( this.getLevelScale( level ) );
+        const tileWidth = this.getTileWidth(level);
+        const tileHeight = this.getTileHeight(level);
+        const px = ( x === 0 ) ? 0 : tileWidth * x - this.tileOverlap;
+        const py = ( y === 0 ) ? 0 : tileHeight * y - this.tileOverlap;
+        let sx = tileWidth + ( x === 0 ? 1 : 2 ) * this.tileOverlap;
+        let sy = tileHeight + ( y === 0 ? 1 : 2 ) * this.tileOverlap;
+        const scale = 1.0 / dimensionsScaled.x;
 
         sx = Math.min( sx, dimensionsScaled.x - px );
         sy = Math.min( sy, dimensionsScaled.y - py );
@@ -447,14 +447,14 @@ $.TileSource.prototype = {
      * @throws {Error}
      */
     getImageInfo: function( url ) {
-        var _this = this,
-            callbackName,
-            callback,
-            readySource,
-            options,
-            urlParts,
-            filename,
-            lastDot;
+        const _this = this;
+        let callbackName;
+        let callback;
+        let readySource;
+        let options;
+        let urlParts;
+        let filename;
+        let lastDot;
 
 
         if( url ) {
@@ -466,9 +466,9 @@ $.TileSource.prototype = {
             }
         }
 
-        var postData = null;
+        let postData = null;
         if (this.splitHashDataForPost) {
-            var hashIdx = url.indexOf("#");
+            const hashIdx = url.indexOf("#");
             if (hashIdx !== -1) {
                 postData = url.substring(hashIdx + 1);
                 url = url.substr(0, hashIdx);
@@ -479,7 +479,7 @@ $.TileSource.prototype = {
             if( typeof (data) === "string" ) {
                 data = $.parseXml( data );
             }
-            var $TileSource = $.TileSource.determineType( _this, data, url );
+            const $TileSource = $.TileSource.determineType( _this, data, url );
             if ( !$TileSource ) {
                 /**
                  * Raised when an error occurs loading a TileSource.
@@ -535,11 +535,11 @@ $.TileSource.prototype = {
                 withCredentials: this.ajaxWithCredentials,
                 headers: this.ajaxHeaders,
                 success: function( xhr ) {
-                    var data = processResponse( xhr );
+                    const data = processResponse( xhr );
                     callback( data );
                 },
                 error: function ( xhr, exc ) {
-                    var msg;
+                    let msg;
 
                     /*
                         IE < 10 will block XHR requests to different origins. Any property access on the request
@@ -549,7 +549,7 @@ $.TileSource.prototype = {
                     try {
                         msg = "HTTP " + xhr.status + " attempting to load TileSource: " + url;
                     } catch ( e ) {
-                        var formattedExc;
+                        let formattedExc;
                         if ( typeof ( exc ) === "undefined" || !exc.toString ) {
                             formattedExc = "Unknown error";
                         } else {
@@ -756,7 +756,7 @@ $.TileSource.prototype = {
      * @param {Number} y
      */
     tileExists: function( level, x, y ) {
-        var numTiles = this.getNumTiles( level );
+        const numTiles = this.getNumTiles( level );
         return level >= this.minLevel &&
             level <= this.maxLevel &&
             x >= 0 &&
@@ -816,7 +816,7 @@ $.TileSource.prototype = {
                 responseType: "arraybuffer",
                 postData: context.postData,
                 success: function(request) {
-                    var blb;
+                    let blb;
                     // Make the raw data into a blob.
                     // BlobBuilder fallback adapted from
                     // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
@@ -863,7 +863,7 @@ $.TileSource.prototype = {
         if (context.userData.request) {
             context.userData.request.abort();
         }
-        var image = context.userData.image;
+        const image = context.userData.image;
         if (context.userData.image) {
             image.onload = image.onerror = image.onabort = null;
         }
@@ -957,10 +957,10 @@ $.extend( true, $.TileSource.prototype, $.EventSource.prototype );
  * @param {XMLHttpRequest} xhr - the completed network request
  */
 function processResponse( xhr ){
-    var responseText = xhr.responseText,
-        status       = xhr.status,
-        statusText,
-        data;
+    const responseText = xhr.responseText;
+    let status       = xhr.status;
+    let statusText;
+    let data;
 
     if ( !xhr ) {
         throw new Error( $.getString( "Errors.Security" ) );
@@ -1004,8 +1004,7 @@ function processResponse( xhr ){
  *      loaded from, if any.
  */
 $.TileSource.determineType = function( tileSource, data, url ){
-    var property;
-    for( property in OpenSeadragon ){
+    for( const property in OpenSeadragon ){
         if( property.match(/.+TileSource$/) &&
             $.isFunction( OpenSeadragon[ property ] ) &&
             $.isFunction( OpenSeadragon[ property ].prototype.supports ) &&

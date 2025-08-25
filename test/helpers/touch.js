@@ -2,10 +2,10 @@
 
 (function () {
 
-    var touches,
-        identifier,
-        target;
-      
+    let touches;
+    let identifier;
+    let target;
+
     // ----------
     window.TouchUtil = {
         reset: function () {
@@ -28,8 +28,8 @@
             // for testing in other touch-enabled browsers
             if ( !('ontouchstart' in window) ) {
                 tracker.setTracking( false );
-                ['touchstart', 'touchend'].forEach(function ( type ) { 
-                    var index = OpenSeadragon.MouseTracker.subscribeEvents.indexOf( type );
+                ['touchstart', 'touchend'].forEach(function ( type ) {
+                    const index = OpenSeadragon.MouseTracker.subscribeEvents.indexOf( type );
                     if ( index > -1 ) {
                       OpenSeadragon.MouseTracker.subscribeEvents.splice( index, 1 );
                     }
@@ -41,11 +41,10 @@
         },
 
         start: function () {
-            var touch,
-                event,
-                newTouches = [];
+            let touch;
+            const newTouches = [];
 
-            for ( var i = 0; i < arguments.length; i++ ) {
+            for ( let i = 0; i < arguments.length; i++ ) {
                 touch = createTouch(
                     target.offsetLeft + arguments[ i ][ 0 ],
                     target.offsetTop  + arguments[ i ][ 1 ]
@@ -55,7 +54,7 @@
                 newTouches.push( touch );
             }
 
-            event = createTouchEvent( 'touchstart', newTouches );
+            const event = createTouchEvent( 'touchstart', newTouches );
             target.dispatchEvent( event );
             return newTouches.length === 1 ? newTouches[ 0 ] : newTouches;
         },
@@ -65,12 +64,11 @@
                 changedTouches = [ changedTouches ];
             }
 
-            var event;
             touches = touches.filter(function ( touch ) {
                 return changedTouches.indexOf( touch ) === -1;
             });
 
-            event = createTouchEvent( 'touchend', changedTouches );
+            const event = createTouchEvent( 'touchend', changedTouches );
             target.dispatchEvent( event );
         }
 
@@ -110,8 +108,8 @@
             } );
         } catch (e) {
             // legacy
-            var touchEvent = document.createEvent( 'TouchEvent' );
-            var touch1 = changedTouches[ 0 ];
+            const touchEvent = document.createEvent( 'TouchEvent' );
+            const touch1 = changedTouches[ 0 ];
             touchEvent.initTouchEvent(
                 createTouchList( touches ),         // touches
                 createTouchList( touches ),         // targetTouches

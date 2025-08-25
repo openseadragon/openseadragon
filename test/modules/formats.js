@@ -2,14 +2,14 @@
 
 (function() {
 
-    // This module tests whether our various file formats can be opened.
+    // This module tests whether our constious file formats can be opened.
     // TODO: Add more file formats (with corresponding test data).
 
-    var viewer = null;
+    let viewer = null;
 
     QUnit.module('Formats', {
         beforeEach: function () {
-            var example = document.createElement("div");
+            const example = document.createElement("div");
             example.id = "example";
             document.getElementById("qunit-fixture").appendChild(example);
         },
@@ -24,11 +24,11 @@
 
 
     // ----------
-    var testOpenUrl = function(relativeUrl, assert) {
+    const testOpenUrl = function(relativeUrl, assert) {
         testOpen('/test/data/' + relativeUrl, assert);
     };
 
-    var testOpen = function(tileSource, assert) {
+    const testOpen = function(tileSource, assert) {
         const done = assert.async();
 
         viewer = OpenSeadragon({
@@ -39,20 +39,20 @@
 
         assert.ok(viewer, 'Viewer exists');
 
-        var openHandler = function(event) {
+        const openHandler = function(event) {
             viewer.removeHandler('open', openHandler);
             assert.ok(true, 'Open event was sent');
             viewer.addHandler('tiled-image-drawn', tileDrawnHandler);
         };
 
-        var tileDrawnHandler = function(event) {
+        const tileDrawnHandler = function(event) {
             viewer.removeHandler('tiled-image-drawn', tileDrawnHandler);
             assert.ok(true, 'A tiled image has been drawn');
             viewer.addHandler('close', closeHandler);
             viewer.close();
         };
 
-        var closeHandler = function(event) {
+        const closeHandler = function(event) {
             viewer.removeHandler('close', closeHandler);
             $('#example').empty();
             assert.ok(true, 'Close event was sent');

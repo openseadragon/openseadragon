@@ -3,21 +3,21 @@
 //Testing of TileSource with getTileUrl that returns a function
 
 (function() {
-    var ASSERT = null;
-    var done = null;
-    var DYNAMIC_URL = "";
-    var viewer = null;
-    var OriginalAjax = OpenSeadragon.makeAjaxRequest;
-    var OriginalTileGetUrl = OpenSeadragon.Tile.prototype.getUrl;
-    // These variables allow tracking when the first request for data has finished
-    var firstUrlPromise = null;
-    var isFirstUrlPromiseResolved = false;
-    var firstUrlPromiseResolver = null;
+    let ASSERT = null;
+    let done = null;
+    let DYNAMIC_URL = "";
+    let viewer = null;
+    const OriginalAjax = OpenSeadragon.makeAjaxRequest;
+    const OriginalTileGetUrl = OpenSeadragon.Tile.prototype.getUrl;
+    // These constiables allow tracking when the first request for data has finished
+    let firstUrlPromise = null;
+    let isFirstUrlPromiseResolved = false;
+    let firstUrlPromiseResolver = null;
 
     /**
-     * Set up shared variables for test
+     * Set up shared constiables for test
      */
-    var configure = function(assert, url, assertAsyncDone) {
+    const configure = function(assert, url, assertAsyncDone) {
         ASSERT = assert;
         DYNAMIC_URL = url;
         done = assertAsyncDone;
@@ -73,7 +73,7 @@
                 }
             });
 
-            var hasCompletedImageInfoRequest = false;
+            let hasCompletedImageInfoRequest = false;
             OpenSeadragon.makeAjaxRequest = function(url, onSuccess, onError) {
                 // Note that our preferred API is that you pass in a single object; the named
                 // arguments are for legacy support.
@@ -106,7 +106,7 @@
 
                 hasCompletedImageInfoRequest = true;
 
-                var request = Promise.resolve(url);
+                const request = Promise.resolve(url);
                 //some required properties to pass through processResponse(...)
                 request.responseText = "some text";
                 request.status = 200;
@@ -144,8 +144,8 @@
     /**
      * Create viewer for test
      */
-    var testUrlCall = function(tileSourceUrl) {
-        var timeWatcher = Util.timeWatcher(ASSERT, 7000);
+    const testUrlCall = function(tileSourceUrl) {
+        const timeWatcher = Util.timeWatcher(ASSERT, 7000);
 
         viewer = OpenSeadragon({
             id: 'example',
@@ -154,14 +154,14 @@
             loadTilesWithAjax: true,
         });
 
-        var failHandler = function (event) {
+        const failHandler = function (event) {
             testPostData(event.postData, "event: 'open-failed'");
             viewer.removeHandler('open-failed', failHandler);
             viewer.close();
         };
         viewer.addHandler('open-failed', failHandler);
 
-        var readyHandler = function (event) {
+        const readyHandler = function (event) {
             //relies on Tilesource contructor extending itself with options object
             testPostData(event.postData, "event: 'ready'");
             viewer.removeHandler('ready', readyHandler);
@@ -169,14 +169,14 @@
         viewer.addHandler('ready', readyHandler);
 
 
-        var openHandler = function(_event) {
+        const openHandler = function(_event) {
             viewer.removeHandler('open', openHandler);
             ASSERT.ok(true, 'Open event was sent');
             viewer.addHandler('close', closeHandler);
             viewer.world.draw();
         };
 
-        var closeHandler = function(_event) {
+        const closeHandler = function(_event) {
             viewer.removeHandler('close', closeHandler);
             $('#example').empty();
             ASSERT.ok(true, 'Close event was sent');
