@@ -2,7 +2,7 @@
 
 (function() {
 
-    // This module tests whether our constious file formats can be opened.
+    // This module tests whether our various file formats can be opened.
     // TODO: Add more file formats (with corresponding test data).
 
     let viewer = null;

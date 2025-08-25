@@ -117,7 +117,7 @@
                 let headers;
                 let responseType;
                 let postData;
-                let leoptions;
+                let options;
 
                 // Note that our preferred API is that you pass in a single object; the named
                 // arguments are for legacy support.

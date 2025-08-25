@@ -9,13 +9,13 @@
     let viewer = null;
     const OriginalAjax = OpenSeadragon.makeAjaxRequest;
     const OriginalTileGetUrl = OpenSeadragon.Tile.prototype.getUrl;
-    // These constiables allow tracking when the first request for data has finished
+    // These variables allow tracking when the first request for data has finished
     let firstUrlPromise = null;
     let isFirstUrlPromiseResolved = false;
     let firstUrlPromiseResolver = null;
 
     /**
-     * Set up shared constiables for test
+     * Set up shared variables for test
      */
     const configure = function(assert, url, assertAsyncDone) {
         ASSERT = assert;

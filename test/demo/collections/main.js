@@ -368,7 +368,7 @@
 
         // ----------
         stanfordTest: function() {
-            const info = {"@context":"http://library.stanford.edu/iiif/image-api/1.1/context.json","@id":"http://ids.lib.harconstd.edu/ids/iiif/48530377","width":6251,"height":109517,"scale_factors":[1,2,4,8,16,32],"tile_width":256,"tile_height":256,"formats":["jpg"],"qualities":["native"],"profile":"http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1"};
+            const info = {"@context":"http://library.stanford.edu/iiif/image-api/1.1/context.json","@id":"http://ids.lib.harvard.edu/ids/iiif/48530377","width":6251,"height":109517,"scale_factors":[1,2,4,8,16,32],"tile_width":256,"tile_height":256,"formats":["jpg"],"qualities":["native"],"profile":"http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1"};
 
             this.viewer.open(info);
         }
