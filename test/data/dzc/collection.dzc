@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Collection MaxLevel="4" TileSize="256" Format="jpg" NextItemId="" xmlns="http://schemas.microsoft.com/deepzoom/2008">
+<Items>
+  <I Id="0" N="0" IsPath="1" Source="../testpattern.dzi?N=0">
+    <Size Width="1000" Height="1000"/>
+  </I>
+  <I Id="1" N="1" IsPath="1" Source="../tall.dzi?N=1">
+    <Size Width="500" Height="2000"/>
+  </I>
+  <I Id="2" N="2" IsPath="1" Source="../wide.dzi?N=2">
+    <Size Width="2000" Height="500"/>
+  </I>
+</Items>
+</Collection>
