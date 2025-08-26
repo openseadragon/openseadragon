@@ -157,7 +157,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      * Draws the TiledImages
      */
     draw(tiledImages) {
-        var _this = this;
+        const _this = this;
         this._prepareNewFrame(); // prepare to draw a new frame
         tiledImages.forEach(function(tiledImage){
             if (tiledImage.opacity !== 0) {
@@ -206,14 +206,14 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      *
      */
     _drawTiles( tiledImage ) {
-        var lastDrawn = tiledImage.getTilesToDraw().map(info => info.tile);
+        const lastDrawn = tiledImage.getTilesToDraw().map(info => info.tile);
         if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
             return;
         }
 
         // Iterate over the tiles to draw, and draw them
-        for (var i = lastDrawn.length - 1; i >= 0; i--) {
-            var tile = lastDrawn[ i ];
+        for (let i = lastDrawn.length - 1; i >= 0; i--) {
+            const tile = lastDrawn[ i ];
             this._drawTile( tile );
 
             if( this.viewer ){

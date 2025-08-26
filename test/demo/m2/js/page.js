@@ -2,7 +2,7 @@
 (function() {
 
     // ----------
-    var component = App.Page = function(config) {
+    const component = App.Page = function(config) {
         this.label = config.label;
         this.alternates = config.alternates;
         this.pageIndex = config.pageIndex;
@@ -50,13 +50,13 @@
 
         // ----------
         selectAlternate: function(index) {
-            var self = this;
+            const self = this;
 
             if (index === this.alternateIndex) {
                 return;
             }
 
-            var itemInfo = (index === -1 ? this.starter : this.alternates[index]);
+            const itemInfo = (index === -1 ? this.starter : this.alternates[index]);
 
             App.viewer.world.removeItem(this.main.tiledImage);
             App.viewer.addTiledImage({
@@ -74,7 +74,7 @@
 
         // ----------
         addDetails: function() {
-            var self = this;
+            const self = this;
 
             if (!this.details) {
                 return;
@@ -98,7 +98,7 @@
 
         // ----------
         removeDetails: function() {
-            var self = this;
+            const self = this;
 
             if (!this.details) {
                 return;
@@ -118,10 +118,10 @@
                 return this.main.tiledImage;
             }
 
-            var count = this.details.length;
-            var detail, box;
+            const count = this.details.length;
+            let detail, box;
 
-            for (var i = 0; i < count; i++) {
+            for (let i = 0; i < count; i++) {
                 detail = this.details[i];
                 if (!detail.tiledImage) {
                     continue;
@@ -144,7 +144,7 @@
 
         // ----------
         place: function(bounds, immediately) {
-            var self = this;
+            const self = this;
 
             this.bounds = bounds.clone();
 
@@ -161,7 +161,7 @@
 
         // ----------
         placeDetail: function(detail, immediately) {
-            var position = new OpenSeadragon.Point(
+            const position = new OpenSeadragon.Point(
                 this.bounds.x + (this.bounds.width * detail.x),
                 this.bounds.y + (this.bounds.width * detail.y));
 

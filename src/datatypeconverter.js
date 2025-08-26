@@ -85,7 +85,7 @@ class WeightedGraph {
      * @return {{path: ConversionStep[], cost: number}|undefined} cheapest path from start to finish
      */
     dijkstra(start, finish) {
-        let path = []; //to return at end
+        const path = []; //to return at end
         if (start === finish) {
             return {path: path, cost: 0};
         }
@@ -110,11 +110,11 @@ class WeightedGraph {
                 break;
             }
             const neighbors = this.adjacencyList[smallestNode.value];
-            for (let neighborKey in neighbors) {
-                let edge = neighbors[neighborKey];
+            for (const neighborKey in neighbors) {
+                const edge = neighbors[neighborKey];
                 //relax node
-                let newCost = smallestNode.key + edge.weight;
-                let nextNeighbor = edge.target;
+                const newCost = smallestNode.key + edge.weight;
+                const nextNeighbor = edge.target;
                 if (newCost < nextNeighbor.key) {
                     nextNeighbor._previous = smallestNode;
                     //key change
@@ -127,7 +127,7 @@ class WeightedGraph {
             return undefined; //no path
         }
 
-        let finalCost = smallestNode.key; //final weight last node
+        const finalCost = smallestNode.key; //final weight last node
 
         // done, build the shortest path
         while (smallestNode._previous) {
@@ -302,7 +302,7 @@ $.DataTypeConverter = class {
     guessType( x ) {
         if (Array.isArray(x)) {
             const types = [];
-            for (let item of x) {
+            for (const item of x) {
                 if (item === undefined || item === null) {
                     continue;
                 }
@@ -396,14 +396,14 @@ $.DataTypeConverter = class {
             return $.Promise.resolve();
         }
 
-        const stepCount = conversionPath.length,
-            _this = this;
+        const stepCount = conversionPath.length;
+        const _this = this;
         const step = (x, i, destroy = true) => {
             if (i >= stepCount) {
                 return $.Promise.resolve(x);
             }
-            let edge = conversionPath[i];
-            let y = edge.transform(tile, x);
+            const edge = conversionPath[i];
+            const y = edge.transform(tile, x);
             if (y === undefined) {
                 $.console.error(`[OpenSeadragon.converter.convert] data mid result undefined value (while converting using %s)`, edge);
                 return $.Promise.resolve();

@@ -123,9 +123,9 @@
                 }
 
                 draw(tiledImages) {
-                    for (let image of tiledImages) {
+                    for (const image of tiledImages) {
                         const tilesDoDraw = image.getTilesToDraw().map(info => info.tile);
-                        for (let tile of tilesDoDraw) {
+                        for (const tile of tilesDoDraw) {
                             const data = this.getDataToDraw(tile);
                             this.testEvents.raiseEvent('test-tile', {
                                 tile: tile,
@@ -411,7 +411,7 @@
             test.ok(typeAtoB > 1, "At least one conversion was triggered.");
             test.equal(typeAtoB, typeBtoC, "A->B = B->C, since we need to move all data to T_C for the drawer.");
 
-            for (let tile of tileCache._tilesLoaded) {
+            for (const tile of tileCache._tilesLoaded) {
                 const cache = tile.getCache();
                 test.equal(cache.type, T_C, "Cache data was affected, the drawer supports only T_C since there is no way to get to T_E.");
 
@@ -494,7 +494,7 @@
 
             //test for each level only single cache was processed
             const processedLevels = {};
-            for (let tile of tileCache._tilesLoaded) {
+            for (const tile of tileCache._tilesLoaded) {
                 const level = tile.level;
 
                 if (tile.__TEST_PROCESSED) {
@@ -533,11 +533,11 @@
             await viewer.world.requestInvalidate(false);
 
             // We set data as TB - there is required T_A: T_B -> T_C -> T_A conversion round on the main cache
-            let newValue = modificationConstant + 4 + 2;
+            const newValue = modificationConstant + 4 + 2;
             // and there is still requirement of T_C on internal data, +2 steps
             testDrawingRoutine(newValue + 2);
 
-            for (let tile of tileCache._tilesLoaded) {
+            for (const tile of tileCache._tilesLoaded) {
                 const cache = tile.getCache();
                 test.equal(cache.type, T_A, "Main Cache Updated (suite 2).");
                 test.equal(cache.data, newValue, "Main Cache Updated (suite 2).");
@@ -556,7 +556,7 @@
             await sleep(20);  // necessary to make space for a draw call
             testDrawingRoutine(2); // Value +2 rendering from original data
 
-            for (let tile of tileCache._tilesLoaded) {
+            for (const tile of tileCache._tilesLoaded) {
                 const origCache = tile.getCache(tile.originalCacheKey);
                 test.ok(tile.getCache() === origCache, "Main cache is now original cache.");
             }
@@ -590,7 +590,7 @@
             await viewer.world.requestInvalidate(false);
             testDrawingRoutine(45);
 
-            for (let tile of tileCache._tilesLoaded) {
+            for (const tile of tileCache._tilesLoaded) {
                 const origCache = tile.getCache(tile.originalCacheKey);
                 test.equal(origCache.type, T_A, "Original cache data was not affected, the drawer uses main cache even after refresh.");
                 test.equal(origCache.data, 0, "Original cache data was not affected, the drawer uses main cache even after refresh.");

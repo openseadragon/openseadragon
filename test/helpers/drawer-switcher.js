@@ -27,7 +27,7 @@ class DrawerSwitcher {
         const drawer = this.url.searchParams.get(urlQueryName) || defaultDrawerImplementation;
         if (!this.drawers[drawer]) throw "Unsupported drawer implementation: " + drawer;
 
-        let context = this._data[urlQueryName] = {
+        const context = this._data[urlQueryName] = {
             query: urlQueryName,
             implementation: drawer,
             title: title
@@ -53,8 +53,8 @@ class DrawerSwitcher {
     }
 
     _preserveOtherSeachParams() {
-        let res = [], registered = Object.keys(this._data);
-        for (let [k, v] of this.url.searchParams.entries()) {
+        const res = [], registered = Object.keys(this._data);
+        for (const [k, v] of this.url.searchParams.entries()) {
             if (!registered.includes(k)) {
                 res.push(`<input name="${k}" type="hidden" value=${v} />`);
             }

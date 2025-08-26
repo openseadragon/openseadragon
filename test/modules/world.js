@@ -1,7 +1,7 @@
 /* global QUnit, $, testLog */
 
 (function() {
-    var viewer;
+    let viewer;
 
     QUnit.module('World', {
         beforeEach: function () {
@@ -25,14 +25,14 @@
     });
 
     // ----------
-    var checkBounds = function(assert, expected, message) {
-        var bounds = viewer.world.getHomeBounds();
+    const checkBounds = function(assert, expected, message) {
+        const bounds = viewer.world.getHomeBounds();
         assert.ok(bounds.equals(expected), message + ' ' + bounds.toString());
     };
 
     // ----------
     QUnit.test('adding a tiled image', function(assert) {
-    var done = assert.async();
+    const done = assert.async();
         assert.ok(viewer.world, 'World exists');
 
         viewer.world.addHandler('add-item', function(event) {
@@ -52,11 +52,11 @@
 
     // ----------
     QUnit.test('metrics', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler('open', function(event) {
             checkBounds(assert, new OpenSeadragon.Rect(0, 0, 4, 4), 'bounds after open');
 
-            var expectedContentFactor = viewer.world.getItemAt(1).getContentSize().x / 2;
+            const expectedContentFactor = viewer.world.getItemAt(1).getContentSize().x / 2;
             assert.equal(viewer.world.getContentFactor(), expectedContentFactor, 'content factor has changed');
 
             viewer.world.addHandler('metrics-change', function metricsChangeHandler(event) {
@@ -89,13 +89,13 @@
 
     // ----------
     QUnit.test('remove/reorder tiled images', function(assert) {
-        var done = assert.async();
-        var handlerCount = 0;
+        const done = assert.async();
+        let handlerCount = 0;
 
         viewer.addHandler('open', function(event) {
             assert.equal(viewer.world.getItemCount(), 3, 'there are now 3 items');
-            var item0 = viewer.world.getItemAt(0);
-            var item1 = viewer.world.getItemAt(1);
+            const item0 = viewer.world.getItemAt(0);
+            const item1 = viewer.world.getItemAt(1);
 
             viewer.world.addHandler('item-index-change', function(event) {
                 handlerCount++;
@@ -122,7 +122,7 @@
 
             viewer.world.removeItem(item1);
 
-            var removeCount = 0;
+            let removeCount = 0;
             viewer.world.addHandler('remove-item', function() {
                 removeCount++;
                 if (removeCount === 2) {
@@ -148,8 +148,8 @@
 
     // ----------
     QUnit.test('draw', function(assert) {
-        var done = assert.async();
-        var handlerCount = 0;
+        const done = assert.async();
+        let handlerCount = 0;
 
         viewer.addHandler('open', function(event) {
             assert.equal(viewer.world.needsDraw(), true, 'needs draw after open');
@@ -172,7 +172,7 @@
 
     // ----------
     QUnit.test('resetItems', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler('tiled-image-drawn', function updateHandler() {
             viewer.removeHandler('tiled-image-drawn', updateHandler);
             assert.ok(viewer.tileCache.numTilesLoaded() > 0, 'we have tiles after tiled-image-drawn');
@@ -188,7 +188,7 @@
 
     // ----------
     QUnit.test('arrange', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler('open', function(event) {
             checkBounds(assert, new OpenSeadragon.Rect(0, 0, 1, 1), 'all stacked');
 

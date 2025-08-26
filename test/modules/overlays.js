@@ -1,14 +1,14 @@
 /* global QUnit, Util, $, console, testLog */
 
 (function() {
-    var viewer;
+    let viewer;
     // jQuery.position can give results quite different than what set in style.left
-    var epsilon = 1;
+    const epsilon = 1;
 
     QUnit.module("Overlays", {
         beforeEach: function() {
-            var example = $('<div id="example-overlays"></div>').appendTo("#qunit-fixture");
-            var fixedOverlay = $('<div id="fixed-overlay"></div>').appendTo(example);
+            const example = $('<div id="example-overlays"></div>').appendTo("#qunit-fixture");
+            const fixedOverlay = $('<div id="fixed-overlay"></div>').appendTo(example);
             fixedOverlay.width(70);
             fixedOverlay.height(60);
 
@@ -25,9 +25,9 @@
         }
     });
 
-    var resetTestVariables = function() {
+    const resetTestVariables = function() {
         if (viewer){
-            let errors = viewer.drawer._numGlMaxTextureErrors;
+            const errors = viewer.drawer._numGlMaxTextureErrors;
             if(errors > 0){
                 console.log('Number of times MAX_TEXTURE_IMAGE_UNITS had a bad value:', errors);
             }
@@ -39,7 +39,7 @@
         if (typeof count !== "number") {
             count = 0;
         }
-        var ready = viewer.isOpen() &&
+        const ready = viewer.isOpen() &&
             viewer.drawer !== null &&
             !viewer.world.needsDraw() &&
             Util.equalsWithVariance(viewer.viewport.getBounds(true).x,
@@ -64,7 +64,7 @@
     }
 
     QUnit.test('Overlays via viewer options', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -111,7 +111,7 @@
     });
 
     QUnit.test('Page Overlays via viewer options', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -182,7 +182,7 @@
     });
 
     QUnit.test('Overlays via addOverlay method', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -197,8 +197,8 @@
             assert.equal(viewer.overlays.length, 0, "No global overlay should be added.");
             assert.equal(viewer.currentOverlays.length, 0, "No overlay should be open.");
 
-            var rect = new OpenSeadragon.Rect(0.1, 0.1, 0.1, 0.1);
-            var overlay = $("<div/>").prop("id", "overlay").get(0);
+            const rect = new OpenSeadragon.Rect(0.1, 0.1, 0.1, 0.1);
+            const overlay = $("<div/>").prop("id", "overlay").get(0);
             viewer.addOverlay(overlay, rect);
             assert.equal(viewer.overlays.length, 0, "No manual overlay should be added as global overlay.");
             assert.equal(viewer.currentOverlays.length, 1, "A manual overlay should be open.");
@@ -229,7 +229,7 @@
     });
 
     QUnit.test('Overlays size in pixels', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -250,19 +250,19 @@
         });
 
         function checkOverlayPosition(contextMessage) {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var expPosition = viewport.imageToViewerElementCoordinates(
+            let expPosition = viewport.imageToViewerElementCoordinates(
                 new OpenSeadragon.Point(13, 120));
-            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
+            let actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
             Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "X position mismatch " + contextMessage);
             Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Y position mismatch " + contextMessage);
 
-            var zoom = viewport.viewportToImageZoom(viewport.getZoom(true));
-            var expectedWidth = 124 * zoom;
-            var expectedHeight = 132 * zoom;
+            const zoom = viewport.viewportToImageZoom(viewport.getZoom(true));
+            const expectedWidth = 124 * zoom;
+            const expectedHeight = 132 * zoom;
             Util.assessNumericValue(assert, $("#overlay").width(), expectedWidth, epsilon,
                 "Width mismatch " + contextMessage);
             Util.assessNumericValue(assert, $("#overlay").height(), expectedHeight, epsilon,
@@ -301,7 +301,7 @@
     });
 
     QUnit.test('Overlays size in points', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -322,17 +322,17 @@
         });
 
         function checkOverlayPosition(contextMessage) {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var expPosition = viewport.viewportToViewerElementCoordinates(
+            let expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.2, 0.1));
-            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
+            let actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
             Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "X position mismatch " + contextMessage);
             Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
                 "Y position mismatch " + contextMessage);
 
-            var expectedSize = viewport.deltaPixelsFromPoints(
+            const expectedSize = viewport.deltaPixelsFromPoints(
                 new OpenSeadragon.Point(0.5, 0.1));
             Util.assessNumericValue(assert, $("#overlay").width(), expectedSize.x, epsilon,
                 "Width mismatch " + contextMessage);
@@ -372,9 +372,9 @@
     });
 
     QUnit.test('Overlays placement', function(assert) {
-        var done = assert.async();
-        var scalableOverlayLocation = new OpenSeadragon.Rect(0.2, 0.1, 0.5, 0.1);
-        var fixedOverlayLocation = new OpenSeadragon.Point(0.5, 0.6);
+        const done = assert.async();
+        const scalableOverlayLocation = new OpenSeadragon.Rect(0.2, 0.1, 0.5, 0.1);
+        const fixedOverlayLocation = new OpenSeadragon.Point(0.5, 0.6);
 
         viewer = OpenSeadragon({
             id: 'example-overlays',
@@ -398,11 +398,11 @@
 
         // Scalable overlays are always TOP_LEFT
         function checkScalableOverlayPosition(contextMessage) {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var expPosition = viewport.viewportToViewerElementCoordinates(
+            const expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.2, 0.1));
-            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
+            const actPosition = viewport.pixelFromPoint(viewer.getOverlayById("overlay").position, true);
             Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "X position mismatch " + contextMessage);
             Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
@@ -410,13 +410,13 @@
         }
 
         function checkFixedOverlayPosition(expectedOffset, contextMessage) {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var expPosition = viewport.viewportToViewerElementCoordinates(
+            const expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.6))
                 .plus(expectedOffset);
 
-            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
+            const actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
             Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
             Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
@@ -459,8 +459,8 @@
     });
 
     QUnit.test('Overlays placement and resizing check', function(assert) {
-        var done = assert.async();
-        var fixedOverlayLocation = new OpenSeadragon.Point(0.5, 0.6);
+        const done = assert.async();
+        const fixedOverlayLocation = new OpenSeadragon.Point(0.5, 0.6);
 
         viewer = OpenSeadragon({
             id: 'example-overlays',
@@ -477,12 +477,12 @@
         });
 
         function checkFixedOverlayPosition(expectedOffset, contextMessage) {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var expPosition = viewport.viewportToViewerElementCoordinates(
+            const expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.6))
                 .plus(expectedOffset);
-            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
+            const actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
             Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
             Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
@@ -514,8 +514,8 @@
     });
 
     QUnit.test('Overlays placement and no resizing check', function(assert) {
-        var done = assert.async();
-        var fixedOverlayLocation = new OpenSeadragon.Point(0.5, 0.6);
+        const done = assert.async();
+        const fixedOverlayLocation = new OpenSeadragon.Point(0.5, 0.6);
 
         viewer = OpenSeadragon({
             id: 'example-overlays',
@@ -532,12 +532,12 @@
         });
 
         function checkFixedOverlayPosition(expectedOffset, contextMessage) {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var expPosition = viewport.viewportToViewerElementCoordinates(
+            const expPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.6))
                 .plus(expectedOffset);
-            var actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
+            const actPosition = viewport.pixelFromPoint(viewer.getOverlayById("fixed-overlay").position, true).plus(expectedOffset);
             Util.assessNumericValue(assert, actPosition.x, expPosition.x, epsilon,
                 "Fixed overlay X position mismatch " + contextMessage);
             Util.assessNumericValue(assert, actPosition.y, expPosition.y, epsilon,
@@ -570,7 +570,7 @@
 
     // ----------
     QUnit.test('overlays appear immediately', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         assert.equal($('#immediate-overlay0').length, 0, 'overlay 0 does not exist');
         assert.equal($('#immediate-overlay1').length, 0, 'overlay 1 does not exist');
 
@@ -602,7 +602,7 @@
 
     // ----------
     QUnit.test('Overlay scaled horizontally only', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -618,16 +618,16 @@
                 width: 1
             });
 
-            var width = $("#horizontally-scaled-overlay").width();
-            var height = 100;
-            var zoom = 1.1;
+            const width = $("#horizontally-scaled-overlay").width();
+            const height = 100;
+            const zoom = 1.1;
             $("#horizontally-scaled-overlay").get(0).style.height = height + "px";
 
             viewer.viewport.zoomBy(zoom);
 
             waitForViewer(function() {
-                var newWidth = $("#horizontally-scaled-overlay").width();
-                var newHeight = $("#horizontally-scaled-overlay").height();
+                const newWidth = $("#horizontally-scaled-overlay").width();
+                const newHeight = $("#horizontally-scaled-overlay").height();
                 assert.equal(newWidth, width * zoom, "Width should be scaled.");
                 assert.equal(newHeight, height, "Height should not be scaled.");
 
@@ -638,7 +638,7 @@
 
     // ----------
     QUnit.test('Overlay scaled vertically only', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -654,16 +654,16 @@
                 height: 1
             });
 
-            var width = 100;
-            var height = $("#vertically-scaled-overlay").height();
-            var zoom = 1.1;
+            const width = 100;
+            const height = $("#vertically-scaled-overlay").height();
+            const zoom = 1.1;
             $("#vertically-scaled-overlay").get(0).style.width = width + "px";
 
             viewer.viewport.zoomBy(zoom);
 
             waitForViewer(function() {
-                var newWidth = $("#vertically-scaled-overlay").width();
-                var newHeight = $("#vertically-scaled-overlay").height();
+                const newWidth = $("#vertically-scaled-overlay").width();
+                const newHeight = $("#vertically-scaled-overlay").height();
                 assert.equal(newWidth, width, "Width should not be scaled.");
                 assert.equal(newHeight, height * zoom, "Height should be scaled.");
 
@@ -674,7 +674,7 @@
 
     // ----------
     QUnit.test('Overlay.getBounds', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -712,22 +712,22 @@
                 placement: OpenSeadragon.Placement.TOP_RIGHT
             });
 
-            var notScaledWidth = 100;
-            var notScaledHeight = 100;
+            const notScaledWidth = 100;
+            const notScaledHeight = 100;
             $("#horizontally-scaled-overlay").get(0).style.height = notScaledHeight + "px";
             $("#vertically-scaled-overlay").get(0).style.width = notScaledWidth + "px";
             $("#not-scaled-overlay").get(0).style.width = notScaledWidth + "px";
             $("#not-scaled-overlay").get(0).style.height = notScaledHeight + "px";
 
-            var notScaledSize = viewer.viewport.deltaPointsFromPixelsNoRotate(
+            const notScaledSize = viewer.viewport.deltaPointsFromPixelsNoRotate(
                 new OpenSeadragon.Point(notScaledWidth, notScaledHeight));
 
             // Force refresh to takes new dimensions into account.
             viewer._drawOverlays();
 
-            var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
+            let actualBounds = viewer.getOverlayById("fully-scaled-overlay")
                 .getBounds(viewer.viewport);
-            var expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
+            let expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
             assert.ok(expectedBounds.equals(actualBounds),
                 "The fully scaled overlay should have bounds " +
                 expectedBounds + " but found " + actualBounds);
@@ -763,7 +763,7 @@
 
     // ----------
     QUnit.test('Fully scaled overlay rotation mode NO_ROTATION', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -782,30 +782,30 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var $overlay = $("#fully-scaled-overlay");
-            var expectedSize = viewport.deltaPixelsFromPointsNoRotate(
+            const $overlay = $("#fully-scaled-overlay");
+            const expectedSize = viewport.deltaPixelsFromPointsNoRotate(
                 new OpenSeadragon.Point(1, 1));
-            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+            const expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(1, 1))
                 .minus(expectedSize);
-            var actualPosition = viewport.pixelFromPoint(viewer.getOverlayById("fully-scaled-overlay").position, true).minus(expectedSize);
+            const actualPosition = viewport.pixelFromPoint(viewer.getOverlayById("fully-scaled-overlay").position, true).minus(expectedSize);
             Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Scaled overlay position.x should adjust to rotation.");
             Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Scaled overlay position.y should adjust to rotation.");
 
-            var actualWidth = $overlay.width();
-            var actualHeight = $overlay.height();
+            const actualWidth = $overlay.width();
+            const actualHeight = $overlay.height();
             Util.assessNumericValue(assert, actualWidth, expectedSize.x, epsilon,
                 "Scaled overlay width should not adjust to rotation.");
             Util.assessNumericValue(assert, actualHeight, expectedSize.y, epsilon,
                 "Scaled overlay height should not adjust to rotation.");
 
-            var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
+            const actualBounds = viewer.getOverlayById("fully-scaled-overlay")
                 .getBounds(viewport);
-            var expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1)
+            const expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1)
                 .rotate(-45, new OpenSeadragon.Point(1, 1));
             assert.ok(expectedBounds.equals(actualBounds),
                 "The fully scaled overlay should have bounds " +
@@ -817,7 +817,7 @@
 
     // ----------
     QUnit.test('Horizontally scaled overlay rotation mode NO_ROTATION', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -835,39 +835,39 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var $overlay = $("#horizontally-scaled-overlay");
-            var notScaledWidth = 100;
-            var notScaledHeight = 100;
+            const $overlay = $("#horizontally-scaled-overlay");
+            const notScaledWidth = 100;
+            const notScaledHeight = 100;
             $overlay.get(0).style.height = notScaledHeight + "px";
 
-            var viewport = viewer.viewport;
-            var notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
+            const viewport = viewer.viewport;
+            const notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
                 new OpenSeadragon.Point(notScaledWidth, notScaledHeight));
 
             // Force refresh to takes new dimensions into account.
             viewer._drawOverlays();
 
-            var expectedWidth = viewport.deltaPixelsFromPointsNoRotate(
+            const expectedWidth = viewport.deltaPixelsFromPointsNoRotate(
                 new OpenSeadragon.Point(1, 1)).x;
-            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+            const expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0.5, 0.5))
                 .minus(new OpenSeadragon.Point(expectedWidth / 2, notScaledHeight / 2));
-            var actualPosition = viewport.pixelFromPoint(viewer.getOverlayById("horizontally-scaled-overlay").position, true).minus(new OpenSeadragon.Point(expectedWidth / 2, notScaledHeight / 2));
+            const actualPosition = viewport.pixelFromPoint(viewer.getOverlayById("horizontally-scaled-overlay").position, true).minus(new OpenSeadragon.Point(expectedWidth / 2, notScaledHeight / 2));
             Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Horizontally scaled overlay position.x should adjust to rotation.");
             Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Horizontally scaled overlay position.y should adjust to rotation.");
 
-            var actualWidth = $overlay.width();
-            var actualHeight = $overlay.height();
+            const actualWidth = $overlay.width();
+            const actualHeight = $overlay.height();
             Util.assessNumericValue(assert, actualWidth, expectedWidth, epsilon,
                 "Horizontally scaled overlay width should not adjust to rotation.");
             Util.assessNumericValue(assert, actualHeight, notScaledHeight, epsilon,
                 "Horizontally scaled overlay height should not adjust to rotation.");
 
-            var actualBounds = viewer.getOverlayById("horizontally-scaled-overlay")
+            const actualBounds = viewer.getOverlayById("horizontally-scaled-overlay")
                 .getBounds(viewport);
-            var expectedBounds = new OpenSeadragon.Rect(
+            const expectedBounds = new OpenSeadragon.Rect(
                 0, 0.5 - notScaledSize.y / 2, 1, notScaledSize.y)
                 .rotate(-45, new OpenSeadragon.Point(0.5, 0.5));
             assert.ok(expectedBounds.equals(actualBounds),
@@ -880,7 +880,7 @@
 
     // ----------
     QUnit.test('Vertically scaled overlay rotation mode NO_ROTATION', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -898,39 +898,39 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var $overlay = $("#vertically-scaled-overlay");
-            var notScaledWidth = 100;
-            var notScaledHeight = 100;
+            const $overlay = $("#vertically-scaled-overlay");
+            const notScaledWidth = 100;
+            const notScaledHeight = 100;
             $overlay.get(0).style.width = notScaledWidth + "px";
 
-            var viewport = viewer.viewport;
-            var notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
+            const viewport = viewer.viewport;
+            const notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
                 new OpenSeadragon.Point(notScaledWidth, notScaledHeight));
 
             // Force refresh to takes new dimensions into account.
             viewer._drawOverlays();
 
-            var expectedHeight = viewport.deltaPixelsFromPointsNoRotate(
+            const expectedHeight = viewport.deltaPixelsFromPointsNoRotate(
                 new OpenSeadragon.Point(1, 1)).y;
-            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+            const expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(0, 0.5))
                 .minus(new OpenSeadragon.Point(0, expectedHeight / 2));
-            var actualPosition= viewport.pixelFromPoint(viewer.getOverlayById("vertically-scaled-overlay").position).minus(new OpenSeadragon.Point(0, expectedHeight / 2));
+            const actualPosition= viewport.pixelFromPoint(viewer.getOverlayById("vertically-scaled-overlay").position).minus(new OpenSeadragon.Point(0, expectedHeight / 2));
             Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Vertically scaled overlay position.x should adjust to rotation.");
             Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Vertically scaled overlay position.y should adjust to rotation.");
 
-            var actualWidth = $overlay.width();
-            var actualHeight = $overlay.height();
+            const actualWidth = $overlay.width();
+            const actualHeight = $overlay.height();
             Util.assessNumericValue(assert, actualWidth, notScaledWidth, epsilon,
                 "Vertically scaled overlay width should not adjust to rotation.");
             Util.assessNumericValue(assert, actualHeight, expectedHeight, epsilon,
                 "Vertically scaled overlay height should not adjust to rotation.");
 
-            var actualBounds = viewer.getOverlayById("vertically-scaled-overlay")
+            const actualBounds = viewer.getOverlayById("vertically-scaled-overlay")
                 .getBounds(viewport);
-            var expectedBounds = new OpenSeadragon.Rect(
+            const expectedBounds = new OpenSeadragon.Rect(
                 0, 0, notScaledSize.x, 1)
                 .rotate(-45, new OpenSeadragon.Point(0, 0.5));
             assert.ok(expectedBounds.equals(actualBounds),
@@ -943,7 +943,7 @@
 
     // ----------
     QUnit.test('Not scaled overlay rotation mode NO_ROTATION', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -960,38 +960,38 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var $overlay = $("#not-scaled-overlay");
-            var notScaledWidth = 100;
-            var notScaledHeight = 100;
+            const $overlay = $("#not-scaled-overlay");
+            const notScaledWidth = 100;
+            const notScaledHeight = 100;
             $overlay.get(0).style.width = notScaledWidth + "px";
             $overlay.get(0).style.height = notScaledHeight + "px";
 
-            var viewport = viewer.viewport;
-            var notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
+            const viewport = viewer.viewport;
+            const notScaledSize = viewport.deltaPointsFromPixelsNoRotate(
                 new OpenSeadragon.Point(notScaledWidth, notScaledHeight));
 
             // Force refresh to takes new dimensions into account.
             viewer._drawOverlays();
 
-            var expectedPosition = viewport.viewportToViewerElementCoordinates(
+            const expectedPosition = viewport.viewportToViewerElementCoordinates(
                 new OpenSeadragon.Point(1, 0))
                 .minus(new OpenSeadragon.Point(notScaledWidth, 0));
-            var actualPosition= viewport.pixelFromPoint(viewer.getOverlayById("not-scaled-overlay").position).minus(new OpenSeadragon.Point(notScaledWidth, 0));
+            const actualPosition= viewport.pixelFromPoint(viewer.getOverlayById("not-scaled-overlay").position).minus(new OpenSeadragon.Point(notScaledWidth, 0));
             Util.assessNumericValue(assert, actualPosition.x, expectedPosition.x, epsilon,
                 "Not scaled overlay position.x should adjust to rotation.");
             Util.assessNumericValue(assert, actualPosition.y, expectedPosition.y, epsilon,
                 "Not scaled overlay position.y should adjust to rotation.");
 
-            var actualWidth = $overlay.width();
-            var actualHeight = $overlay.height();
+            const actualWidth = $overlay.width();
+            const actualHeight = $overlay.height();
             Util.assessNumericValue(assert, actualWidth, notScaledWidth, epsilon,
                 "Not scaled overlay width should not adjust to rotation.");
             Util.assessNumericValue(assert, actualHeight, notScaledHeight, epsilon,
                 "Not scaled overlay height should not adjust to rotation.");
 
-            var actualBounds = viewer.getOverlayById("not-scaled-overlay")
+            const actualBounds = viewer.getOverlayById("not-scaled-overlay")
                 .getBounds(viewport);
-            var expectedBounds = new OpenSeadragon.Rect(
+            const expectedBounds = new OpenSeadragon.Rect(
                 1 - notScaledSize.x, 0, notScaledSize.x, notScaledSize.y)
                 .rotate(-45, new OpenSeadragon.Point(1, 0));
             assert.ok(expectedBounds.equals(actualBounds),
@@ -1004,7 +1004,7 @@
 
     // ----------
     QUnit.test('Fully scaled overlay rotation mode BOUNDING_BOX', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -1023,29 +1023,29 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var $overlay = $("#fully-scaled-overlay");
-            var expectedRect = viewport.viewportToViewerElementRectangle(
+            const $overlay = $("#fully-scaled-overlay");
+            const expectedRect = viewport.viewportToViewerElementRectangle(
                 new OpenSeadragon.Rect(0, 0, 1, 1)).getBoundingBox();
-            var actualPosition = $overlay.position();
+            const actualPosition = $overlay.position();
             Util.assessNumericValue(assert, actualPosition.left, expectedRect.x, epsilon,
                 "Scaled overlay position.x should adjust to rotation.");
             Util.assessNumericValue(assert, actualPosition.top, expectedRect.y, epsilon,
                 "Scaled overlay position.y should adjust to rotation.");
 
-            var actualWidth = $overlay.width();
-            var actualHeight = $overlay.height();
+            const actualWidth = $overlay.width();
+            const actualHeight = $overlay.height();
             Util.assessNumericValue(assert, actualWidth, expectedRect.width, epsilon,
                 "Scaled overlay width should not adjust to rotation.");
             Util.assessNumericValue(assert, actualHeight, expectedRect.height, epsilon,
                 "Scaled overlay height should not adjust to rotation.");
 
-            var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
+            const actualBounds = viewer.getOverlayById("fully-scaled-overlay")
                 .getBounds(viewport);
-            var expectedBounds = new OpenSeadragon.Rect(
+            const expectedBounds = new OpenSeadragon.Rect(
                     0.5, -0.5, Math.sqrt(2), Math.sqrt(2), 45);
-            var boundsEpsilon = 0.000001;
+            const boundsEpsilon = 0.000001;
             Util.assessNumericValue(assert, actualBounds.x, expectedBounds.x, boundsEpsilon,
                 "The fully scaled overlay should have adjusted bounds.x");
             Util.assessNumericValue(assert, actualBounds.y, expectedBounds.y, boundsEpsilon,
@@ -1064,7 +1064,7 @@
 
     // ----------
     QUnit.test('Remove Child from Overlay', function(assert){
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -1072,8 +1072,8 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var $overlay = document.createElement("div");
-            var something = document.createElement("p");
+            const $overlay = document.createElement("div");
+            const something = document.createElement("p");
             $overlay.appendChild(something);
             viewer.addOverlay($overlay);
             $overlay.removeChild(something);
@@ -1085,7 +1085,7 @@
 
     // ----------
     QUnit.test('Fully scaled overlay rotation mode EXACT', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id: 'example-overlays',
             prefixUrl: '/build/openseadragon/images/',
@@ -1104,43 +1104,43 @@
         });
 
         viewer.addOnceHandler('open', function() {
-            var viewport = viewer.viewport;
-            var $overlay = $("#fully-scaled-overlay");
-            var expectedSize = viewport.deltaPixelsFromPointsNoRotate(
+            const viewport = viewer.viewport;
+            const $overlay = $("#fully-scaled-overlay");
+            const expectedSize = viewport.deltaPixelsFromPointsNoRotate(
                 new OpenSeadragon.Point(1, 1));
-            var expectedPosition = viewport.pixelFromPoint(
+            const expectedPosition = viewport.pixelFromPoint(
                 new OpenSeadragon.Point(1, 1))
                 .minus(expectedSize);
             // We can't rely on jQuery.position with transforms.
-            var actualStyle= viewer.getOverlayById("fully-scaled-overlay").style;
-            var left = Number(actualStyle.left.replace("px", ""));
-            var top = Number(actualStyle.top.replace("px", ""));
+            const actualStyle= viewer.getOverlayById("fully-scaled-overlay").style;
+            const left = Number(actualStyle.left.replace("px", ""));
+            const top = Number(actualStyle.top.replace("px", ""));
             Util.assessNumericValue(assert, left, expectedPosition.x, epsilon,
                 "Scaled overlay position.x should adjust to rotation.");
             Util.assessNumericValue(assert, top, expectedPosition.y, epsilon,
                 "Scaled overlay position.y should adjust to rotation.");
 
-            var actualWidth = $overlay.width();
-            var actualHeight = $overlay.height();
+            const actualWidth = $overlay.width();
+            const actualHeight = $overlay.height();
             Util.assessNumericValue(assert, actualWidth, expectedSize.x, epsilon,
                 "Scaled overlay width should not adjust to rotation.");
             Util.assessNumericValue(assert, actualHeight, expectedSize.y, epsilon,
                 "Scaled overlay height should not adjust to rotation.");
 
-            var transformOriginProp = OpenSeadragon.getCssPropertyWithVendorPrefix(
+            const transformOriginProp = OpenSeadragon.getCssPropertyWithVendorPrefix(
                 'transformOrigin');
-            var transformProp = OpenSeadragon.getCssPropertyWithVendorPrefix(
+            const transformProp = OpenSeadragon.getCssPropertyWithVendorPrefix(
                 'transform');
-            var transformOrigin = actualStyle[transformOriginProp];
+            const transformOrigin = actualStyle[transformOriginProp];
             // Some browsers replace "right bottom" by "100% 100%"
             assert.ok(transformOrigin.match(/(100% 100%)|(right bottom)/),
                 "Transform origin should be right bottom. Got: " + transformOrigin);
             assert.equal(actualStyle[transformProp], "rotate(45deg)",
                 "Transform should be rotate(45deg).");
 
-            var actualBounds = viewer.getOverlayById("fully-scaled-overlay")
+            const actualBounds = viewer.getOverlayById("fully-scaled-overlay")
                 .getBounds(viewport);
-            var expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
+            const expectedBounds = new OpenSeadragon.Rect(0, 0, 1, 1);
             assert.ok(expectedBounds.equals(actualBounds),
                 "The fully scaled overlay should have bounds " +
                 expectedBounds + " but found " + actualBounds);

@@ -58,7 +58,7 @@
  * @param {String} tilesUrl
  */
 $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
-    var options;
+    let options;
 
     if( $.isPlainObject( width ) ){
         options = width;
@@ -73,9 +73,9 @@ $.TmsTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
     }
     // TMS has integer multiples of 256 for width/height and adds buffer
     // if necessary -> account for this!
-    var bufferedWidth = Math.ceil(options.width / 256) * 256,
-        bufferedHeight = Math.ceil(options.height / 256) * 256,
-        max;
+    const bufferedWidth = Math.ceil(options.width / 256) * 256;
+    const bufferedHeight = Math.ceil(options.height / 256) * 256;
+    let max;
 
     // Compute number of zoomlevels in this tileset
     if (bufferedWidth > bufferedHeight) {
@@ -128,7 +128,7 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      */
     getTileUrl: function( level, x, y ) {
         // Convert from Deep Zoom definition to TMS zoom definition
-        var yTiles = this.getNumTiles( level ).y - 1;
+        const yTiles = this.getNumTiles( level ).y - 1;
 
         return this.tilesUrl + level + "/" + x + "/" + (yTiles - y) + ".png";
     },

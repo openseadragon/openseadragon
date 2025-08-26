@@ -60,7 +60,7 @@ $.Viewport = function( options ) {
 
     //backward compatibility for positional args while preferring more
     //idiomatic javascript options object as the only argument
-    var args = arguments;
+    const args = arguments;
     if (args.length && args[0] instanceof $.Point) {
         options = {
             containerSize:  args[0],
@@ -247,8 +247,8 @@ $.Viewport.prototype = {
             return this.defaultZoomLevel;
         }
 
-        var aspectFactor = this._contentAspectRatio / this.getAspectRatio();
-        var output;
+        const aspectFactor = this._contentAspectRatio / this.getAspectRatio();
+        let output;
         if (this.homeFillsViewer) { // fill the viewer and clip the image
             output = aspectFactor >= 1 ? aspectFactor : 1;
         } else {
@@ -275,9 +275,9 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Rect} The home bounds in vewport coordinates.
      */
     getHomeBoundsNoRotate: function() {
-        var center = this._contentBounds.getCenter();
-        var width  = 1.0 / this.getHomeZoom();
-        var height = width / this.getAspectRatio();
+        const center = this._contentBounds.getCenter();
+        const width  = 1.0 / this.getHomeZoom();
+        const height = width / this.getAspectRatio();
 
         return new $.Rect(
             center.x - (width / 2.0),
@@ -315,8 +315,8 @@ $.Viewport.prototype = {
      * @function
      */
     getMinZoom: function() {
-        var homeZoom = this.getHomeZoom(),
-            zoom = this.minZoomLevel ?
+        const homeZoom = this.getHomeZoom();
+        const zoom = this.minZoomLevel ?
             this.minZoomLevel :
                 this.minZoomImageRatio * homeZoom;
 
@@ -327,7 +327,7 @@ $.Viewport.prototype = {
      * @function
      */
     getMaxZoom: function() {
-        var zoom = this.maxZoomLevel;
+        let zoom = this.maxZoomLevel;
         if (!zoom) {
             zoom = this._contentSize.x * this.maxZoomPixelRatio / this._containerInnerSize.x;
             zoom /= this._contentBounds.width;
@@ -403,9 +403,9 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Rect} The location you are zoomed/panned to, in viewport coordinates.
      */
     getBoundsNoRotate: function(current) {
-        var center = this.getCenter(current);
-        var width  = 1.0 / this.getZoom(current);
-        var height = width / this.getAspectRatio();
+        const center = this.getCenter(current);
+        const width  = 1.0 / this.getZoom(current);
+        const height = width / this.getAspectRatio();
 
         return new $.Rect(
             center.x - (width / 2.0),
@@ -433,8 +433,8 @@ $.Viewport.prototype = {
      * including the space taken by margins, in viewport coordinates.
      */
     getBoundsNoRotateWithMargins: function(current) {
-        var bounds = this.getBoundsNoRotate(current);
-        var factor = this._containerInnerSize.x * this.getZoom(current);
+        const bounds = this.getBoundsNoRotate(current);
+        const factor = this._containerInnerSize.x * this.getZoom(current);
         bounds.x -= this._margins.left / factor;
         bounds.y -= this._margins.top / factor;
         bounds.width += (this._margins.left + this._margins.right) / factor;
@@ -447,22 +447,14 @@ $.Viewport.prototype = {
      * @param {Boolean} current - Pass true for the current location; defaults to false (target location).
      */
     getCenter: function( current ) {
-        var centerCurrent = new $.Point(
+        const centerCurrent = new $.Point(
                 this.centerSpringX.current.value,
                 this.centerSpringY.current.value
-            ),
-            centerTarget = new $.Point(
+            );
+        const centerTarget = new $.Point(
                 this.centerSpringX.target.value,
                 this.centerSpringY.target.value
-            ),
-            oldZoomPixel,
-            zoom,
-            width,
-            height,
-            bounds,
-            newZoomPixel,
-            deltaZoomPixels,
-            deltaZoomPoints;
+            );
 
         if ( current ) {
             return centerCurrent;
@@ -470,21 +462,21 @@ $.Viewport.prototype = {
             return centerTarget;
         }
 
-        oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+        const oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
 
-        zoom    = this.getZoom();
-        width   = 1.0 / zoom;
-        height  = width / this.getAspectRatio();
-        bounds  = new $.Rect(
+        const zoom    = this.getZoom();
+        const width   = 1.0 / zoom;
+        const height  = width / this.getAspectRatio();
+        const bounds  = new $.Rect(
             centerCurrent.x - width / 2.0,
             centerCurrent.y - height / 2.0,
             width,
             height
         );
 
-        newZoomPixel = this._pixelFromPoint(this.zoomPoint, bounds);
-        deltaZoomPixels = newZoomPixel.minus( oldZoomPixel ).rotate(-this.getRotation(true));
-        deltaZoomPoints = deltaZoomPixels.divide( this._containerInnerSize.x * zoom );
+        const newZoomPixel = this._pixelFromPoint(this.zoomPoint, bounds);
+        const deltaZoomPixels = newZoomPixel.minus( oldZoomPixel ).rotate(-this.getRotation(true));
+        const deltaZoomPoints = deltaZoomPixels.divide( this._containerInnerSize.x * zoom );
 
         return centerTarget.plus( deltaZoomPoints );
     },
@@ -515,19 +507,19 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Rect} constrained bounds.
      */
     _applyBoundaryConstraints: function(bounds) {
-        var newBounds = this.viewportToViewerElementRectangle(bounds).getBoundingBox();
-        var cb = this.viewportToViewerElementRectangle(this._contentBoundsNoRotate).getBoundingBox();
+        const newBounds = this.viewportToViewerElementRectangle(bounds).getBoundingBox();
+        const cb = this.viewportToViewerElementRectangle(this._contentBoundsNoRotate).getBoundingBox();
 
-        var xConstrained = false;
-        var yConstrained = false;
+        let xConstrained = false;
+        let yConstrained = false;
 
         if (this.wrapHorizontal) {
             //do nothing
         } else {
-            var boundsRight = newBounds.x + newBounds.width;
-            var contentRight = cb.x + cb.width;
+            const boundsRight = newBounds.x + newBounds.width;
+            const contentRight = cb.x + cb.width;
 
-            var horizontalThreshold, leftDx, rightDx;
+            let horizontalThreshold, leftDx, rightDx;
             if (newBounds.width > cb.width) {
                 horizontalThreshold = this.visibilityRatio * cb.width;
             } else {
@@ -552,10 +544,10 @@ $.Viewport.prototype = {
         if (this.wrapVertical) {
             //do nothing
         } else {
-            var boundsBottom = newBounds.y + newBounds.height;
-            var contentBottom = cb.y + cb.height;
+            const boundsBottom = newBounds.y + newBounds.height;
+            const contentBottom = cb.y + cb.height;
 
-            var verticalThreshold, topDy, bottomDy;
+            let verticalThreshold, topDy, bottomDy;
             if (newBounds.height > cb.height) {
                 verticalThreshold = this.visibilityRatio * cb.height;
             } else{
@@ -577,8 +569,8 @@ $.Viewport.prototype = {
 
         }
 
-        var constraintApplied = xConstrained || yConstrained;
-        var newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds) : bounds.clone();
+        const constraintApplied = xConstrained || yConstrained;
+        const newViewportBounds = constraintApplied ? this.viewerElementToViewportRectangle(newBounds) : bounds.clone();
         newViewportBounds.xConstrained = xConstrained;
         newViewportBounds.yConstrained = yConstrained;
         newViewportBounds.constraintApplied = constraintApplied;
@@ -620,14 +612,14 @@ $.Viewport.prototype = {
      * @fires OpenSeadragon.Viewer.event:constrain if constraints were applied
      */
     applyConstraints: function(immediately) {
-        var actualZoom = this.getZoom();
-        var constrainedZoom = this._applyZoomConstraints(actualZoom);
+        const actualZoom = this.getZoom();
+        const constrainedZoom = this._applyZoomConstraints(actualZoom);
 
         if (actualZoom !== constrainedZoom) {
             this.zoomTo(constrainedZoom, this.zoomPoint, immediately);
         }
 
-        var constrainedBounds = this.getConstrainedBounds(false);
+        const constrainedBounds = this.getConstrainedBounds(false);
 
         if(constrainedBounds.constraintApplied){
             this.fitBounds(constrainedBounds, immediately);
@@ -657,14 +649,14 @@ $.Viewport.prototype = {
      */
     _fitBounds: function(bounds, options) {
         options = options || {};
-        var immediately = options.immediately || false;
-        var constraints = options.constraints || false;
+        const immediately = options.immediately || false;
+        const constraints = options.constraints || false;
 
-        var aspect = this.getAspectRatio();
-        var center = bounds.getCenter();
+        const aspect = this.getAspectRatio();
+        const center = bounds.getCenter();
 
         // Compute width and height of bounding box.
-        var newBounds = new $.Rect(
+        const newBounds = new $.Rect(
             bounds.x,
             bounds.y,
             bounds.width,
@@ -681,7 +673,7 @@ $.Viewport.prototype = {
         // Compute x and y from width, height and center position
         newBounds.x = center.x - newBounds.width / 2;
         newBounds.y = center.y - newBounds.height / 2;
-        var newZoom = 1.0 / newBounds.width;
+        let newZoom = 1.0 / newBounds.width;
 
         if (immediately) {
             this.panTo(center, true);
@@ -692,13 +684,13 @@ $.Viewport.prototype = {
             return this;
         }
 
-        var currentCenter = this.getCenter(true);
-        var currentZoom = this.getZoom(true);
+        const currentCenter = this.getCenter(true);
+        const currentZoom = this.getZoom(true);
         this.panTo(currentCenter, true);
         this.zoomTo(currentZoom, null, true);
 
-        var oldBounds = this.getBounds();
-        var oldZoom   = this.getZoom();
+        const oldBounds = this.getBounds();
+        const oldZoom   = this.getZoom();
 
         if (oldZoom === 0 || Math.abs(newZoom / oldZoom - 1) < 0.00000001) {
             this.zoomTo(newZoom, null, true);
@@ -715,15 +707,15 @@ $.Viewport.prototype = {
             newZoom = this._applyZoomConstraints(newZoom);
             this.zoomTo(newZoom, null, false);
 
-            var constrainedBounds = this.getConstrainedBounds();
+            const constrainedBounds = this.getConstrainedBounds();
 
             this.panTo(currentCenter, true);
             this.zoomTo(currentZoom, null, true);
 
             this.fitBounds(constrainedBounds);
         } else {
-            var rotatedNewBounds = newBounds.rotate(-this.getRotation());
-            var referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
+            const rotatedNewBounds = newBounds.rotate(-this.getRotation());
+            const referencePoint = rotatedNewBounds.getTopLeft().times(newZoom)
                 .minus(oldBounds.getTopLeft().times(oldZoom))
                 .divide(newZoom - oldZoom);
 
@@ -776,7 +768,7 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Viewport} Chainable.
      */
     fitVertically: function(immediately) {
-        var box = new $.Rect(
+        const box = new $.Rect(
             this._contentBounds.x + (this._contentBounds.width / 2),
             this._contentBounds.y,
             0,
@@ -790,7 +782,7 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Viewport} Chainable.
      */
     fitHorizontally: function(immediately) {
-        var box = new $.Rect(
+        const box = new $.Rect(
             this._contentBounds.x,
             this._contentBounds.y + (this._contentBounds.height / 2),
             this._contentBounds.width,
@@ -809,12 +801,8 @@ $.Viewport.prototype = {
      *                               of the viewer rectangle, and in which dimension(s).
      */
     getConstrainedBounds: function(current) {
-        var bounds,
-            constrainedBounds;
-
-        bounds = this.getBounds(current);
-
-        constrainedBounds = this._applyBoundaryConstraints(bounds);
+        const bounds = this.getBounds(current);
+        const constrainedBounds = this._applyBoundaryConstraints(bounds);
 
         return constrainedBounds;
     },
@@ -827,7 +815,7 @@ $.Viewport.prototype = {
      * @fires OpenSeadragon.Viewer.event:pan
      */
     panBy: function( delta, immediately ) {
-        var center = new $.Point();
+        const center = new $.Point();
         if (immediately) {
             center.x = this.centerSpringX.current.value;
             center.y = this.centerSpringY.current.value;
@@ -896,7 +884,7 @@ $.Viewport.prototype = {
      * @fires OpenSeadragon.Viewer.event:zoom
      */
     zoomTo: function(zoom, refPoint, immediately) {
-        var _this = this;
+        const _this = this;
 
         this.zoomPoint = refPoint instanceof $.Point &&
             !isNaN(refPoint.x) &&
@@ -999,7 +987,7 @@ $.Viewport.prototype = {
             null;
         if (immediately) {
             if(this.rotationPivot){
-                var changeInDegrees = degrees - this._oldDegrees;
+                const changeInDegrees = degrees - this._oldDegrees;
                 if(!changeInDegrees){
                     this.rotationPivot = null;
                     return this;
@@ -1009,16 +997,16 @@ $.Viewport.prototype = {
                 this.degreesSpring.resetTo(degrees);
             }
         } else {
-            var normalizedFrom = $.positiveModulo(this.degreesSpring.current.value, 360);
-            var normalizedTo = $.positiveModulo(degrees, 360);
-            var diff = normalizedTo - normalizedFrom;
+            const normalizedFrom = $.positiveModulo(this.degreesSpring.current.value, 360);
+            let normalizedTo = $.positiveModulo(degrees, 360);
+            const diff = normalizedTo - normalizedFrom;
             if (diff > 180) {
                 normalizedTo -= 360;
             } else if (diff < -180) {
                 normalizedTo += 360;
             }
 
-            var reverseDiff = normalizedFrom - normalizedTo;
+            const reverseDiff = normalizedFrom - normalizedTo;
             this.degreesSpring.resetTo(degrees + reverseDiff);
             this.degreesSpring.springTo(degrees);
         }
@@ -1064,9 +1052,9 @@ $.Viewport.prototype = {
      * @fires OpenSeadragon.Viewer.event:resize
      */
     resize: function( newContainerSize, maintain ) {
-        var oldBounds = this.getBoundsNoRotate(),
-            newBounds = oldBounds,
-            widthDeltaFactor;
+        const oldBounds = this.getBoundsNoRotate();
+        const newBounds = oldBounds;
+        let widthDeltaFactor;
 
         this.containerSize.x = newContainerSize.x;
         this.containerSize.y = newContainerSize.y;
@@ -1101,7 +1089,7 @@ $.Viewport.prototype = {
             });
         }
 
-        var output = this.fitBounds( newBounds, true );
+        const output = this.fitBounds( newBounds, true );
 
         if( this.viewer ){
             /**
@@ -1140,7 +1128,7 @@ $.Viewport.prototype = {
      * @returns {Boolean} True if the viewport is still animating, false otherwise.
      */
     update: function() {
-        var _this = this;
+        const _this = this;
         this._adjustCenterSpringsForZoomPoint(function() {
             _this.zoomSpring.update();
         });
@@ -1158,7 +1146,7 @@ $.Viewport.prototype = {
         }
 
 
-        var changed = this.centerSpringX.current.value !== this._oldCenterX ||
+        const changed = this.centerSpringX.current.value !== this._oldCenterX ||
             this.centerSpringY.current.value !== this._oldCenterY ||
             this.zoomSpring.current.value !== this._oldZoom ||
             this.degreesSpring.current.value !== this._oldDegrees;
@@ -1169,7 +1157,7 @@ $.Viewport.prototype = {
         this._oldZoom    = this.zoomSpring.current.value;
         this._oldDegrees = this.degreesSpring.current.value;
 
-        var isAnimating = changed ||
+        const isAnimating = changed ||
                           !this.zoomSpring.isAtTargetValue() ||
                           !this.centerSpringX.isAtTargetValue() ||
                           !this.centerSpringY.isAtTargetValue() ||
@@ -1180,9 +1168,9 @@ $.Viewport.prototype = {
 
     // private - pass true to use spring, or a number for degrees for immediate rotation
     _rotateAboutPivot: function(degreesOrUseSpring){
-        var useSpring = degreesOrUseSpring === true;
+        const useSpring = degreesOrUseSpring === true;
 
-        var delta = this.rotationPivot.minus(this.getCenter());
+        const delta = this.rotationPivot.minus(this.getCenter());
         this.centerSpringX.shiftBy(delta.x);
         this.centerSpringY.shiftBy(delta.y);
 
@@ -1192,8 +1180,8 @@ $.Viewport.prototype = {
             this.degreesSpring.resetTo(degreesOrUseSpring);
         }
 
-        var changeInDegrees = this.degreesSpring.current.value - this._oldDegrees;
-        var rdelta = delta.rotate(changeInDegrees * -1).times(-1);
+        const changeInDegrees = this.degreesSpring.current.value - this._oldDegrees;
+        const rdelta = delta.rotate(changeInDegrees * -1).times(-1);
         this.centerSpringX.shiftBy(rdelta.x);
         this.centerSpringY.shiftBy(rdelta.y);
     },
@@ -1201,12 +1189,12 @@ $.Viewport.prototype = {
     // private
     _adjustCenterSpringsForZoomPoint: function(zoomSpringHandler) {
         if (this.zoomPoint) {
-            var oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+            const oldZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
             zoomSpringHandler();
-            var newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
+            const newZoomPixel = this.pixelFromPoint(this.zoomPoint, true);
 
-            var deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
-            var deltaZoomPoints = this.deltaPointsFromPixels(
+            const deltaZoomPixels = newZoomPixel.minus(oldZoomPixel);
+            const deltaZoomPoints = this.deltaPointsFromPixels(
                 deltaZoomPixels, true);
 
             this.centerSpringX.shiftBy(deltaZoomPoints.x);
@@ -1330,7 +1318,7 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Point}
      */
     pointFromPixelNoRotate: function(pixel, current) {
-        var bounds = this.getBoundsNoRotate(current);
+        const bounds = this.getBoundsNoRotate(current);
         return pixel.minus(
             new $.Point(this._margins.left, this._margins.top)
         ).divide(
@@ -1356,7 +1344,7 @@ $.Viewport.prototype = {
 
     // private
     _viewportToImageDelta: function( viewerX, viewerY ) {
-        var scale = this._contentBoundsNoRotate.width;
+        const scale = this._contentBoundsNoRotate.width;
         return new $.Point(
             viewerX * this._contentSizeNoRotate.x / scale,
             viewerY * this._contentSizeNoRotate.x / scale);
@@ -1380,7 +1368,7 @@ $.Viewport.prototype = {
         }
 
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
+            const count = this.viewer.world.getItemCount();
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
                     $.console.error('[Viewport.viewportToImageCoordinates] is not accurate ' +
@@ -1390,7 +1378,7 @@ $.Viewport.prototype = {
                 // It is better to use TiledImage.viewportToImageCoordinates
                 // because this._contentBoundsNoRotate can not be relied on
                 // with clipping.
-                var item = this.viewer.world.getItemAt(0);
+                const item = this.viewer.world.getItemAt(0);
                 return item.viewportToImageCoordinates(viewerX, viewerY, true);
             }
         }
@@ -1402,7 +1390,7 @@ $.Viewport.prototype = {
 
     // private
     _imageToViewportDelta: function( imageX, imageY ) {
-        var scale = this._contentBoundsNoRotate.width;
+        const scale = this._contentBoundsNoRotate.width;
         return new $.Point(
             imageX / this._contentSizeNoRotate.x * scale,
             imageY / this._contentSizeNoRotate.x * scale);
@@ -1426,7 +1414,7 @@ $.Viewport.prototype = {
         }
 
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
+            const count = this.viewer.world.getItemCount();
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
                     $.console.error('[Viewport.imageToViewportCoordinates] is not accurate ' +
@@ -1436,12 +1424,12 @@ $.Viewport.prototype = {
                 // It is better to use TiledImage.viewportToImageCoordinates
                 // because this._contentBoundsNoRotate can not be relied on
                 // with clipping.
-                var item = this.viewer.world.getItemAt(0);
+                const item = this.viewer.world.getItemAt(0);
                 return item.imageToViewportCoordinates(imageX, imageY, true);
             }
         }
 
-        var point = this._imageToViewportDelta(imageX, imageY);
+        const point = this._imageToViewportDelta(imageX, imageY);
         point.x += this._contentBoundsNoRotate.x;
         point.y += this._contentBoundsNoRotate.y;
         return point;
@@ -1463,14 +1451,14 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Rect} This image's bounds in viewport coordinates
      */
     imageToViewportRectangle: function(imageX, imageY, pixelWidth, pixelHeight) {
-        var rect = imageX;
+        let rect = imageX;
         if (!(rect instanceof $.Rect)) {
             //they passed individual components instead of a rectangle
             rect = new $.Rect(imageX, imageY, pixelWidth, pixelHeight);
         }
 
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
+            const count = this.viewer.world.getItemCount();
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
                     $.console.error('[Viewport.imageToViewportRectangle] is not accurate ' +
@@ -1480,14 +1468,14 @@ $.Viewport.prototype = {
                 // It is better to use TiledImage.imageToViewportRectangle
                 // because this._contentBoundsNoRotate can not be relied on
                 // with clipping.
-                var item = this.viewer.world.getItemAt(0);
+                const item = this.viewer.world.getItemAt(0);
                 return item.imageToViewportRectangle(
                     imageX, imageY, pixelWidth, pixelHeight, true);
             }
         }
 
-        var coordA = this.imageToViewportCoordinates(rect.x, rect.y);
-        var coordB = this._imageToViewportDelta(rect.width, rect.height);
+        const coordA = this.imageToViewportCoordinates(rect.x, rect.y);
+        const coordB = this._imageToViewportDelta(rect.width, rect.height);
         return new $.Rect(
             coordA.x,
             coordA.y,
@@ -1513,14 +1501,14 @@ $.Viewport.prototype = {
      * @param {Number} [pointHeight] the height of the rectangle in viewport coordinate system.
      */
     viewportToImageRectangle: function(viewerX, viewerY, pointWidth, pointHeight) {
-        var rect = viewerX;
+        let rect = viewerX;
         if (!(rect instanceof $.Rect)) {
             //they passed individual components instead of a rectangle
             rect = new $.Rect(viewerX, viewerY, pointWidth, pointHeight);
         }
 
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
+            const count = this.viewer.world.getItemCount();
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
                     $.console.error('[Viewport.viewportToImageRectangle] is not accurate ' +
@@ -1530,14 +1518,14 @@ $.Viewport.prototype = {
                 // It is better to use TiledImage.viewportToImageCoordinates
                 // because this._contentBoundsNoRotate can not be relied on
                 // with clipping.
-                var item = this.viewer.world.getItemAt(0);
+                const item = this.viewer.world.getItemAt(0);
                 return item.viewportToImageRectangle(
                     viewerX, viewerY, pointWidth, pointHeight, true);
             }
         }
 
-        var coordA = this.viewportToImageCoordinates(rect.x, rect.y);
-        var coordB = this._viewportToImageDelta(rect.width, rect.height);
+        const coordA = this.viewportToImageCoordinates(rect.x, rect.y);
+        const coordB = this._viewportToImageDelta(rect.width, rect.height);
         return new $.Rect(
             coordA.x,
             coordA.y,
@@ -1555,7 +1543,7 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Point}
      */
     viewerElementToImageCoordinates: function( pixel ) {
-        var point = this.pointFromPixel( pixel, true );
+        const point = this.pointFromPixel( pixel, true );
         return this.viewportToImageCoordinates( point );
     },
 
@@ -1567,7 +1555,7 @@ $.Viewport.prototype = {
      * @returns {OpenSeadragon.Point}
      */
     imageToViewerElementCoordinates: function( pixel ) {
-        var point = this.imageToViewportCoordinates( pixel );
+        const point = this.imageToViewportCoordinates( pixel );
         return this.pixelFromPoint( point, true );
     },
 
@@ -1580,7 +1568,7 @@ $.Viewport.prototype = {
     windowToImageCoordinates: function(pixel) {
         $.console.assert(this.viewer,
             "[Viewport.windowToImageCoordinates] the viewport must have a viewer.");
-        var viewerCoordinates = pixel.minus(
+        const viewerCoordinates = pixel.minus(
                 $.getElementPosition(this.viewer.element));
         return this.viewerElementToImageCoordinates(viewerCoordinates);
     },
@@ -1594,7 +1582,7 @@ $.Viewport.prototype = {
     imageToWindowCoordinates: function(pixel) {
         $.console.assert(this.viewer,
             "[Viewport.imageToWindowCoordinates] the viewport must have a viewer.");
-        var viewerCoordinates = this.imageToViewerElementCoordinates(pixel);
+        const viewerCoordinates = this.imageToViewerElementCoordinates(pixel);
         return viewerCoordinates.plus(
                 $.getElementPosition(this.viewer.element));
     },
@@ -1655,7 +1643,7 @@ $.Viewport.prototype = {
     windowToViewportCoordinates: function(pixel) {
         $.console.assert(this.viewer,
             "[Viewport.windowToViewportCoordinates] the viewport must have a viewer.");
-        var viewerCoordinates = pixel.minus(
+        const viewerCoordinates = pixel.minus(
                 $.getElementPosition(this.viewer.element));
         return this.viewerElementToViewportCoordinates(viewerCoordinates);
     },
@@ -1668,7 +1656,7 @@ $.Viewport.prototype = {
     viewportToWindowCoordinates: function(point) {
         $.console.assert(this.viewer,
             "[Viewport.viewportToWindowCoordinates] the viewport must have a viewer.");
-        var viewerCoordinates = this.viewportToViewerElementCoordinates(point);
+        const viewerCoordinates = this.viewportToViewerElementCoordinates(point);
         return viewerCoordinates.plus(
                 $.getElementPosition(this.viewer.element));
     },
@@ -1687,7 +1675,7 @@ $.Viewport.prototype = {
      */
     viewportToImageZoom: function(viewportZoom) {
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
+            const count = this.viewer.world.getItemCount();
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
                     $.console.error('[Viewport.viewportToImageZoom] is not ' +
@@ -1697,15 +1685,15 @@ $.Viewport.prototype = {
                 // It is better to use TiledImage.viewportToImageZoom
                 // because this._contentBoundsNoRotate can not be relied on
                 // with clipping.
-                var item = this.viewer.world.getItemAt(0);
+                const item = this.viewer.world.getItemAt(0);
                 return item.viewportToImageZoom(viewportZoom);
             }
         }
 
-        var imageWidth = this._contentSizeNoRotate.x;
-        var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBoundsNoRotate.width;
-        var viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
+        const imageWidth = this._contentSizeNoRotate.x;
+        const containerWidth = this._containerInnerSize.x;
+        const scale = this._contentBoundsNoRotate.width;
+        const viewportToImageZoomRatio = (containerWidth / imageWidth) * scale;
         return viewportZoom * viewportToImageZoomRatio;
     },
 
@@ -1723,7 +1711,7 @@ $.Viewport.prototype = {
      */
     imageToViewportZoom: function(imageZoom) {
         if (this.viewer) {
-            var count = this.viewer.world.getItemCount();
+            const count = this.viewer.world.getItemCount();
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
                     $.console.error('[Viewport.imageToViewportZoom] is not accurate ' +
@@ -1733,15 +1721,15 @@ $.Viewport.prototype = {
                 // It is better to use TiledImage.imageToViewportZoom
                 // because this._contentBoundsNoRotate can not be relied on
                 // with clipping.
-                var item = this.viewer.world.getItemAt(0);
+                const item = this.viewer.world.getItemAt(0);
                 return item.imageToViewportZoom(imageZoom);
             }
         }
 
-        var imageWidth = this._contentSizeNoRotate.x;
-        var containerWidth = this._containerInnerSize.x;
-        var scale = this._contentBoundsNoRotate.width;
-        var viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
+        const imageWidth = this._contentSizeNoRotate.x;
+        const containerWidth = this._containerInnerSize.x;
+        const scale = this._contentBoundsNoRotate.width;
+        const viewportToImageZoomRatio = (imageWidth / containerWidth) / scale;
         return imageZoom * viewportToImageZoomRatio;
     },
 

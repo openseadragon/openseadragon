@@ -48,7 +48,7 @@
  * exponential springs must have non-zero values.
  */
 $.Spring = function( options ) {
-    var args = arguments;
+    const args = arguments;
 
     if( typeof ( options ) !== 'object' ){
         //allows backward compatible use of ( initialValue, config ) as

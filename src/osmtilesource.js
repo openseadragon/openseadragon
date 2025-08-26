@@ -67,7 +67,7 @@
  * @param {String} tilesUrl
  */
 $.OsmTileSource = function( width, height, tileSize, tileOverlap, tilesUrl ) {
-    var options;
+    let options;
 
     if( $.isPlainObject( width ) ){
         options = width;

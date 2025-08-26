@@ -75,7 +75,7 @@ $.ControlAnchor = {
  */
 $.Control = function ( element, options, container ) {
 
-    var parent = element.parentNode;
+    const parent = element.parentNode;
     if (typeof options === 'number')
     {
         $.console.error("Passing an anchor directly into the OpenSeadragon.Control constructor is deprecated; " +

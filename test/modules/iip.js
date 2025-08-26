@@ -1,6 +1,6 @@
 (function() {
 
-    var test = new OpenSeadragon.IIPTileSource();
+    const test = new OpenSeadragon.IIPTileSource();
 
     // Set options
     test.iipsrv = "http://localhost/fcgi-bin/iipsrv.fcgi";
@@ -12,7 +12,7 @@
 
     QUnit.test('IIPTileSource metadata URL', function(assert) {
 
-	var url = test.iipsrv + '?FIF=' + test.image + '&obj=IIP,1.0&obj=Max-size&obj=Tile-size&obj=Resolution-number&obj=Resolutions';
+	const url = test.iipsrv + '?FIF=' + test.image + '&obj=IIP,1.0&obj=Max-size&obj=Tile-size&obj=Resolution-number&obj=Resolutions';
 	assert.equal( test.getMetadataUrl(), url, "Info URL" );
 
     });
@@ -21,7 +21,7 @@
     QUnit.test('IIPTileSource metadata parsing', function(assert) {
 
 	// Parse metadata
-	var metadata = `Max-size:8272 1712\r\nTile-size:256 256\r\nResolution-number:7\r\nResolutions:129 26,258 53,517 107,1034 214,2068 428,4136 856,8272 1712\r\n`;
+	const metadata = `Max-size:8272 1712\r\nTile-size:256 256\r\nResolution-number:7\r\nResolutions:129 26,258 53,517 107,1034 214,2068 428,4136 856,8272 1712\r\n`;
 	test.parseIIP( metadata );
 
 	// Check dimensions

@@ -31,7 +31,7 @@ let viewer;
 
     if ( !window.performance.now ) {
 
-        var nowOffset = Date.now();
+        let nowOffset = Date.now();
 
         if ( performance.timing && performance.timing.navigationStart ) {
             nowOffset = performance.timing.navigationStart;
@@ -104,15 +104,15 @@ let viewer;
 function rStats ( settings ) {
 
     function iterateKeys ( array, callback ) {
-        var keys = Object.keys( array );
-        for ( var j = 0, l = keys.length; j < l; j++ ) {
+        const keys = Object.keys( array );
+        for ( let j = 0, l = keys.length; j < l; j++ ) {
             callback( keys[ j ] );
         }
     }
 
     function importCSS ( url ) {
 
-        var element = document.createElement( 'link' );
+        const element = document.createElement( 'link' );
         element.href = url;
         element.rel = 'stylesheet';
         element.type = 'text/css';
@@ -120,35 +120,35 @@ function rStats ( settings ) {
 
     }
 
-    var _settings = settings || {};
-    var _colours = _settings.colours || [ '#850700', '#c74900', '#fcb300', '#284280', '#4c7c0c' ];
+    const _settings = settings || {};
+    const _colours = _settings.colours || [ '#850700', '#c74900', '#fcb300', '#284280', '#4c7c0c' ];
 
-    var _cssFont = 'https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300';
-    var _cssRStats = ( _settings.CSSPath ? _settings.CSSPath : '' ) + 'rStats.css';
+    const _cssFont = 'https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700,300';
+    const _cssRStats = ( _settings.CSSPath ? _settings.CSSPath : '' ) + 'rStats.css';
 
-    var _css = _settings.css || [ _cssFont, _cssRStats ];
+    const _css = _settings.css || [ _cssFont, _cssRStats ];
     _css.forEach(function (uri) {
         importCSS( uri );
     });
 
     if ( !_settings.values ) _settings.values = {};
 
-    var _base, _div, _elHeight = 10, _elWidth = 200;
-    var _perfCounters = {};
+    let _base, _div, _elHeight = 10, _elWidth = 200;
+    const _perfCounters = {};
 
 
     function Graph ( _dom, _id, _defArg ) {
 
-        var _def = _defArg || {};
-        var _canvas = document.createElement( 'canvas' ),
-            _ctx = _canvas.getContext( '2d' ),
-            _max = 0,
-            _current = 0;
+        const _def = _defArg || {};
+        const _canvas = document.createElement( 'canvas' );
+        const _ctx = _canvas.getContext( '2d' );
+        let _max = 0;
+        let _current = 0;
 
-        var c = _def.color ? _def.color : '#666666';
+        const c = _def.color ? _def.color : '#666666';
 
-        var _dotCanvas = document.createElement( 'canvas' ),
-            _dotCtx = _dotCanvas.getContext( '2d' );
+        const _dotCanvas = document.createElement( 'canvas' );
+        const _dotCtx = _dotCanvas.getContext( '2d' );
         _dotCanvas.width = 1;
         _dotCanvas.height = 2 * _elHeight;
         _dotCtx.fillStyle = '#444444';
@@ -160,8 +160,8 @@ function rStats ( settings ) {
         _dotCtx.fillRect( 0, _elHeight, 1, 1 );
         _dotCtx.globalAlpha = 1;
 
-        var _alarmCanvas = document.createElement( 'canvas' ),
-            _alarmCtx = _alarmCanvas.getContext( '2d' );
+        const _alarmCanvas = document.createElement( 'canvas' );
+        const _alarmCtx = _alarmCanvas.getContext( '2d' );
         _alarmCanvas.width = 1;
         _alarmCanvas.height = 2 * _elHeight;
         _alarmCtx.fillStyle = '#444444';
@@ -209,8 +209,8 @@ function rStats ( settings ) {
 
     function StackGraph ( _dom, _num ) {
 
-        var _canvas = document.createElement( 'canvas' ),
-            _ctx = _canvas.getContext( '2d' );
+        const _canvas = document.createElement( 'canvas' );
+        const _ctx = _canvas.getContext( '2d' );
 
         function _init () {
 
@@ -228,9 +228,9 @@ function rStats ( settings ) {
 
         function _draw ( v ) {
             _ctx.drawImage( _canvas, 1, 0, _canvas.width - 1, _canvas.height, 0, 0, _canvas.width - 1, _canvas.height );
-            var th = 0;
+            let th = 0;
             iterateKeys( v, function ( j ) {
-                var h = v[ j ] * _canvas.height;
+                const h = v[ j ] * _canvas.height;
                 _ctx.fillStyle = _colours[ j ];
                 _ctx.fillRect( _canvas.width - 1, th, 1, h );
                 th += h;
@@ -247,21 +247,21 @@ function rStats ( settings ) {
 
     function PerfCounter ( id, group ) {
 
-        var _id = id,
-            _time,
-            _value = 0,
-            _total = 0,
-            _averageValue = 0,
-            _accumValue = 0,
-            _accumStart = performance.now(),
-            _accumSamples = 0,
-            _dom = document.createElement( 'div' ),
-            _spanId = document.createElement( 'span' ),
-            _spanValue = document.createElement( 'div' ),
-            _spanValueText = document.createTextNode( '' ),
-            _def = _settings ? _settings.values[ _id.toLowerCase() ] : null,
-            _graph = new Graph( _dom, _id, _def ),
-            _started = false;
+        const _id = id;
+        let _time;
+        let _value = 0;
+        let _total = 0;
+        let _averageValue = 0;
+        let _accumValue = 0;
+        let _accumStart = performance.now();
+        let _accumSamples = 0;
+        const _dom = document.createElement( 'div' );
+        const _spanId = document.createElement( 'span' );
+        const _spanValue = document.createElement( 'div' );
+        const _spanValueText = document.createTextNode( '' );
+        const _def = _settings ? _settings.values[ _id.toLowerCase() ] : null;
+        const _graph = new Graph( _dom, _id, _def );
+        let _started = false;
 
         _spanId.className = 'rs-counter-id';
         _spanId.textContent = ( _def && _def.caption ) ? _def.caption : _id;
@@ -280,7 +280,7 @@ function rStats ( settings ) {
             if ( _def && _def.average ) {
                 _accumValue += v;
                 _accumSamples++;
-                var t = performance.now();
+                const t = performance.now();
                 if ( t - _accumStart >= ( _def.avgMs || 1000 ) ) {
                     _averageValue = _accumValue / _accumSamples;
                     _accumValue = 0;
@@ -313,17 +313,17 @@ function rStats ( settings ) {
         }
 
         function _draw () {
-            var v = ( _def && _def.average ) ? _averageValue : _value;
+            const v = ( _def && _def.average ) ? _averageValue : _value;
             _spanValueText.nodeValue = Math.round( v * 100 ) / 100;
-            var a = ( _def && ( ( _def.below && _value < _def.below ) || ( _def.over && _value > _def.over ) ) );
+            const a = ( _def && ( ( _def.below && _value < _def.below ) || ( _def.over && _value > _def.over ) ) );
             _graph.draw( _value, a );
             _dom.className = a ? 'rs-counter-base alarm' : 'rs-counter-base';
 
         }
 
         function _frame () {
-            var t = performance.now();
-            var e = t - _time;
+            const t = performance.now();
+            const e = t - _time;
             _total++;
             if ( e > 1000 ) {
                 if ( _def && _def.interpolate === false ) {
@@ -358,7 +358,7 @@ function rStats ( settings ) {
 
     function sample () {
 
-        var _value = 0;
+        let _value = 0;
 
         function _set ( v ) {
             _value = v;
@@ -375,21 +375,21 @@ function rStats ( settings ) {
 
     function _perf ( idArg ) {
 
-        var id = idArg.toLowerCase();
+        let id = idArg.toLowerCase();
         if ( id === undefined ) id = 'default';
         if ( _perfCounters[ id ] ) return _perfCounters[ id ];
 
-        var group = null;
+        let group = null;
         if ( _settings && _settings.groups ) {
             iterateKeys( _settings.groups, function ( j ) {
-                var g = _settings.groups[ parseInt( j, 10 ) ];
+                const g = _settings.groups[ parseInt( j, 10 ) ];
                 if ( !group && g.values.indexOf( id.toLowerCase() ) !== -1 ) {
                     group = g;
                 }
             } );
         }
 
-        var p = new PerfCounter( id, group );
+        const p = new PerfCounter( id, group );
         _perfCounters[ id ] = p;
         return p;
 
@@ -401,7 +401,7 @@ function rStats ( settings ) {
             if ( !_settings.values ) _settings.values = {};
             if ( !_settings.groups ) _settings.groups = [];
             if ( !_settings.fractions ) _settings.fractions = [];
-            for ( var j = 0; j < _settings.plugins.length; j++ ) {
+            for ( let j = 0; j < _settings.plugins.length; j++ ) {
                 _settings.plugins[ j ].attach( _perf );
                 iterateKeys( _settings.plugins[ j ].values, function ( k ) {
                     _settings.values[ k ] = _settings.plugins[ j ].values[ k ];
@@ -429,11 +429,11 @@ function rStats ( settings ) {
 
         if ( _settings.groups ) {
             iterateKeys( _settings.groups, function ( j ) {
-                var g = _settings.groups[ parseInt( j, 10 ) ];
-                var div = document.createElement( 'div' );
+                const g = _settings.groups[ parseInt( j, 10 ) ];
+                const div = document.createElement( 'div' );
                 div.className = 'rs-group';
                 g.div = div;
-                var h1 = document.createElement( 'h1' );
+                const h1 = document.createElement( 'h1' );
                 h1.textContent = g.caption;
                 h1.addEventListener( 'click', function ( e ) {
                     this.classList.toggle( 'hidden' );
@@ -446,15 +446,15 @@ function rStats ( settings ) {
 
         if ( _settings.fractions ) {
             iterateKeys( _settings.fractions, function ( j ) {
-                var f = _settings.fractions[ parseInt( j, 10 ) ];
-                var div = document.createElement( 'div' );
+                const f = _settings.fractions[ parseInt( j, 10 ) ];
+                const div = document.createElement( 'div' );
                 div.className = 'rs-fraction';
-                var legend = document.createElement( 'div' );
+                const legend = document.createElement( 'div' );
                 legend.className = 'rs-legend';
 
-                var h = 0;
+                let h = 0;
                 iterateKeys( _settings.fractions[ j ].steps, function ( k ) {
-                    var p = document.createElement( 'p' );
+                    const p = document.createElement( 'p' );
                     p.textContent = _settings.fractions[ j ].steps[ k ];
                     p.style.color = _colours[ h ];
                     legend.appendChild( p );
@@ -463,7 +463,7 @@ function rStats ( settings ) {
                 div.appendChild( legend );
                 div.style.height = h * _elHeight + 'px';
                 f.div = div;
-                var graph = new StackGraph( div, h );
+                const graph = new StackGraph( div, h );
                 f.graph = graph;
                 _div.appendChild( div );
             } );
@@ -483,14 +483,14 @@ function rStats ( settings ) {
 
         if ( _settings && _settings.fractions ) {
             iterateKeys( _settings.fractions, function ( j ) {
-                var f = _settings.fractions[ parseInt( j, 10 ) ];
-                var v = [];
-                var base = _perfCounters[ f.base.toLowerCase() ];
+                const f = _settings.fractions[ parseInt( j, 10 ) ];
+                const v = [];
+                let base = _perfCounters[ f.base.toLowerCase() ];
                 if ( base ) {
                     base = base.value();
                     iterateKeys( _settings.fractions[ j ].steps, function ( k ) {
-                        var s = _settings.fractions[ j ].steps[ parseInt( k, 10 ) ].toLowerCase();
-                        var val = _perfCounters[ s ];
+                        const s = _settings.fractions[ j ].steps[ parseInt( k, 10 ) ].toLowerCase();
+                        const val = _perfCounters[ s ];
                         if ( val ) {
                             v.push( val.value() / base );
                         }
@@ -522,17 +522,17 @@ function rStats ( settings ) {
 
 
 
-var glStats = function() {
+const glStats = function() {
 
-    var _rS = null;
+    let _rS = null;
 
-    var _totalDrawArraysCalls = 0,
-        _totalDrawElementsCalls = 0,
-        _totalUseProgramCalls = 0,
-        _totalFaces = 0,
-        _totalVertices = 0,
-        _totalPoints = 0,
-        _totalBindTexures = 0;
+    let _totalDrawArraysCalls = 0;
+    let _totalDrawElementsCalls = 0;
+    let _totalUseProgramCalls = 0;
+    let _totalFaces = 0;
+    let _totalVertices = 0;
+    let _totalPoints = 0;
+    let _totalBindTexures = 0;
 
         function _h( f, c ) {
             return function() {
@@ -560,17 +560,17 @@ var glStats = function() {
         _totalBindTexures++;
     } );
 
-    var _values = {
+    const _values = {
         allcalls: { over: 3000, caption: 'Calls (hook)' },
         drawelements: { caption: 'drawElements (hook)' },
         drawarrays: { caption: 'drawArrays (hook)' },
     };
 
-    var _groups = [
+    const _groups = [
         { caption: 'WebGL', values: [ 'allcalls', 'drawelements', 'drawarrays', 'useprogram', 'bindtexture', 'glfaces', 'glvertices', 'glpoints' ] }
     ];
 
-    var _fractions = [
+    const _fractions = [
         { base: 'allcalls', steps: [ 'drawelements', 'drawarrays' ] }
     ];
 
@@ -613,11 +613,11 @@ var glStats = function() {
 
 }
 
-var threeStats = function( renderer ) {
+const threeStats = function( renderer ) {
 
-    var _rS = null;
+    let _rS = null;
 
-    var _values = {
+    const _values = {
         'renderer.info.memory.geometries': { caption: 'Geometries' },
         'renderer.info.memory.textures': { caption: 'Textures' },
         'renderer.info.memory.programs': { caption: 'Programs' },
@@ -627,12 +627,12 @@ var threeStats = function( renderer ) {
         'renderer.info.render.vertices': { caption: 'Vertices' }
     };
 
-    var _groups = [
+    const _groups = [
         { caption: 'Three.js - memory', values: [ 'renderer.info.memory.geometries', 'renderer.info.memory.programs', 'renderer.info.memory.textures' ] },
         { caption: 'Three.js - render', values: [ 'renderer.info.render.calls', 'renderer.info.render.faces', 'renderer.info.render.points', 'renderer.info.render.vertices' ] }
     ];
 
-    var _fractions = [];
+    const _fractions = [];
 
     function _update() {
 
@@ -674,7 +674,7 @@ class Stats{
     constructor(){
         this.mode = 0;
 
-        var container = this.container = document.createElement( 'div' );
+        const container = this.container = document.createElement( 'div' );
         container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
         container.addEventListener( 'click', function ( event ) {
 
@@ -713,7 +713,7 @@ class Stats{
 
 	showPanel( id ) {
 
-		for ( var i = 0; i < this.container.children.length; i ++ ) {
+		for ( let i = 0; i < this.container.children.length; i ++ ) {
 
 			this.container.children[ i ].style.display = i === id ? 'block' : 'none';
 
@@ -742,9 +742,9 @@ class Stats{
 
         this.frames ++;
 
-        var time = ( performance || Date ).now();
+        const time = ( performance || Date ).now();
 
-        var interval = time - this.beginTime;
+        const interval = time - this.beginTime;
 
         this.cumulativeMS += interval;
 
@@ -762,7 +762,7 @@ class Stats{
 
             if ( this.memPanel ) {
 
-                var memory = performance.memory;
+                const memory = performance.memory;
                 this.memPanel.update( memory.usedJSHeapSize / 1048576, memory.jsHeapSizeLimit / 1048576 );
 
             }
@@ -784,20 +784,20 @@ class Stats{
 
 Stats.Panel = function ( name, fg, bg ) {
 
-	var min = Infinity, max = 0, round = Math.round;
-	var PR = round( window.devicePixelRatio || 1 );
+	let min = Infinity, max = 0, round = Math.round;
+	const PR = round( window.devicePixelRatio || 1 );
 
-	var WIDTH = 80 * PR, HEIGHT = 48 * PR,
-			TEXT_X = 3 * PR, TEXT_Y = 2 * PR,
-			GRAPH_X = 3 * PR, GRAPH_Y = 15 * PR,
-			GRAPH_WIDTH = 74 * PR, GRAPH_HEIGHT = 30 * PR;
+	const WIDTH = 80 * PR, HEIGHT = 48 * PR;
+	const TEXT_X = 3 * PR, TEXT_Y = 2 * PR;
+	const GRAPH_X = 3 * PR, GRAPH_Y = 15 * PR;
+	const GRAPH_WIDTH = 74 * PR, GRAPH_HEIGHT = 30 * PR;
 
-	var canvas = document.createElement( 'canvas' );
+	const canvas = document.createElement( 'canvas' );
 	canvas.width = WIDTH;
 	canvas.height = HEIGHT;
 	canvas.style.cssText = 'width:80px;height:48px';
 
-	var context = canvas.getContext( '2d' );
+	const context = canvas.getContext( '2d' );
 	context.font = 'bold ' + ( 9 * PR ) + 'px Helvetica,Arial,sans-serif';
 	context.textBaseline = 'top';
 
@@ -847,24 +847,24 @@ Stats.Panel = function ( name, fg, bg ) {
     // $('<label>').text('FPS').appendTo(labels);
     // $('<label>').text('Update (ms)').appendTo(labels);
     // $('<label>').text('Draw (ms)').appendTo(labels);
-    // var statsFPS=new Stats();
+    // const statsFPS=new Stats();
     // statsFPS.begin();
     // $(statsFPS.dom).css({position:'relative', display:'inline-block'}).appendTo(fpscontainer);
     // requestAnimationFrame(function loop(){statsFPS.update();requestAnimationFrame(loop)});
 
-    // var statsUpdate=new Stats();
+    // const statsUpdate=new Stats();
     // $(statsUpdate.dom).css({position:'relative', display:'inline-block'}).appendTo(fpscontainer);
     // statsUpdate.showPanel(2);
 
-    // var statsDraw=new Stats();
+    // const statsDraw=new Stats();
     // $(statsDraw.dom).css({position:'relative', display:'inline-block'}).appendTo(fpscontainer);
     // statsDraw.showPanel(2);
 
-    let origUpdate = OpenSeadragon.World.prototype.update;
-    let origDraw = OpenSeadragon.World.prototype.draw;
+    const origUpdate = OpenSeadragon.World.prototype.update;
+    const origDraw = OpenSeadragon.World.prototype.draw;
 
-    let glS = new glStats();
-    let rS = new rStats( {
+    const glS = new glStats();
+    const rS = new rStats( {
         values: {
             frame: { caption: 'Total frame time (ms)', over: 16 },
             fps: { caption: 'Framerate (FPS)', below: 30 },
@@ -918,7 +918,7 @@ function run(drawerType, num) {
         viewer.destroy();
     }
     viewer = window.viewer = makeViewer(drawerType);
-    let tileSources = makeTileSources(num);
+    const tileSources = makeTileSources(num);
 
 
 
@@ -938,16 +938,16 @@ function run(drawerType, num) {
         window.clearInterval(window.interval);
     }
     window.interval = window.setInterval(()=>{
-        let m = movingLeft ? 1 : -1;
+        const m = movingLeft ? 1 : -1;
         movingLeft = m === -1;
-        let dist = viewer.viewport.getBounds().width;
+        const dist = viewer.viewport.getBounds().width;
         viewer.viewport.panBy(new OpenSeadragon.Point( dist * m/40, 0));
 
     }, 1000);
 }
 
 function makeViewer(drawerType){
-    let viewer = OpenSeadragon({
+    const viewer = OpenSeadragon({
         id: "drawer",
         prefixUrl: "../../build/openseadragon/images/",
         minZoomImageRatio:0.01,
@@ -964,12 +964,12 @@ function makeViewer(drawerType){
 
 function makeTileSources(num){
 
-    let keys = Object.keys(sources);
+    const keys = Object.keys(sources);
 
-    let indices = Array.from(Array(num).keys());
+    const indices = Array.from(Array(num).keys());
 
     return indices.map(index => {
-        let ts = sources[keys[index % keys.length]];
+        const ts = sources[keys[index % keys.length]];
         return ts;
     })
 
@@ -981,7 +981,7 @@ const numberOfSources = Number.parseInt(url.searchParams.get("sources")) || 1;
 
 $('#create-drawer').on('click',function(){
     const drawer = $('#select-drawer').val();
-    let num = Math.floor($('#input-number').val());
+    const num = Math.floor($('#input-number').val());
 
     url.searchParams.set("drawer", drawer);
     url.searchParams.set("sources", num);
