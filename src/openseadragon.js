@@ -771,18 +771,25 @@
   *
   */
 
- /**
-  * @typedef {Object.<string, Object>} DrawerOptions - give the renderer options (both shared - BaseDrawerOptions, and custom).
-  *   Supports arbitrary keys: you can register any drawer on the OpenSeadragon namespace, it will get automatically recognized
-  *   and its getType() implementation will define what key to specify the options with.
-  * @memberof OpenSeadragon
-  * @property {BaseDrawerOptions} [webgl] - options if the WebGLDrawer is used.
-  * @property {BaseDrawerOptions} [canvas] - options if the CanvasDrawer is used.
-  * @property {BaseDrawerOptions} [html] - options if the HTMLDrawer is used.
-  * @property {BaseDrawerOptions} [custom] - options if a custom drawer is used.
-  *
-  * //Note: if you want to add change options for target drawer change type to {BaseDrawerOptions & MyDrawerOpts}
-  */
+/**
+ * @typedef {BaseDrawerOptions} WebGLDrawerOptions
+ * @memberof OpenSeadragon
+ * @property {Boolean} [unpackWithPremultipliedAlpha=false]
+ *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
+ */
+
+/**
+ * @typedef {Object.<string, Object>} DrawerOptions - give the renderer options (both shared - BaseDrawerOptions, and custom).
+ *   Supports arbitrary keys: you can register any drawer on the OpenSeadragon namespace, it will get automatically recognized
+ *   and its getType() implementation will define what key to specify the options with.
+ * @memberof OpenSeadragon
+ * @property {WebGLDrawerOptions} [webgl] - options if the WebGLDrawer is used.
+ * @property {BaseDrawerOptions} [canvas] - options if the CanvasDrawer is used.
+ * @property {BaseDrawerOptions} [html] - options if the HTMLDrawer is used.
+ * @property {BaseDrawerOptions} [custom] - options if a custom drawer is used.
+ *
+ * //Note: if you want to add change options for target drawer change type to {BaseDrawerOptions & MyDrawerOpts}
+ */
 
 
 /**
@@ -1407,7 +1414,7 @@ function OpenSeadragon( options ){
 
             drawerOptions: {
                 webgl: {
-
+                    unpackWithPremultipliedAlpha: false,
                 },
                 canvas: {
 
