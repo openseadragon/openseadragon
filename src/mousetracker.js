@@ -120,6 +120,9 @@
      *      An optional handler for blur.
      * @param {Object} [options.userData=null]
      *      Arbitrary object to be passed unchanged to any attached handler methods.
+     * @param {Number} [options.trackpadScrollSensitivity=0.3]
+     *      Sensitivity multiplier for trackpad scroll events. Lower values make trackpad scrolling slower.
+     *      This helps normalize trackpad scroll speed compared to mouse wheel scrolling.
      */
     $.MouseTracker = function ( options ) {
 
@@ -170,6 +173,13 @@
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
+        /**
+         * Sensitivity multiplier for trackpad scroll events. Lower values make trackpad scrolling slower.
+         * This helps normalize trackpad scroll speed compared to mouse wheel scrolling.
+         * @member {Number} trackpadScrollSensitivity
+         * @memberof OpenSeadragon.MouseTracker#
+         */
+        this.trackpadScrollSensitivity = options.trackpadScrollSensitivity !== undefined ? options.trackpadScrollSensitivity : $.DEFAULT_SETTINGS.trackpadScrollSensitivity;
         /*eslint-disable no-multi-spaces*/
         this.userData              = options.userData          || null;
         this.stopDelay             = options.stopDelay         || 50;
@@ -2055,7 +2065,24 @@
         //   y-index scrolling.
         // event.deltaMode: 0=pixel, 1=line, 2=page
         // TODO: Deltas in pixel mode should be accumulated then a scroll value computed after $.DEFAULT_SETTINGS.pixelsPerWheelLine threshold reached
-        nDelta = event.deltaY ? (event.deltaY < 0 ? 1 : -1) : 0;
+
+        // Detect trackpad vs mouse wheel and apply appropriate scaling
+        if (event.deltaY) {
+            const absDeltaY = Math.abs(event.deltaY);
+            const isTrackpad = absDeltaY < 10 && event.deltaMode === 0; // Trackpads typically have small deltaY values in pixel mode
+
+            if (isTrackpad) {
+                // For trackpads, use a smaller scaling factor to normalize speed
+                const trackpadSensitivity = tracker.trackpadScrollSensitivity !== undefined ?
+                    tracker.trackpadScrollSensitivity : 0.3;
+                nDelta = event.deltaY < 0 ? trackpadSensitivity : -trackpadSensitivity;
+            } else {
+                // For mouse wheels, use the original behavior
+                nDelta = event.deltaY < 0 ? 1 : -1;
+            }
+        } else {
+            nDelta = 0;
+        }
 
         eventInfo = {
             originalEvent: event,

@@ -314,6 +314,10 @@
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
   *
+  * @property {Number} [trackpadScrollSensitivity=0.3]
+  *     Sensitivity multiplier for trackpad scroll events. Lower values make trackpad scrolling slower.
+  *     This helps normalize trackpad scroll speed compared to mouse wheel scrolling.
+  *
   * @property {Number} [pixelsPerArrowPress=40]
   *     The number of pixels viewport moves when an arrow key is pressed.
   *
@@ -1348,6 +1352,7 @@ function OpenSeadragon( options ){
             iOSDevice:              isIOSDevice(),
             pixelsPerWheelLine:     40,
             pixelsPerArrowPress:    40,
+            trackpadScrollSensitivity: 0.3,
             autoResize:             true,
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
