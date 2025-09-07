@@ -5,10 +5,10 @@
         return;
     }
 
-    var svgNS = 'http://www.w3.org/2000/svg';
+    const svgNS = 'http://www.w3.org/2000/svg';
 
-    var update = function(viewer) {
-        var info = viewer._svgOverlayInfo;
+    const update = function(viewer) {
+        const info = viewer._svgOverlayInfo;
 
         if (info.containerWidth !== viewer.container.clientWidth) {
             info.containerWidth = viewer.container.clientWidth;
@@ -20,15 +20,15 @@
             info.svg.setAttribute('height', info.containerHeight);
         }
 
-        var p = viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(0, 0), true);
-        var zoom = viewer.viewport.getZoom(true);
-        var scale = viewer.container.clientWidth * zoom;
+        const p = viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(0, 0), true);
+        const zoom = viewer.viewport.getZoom(true);
+        const scale = viewer.container.clientWidth * zoom;
         info.node.setAttribute('transform',
             'translate(' + p.x + ',' + p.y + ') scale(' + scale + ')');
     };
 
     OpenSeadragon.Viewer.prototype.svgOverlay = function(command) {
-        var self = this;
+        const self = this;
 
         if (command === undefined) {
             if (this._svgOverlayInfo) {
@@ -36,7 +36,7 @@
                 return;
             }
 
-            var info = this._svgOverlayInfo = {
+            const info = this._svgOverlayInfo = {
                 containerWidth: 0,
                 containerHeight: 0
             };

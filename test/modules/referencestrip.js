@@ -1,7 +1,7 @@
 /* global QUnit, $, testLog */
 
 (function() {
-    var viewer;
+    let viewer;
 
     QUnit.module('ReferenceStrip', {
         beforeEach: function () {
@@ -19,7 +19,7 @@
     });
 
     // ----------
-    var createViewer = function(options) {
+    const createViewer = function(options) {
         options = options || {};
         viewer = OpenSeadragon(OpenSeadragon.extend({
             id:            'example',
@@ -30,7 +30,7 @@
 
     // ----------
     QUnit.test('basics', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         createViewer({
             sequenceMode: true,
             showReferenceStrip: true,
@@ -47,9 +47,9 @@
     // ----------
     QUnit.test('shadow dom', function(assert) {
         if (document.head && document.head.attachShadow) {
-            var done = assert.async();
+            const done = assert.async();
 
-            var shadowDiv = document.createElement('div');
+            const shadowDiv = document.createElement('div');
             shadowDiv.attachShadow({
                 mode: 'open'
             });

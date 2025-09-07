@@ -9,15 +9,15 @@
 
 
     QUnit.test("should set sane tile size defaults", function(assert) {
-        var source = new OpenSeadragon.TileSource();
+        const source = new OpenSeadragon.TileSource();
 
         assert.equal(source.getTileWidth(), 0, "getTileWidth() should return 0 if not provided a size");
         assert.equal(source.getTileHeight(), 0, "getTileHeight() should return 0 if not provided a size");
     });
 
     QUnit.test("providing tileSize", function(assert){
-        var tileSize = 256,
-            source = new OpenSeadragon.TileSource({
+        const tileSize = 256;
+        const source = new OpenSeadragon.TileSource({
                 tileSize: tileSize
             });
 
@@ -28,9 +28,9 @@
 
 
     QUnit.test("providing tileWidth and tileHeight", function(assert){
-        var tileWidth = 256,
-            tileHeight = 512,
-            source = new OpenSeadragon.TileSource({
+        const tileWidth = 256;
+        const tileHeight = 512;
+        const source = new OpenSeadragon.TileSource({
                 tileWidth: tileWidth,
                 tileHeight: tileHeight
             });
@@ -44,12 +44,12 @@
     });
 
     QUnit.test('getTileSize() deprecation', function(assert) {
-        var source = new OpenSeadragon.TileSource();
+        const source = new OpenSeadragon.TileSource();
         Util.testDeprecation(assert, source, 'getTileSize');
     });
 
     QUnit.test('getTileAtPoint', function(assert) {
-        var tileSource = new OpenSeadragon.TileSource({
+        let tileSource = new OpenSeadragon.TileSource({
             width: 1500,
             height: 1000,
             tileWidth: 200,
@@ -60,7 +60,7 @@
         assert.equal(tileSource.maxLevel, 11, "The max level should be 11.");
 
         function assertTileAtPoint(level, position, expected) {
-            var actual = tileSource.getTileAtPoint(level, position);
+            const actual = tileSource.getTileAtPoint(level, position);
             assert.ok(actual.equals(expected), "The tile at level " + level +
                 ", position " + position.toString() +
                 " should be tile " + expected.toString() +
@@ -80,7 +80,7 @@
         assertTileAtPoint(9, new OpenSeadragon.Point(1, 10 / 15), new OpenSeadragon.Point(1, 1));
 
         // For all other levels, there is only one tile.
-        for (var level = 8; level >= 0; level--) {
+        for (let level = 8; level >= 0; level--) {
             assertTileAtPoint(level, new OpenSeadragon.Point(0, 0), new OpenSeadragon.Point(0, 0));
             assertTileAtPoint(level, new OpenSeadragon.Point(0.5, 0.5), new OpenSeadragon.Point(0, 0));
             assertTileAtPoint(level, new OpenSeadragon.Point(1, 10 / 15), new OpenSeadragon.Point(0, 0));
@@ -121,7 +121,7 @@
     });
 
     QUnit.test('changing maxLevel', function(assert) {
-        var tileSource = new OpenSeadragon.TileSource({
+        const tileSource = new OpenSeadragon.TileSource({
             width: 4096,
             height: 4096,
         });
@@ -129,7 +129,7 @@
         assert.equal(tileSource.maxLevel, 12, 'The initial max level should be 12.');
 
         function assertLevelScale(level, expected) {
-            var actual = tileSource.getLevelScale(level);
+            const actual = tileSource.getLevelScale(level);
             assert.ok(Math.abs(actual - expected) < Number.EPSILON, "The scale at level " + level +
                 " should be " + expected.toString() +
                 " got " + actual.toString());

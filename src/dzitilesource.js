@@ -2,7 +2,7 @@
  * OpenSeadragon - DziTileSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -51,10 +51,8 @@
  * @property {OpenSeadragon.DisplayRect[]} displayRects
  */
 $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, fileFormat, displayRects, minLevel, maxLevel ) {
-    var i,
-        rect,
-        level,
-        options;
+    let level;
+    let options;
 
     if( $.isPlainObject( width ) ){
         options = width;
@@ -78,8 +76,8 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
     this.displayRects = options.displayRects;
 
     if ( this.displayRects ) {
-        for ( i = this.displayRects.length - 1; i >= 0; i-- ) {
-            rect = this.displayRects[ i ];
+        for ( let i = this.displayRects.length - 1; i >= 0; i-- ) {
+            const rect = this.displayRects[ i ];
             for ( level = rect.minLevel; level <= rect.maxLevel; level++ ) {
                 if ( !this._levelRects[ level ] ) {
                     this._levelRects[ level ] = [];
@@ -104,7 +102,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * @param {String} optional - url
      */
     supports: function( data, url ){
-        var ns;
+        let ns;
         if ( data.Image ) {
             ns = data.Image.xmlns;
         } else if ( data.documentElement) {
@@ -130,7 +128,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      */
     configure: function( data, url, postData ){
 
-        var options;
+        let options;
 
         if( !$.isPlainObject(data) ){
 
@@ -182,14 +180,12 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * @param {Number} y
      */
     tileExists: function( level, x, y ) {
-        var rects = this._levelRects[ level ],
-            rect,
-            scale,
-            xMin,
-            yMin,
-            xMax,
-            yMax,
-            i;
+        const rects = this._levelRects[ level ];
+        let scale;
+        let xMin;
+        let yMin;
+        let xMax;
+        let yMax;
 
         if ((this.minLevel && level < this.minLevel) || (this.maxLevel && level > this.maxLevel)) {
             return false;
@@ -199,8 +195,8 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
             return true;
         }
 
-        for ( i = rects.length - 1; i >= 0; i-- ) {
-            rect = rects[ i ];
+        for (let i = rects.length - 1; i >= 0; i-- ) {
+            const rect = rects[ i ];
 
             if ( level < rect.minLevel || level > rect.maxLevel ) {
                 continue;
@@ -238,16 +234,16 @@ function configureFromXML( tileSource, xmlDoc ){
         throw new Error( $.getString( "Errors.Xml" ) );
     }
 
-    var root           = xmlDoc.documentElement,
-        rootName       = root.localName || root.tagName,
-        ns             = xmlDoc.documentElement.namespaceURI,
-        configuration  = null,
-        displayRects   = [],
-        dispRectNodes,
-        dispRectNode,
-        rectNode,
-        sizeNode,
-        i;
+    const root           = xmlDoc.documentElement;
+    const rootName       = root.localName || root.tagName;
+    const ns             = xmlDoc.documentElement.namespaceURI;
+    let configuration  = null;
+    const displayRects   = [];
+    let dispRectNodes;
+    let dispRectNode;
+    let rectNode;
+    let sizeNode;
+    let i;
 
     if ( rootName === "Image" ) {
 
@@ -316,8 +312,8 @@ function configureFromXML( tileSource, xmlDoc ){
     } else if ( rootName === "Collection" ) {
         throw new Error( $.getString( "Errors.Dzc" ) );
     } else if ( rootName === "Error" ) {
-        var messageNode = root.getElementsByTagName("Message")[0];
-        var message = messageNode.firstChild.nodeValue;
+        const messageNode = root.getElementsByTagName("Message")[0];
+        const message = messageNode.firstChild.nodeValue;
         throw new Error(message);
     }
 
@@ -330,18 +326,17 @@ function configureFromXML( tileSource, xmlDoc ){
  * @function
  */
 function configureFromObject( tileSource, configuration ){
-    var imageData     = configuration.Image,
-        tilesUrl      = imageData.Url,
-        fileFormat    = imageData.Format,
-        sizeData      = imageData.Size,
-        dispRectData  = imageData.DisplayRect || [],
-        width         = parseInt( sizeData.Width, 10 ),
-        height        = parseInt( sizeData.Height, 10 ),
-        tileSize      = parseInt( imageData.TileSize, 10 ),
-        tileOverlap   = parseInt( imageData.Overlap, 10 ),
-        displayRects  = [],
-        rectData,
-        i;
+    const imageData     = configuration.Image;
+    const tilesUrl      = imageData.Url;
+    const fileFormat    = imageData.Format;
+    const sizeData      = imageData.Size;
+    const dispRectData  = imageData.DisplayRect || [];
+    const width         = parseInt( sizeData.Width, 10 );
+    const height        = parseInt( sizeData.Height, 10 );
+    const tileSize      = parseInt( imageData.TileSize, 10 );
+    const tileOverlap   = parseInt( imageData.Overlap, 10 );
+    const displayRects  = [];
+    let rectData;
 
     //TODO: need to figure out out to better handle image format compatibility
     //      which actually includes additional file formats like xml and pdf
@@ -356,7 +351,7 @@ function configureFromObject( tileSource, configuration ){
         );
     }*/
 
-    for ( i = 0; i < dispRectData.length; i++ ) {
+    for (let i = 0; i < dispRectData.length; i++ ) {
         rectData = dispRectData[ i ].Rect;
 
         displayRects.push( new $.DisplayRect(

@@ -2,7 +2,7 @@
  * OpenSeadragon - Control
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -75,7 +75,7 @@ $.ControlAnchor = {
  */
 $.Control = function ( element, options, container ) {
 
-    var parent = element.parentNode;
+    const parent = element.parentNode;
     if (typeof options === 'number')
     {
         $.console.error("Passing an anchor directly into the OpenSeadragon.Control constructor is deprecated; " +

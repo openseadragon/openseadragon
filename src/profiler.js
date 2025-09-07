@@ -2,7 +2,7 @@
  * OpenSeadragon - Profiler
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -86,7 +86,7 @@ $.Profiler.prototype = {
             return;     // this is the first update
         }
 
-        var time = this.lastBeginTime - this.lastEndTime;
+        const time = this.lastBeginTime - this.lastEndTime;
 
         this.avgIdleTime = (this.avgIdleTime * (this.numUpdates - 1) + time) / this.numUpdates;
 
@@ -109,7 +109,7 @@ $.Profiler.prototype = {
         this.lastEndTime = $.now();
         this.midUpdate = false;
 
-        var time = this.lastEndTime - this.lastBeginTime;
+        const time = this.lastEndTime - this.lastBeginTime;
 
         this.numUpdates++;
         this.avgUpdateTime = (this.avgUpdateTime * (this.numUpdates - 1) + time) / this.numUpdates;

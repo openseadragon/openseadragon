@@ -9,8 +9,8 @@
     });
 
     function testImplicitTilesUrl(assert, dziUrl, expected, msg) {
-        var source = new OpenSeadragon.DziTileSource();
-        var options = source.configure({
+        const source = new OpenSeadragon.DziTileSource();
+        const options = source.configure({
             Image: {Size: {Width:0, Height: 0}}
         }, dziUrl);
         assert.equal(options.tilesUrl, expected, msg);

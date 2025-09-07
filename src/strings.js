@@ -2,7 +2,7 @@
  * OpenSeadragon - getString/setString
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -37,7 +37,7 @@
 //TODO: I guess this is where the i18n needs to be reimplemented.  I'll look
 //      into existing patterns for i18n in javascript but i think that mimicking
 //      pythons gettext might be a reasonable approach.
-var I18N = {
+const I18N = {
     Errors: {
         Dzc:            "Sorry, we don't support Deep Zoom Collections!",
         Dzi:            "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
@@ -70,11 +70,11 @@ $.extend( $, /** @lends OpenSeadragon */{
      */
     getString: function( prop ) {
 
-        var props   = prop.split('.'),
-            string  = null,
-            args    = arguments,
-            container = I18N,
-            i;
+        const props   = prop.split('.');
+        let string  = null;
+        const args    = arguments;
+        let container = I18N;
+        let i;
 
         for (i = 0; i < props.length - 1; i++) {
             // in case not a subproperty
@@ -88,7 +88,7 @@ $.extend( $, /** @lends OpenSeadragon */{
         }
 
         return string.replace(/\{\d+\}/g, function(capture) {
-            var i = parseInt( capture.match( /\d+/ ), 10 ) + 1;
+            const i = parseInt( capture.match( /\d+/ ), 10 ) + 1;
             return i < args.length ?
                 args[ i ] :
                 "";
@@ -102,9 +102,9 @@ $.extend( $, /** @lends OpenSeadragon */{
      */
     setString: function( prop, value ) {
 
-        var props     = prop.split('.'),
-            container = I18N,
-            i;
+        const props     = prop.split('.');
+        let container = I18N;
+        let i;
 
         for ( i = 0; i < props.length - 1; i++ ) {
             if ( !container[ props[ i ] ] ) {

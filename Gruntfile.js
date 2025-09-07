@@ -3,7 +3,7 @@
 
 module.exports = function(grunt) {
     /* eslint-disable no-undef */
-    var dateFormat = require('dateformat');
+    const dateFormat = require('dateformat');
 
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
@@ -19,7 +19,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-istanbul');
 
     // ----------
-    var packageJson = grunt.file.readJSON("package.json"),
+    const packageJson = grunt.file.readJSON("package.json"),
         distribution = "build/openseadragon/openseadragon.js",
         minified = "build/openseadragon/openseadragon.min.js",
         packageDirName = "openseadragon-bin-" + packageJson.version,
@@ -43,6 +43,8 @@ module.exports = function(grunt) {
             "src/tilesource.js",
             "src/dzitilesource.js",
             "src/iiiftilesource.js",
+            "src/iiptilesource.js",
+            "src/iristilesource.js",
             "src/osmtilesource.js",
             "src/tmstilesource.js",
             "src/zoomifytilesource.js",
@@ -50,7 +52,7 @@ module.exports = function(grunt) {
             "src/imagetilesource.js",
             "src/tilesourcecollection.js",
             "src/priorityqueue.js",
-            "src/datatypeconvertor.js",
+            "src/datatypeconverter.js",
             "src/button.js",
             "src/buttongroup.js",
             "src/rectangle.js",
@@ -70,7 +72,7 @@ module.exports = function(grunt) {
             "src/world.js",
         ];
 
-    var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
+    const banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
                  "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
                  "//! Git commit: <%= gitInfo %>\n" +
                  "//! http://openseadragon.github.io\n" +
@@ -254,7 +256,7 @@ module.exports = function(grunt) {
     });
 
     grunt.event.on("qunit.coverage", function(coverage) {
-        var reportPath = coverageDir + "/coverage.json";
+        const reportPath = coverageDir + "/coverage.json";
 
         // Create the coverage file
         grunt.file.write(reportPath, JSON.stringify(coverage));
@@ -274,7 +276,7 @@ module.exports = function(grunt) {
     // Creates a directory tree to be compressed into a package.
     grunt.registerTask("copy:package", function() {
         grunt.file.recurse("build/openseadragon", function(abspath, rootdir, subdir, filename) {
-            var dest = packageDir +
+            const dest = packageDir +
                 (subdir ? subdir + "/" : '/') +
                 filename;
             grunt.file.copy(abspath, dest);
@@ -292,7 +294,7 @@ module.exports = function(grunt) {
                 return;
             }
 
-            var dest = releaseRoot +
+            const dest = releaseRoot +
                 (subdir ? subdir + "/" : '/') +
                 filename;
 
@@ -304,8 +306,8 @@ module.exports = function(grunt) {
     // Bower task.
     // Generates the Bower file for site-build.
     grunt.registerTask("bower", function() {
-        var path = "../site-build/bower.json";
-        var data = grunt.file.readJSON(path);
+        const path = "../site-build/bower.json";
+        const data = grunt.file.readJSON(path);
         data.version = packageJson.version;
         grunt.file.write(path, JSON.stringify(data, null, 2) + "\n");
     });

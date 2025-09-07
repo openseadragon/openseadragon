@@ -2,7 +2,7 @@
  * OpenSeadragon - Overlay
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -117,7 +117,7 @@
          * @param {Element} element
          */
 
-        var options;
+        let options;
         if ($.isPlainObject(element)) {
             options = element;
         } else {
@@ -186,7 +186,7 @@
          * @param {OpenSeadragon.Point} size
          */
         adjust: function(position, size) {
-            var properties = $.Placement.properties[this.placement];
+            const properties = $.Placement.properties[this.placement];
             if (!properties) {
                 return;
             }
@@ -206,8 +206,8 @@
          * @function
          */
         destroy: function() {
-            var element = this.elementWrapper;
-            var style = this.style;
+            const element = this.elementWrapper;
+            const style = this.style;
 
             if (element.parentNode) {
                 element.parentNode.removeChild(element);
@@ -236,9 +236,9 @@
             if (this.height !== null) {
                 style.height = "";
             }
-            var transformOriginProp = $.getCssPropertyWithVendorPrefix(
+            const transformOriginProp = $.getCssPropertyWithVendorPrefix(
                 'transformOrigin');
-            var transformProp = $.getCssPropertyWithVendorPrefix(
+            const transformProp = $.getCssPropertyWithVendorPrefix(
                 'transform');
             if (transformOriginProp && transformProp) {
                 style[transformOriginProp] = "";
@@ -251,7 +251,7 @@
          * @param {Element} container
          */
         drawHTML: function(container, viewport) {
-            var element = this.elementWrapper;
+            const element = this.elementWrapper;
             if (element.parentNode !== container) {
                 //save the source parent for later if we need it
                 element.prevElementParent = element.parentNode;
@@ -264,22 +264,22 @@
                 // least one direction when this.checkResize is set to false.
                 this.size = $.getElementSize(this.elementWrapper);
             }
-            var positionAndSize = this._getOverlayPositionAndSize(viewport);
-            var position = positionAndSize.position;
-            var size = this.size = positionAndSize.size;
-            var outerScale = "";
+            const positionAndSize = this._getOverlayPositionAndSize(viewport);
+            const position = positionAndSize.position;
+            const size = this.size = positionAndSize.size;
+            let outerScale = "";
             if (viewport.overlayPreserveContentDirection) {
                 outerScale = viewport.flipped ? " scaleX(-1)" : " scaleX(1)";
             }
-            var rotate = viewport.flipped ? -positionAndSize.rotate : positionAndSize.rotate;
-            var scale = viewport.flipped ? " scaleX(-1)" : "";
+            const rotate = viewport.flipped ? -positionAndSize.rotate : positionAndSize.rotate;
+            const scale = viewport.flipped ? " scaleX(-1)" : "";
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
             if (this.onDraw) {
                 this.onDraw(position, size, this.element);
             } else {
-                var style = this.style;
-                var innerStyle = this.element.style;
+                const style = this.style;
+                const innerStyle = this.element.style;
                 innerStyle.display = "block";
                 style.left = position.x + "px";
                 style.top = position.y + "px";
@@ -289,9 +289,9 @@
                 if (this.height !== null) {
                     innerStyle.height = size.y + "px";
                 }
-                var transformOriginProp = $.getCssPropertyWithVendorPrefix(
+                const transformOriginProp = $.getCssPropertyWithVendorPrefix(
                     'transformOrigin');
-                var transformProp = $.getCssPropertyWithVendorPrefix(
+                const transformProp = $.getCssPropertyWithVendorPrefix(
                     'transform');
                 if (transformOriginProp && transformProp) {
                     if (rotate && !viewport.flipped) {
@@ -318,19 +318,19 @@
 
         // private
         _getOverlayPositionAndSize: function(viewport) {
-            var position = viewport.pixelFromPoint(this.location, true);
-            var size = this._getSizeInPixels(viewport);
+            let position = viewport.pixelFromPoint(this.location, true);
+            let size = this._getSizeInPixels(viewport);
             this.adjust(position, size);
 
-            var rotate = 0;
+            let rotate = 0;
             if (viewport.getRotation(true) &&
                 this.rotationMode !== $.OverlayRotationMode.NO_ROTATION) {
                 // BOUNDING_BOX is only valid if both directions get scaled.
                 // Get replaced by EXACT otherwise.
                 if (this.rotationMode === $.OverlayRotationMode.BOUNDING_BOX &&
                     this.width !== null && this.height !== null) {
-                    var rect = new $.Rect(position.x, position.y, size.x, size.y);
-                    var boundingBox = this._getBoundingBox(rect, viewport.getRotation(true));
+                    const rect = new $.Rect(position.x, position.y, size.x, size.y);
+                    const boundingBox = this._getBoundingBox(rect, viewport.getRotation(true));
                     position = boundingBox.getTopLeft();
                     size = boundingBox.getSize();
                 } else {
@@ -350,10 +350,10 @@
 
         // private
         _getSizeInPixels: function(viewport) {
-            var width = this.size.x;
-            var height = this.size.y;
+            let width = this.size.x;
+            let height = this.size.y;
             if (this.width !== null || this.height !== null) {
-                var scaledSize = viewport.deltaPixelsFromPointsNoRotate(
+                const scaledSize = viewport.deltaPixelsFromPointsNoRotate(
                     new $.Point(this.width || 0, this.height || 0), true);
                 if (this.width !== null) {
                     width = scaledSize.x;
@@ -364,7 +364,7 @@
             }
             if (this.checkResize &&
                 (this.width === null || this.height === null)) {
-                var eltSize = this.size = $.getElementSize(this.elementWrapper);
+                const eltSize = this.size = $.getElementSize(this.elementWrapper);
                 if (this.width === null) {
                     width = eltSize.x;
                 }
@@ -377,14 +377,14 @@
 
         // private
         _getBoundingBox: function(rect, degrees) {
-            var refPoint = this._getPlacementPoint(rect);
+            const refPoint = this._getPlacementPoint(rect);
             return rect.rotate(degrees, refPoint).getBoundingBox();
         },
 
         // private
         _getPlacementPoint: function(rect) {
-            var result = new $.Point(rect.x, rect.y);
-            var properties = $.Placement.properties[this.placement];
+            const result = new $.Point(rect.x, rect.y);
+            const properties = $.Placement.properties[this.placement];
             if (properties) {
                 if (properties.isHorizontallyCentered) {
                     result.x += rect.width / 2;
@@ -402,8 +402,8 @@
 
         // private
         _getTransformOrigin: function() {
-            var result = "";
-            var properties = $.Placement.properties[this.placement];
+            let result = "";
+            const properties = $.Placement.properties[this.placement];
             if (!properties) {
                 return result;
             }
@@ -429,7 +429,7 @@
          * @param {OpenSeadragon.Placement} placement
          */
         update: function(location, placement) {
-            var options = $.isPlainObject(location) ? location : {
+            const options = $.isPlainObject(location) ? location : {
                 location: location,
                 placement: placement
             };
@@ -454,10 +454,10 @@
         getBounds: function(viewport) {
             $.console.assert(viewport,
                 'A viewport must now be passed to Overlay.getBounds.');
-            var width = this.width;
-            var height = this.height;
+            let width = this.width;
+            let height = this.height;
             if (width === null || height === null) {
-                var size = viewport.deltaPointsFromPixelsNoRotate(this.size, true);
+                const size = viewport.deltaPointsFromPixelsNoRotate(this.size, true);
                 if (width === null) {
                     width = size.x;
                 }
@@ -465,7 +465,7 @@
                     height = size.y;
                 }
             }
-            var location = this.location.clone();
+            const location = this.location.clone();
             this.adjust(location, new $.Point(width, height));
             return this._adjustBoundsForRotation(
                 viewport, new $.Rect(location.x, location.y, width, height));
@@ -485,7 +485,7 @@
                 }
                 // It is easier to just compute the position and size and
                 // convert to viewport coordinates.
-                var positionAndSize = this._getOverlayPositionAndSize(viewport);
+                const positionAndSize = this._getOverlayPositionAndSize(viewport);
                 return viewport.viewerElementToViewportRectangle(new $.Rect(
                     positionAndSize.position.x,
                     positionAndSize.position.y,

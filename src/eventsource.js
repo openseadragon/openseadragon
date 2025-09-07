@@ -2,7 +2,7 @@
  * OpenSeadragon - EventSource
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -135,8 +135,8 @@ $.EventSource.prototype = {
      * @param {OpenSeadragon.EventHandler|OpenSeadragon.AsyncEventHandler} handler - Function to be removed.
      */
     removeHandler: function ( eventName, handler ) {
-        const events = this.events[ eventName ],
-            handlers = [];
+        const events = this.events[ eventName ];
+        const handlers = [];
         if ( !events ) {
             return;
         }

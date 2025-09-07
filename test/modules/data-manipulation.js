@@ -88,12 +88,12 @@
         // we test middle of the canvas, so that we can test both tiles or the output canvas of canvas drawer :)
         async function readTileData(tileRef = null) {
             // Get some time for viewer to load data
-            await sleep(50);
+            while (viewer.world.getItemAt(0).getTilesToDraw().length < 1) {
+                await sleep(10);
+            }
             // make sure at least one tile loaded
             const tile = tileRef || viewer.world.getItemAt(0).getTilesToDraw()[0];
             await tile[PROMISE_REF_KEY];
-            // Get some time for viewer to load data
-            await sleep(50);
 
             if (type === "canvas") {
                 //test with the underlying canvas instead
@@ -121,19 +121,19 @@
 
             viewer.addHandler('open', async () => {
                 await viewer.waitForFinishedJobsForTest();
-                let data = await readTileData();
+                const data = await readTileData();
                 assert.equal(data.data[0], 255);
                 assert.equal(data.data[1], 0);
                 assert.equal(data.data[2], 0);
                 assert.equal(data.data[3], 255);
 
                 // Thorough testing of the cache state
-                for (let tile of viewer.tileCache._tilesLoaded) {
+                for (const tile of viewer.tileCache._tilesLoaded) {
                     await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
                     assert.equal(caches.length, 2, `Tile ${getTileDescription(tile)} has only two caches - main & original`);
-                    for (let [key, value] of caches) {
+                    for (const [key, value] of caches) {
                         assert.ok(value.loaded, `Attached cache '${key}' is ready.`);
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
                         assert.ok(value._tiles.includes(tile), `Attached cache '${key}' reference is bidirectional.`);
@@ -186,12 +186,12 @@
                 assert.equal(data.data[3], 255);
 
                 // Thorough testing of the cache state
-                for (let tile of viewer.tileCache._tilesLoaded) {
+                for (const tile of viewer.tileCache._tilesLoaded) {
                     await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
                     assert.equal(caches.length, 2, `Tile ${getTileDescription(tile)} has only two caches - main & original`);
-                    for (let [key, value] of caches) {
+                    for (const [key, value] of caches) {
                         assert.ok(value.loaded, `Attached cache '${key}' is ready.`);
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
                         assert.ok(value._tiles.includes(tile), `Attached cache '${key}' reference is bidirectional.`);
@@ -241,12 +241,12 @@
                 assert.equal(data.data[3], 255);
 
                 // Thorough testing of the cache state
-                for (let tile of viewer.tileCache._tilesLoaded) {
+                for (const tile of viewer.tileCache._tilesLoaded) {
                     await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
                     assert.equal(caches.length, 1, `Tile ${getTileDescription(tile)} has only single, original cache`);
-                    for (let [key, value] of caches) {
+                    for (const [key, value] of caches) {
                         assert.ok(value.loaded, `Attached cache '${key}' is ready.`);
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
                         assert.ok(value._tiles.includes(tile), `Attached cache '${key}' reference is bidirectional.`);

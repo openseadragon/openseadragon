@@ -2,7 +2,7 @@
  * OpenSeadragon - Navigator
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -51,10 +51,10 @@
  */
 $.Navigator = function( options ){
 
-    var viewer      = options.viewer,
-        _this = this,
-        viewerSize,
-        navigatorSize;
+    const viewer = options.viewer;
+    const _this = this;
+    let viewerSize;
+    let navigatorSize;
 
     //We may need to create a new element and id if they did not
     //provide the id for the existing element or the element itself
@@ -226,7 +226,7 @@ $.Navigator = function( options ){
         _this.viewport.setRotation(degrees, immediately);
     }
     if (options.navigatorRotate) {
-        var degrees = options.viewer.viewport ?
+        const degrees = options.viewer.viewport ?
             options.viewer.viewport.getRotation() :
             options.viewer.degrees || 0;
 
@@ -272,14 +272,14 @@ $.Navigator = function( options ){
 
     viewer.world.addHandler("item-index-change", function(event) {
         window.setTimeout(function(){
-            var item = _this.world.getItemAt(event.previousIndex);
+            const item = _this.world.getItemAt(event.previousIndex);
             _this.world.setItemIndex(item, event.newIndex);
         }, 1);
     });
 
     viewer.world.addHandler("remove-item", function(event) {
-        var theirItem = event.item;
-        var myItem = _this._getMatchingItem(theirItem);
+        const theirItem = event.item;
+        const myItem = _this._getMatchingItem(theirItem);
         if (myItem) {
             _this.world.removeItem(myItem);
         }
@@ -297,7 +297,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      */
     updateSize: function () {
         if ( this.viewport ) {
-            var containerSize = new $.Point(
+            const containerSize = new $.Point(
                     (this.container.clientWidth === 0 ? 1 : this.container.clientWidth),
                     (this.container.clientHeight === 0 ? 1 : this.container.clientHeight)
                 );
@@ -357,13 +357,12 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      * @param {OpenSeadragon.Viewport} [viewport] The viewport to display. Default: the viewport this navigator is tracking.
      */
     update: function( viewport ) {
-
-        var viewerSize,
-            newWidth,
-            newHeight,
-            bounds,
-            topleft,
-            bottomright;
+        let viewerSize;
+        let newWidth;
+        let newHeight;
+        let bounds;
+        let topleft;
+        let bottomright;
 
         if(!viewport){
             viewport = this.viewer.viewport;
@@ -398,19 +397,19 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 .minus( this.totalBorderWidths );
 
             if (!this.navigatorRotate) {
-                var degrees = viewport.getRotation(true);
+                const degrees = viewport.getRotation(true);
                 _setTransformRotate(this.displayRegion, -degrees);
             }
 
             //update style for navigator-box
-            var style = this.displayRegion.style;
+            const style = this.displayRegion.style;
             style.display = this.world.getItemCount() ? 'block' : 'none';
 
             style.top = topleft.y.toFixed(2) + "px";
             style.left = topleft.x.toFixed(2) + "px";
 
-            var width = bottomright.x - topleft.x;
-            var height = bottomright.y - topleft.y;
+            const width = bottomright.x - topleft.x;
+            const height = bottomright.y - topleft.y;
             // make sure width and height are non-negative so IE doesn't throw
             style.width  = Math.round( Math.max( width, 0 ) ) + 'px';
             style.height = Math.round( Math.max( height, 0 ) ) + 'px';
@@ -420,14 +419,14 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     // overrides Viewer.addTiledImage
     addTiledImage: function(options) {
-        var _this = this;
+        const _this = this;
 
-        var original = options.originalTiledImage;
+        const original = options.originalTiledImage;
         delete options.original;
 
-        var optionsClone = $.extend({}, options, {
+        const optionsClone = $.extend({}, options, {
             success: function(event) {
-                var myItem = event.item;
+                const myItem = event.item;
                 myItem._originalForNavigator = original;
                 _this._matchBounds(myItem, original, true);
                 _this._matchOpacity(myItem, original);
@@ -461,10 +460,9 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     // private
     _getMatchingItem: function(theirItem) {
-        var count = this.world.getItemCount();
-        var item;
-        for (var i = 0; i < count; i++) {
-            item = this.world.getItemAt(i);
+        const count = this.world.getItemCount();
+        for (let i = 0; i < count; i++) {
+            let item = this.world.getItemAt(i);
             if (item._originalForNavigator === theirItem) {
                 return item;
             }
@@ -475,7 +473,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
 
     // private
     _matchBounds: function(myItem, theirItem, immediately) {
-        var bounds = theirItem.getBoundsNoRotate();
+        const bounds = theirItem.getBoundsNoRotate();
         myItem.setPosition(bounds.getTopLeft(), immediately);
         myItem.setWidth(bounds.width, immediately);
         myItem.setRotation(theirItem.getRotation(), immediately);
@@ -501,7 +499,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
  * @function
  */
 function onCanvasClick( event ) {
-  var canvasClickEventArgs = {
+  const canvasClickEventArgs = {
     tracker: event.eventSource,
     position: event.position,
     quick: event.quick,
@@ -531,7 +529,7 @@ function onCanvasClick( event ) {
     if(this.viewer.viewport.flipped) {
       event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
-    var target = this.viewport.pointFromPixel(event.position);
+    const target = this.viewport.pointFromPixel(event.position);
     if (!this.panVertical) {
       // perform only horizonal pan
       target.y = this.viewer.viewport.getCenter(true).y;
@@ -551,7 +549,7 @@ function onCanvasClick( event ) {
  * @function
  */
 function onCanvasDrag( event ) {
-    var canvasDragEventArgs = {
+    const canvasDragEventArgs = {
       tracker: event.eventSource,
       position: event.position,
       delta: event.delta,
@@ -622,7 +620,7 @@ function onCanvasRelease( event ) {
  * @function
  */
 function onCanvasScroll( event ) {
-    var eventArgs = {
+    const eventArgs = {
         tracker: event.eventSource,
         position: event.position,
         scroll: event.scroll,

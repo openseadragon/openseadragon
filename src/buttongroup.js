@@ -2,7 +2,7 @@
  * OpenSeadragon - ButtonGroup
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -57,7 +57,7 @@ $.ButtonGroup = function( options ) {
     }, options );
 
     // copy the button elements  TODO: Why?
-    var buttons = this.buttons.concat([]),
+    let buttons = this.buttons.concat([]),
         _this = this,
         i;
 
@@ -93,13 +93,13 @@ $.ButtonGroup = function( options ) {
         clickTimeThreshold: this.clickTimeThreshold,
         clickDistThreshold: this.clickDistThreshold,
         enterHandler: function ( event ) {
-            var i;
+            let i;
             for ( i = 0; i < _this.buttons.length; i++ ) {
                 _this.buttons[ i ].notifyGroupEnter();
             }
         },
         leaveHandler: function ( event ) {
-            var i;
+            let i;
             if ( !event.insideElementPressed ) {
                 for ( i = 0; i < _this.buttons.length; i++ ) {
                     _this.buttons[ i ].notifyGroupExit();
@@ -145,7 +145,7 @@ $.ButtonGroup.prototype = {
 
     destroy: function() {
         while (this.buttons.length) {
-            var button = this.buttons.pop();
+            const button = this.buttons.pop();
             this.element.removeChild(button.element);
             button.destroy();
         }

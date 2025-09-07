@@ -2,7 +2,7 @@
  * OpenSeadragon - full-screen support functions
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -48,7 +48,7 @@
      * @property {String} fullScreenErrorEventName Event fired when a request to go
      * in full screen mode failed.
      */
-    var fullScreenApi = {
+    const fullScreenApi = {
         supportsFullScreen: false,
         isFullScreen: function() { return false; },
         getFullScreenElement: function() { return null; },

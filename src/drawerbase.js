@@ -2,7 +2,7 @@
  * OpenSeadragon - DrawerBase
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -283,6 +283,16 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this._dataNeedsRefresh = $.now();
     }
 
+    /**
+     * When a Tiled Image is initialized and ready, this method is called.
+     * Unlike with events, here it is guaranteed that all external code has finished
+     * processing (under normal circumstances) and the tiled image should not change.
+     * @param {OpenSeadragon.TiledImage} tiledImage target image that has been created
+     */
+    tiledImageCreated(tiledImage) {
+        // pass
+    }
+
     // Private functions
 
     /**
@@ -320,8 +330,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
      */
     viewportToDrawerRectangle(rectangle) {
-        var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
-        var size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
+        const topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
+        const size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
 
         return new $.Rect(
             topLeft.x * $.pixelDensityRatio,
@@ -340,7 +350,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
      */
     viewportCoordToDrawerCoord(point) {
-        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
+        const vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
         return new $.Point(
             vpPoint.x * $.pixelDensityRatio,
             vpPoint.y * $.pixelDensityRatio
@@ -357,8 +367,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Point} {x, y} size of the canvas
      */
     _calculateCanvasSize() {
-        var pixelDensityRatio = $.pixelDensityRatio;
-        var viewportSize = this.viewport.getContainerSize();
+        const pixelDensityRatio = $.pixelDensityRatio;
+        const viewportSize = this.viewport.getContainerSize();
         return new OpenSeadragon.Point( Math.round(viewportSize.x * pixelDensityRatio), Math.round(viewportSize.y * pixelDensityRatio));
     }
 

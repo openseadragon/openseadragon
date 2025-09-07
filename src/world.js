@@ -2,7 +2,7 @@
  * OpenSeadragon - World
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -43,7 +43,7 @@
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this World.
  **/
 $.World = function( options ) {
-    var _this = this;
+    const _this = this;
 
     $.console.assert( options.viewer, "[World] options.viewer is required" );
 
@@ -80,7 +80,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
         options = options || {};
         if (options.index !== undefined) {
-            var index = Math.max(0, Math.min(this._items.length, options.index));
+            const index = Math.max(0, Math.min(this._items.length, options.index));
             this._items.splice(index, 0, item);
         } else {
             this._items.push( item );
@@ -148,7 +148,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         $.console.assert(item, "[World.setItemIndex] item is required");
         $.console.assert(index !== undefined, "[World.setItemIndex] index is required");
 
-        var oldIndex = this.getIndexOfItem( item );
+        const oldIndex = this.getIndexOfItem( item );
 
         if ( index >= this._items.length ) {
             throw new Error( "Index bigger than number of layers." );
@@ -190,7 +190,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     removeItem: function( item ) {
         $.console.assert(item, "[World.removeItem] item is required");
 
-        var index = $.indexOf(this._items, item );
+        const index = $.indexOf(this._items, item );
         if ( index === -1 ) {
             return;
         }
@@ -212,21 +212,20 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     removeAll: function() {
         // We need to make sure any pending images are canceled so the world items don't get messed up
         this.viewer._cancelPendingImages();
-        var item;
-        var i;
-        for (i = 0; i < this._items.length; i++) {
+        let item;
+        for (let i = 0; i < this._items.length; i++) {
             item = this._items[i];
             item.removeHandler('bounds-change', this._delegatedFigureSizes);
             item.removeHandler('clip-change', this._delegatedFigureSizes);
             item.destroy();
         }
 
-        var removedItems = this._items;
+        const removedItems = this._items;
         this._items = [];
         this._figureSizes();
         this._needsDraw = true;
 
-        for (i = 0; i < removedItems.length; i++) {
+        for (let i = 0; i < removedItems.length; i++) {
             item = removedItems[i];
             this._raiseRemoveItem(item);
         }
@@ -245,12 +244,42 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      */
     requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
         $.__updated = tStamp;
-        // const priorityTiles = this._items.map(item => item._lastDrawn.map(x => x.tile)).flat();
+
+        // Find the earliest needed timestamp
+        let drawnTstamp = Infinity;
+        for (const item of this._items) {
+            if (item._lastDrawn.length) {
+                drawnTstamp = Math.min(drawnTstamp, item._lastDrawn[0].tile.lastTouchTime);
+            }
+        }
+
+        const allTiles = this.viewer.tileCache.getLoadedTilesFor(null);
+        const tilesToRestore = new Array(allTiles.length);
+
+        let restoreIndex = 0;
+        let deletedTiles = 0;
+
+        const cache = this.viewer.tileCache;
+        for (let i = 0; i < allTiles.length; i++) {
+            const tile = allTiles[i];
+            const isRecentlyTouched = tile.lastTouchTime >= drawnTstamp;
+            const isAboveCutoff = tile.level <= (tile.tiledImage.source.getClosestLevel() || 0);
+
+            if (isRecentlyTouched || isAboveCutoff) {
+                tilesToRestore[restoreIndex++] = tile;
+            } else {
+                cache._unloadTile(tile, false, i - deletedTiles);
+                deletedTiles++;
+            }
+        }
+        tilesToRestore.length = restoreIndex;
+        return this.requestTileInvalidateEvent(tilesToRestore, tStamp, restoreTiles);
+
         // const promise = this.requestTileInvalidateEvent(priorityTiles, tStamp, restoreTiles);
         // return promise.then(() => this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles));
 
         // Tile-first retrieval fires computation on tiles that share cache, which are filtered out by processing property
-        return this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles);
+        // return this.requestTileInvalidateEvent(this.viewer.tileCache.getLoadedTilesFor(null), tStamp, restoreTiles);
 
         // Cache-first update tile retrieval is nicer since there might be many tiles sharing
         // return this.requestTileInvalidateEvent(new Set(Object.values(this.viewer.tileCache._cachesLoaded)
@@ -274,8 +303,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return $.Promise.resolve();
         }
 
-        const tileList = [],
-            tileFinishResolvers = [];
+        const tileList = [];
+        const tileFinishResolvers = [];
         for (const tile of tilesToProcess) {
             // We allow re-execution on tiles that are in process but have too low processing timestamp,
             // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
@@ -288,7 +317,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 continue;
             }
 
-            for (let t of tileCache._tiles) {
+            for (const t of tileCache._tiles) {
                 // Mark all related tiles as processing and register callback to unmark later on
                 t.processing = tStamp;
                 t.processingPromise = new $.Promise((resolve) => {
@@ -345,7 +374,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             };
             const atomicCacheSwap = () => {
                 if (workingCache) {
-                    let newCacheKey = tile.buildDistinctMainCacheKey();
+                    const newCacheKey = tile.buildDistinctMainCacheKey();
                     tiledImage._tileCache.injectCache({
                         tile: tile,
                         cache: workingCache,
@@ -376,7 +405,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return eventTarget.raiseEventAwaiting('tile-invalidated', {
                 tile: tile,
                 tiledImage: tiledImage,
-                outdated: () => originalCache.__invStamp !== tStamp || (!tile.loaded && !tile.loading),
+                outdated: () => this.viewer.isDestroyed() || originalCache.__invStamp !== tStamp || (!tile.loaded && !tile.loading),
                 getData: getWorkingCacheData,
                 setData: setWorkingCacheData,
                 resetData: () => {
@@ -386,6 +415,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     }
                 }
             }).then(_ => {
+                if (this.viewer.isDestroyed()) {
+                    return null;
+                }
+
                 if (originalCache.__invStamp === tStamp && (tile.loaded || tile.loading)) {
                     if (workingCache) {
                         return workingCache.prepareForRendering(drawer).then(c => {
@@ -425,10 +458,13 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         });
 
         return $.Promise.all(jobList).then(() => {
-            for (let resolve of tileFinishResolvers) {
+            for (const resolve of tileFinishResolvers) {
                 resolve();
             }
-            this.draw();
+
+            if (!this.viewer.isDestroyed()) {
+                this.draw();
+            }
         });
     },
 
@@ -436,7 +472,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Clears all tiles and triggers updates for all items.
      */
     resetItems: function() {
-        for ( var i = 0; i < this._items.length; i++ ) {
+        for ( let i = 0; i < this._items.length; i++ ) {
             this._items[i].reset();
         }
     },
@@ -448,8 +484,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * all TiledImages need to be updated.
      */
     update: function(viewportChanged) {
-        var animated = false;
-        for ( var i = 0; i < this._items.length; i++ ) {
+        let animated = false;
+        for ( let i = 0; i < this._items.length; i++ ) {
             animated = this._items[i].update(viewportChanged) || animated;
         }
 
@@ -462,7 +498,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     draw: function() {
         this.viewer.drawer.draw(this._items);
         this._needsDraw = false;
-        for (let item of this._items) {
+        for (const item of this._items) {
             this._needsDraw = item.setDrawn() || this._needsDraw;
         }
     },
@@ -471,7 +507,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @returns {Boolean} true if any items need updating.
      */
     needsDraw: function() {
-        for ( var i = 0; i < this._items.length; i++ ) {
+        for ( let i = 0; i < this._items.length; i++ ) {
             if ( this._items[i].needsDraw() ) {
                 return true;
             }
@@ -524,25 +560,25 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      */
     arrange: function(options) {
         options = options || {};
-        var immediately = options.immediately || false;
-        var layout = options.layout || $.DEFAULT_SETTINGS.collectionLayout;
-        var rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
-        var columns = options.columns || $.DEFAULT_SETTINGS.collectionColumns;
-        var tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
-        var tileMargin = options.tileMargin || $.DEFAULT_SETTINGS.collectionTileMargin;
-        var increment = tileSize + tileMargin;
-        var wrap;
+        const immediately = options.immediately || false;
+        const layout = options.layout || $.DEFAULT_SETTINGS.collectionLayout;
+        const rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
+        const columns = options.columns || $.DEFAULT_SETTINGS.collectionColumns;
+        const tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
+        const tileMargin = options.tileMargin || $.DEFAULT_SETTINGS.collectionTileMargin;
+        const increment = tileSize + tileMargin;
+        let wrap;
         if (!options.rows && columns) {
             wrap = columns;
         } else {
             wrap = Math.ceil(this._items.length / rows);
         }
-        var x = 0;
-        var y = 0;
-        var item, box, width, height, position;
+        let x = 0;
+        let y = 0;
+        let item, box, width, height, position;
 
         this.setAutoRefigureSizes(false);
-        for (var i = 0; i < this._items.length; i++) {
+        for (let i = 0; i < this._items.length; i++) {
             if (i && (i % wrap) === 0) {
                 if (layout === 'horizontal') {
                     y += increment;
@@ -579,24 +615,24 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     // private
     _figureSizes: function() {
-        var oldHomeBounds = this._homeBounds ? this._homeBounds.clone() : null;
-        var oldContentSize = this._contentSize ? this._contentSize.clone() : null;
-        var oldContentFactor = this._contentFactor || 0;
+        const oldHomeBounds = this._homeBounds ? this._homeBounds.clone() : null;
+        const oldContentSize = this._contentSize ? this._contentSize.clone() : null;
+        const oldContentFactor = this._contentFactor || 0;
 
         if (!this._items.length) {
             this._homeBounds = new $.Rect(0, 0, 1, 1);
             this._contentSize = new $.Point(1, 1);
             this._contentFactor = 1;
         } else {
-            var item = this._items[0];
-            var bounds = item.getBounds();
+            let item = this._items[0];
+            let bounds = item.getBounds();
             this._contentFactor = item.getContentSize().x / bounds.width;
-            var clippedBounds = item.getClippedBounds().getBoundingBox();
-            var left = clippedBounds.x;
-            var top = clippedBounds.y;
-            var right = clippedBounds.x + clippedBounds.width;
-            var bottom = clippedBounds.y + clippedBounds.height;
-            for (var i = 1; i < this._items.length; i++) {
+            let clippedBounds = item.getClippedBounds().getBoundingBox();
+            let left = clippedBounds.x;
+            let top = clippedBounds.y;
+            let right = clippedBounds.x + clippedBounds.width;
+            let bottom = clippedBounds.y + clippedBounds.height;
+            for (let i = 1; i < this._items.length; i++) {
                 item = this._items[i];
                 bounds = item.getBounds();
                 this._contentFactor = Math.max(this._contentFactor,

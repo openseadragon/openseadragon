@@ -2,7 +2,7 @@
  * OpenSeadragon - ImageLoader
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -94,8 +94,8 @@ $.ImageJob.prototype = {
     start: function() {
         this.tries++;
 
-        var self = this;
-        var selfAbort = this.abort;
+        const self = this;
+        const selfAbort = this.abort;
 
         this.jobId = window.setTimeout(function () {
             self.fail("Image load exceeded timeout (" + self.timeout + " ms)", null);
@@ -208,7 +208,7 @@ $.ImageLoader.prototype = {
         if (!options.source) {
             $.console.error('ImageLoader.prototype.addJob() requires [options.source]. ' +
                 'TileSource since new API defines how images are fetched. Creating a dummy TileSource.');
-            var implementation = $.TileSource.prototype;
+            const implementation = $.TileSource.prototype;
             options.source = {
                 downloadTileStart: implementation.downloadTileStart,
                 downloadTileAbort: implementation.downloadTileAbort
@@ -252,8 +252,8 @@ $.ImageLoader.prototype = {
      * @method
      */
     clear: function() {
-        for( var i = 0; i < this.jobQueue.length; i++ ) {
-            var job = this.jobQueue[i];
+        for( let i = 0; i < this.jobQueue.length; i++ ) {
+            const job = this.jobQueue[i];
             if ( typeof job.abort === "function" ) {
                 job.abort();
             }
@@ -296,7 +296,7 @@ function completeJob(loader, job, callback) {
         }
     }
 
-    callback(job.data, job.errorMsg, job.request, job.dataType);
+    callback(job.data, job.errorMsg, job.request, job.dataType, job.tries);
 }
 
 }(OpenSeadragon));

@@ -2,7 +2,7 @@
  * OpenSeadragon - Point
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -198,11 +198,11 @@ $.Point.prototype = {
      */
     rotate: function (degrees, pivot) {
         pivot = pivot || new $.Point(0, 0);
-        var cos;
-        var sin;
+        let cos;
+        let sin;
         // Avoid float computations when possible
         if (degrees % 90 === 0) {
-            var d = $.positiveModulo(degrees, 360);
+            const d = $.positiveModulo(degrees, 360);
             switch (d) {
                 case 0:
                     cos = 1;
@@ -222,12 +222,12 @@ $.Point.prototype = {
                     break;
             }
         } else {
-            var angle = degrees * Math.PI / 180.0;
+            const angle = degrees * Math.PI / 180.0;
             cos = Math.cos(angle);
             sin = Math.sin(angle);
         }
-        var x = cos * (this.x - pivot.x) - sin * (this.y - pivot.y) + pivot.x;
-        var y = sin * (this.x - pivot.x) + cos * (this.y - pivot.y) + pivot.y;
+        const x = cos * (this.x - pivot.x) - sin * (this.y - pivot.y) + pivot.x;
+        const y = sin * (this.x - pivot.x) + cos * (this.y - pivot.y) + pivot.y;
         return new $.Point(x, y);
     },
 

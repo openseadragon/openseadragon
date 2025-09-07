@@ -2,7 +2,7 @@
  * OpenSeadragon - CanvasDrawer
  *
  * Copyright (C) 2009 CodePlex Foundation
- * Copyright (C) 2010-2024 OpenSeadragon contributors
+ * Copyright (C) 2010-2025 OpenSeadragon contributors
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -106,8 +106,8 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @returns {Element} the canvas to draw into
      */
     _createDrawingElement(){
-        let canvas = $.makeNeutralElement("canvas");
-        let viewportSize = this._calculateCanvasSize();
+        const canvas = $.makeNeutralElement("canvas");
+        const viewportSize = this._calculateCanvasSize();
         canvas.width = viewportSize.x;
         canvas.height = viewportSize.y;
         return canvas;
@@ -176,7 +176,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @param {OpenSeadragon.Rect} rect
      */
     drawDebuggingRect(rect) {
-        var context = this.context;
+        const context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
         context.strokeStyle = this.debugGridColor[0];
@@ -234,14 +234,14 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      *
      */
     _prepareNewFrame() {
-        var viewportSize = this._calculateCanvasSize();
+        const viewportSize = this._calculateCanvasSize();
         if( this.canvas.width !== viewportSize.x ||
             this.canvas.height !== viewportSize.y ) {
             this.canvas.width = viewportSize.x;
             this.canvas.height = viewportSize.y;
             this._updateImageSmoothingEnabled(this.context);
             if ( this.sketchCanvas !== null ) {
-                var sketchCanvasSize = this._calculateSketchCanvasSize();
+                const sketchCanvasSize = this._calculateSketchCanvasSize();
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
                 this._updateImageSmoothingEnabled(this.sketchContext);
@@ -256,11 +256,11 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @param {OpenSeadragon.Rect} [bounds] The rectangle to clear
      */
     _clear(useSketch, bounds){
-        var context = this._getContext(useSketch);
+        const context = this._getContext(useSketch);
         if (bounds) {
             context.clearRect(bounds.x, bounds.y, bounds.width, bounds.height);
         } else {
-            var canvas = context.canvas;
+            const canvas = context.canvas;
             context.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
@@ -481,8 +481,8 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      */
     _drawDebugInfo( tiledImage, lastDrawn ) {
         if( tiledImage.debugMode ) {
-            for ( var i = lastDrawn.length - 1; i >= 0; i-- ) {
-                var tile = lastDrawn[ i ];
+            for ( let i = lastDrawn.length - 1; i >= 0; i-- ) {
+                const tile = lastDrawn[ i ];
                 try {
                     this._drawDebugInfoOnTile(tile, lastDrawn.length, i, tiledImage);
                 } catch(e) {
@@ -500,7 +500,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @param {Boolean} useSketch - Whether to use the sketch canvas or not.
      */
     _clipWithPolygons (polygons, useSketch) {
-        var context = this._getContext(useSketch);
+        const context = this._getContext(useSketch);
         context.beginPath();
         for(const polygon of polygons){
             for(const [i, coord] of polygon.entries() ){
@@ -623,11 +623,11 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @returns {CanvasRenderingContext2D}
      */
     _getContext( useSketch ) {
-        var context = this.context;
+        let context = this.context;
         if ( useSketch ) {
             if (this.sketchCanvas === null) {
                 this.sketchCanvas = document.createElement( "canvas" );
-                var sketchCanvasSize = this._calculateSketchCanvasSize();
+                const sketchCanvasSize = this._calculateSketchCanvasSize();
                 this.sketchCanvas.width = sketchCanvasSize.x;
                 this.sketchCanvas.height = sketchCanvasSize.y;
                 this.sketchContext = this.sketchCanvas.getContext( "2d" );
@@ -636,13 +636,13 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
                 // will have the same size as the main canvas. However, if
                 // the viewport get rotated later on, we will need to resize it.
                 if (this.viewport.getRotation() === 0) {
-                    var self = this;
+                    const self = this;
                     this.viewer.addHandler('rotate', function resizeSketchCanvas() {
                         if (self.viewport.getRotation() === 0) {
                             return;
                         }
                         self.viewer.removeHandler('rotate', resizeSketchCanvas);
-                        var sketchCanvasSize = self._calculateSketchCanvasSize();
+                        const sketchCanvasSize = self._calculateSketchCanvasSize();
                         self.sketchCanvas.width = sketchCanvasSize.x;
                         self.sketchCanvas.height = sketchCanvasSize.y;
                     });
@@ -674,7 +674,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
     // private
     _setClip(rect, useSketch) {
-        var context = this._getContext( useSketch );
+        const context = this._getContext( useSketch );
         context.beginPath();
         context.rect(rect.x, rect.y, rect.width, rect.height);
         context.clip();
@@ -683,7 +683,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
     // private
     // used to draw a placeholder rectangle
     _drawRectangle(rect, fillStyle, useSketch) {
-        var context = this._getContext( useSketch );
+        const context = this._getContext( useSketch );
         context.save();
         context.fillStyle = fillStyle;
         context.fillRect(rect.x, rect.y, rect.width, rect.height);
@@ -707,7 +707,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * options.translate get ignored.
      */
     blendSketch(opacity, scale, translate, compositeOperation) {
-        var options = opacity;
+        let options = opacity;
         if (!$.isPlainObject(options)) {
             options = {
                 opacity: opacity,
@@ -719,7 +719,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
         opacity = options.opacity;
         compositeOperation = options.compositeOperation;
-        var bounds = options.bounds;
+        const bounds = options.bounds;
 
         this.context.save();
         this.context.globalAlpha = opacity;
@@ -759,14 +759,14 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         } else {
             scale = options.scale || 1;
             translate = options.translate;
-            var position = translate instanceof $.Point ?
+            const position = translate instanceof $.Point ?
                 translate : new $.Point(0, 0);
 
-            var widthExt = 0;
-            var heightExt = 0;
+            let widthExt = 0;
+            let heightExt = 0;
             if (translate) {
-                var widthDiff = this.sketchCanvas.width - this.canvas.width;
-                var heightDiff = this.sketchCanvas.height - this.canvas.height;
+                const widthDiff = this.sketchCanvas.width - this.canvas.width;
+                const heightDiff = this.sketchCanvas.height - this.canvas.height;
                 widthExt = Math.round(widthDiff / 2);
                 heightExt = Math.round(heightDiff / 2);
             }
@@ -788,8 +788,8 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
     // private
     _drawDebugInfoOnTile(tile, count, i, tiledImage) {
 
-        var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
-        var context = this.context;
+        const colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
+        const context = this.context;
         context.save();
         context.lineWidth = 2 * $.pixelDensityRatio;
         context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
@@ -809,8 +809,8 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             tile.size.y * $.pixelDensityRatio
         );
 
-        var tileCenterX = (tile.position.x + (tile.size.x / 2)) * $.pixelDensityRatio;
-        var tileCenterY = (tile.position.y + (tile.size.y / 2)) * $.pixelDensityRatio;
+        const tileCenterX = (tile.position.x + (tile.size.x / 2)) * $.pixelDensityRatio;
+        const tileCenterY = (tile.position.y + (tile.size.y / 2)) * $.pixelDensityRatio;
 
         // Rotate the text the right way around.
         context.translate( tileCenterX, tileCenterY );
@@ -884,7 +884,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @returns {OpenSeadragon.Point} The size of the canvas
      */
     _getCanvasSize(sketch) {
-        var canvas = this._getContext(sketch).canvas;
+        const canvas = this._getContext(sketch).canvas;
         return new $.Point(canvas.width, canvas.height);
     }
 
@@ -905,7 +905,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @param {Boolean} [useSketch=false]
      */
     _setRotations(tiledImage, useSketch = false) {
-        var saveContext = false;
+        let saveContext = false;
         if (this.viewport.getRotation(true) % 360 !== 0) {
             this._offsetForRotation({
                 degrees: this.viewport.getRotation(true),
@@ -927,11 +927,11 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
     // private
     _offsetForRotation(options) {
-        var point = options.point ?
+        const point = options.point ?
             options.point.times($.pixelDensityRatio) :
             this._getCanvasCenter();
 
-        var context = this._getContext(options.useSketch);
+        const context = this._getContext(options.useSketch);
         context.save();
 
         context.translate(point.x, point.y);
@@ -942,10 +942,10 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
     // private
     _flip(options) {
         options = options || {};
-        var point = options.point ?
+        const point = options.point ?
         options.point.times($.pixelDensityRatio) :
         this._getCanvasCenter();
-        var context = this._getContext(options.useSketch);
+        const context = this._getContext(options.useSketch);
 
         context.translate(point.x, 0);
         context.scale(-1, 1);
@@ -954,14 +954,14 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
     // private
     _restoreRotationChanges(useSketch) {
-        var context = this._getContext(useSketch);
+        const context = this._getContext(useSketch);
         context.restore();
     }
 
     // private
     _calculateCanvasSize() {
-        var pixelDensityRatio = $.pixelDensityRatio;
-        var viewportSize = this.viewport.getContainerSize();
+        const pixelDensityRatio = $.pixelDensityRatio;
+        const viewportSize = this.viewport.getContainerSize();
         return {
             // canvas width and height are integers
             x: Math.round(viewportSize.x * pixelDensityRatio),
@@ -971,13 +971,13 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
     // private
     _calculateSketchCanvasSize() {
-        var canvasSize = this._calculateCanvasSize();
+        const canvasSize = this._calculateCanvasSize();
         if (this.viewport.getRotation() === 0) {
             return canvasSize;
         }
         // If the viewport is rotated, we need a larger sketch canvas in order
         // to support edge smoothing.
-        var sketchCanvasSize = Math.ceil(Math.sqrt(
+        const sketchCanvasSize = Math.ceil(Math.sqrt(
             canvasSize.x * canvasSize.x +
             canvasSize.y * canvasSize.y));
         return {
@@ -994,7 +994,7 @@ $.CanvasDrawer = CanvasDrawer;
  * invalid value.
  * @private
  */
-var DEFAULT_SUBPIXEL_ROUNDING_RULE = $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
+const DEFAULT_SUBPIXEL_ROUNDING_RULE = $.SUBPIXEL_ROUNDING_OCCURRENCES.NEVER;
 
 /**
  * Checks whether the input value is an invalid subpixel rounding enum value.
@@ -1042,7 +1042,7 @@ function determineSubPixelRoundingRule(subPixelRoundingRules) {
         return DEFAULT_SUBPIXEL_ROUNDING_RULE;
     }
 
-    var subPixelRoundingRule = subPixelRoundingRules[$.Browser.vendor];
+    let subPixelRoundingRule = subPixelRoundingRules[$.Browser.vendor];
 
     if (isSubPixelRoundingRuleUnknown(subPixelRoundingRule)) {
         subPixelRoundingRule = subPixelRoundingRules['*'];

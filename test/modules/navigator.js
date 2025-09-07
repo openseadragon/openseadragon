@@ -2,18 +2,18 @@
 /* global QUnit, Util, $ */
 
 (function () {
-    var debug = false,
-        viewer,
-        displayRegion,
-        navigatorElement,
-        navigatorScaleFactor,
-        contentStartFromLeft,
-        contentStartFromTop,
-        displayRegionWidth,
-        displayRegionHeight,
-        topNavigatorClickAdjustment;
+    const debug = false;
+    let viewer;
+    let displayRegion;
+    let navigatorElement;
+    let navigatorScaleFactor;
+    let contentStartFromLeft;
+    let contentStartFromTop;
+    let displayRegionWidth;
+    let displayRegionHeight;
+    let topNavigatorClickAdjustment;
 
-    var resetTestVariables = function () {
+    const resetTestVariables = function () {
         if (viewer) {
             viewer.close();
         }
@@ -50,20 +50,20 @@
         }
     });
 
-    var assessNavigatorLocation = function (assert, expectedX, expectedY) {
+    const assessNavigatorLocation = function (assert, expectedX, expectedY) {
         navigatorElement = navigatorElement || $(".navigator");
         Util.assessNumericValue(assert, navigatorElement.offset().left, expectedX, 10, ' Navigator x Position');
         Util.assessNumericValue(assert, navigatorElement.offset().top, expectedY, 10, ' Navigator y Position');
     };
 
-    var assessNavigatorSize = function (assert, expectedWidth, expectedHeight, msg) {
+    const assessNavigatorSize = function (assert, expectedWidth, expectedHeight, msg) {
         msg = msg || "";
         navigatorElement = navigatorElement || $(".navigator");
         Util.assessNumericValue(assert, navigatorElement.width(), expectedWidth, 2, ' Navigator Width ' + msg);
         Util.assessNumericValue(assert, navigatorElement.height(), expectedHeight, 2, ' Navigator Height ' + msg);
     };
 
-    var assessNavigatorAspectRatio = function (assert, expectedAspectRatio, variance, msg) {
+    const assessNavigatorAspectRatio = function (assert, expectedAspectRatio, variance, msg) {
         msg = msg || "";
         navigatorElement = navigatorElement || $(".navigator");
         Util.assessNumericValue(
@@ -75,7 +75,7 @@
         );
     };
 
-    var assessNavigatorArea = function (assert, expectedArea, msg) {
+    const assessNavigatorArea = function (assert, expectedArea, msg) {
         msg = msg || "";
         navigatorElement = navigatorElement || $(".navigator");
         Util.assessNumericValue(
@@ -88,12 +88,11 @@
     };
 
 
-    var navigatorRegionBoundsInPoints = function () {
-        var regionBoundsInPoints,
-            expectedDisplayRegionWidth,
-            expectedDisplayRegionHeight,
-            expectedDisplayRegionXLocation,
-            expectedDisplayRegionYLocation;
+    const navigatorRegionBoundsInPoints = function () {
+        let expectedDisplayRegionWidth;
+        let expectedDisplayRegionHeight;
+        let expectedDisplayRegionXLocation;
+        let expectedDisplayRegionYLocation;
 
         if (navigatorElement === null) {
             navigatorElement = $(".navigator");
@@ -110,7 +109,7 @@
         expectedDisplayRegionHeight = viewer.viewport.getBounds().height * displayRegionHeight * viewer.source.aspectRatio;
         expectedDisplayRegionXLocation = viewer.viewport.getBounds().x * displayRegionWidth + contentStartFromLeft;
         expectedDisplayRegionYLocation = viewer.viewport.getBounds().y * displayRegionHeight * viewer.source.aspectRatio + contentStartFromTop;
-        regionBoundsInPoints = new OpenSeadragon.Rect(
+        const regionBoundsInPoints = new OpenSeadragon.Rect(
             expectedDisplayRegionXLocation,
             expectedDisplayRegionYLocation,
             expectedDisplayRegionWidth,
@@ -136,11 +135,11 @@
         return regionBoundsInPoints;
     };
 
-    var assessDisplayRegion = function (assert, status) {
+    const assessDisplayRegion = function (assert, status) {
         if (debug) {
             console.log(status);
         }
-        var expectedBounds = navigatorRegionBoundsInPoints();
+        const expectedBounds = navigatorRegionBoundsInPoints();
         Util.assessNumericValue(
             assert,
             displayRegion.width() + viewer.navigator.totalBorderWidths.x,
@@ -160,9 +159,9 @@
     };
 
 
-    var waitForViewer = function () {
+    const waitForViewer = function () {
         return function (assert, handler, count, lastDisplayRegionLeft, lastDisplayWidth) {
-            var viewerAndNavigatorDisplayReady = false,
+            let viewerAndNavigatorDisplayReady = false,
                 currentDisplayRegionLeft,
                 currentDisplayWidth;
             if (displayRegion === null) {
@@ -216,9 +215,9 @@
         };
     }();
 
-    var simulateNavigatorClick = function (viewer, locationX, locationY) {
+    const simulateNavigatorClick = function (viewer, locationX, locationY) {
         //Assumes that the page has not been scrolled from the top or left
-        var $canvas = $(viewer.element).find('.openseadragon-canvas'),
+        const $canvas = $(viewer.element).find('.openseadragon-canvas'),
             offset = $canvas.offset(),
             event = {
                 clientX: offset.left + locationX,
@@ -230,8 +229,8 @@
             .simulate('mouseup', event);
     };
 
-    var simulateNavigatorDrag = function (viewer, distanceX, distanceY) {
-        var $canvas = $(viewer.element).find('.openseadragon-canvas'),
+    const simulateNavigatorDrag = function (viewer, distanceX, distanceY) {
+        const $canvas = $(viewer.element).find('.openseadragon-canvas'),
             offset = $canvas.offset(),
             event = {};
 
@@ -255,19 +254,19 @@
         $canvas.simulate( 'mouseleave', event );
     };
 
-    var dragNavigatorBackToCenter = function () {
-        var delta = viewer.viewport.getHomeBounds().getCenter().minus(viewer.viewport.getCenter()).times(displayRegionWidth);
+    const dragNavigatorBackToCenter = function () {
+        const delta = viewer.viewport.getHomeBounds().getCenter().minus(viewer.viewport.getCenter()).times(displayRegionWidth);
         simulateNavigatorDrag(viewer.navigator, delta.x, delta.y);
     };
 
-    var resizeElement = function ($element, width, height) {
+    const resizeElement = function ($element, width, height) {
         $element.width(width);
         $element.height(height);
     };
 
 
-    var assessViewerInCenter = function (assert) {
-        var yPositionVariance = 0.04;
+    const assessViewerInCenter = function (assert) {
+        let yPositionVariance = 0.04;
         if (viewer.source.aspectRatio < 1) {
             yPositionVariance /= viewer.source.aspectRatio;
         }
@@ -282,9 +281,9 @@
     };
 
 
-    var assessViewerInCorner = function (theContentCorner, assert) {
+    const assessViewerInCorner = function (theContentCorner, assert) {
         return function () {
-            var expectedXCoordinate, expectedYCoordinate;
+            let expectedXCoordinate, expectedYCoordinate;
             if (theContentCorner === "TOPLEFT") {
                 expectedXCoordinate = 0;
                 expectedYCoordinate = 0;
@@ -322,16 +321,16 @@
         };
     };
 
-    var assessNavigatorViewerPlacement = function (assert, seadragonProperties, testProperties) {
-        var done = assert.async();
+    const assessNavigatorViewerPlacement = function (assert, seadragonProperties, testProperties) {
+        const done = assert.async();
 
         seadragonProperties.visibilityRatio = 1;
         viewer = OpenSeadragon(seadragonProperties);
 
-        var clickOnNavigator = function (theContentCorner) {
+        const clickOnNavigator = function (theContentCorner) {
             return function () {
-                var xPos,
-                    yPos;
+                let xPos;
+                let yPos;
                 if (theContentCorner === "TOPLEFT") {
                     xPos = contentStartFromLeft;
                     yPos = contentStartFromTop + topNavigatorClickAdjustment;
@@ -352,7 +351,7 @@
             };
         };
 
-        var navigatorOperationScenarios = [
+        const navigatorOperationScenarios = [
                 {interactionOperation: clickOnNavigator("TOPRIGHT"),
                   assessmentOperation: assessViewerInCorner("TOPRIGHT", assert),
                     assessmentMessage: "After click on navigator on top right"},
@@ -377,31 +376,31 @@
                 {interactionOperation: dragNavigatorBackToCenter,
                   assessmentOperation: assessViewerInCenter,
                     assessmentMessage: "After drag on navigator from top left"}
-            ],
-            viewerResizeScenarios = [
+            ];
+        const viewerResizeScenarios = [
                 {resizeFactorX: 0.5, resizeFactorY: 1.0, assessmentMessage: "After Viewer Resize (50%, 100%)"},
                 {resizeFactorX: 1.0, resizeFactorY: 0.5, assessmentMessage: "After Viewer Resize (100%, 50%)"},
                 {resizeFactorX: 1.0, resizeFactorY: 1.0, assessmentMessage: "After Viewer Resize (100%, 100%)"}
-            ],
-            navigatorResizeScenarios = [
+            ];
+        const navigatorResizeScenarios = [
                 {resizeFactorX: 0.75, resizeFactorY: 1.0, assessmentMessage: "After Navigator Resize (75%, 100%)"},
                 {resizeFactorX: 1.0, resizeFactorY: 0.75, assessmentMessage: "After Navigator Resize (100%, 75%)"},
                 {resizeFactorX: 1.0, resizeFactorY: 1.0, assessmentMessage: "After Navigator Resize (100%, 100%)"}
-            ],
-            autoFadeWaitTime = 100,
-            navigatorElement = null,
-            viewerElement = null,
-            viewerOriginalSize = null,
-            navigatorOriginalSize = null;
+            ];
+        const autoFadeWaitTime = 100;
+        let navigatorElement = null;
+        let viewerElement = null;
+        let viewerOriginalSize = null;
+        let navigatorOriginalSize = null;
 
         if ($.isNumeric(testProperties.topNavigatorClickAdjustment))
         {
             topNavigatorClickAdjustment = testProperties.topNavigatorClickAdjustment;
         }
 
-        var assessNavigatorOperationAndTakeNextStep = function (step) {
+        const assessNavigatorOperationAndTakeNextStep = function (step) {
             return function () {
-                var nextStep = step + 1;
+                const nextStep = step + 1;
                 assessDisplayRegion(assert, navigatorOperationScenarios[step].assessmentMessage);
                 navigatorOperationScenarios[step].assessmentOperation(assert);
                 if (step === navigatorOperationScenarios.length - 1) {
@@ -414,33 +413,33 @@
             };
         };
 
-        var assessAfterSnapback = function () {
+        const assessAfterSnapback = function () {
             assessDisplayRegion(assert, "After snapback");
             navigatorOperationScenarios[0].interactionOperation();
             waitForViewer(assert, assessNavigatorOperationAndTakeNextStep(0));
         };
 
-        var assessAfterDragOnViewer = function () {
+        const assessAfterDragOnViewer = function () {
             assessDisplayRegion(assert, "After pan");
             viewer.viewport.applyConstraints();
             waitForViewer(assert, assessAfterSnapback);
         };
 
-        var assessAfterZoomOnViewer = function () {
-            var target = new OpenSeadragon.Point(0.4, 0.4);
+        const assessAfterZoomOnViewer = function () {
+            const target = new OpenSeadragon.Point(0.4, 0.4);
             assessDisplayRegion(assert, "After image zoom");
             viewer.viewport.panTo(target);
             waitForViewer(assert, assessAfterDragOnViewer);
         };
 
-        var assessAfterResizeNavigator = function () {
+        const assessAfterResizeNavigator = function () {
             viewer.viewport.zoomTo(viewer.viewport.getZoom() * 2);
             waitForViewer(assert, assessAfterZoomOnViewer);
         };
 
-        var assessNavigatorResizeAndTakeNextStep = function (step) {
+        const assessNavigatorResizeAndTakeNextStep = function (step) {
             return function () {
-                var nextStep = step + 1;
+                const nextStep = step + 1;
                 assessNavigatorSize(assert, navigatorOriginalSize.x * navigatorResizeScenarios[step].resizeFactorX, navigatorOriginalSize.y * navigatorResizeScenarios[step].resizeFactorY, navigatorResizeScenarios[step].assessmentMessage);
                 assessDisplayRegion(assert, navigatorResizeScenarios[step].assessmentMessage);
                 if (step === viewerResizeScenarios.length - 1) {
@@ -453,9 +452,9 @@
             };
         };
 
-        var assessViewerResizeAndTakeNextStep = function (step) {
+        const assessViewerResizeAndTakeNextStep = function (step) {
             return function () {
-                var nextStep = step + 1;
+                const nextStep = step + 1;
                 if (seadragonProperties.navigatorId) {
                     // Navigator hosted in outside element...size shouldn't change
                     assessNavigatorSize(
@@ -531,7 +530,7 @@
             };
         };
 
-        var captureInitialStateThenAct = function () {
+        const captureInitialStateThenAct = function () {
             assessDisplayRegion(assert, "After image load");
             testProperties.determineExpectationsAndAssessNavigatorLocation(assert, seadragonProperties, testProperties);
             viewerOriginalSize = new OpenSeadragon.Point(viewerElement.width(), viewerElement.height());
@@ -542,17 +541,17 @@
             waitForViewer(assert, assessViewerResizeAndTakeNextStep(0));
         };
 
-        var assessAutoFadeTriggered = function () {
+        const assessAutoFadeTriggered = function () {
             assert.ok(navigatorElement.parent().css("opacity") < 1, "Expecting navigator to be autofade when in the default location");
             waitForViewer(assert, captureInitialStateThenAct());
         };
 
-        var assessAutoFadeDisabled = function () {
+        const assessAutoFadeDisabled = function () {
             assert.ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be always visible when in a custom location");
             waitForViewer(assert, captureInitialStateThenAct());
         };
 
-        var openHandler = function () {
+        const openHandler = function () {
             viewer.removeHandler('open', openHandler);
             navigatorElement = navigatorElement || $(testProperties.navigatorLocator);
             viewerElement = $("#" + seadragonProperties.id);
@@ -564,7 +563,7 @@
             }
             else {
                 assert.ok(navigatorElement.parent().css("opacity") > 0, "Expecting navigator to be visible initially");
-                var event = {
+                const event = {
                      clientX: 1,
                      clientY: 1
                  };
@@ -596,7 +595,7 @@
                 navigatorLocator: '.navigator',
                 testAutoFade: false,
                 determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    const mainViewerElement = $("#" + seadragonProperties.id);
                     navigatorElement = navigatorElement || $(testProperties.navigatorLocator);
                     assessNavigatorLocation(
                         assert,
@@ -631,7 +630,7 @@
                 testAutoFade: true,
                 expectedAutoFade: true,
                 determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    const mainViewerElement = $("#" + seadragonProperties.id);
                     navigatorElement = navigatorElement || $(testProperties.navigatorLocator);
                     assessNavigatorLocation(assert, mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
@@ -661,7 +660,7 @@
                 testAutoFade: true,
                 expectedAutoFade: true,
                 determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    const mainViewerElement = $("#" + seadragonProperties.id);
                     assessNavigatorLocation(assert, mainViewerElement.offset().left,
                         mainViewerElement.offset().top);
                     assessNavigatorSize(assert, mainViewerElement.width() * seadragonProperties.navigatorSizeRatio, mainViewerElement.height() * seadragonProperties.navigatorSizeRatio);
@@ -690,7 +689,7 @@
                 testAutoFade: true,
                 expectedAutoFade: true,
                 determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    const mainViewerElement = $("#" + seadragonProperties.id);
                     navigatorElement = navigatorElement || $(testProperties.navigatorLocator);
                     assessNavigatorLocation(assert, mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top);
@@ -720,7 +719,7 @@
                 testAutoFade: true,
                 expectedAutoFade: true,
                 determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    const mainViewerElement = $("#" + seadragonProperties.id);
                     navigatorElement = navigatorElement || $(testProperties.navigatorLocator);
                     assessNavigatorLocation(assert, mainViewerElement.offset().left,
                         mainViewerElement.offset().top + mainViewerElement.height() - navigatorElement.height());
@@ -750,7 +749,7 @@
                 testAutoFade: true,
                 expectedAutoFade: true,
                 determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-                    var mainViewerElement = $("#" + seadragonProperties.id);
+                    const mainViewerElement = $("#" + seadragonProperties.id);
                     navigatorElement = navigatorElement || $(testProperties.navigatorLocator);
                     assessNavigatorLocation(assert, mainViewerElement.offset().left + mainViewerElement.width() - navigatorElement.width(),
                         mainViewerElement.offset().top + mainViewerElement.height() - navigatorElement.height());
@@ -782,7 +781,7 @@
     //             testAutoFade: true,
     //             expectedAutoFade: true,
     //             determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-    //                 var mainViewerElement = $("#" + seadragonProperties.id);
+    //                 const mainViewerElement = $("#" + seadragonProperties.id);
     //                 assessNavigatorLocation(assert, mainViewerElement.offset().left + seadragonProperties.navigatorLeft,
     //                     mainViewerElement.offset().top + seadragonProperties.navigatorTop);
     //                 assessNavigatorSize(assert, seadragonProperties.navigatorWidth, seadragonProperties.navigatorHeight);
@@ -804,8 +803,8 @@
     //             navigatorLocator: '#exampleNavigator',
     //             testAutoFade: false,
     //             determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-    //                 var mainViewerElement = $("#" + seadragonProperties.id),
-    //                     navigatorViewerElement = $("#" + seadragonProperties.navigatorId);
+    //                 const mainViewerElement = $("#" + seadragonProperties.id);
+    //                 const navigatorViewerElement = $("#" + seadragonProperties.navigatorId);
     //                 assessNavigatorLocation(assert, mainViewerElement.offset().left,
     //                     mainViewerElement.offset().top - navigatorViewerElement.parent().height());
     //             }
@@ -846,7 +845,7 @@
     //             //simulated click.  This property is a work around for that problem
     //             topNavigatorClickAdjustment: 15,
     //             determineExpectationsAndAssessNavigatorLocation: function (assert, seadragonProperties, testProperties) {
-    //                 var jqueryDialog = $(testProperties.navigatorLocator);
+    //                 const jqueryDialog = $(testProperties.navigatorLocator);
     //                 assessNavigatorLocation(assert, jqueryDialog.offset().left,
     //                     jqueryDialog.offset().top);
     //                 assessNavigatorSize(assert, jqueryDialog.width(), jqueryDialog.height());
@@ -855,7 +854,7 @@
     // });
 
     QUnit.test('Viewer closing one image and opening another', function(assert) {
-        var timeWatcher = Util.timeWatcher(assert);
+        const timeWatcher = Util.timeWatcher(assert);
 
         viewer = OpenSeadragon({
             id:            'example',
@@ -865,13 +864,13 @@
             showNavigator:  true
         });
 
-        var closeHandler1 = function(event) {
+        const closeHandler1 = function(event) {
             viewer.removeHandler('close', closeHandler1);
             assert.ok(true, 'calling open closes the old one');
             assert.equal(viewer.navigator.source, null, 'navigator source has been cleared');
         };
 
-        var closeHandler2 = function(event) {
+        const closeHandler2 = function(event) {
             viewer.removeHandler('close', closeHandler2);
             setTimeout(function() {
                 assert.ok(!viewer.navigator._updateRequestId, 'navigator timer is off');
@@ -879,19 +878,19 @@
             }, 100);
         };
 
-        var navOpenHandler2 = function(event) {
+        const navOpenHandler2 = function(event) {
             viewer.navigator.world.removeHandler('add-item', navOpenHandler2);
             assert.equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
             viewer.addHandler('close', closeHandler2);
             viewer.close();
         };
 
-        var openHandler2 = function(event) {
+        const openHandler2 = function(event) {
             viewer.removeHandler('open', openHandler2);
             viewer.navigator.world.addHandler('add-item', navOpenHandler2);
         };
 
-        var navOpenHandler1 = function(event) {
+        const navOpenHandler1 = function(event) {
             viewer.navigator.world.removeHandler('add-item', navOpenHandler1);
             assert.equal(viewer.navigator.source, viewer.source, 'viewer and navigator have the same source');
             assert.ok(viewer.navigator._updateRequestId, 'navigator timer is on');
@@ -900,7 +899,7 @@
             viewer.open('/test/data/tall.dzi');
         };
 
-        var openHandler1 = function(event) {
+        const openHandler1 = function(event) {
             viewer.removeHandler('open', openHandler1);
             assert.ok(viewer.navigator, 'navigator exists');
             viewer.navigator.world.addHandler('add-item', navOpenHandler1);
@@ -910,7 +909,7 @@
     });
 
     QUnit.test('Item positions including collection mode', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
 
         viewer = OpenSeadragon({
             id:            'example',
@@ -921,13 +920,13 @@
             collectionMode: true
         });
 
-        var navOpenHandler = function(event) {
+        const navOpenHandler = function(event) {
             if (viewer.navigator.world.getItemCount() === 2) {
                 viewer.navigator.world.removeHandler('add-item', navOpenHandler);
 
                 setTimeout(function() {
                     // Test initial formation
-                    for (var i = 0; i < 2; i++) {
+                    for (let i = 0; i < 2; i++) {
                         assert.propEqual(viewer.navigator.world.getItemAt(i).getBounds(),
                             viewer.world.getItemAt(i).getBounds(), 'bounds are the same');
                     }
@@ -942,7 +941,7 @@
             }
         };
 
-        var openHandler = function() {
+        const openHandler = function() {
             viewer.removeHandler('open', openHandler);
             viewer.navigator.world.addHandler('add-item', navOpenHandler);
             // The navigator may already have added the items.
@@ -953,7 +952,7 @@
     });
 
     QUnit.test('Item opacity is synchronized', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -962,13 +961,13 @@
             showNavigator:  true
         });
 
-        var navOpenHandler = function(event) {
+        const navOpenHandler = function(event) {
             if (viewer.navigator.world.getItemCount() === 2) {
                 viewer.navigator.world.removeHandler('add-item', navOpenHandler);
 
                 setTimeout(function() {
                     // Test initial formation
-                    for (var i = 0; i < 2; i++) {
+                    for (let i = 0; i < 2; i++) {
                         assert.equal(viewer.navigator.world.getItemAt(i).getOpacity(),
                             viewer.world.getItemAt(i).getOpacity(), 'opacity is the same');
                     }
@@ -983,7 +982,7 @@
             }
         };
 
-        var openHandler = function() {
+        const openHandler = function() {
             viewer.removeHandler('open', openHandler);
             viewer.navigator.world.addHandler('add-item', navOpenHandler);
             // The navigator may already have added the items.
@@ -994,7 +993,7 @@
     });
 
     QUnit.test('Item composite operation is synchronized', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -1003,13 +1002,13 @@
             showNavigator:  true
         });
 
-        var navOpenHandler = function(event) {
+        const navOpenHandler = function(event) {
             if (viewer.navigator.world.getItemCount() === 2) {
                 viewer.navigator.world.removeHandler('add-item', navOpenHandler);
 
                 setTimeout(function() {
                     // Test initial formation
-                    for (var i = 0; i < 2; i++) {
+                    for (let i = 0; i < 2; i++) {
                         assert.equal(viewer.navigator.world.getItemAt(i).getCompositeOperation(),
                             viewer.world.getItemAt(i).getCompositeOperation(), 'composite operation is the same');
                     }
@@ -1024,7 +1023,7 @@
             }
         };
 
-        var openHandler = function() {
+        const openHandler = function() {
             viewer.removeHandler('open', openHandler);
             viewer.navigator.world.addHandler('add-item', navOpenHandler);
             // The navigator may already have added the items.
@@ -1035,7 +1034,7 @@
     });
 
     QUnit.test('Viewer options transmitted to navigator', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -1058,7 +1057,7 @@
     });
 
     QUnit.test('Viewer rotation applied to navigator by default', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -1082,7 +1081,7 @@
     });
 
     QUnit.test('Viewer rotation not applied to navigator when navigatorRotate=false', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -1107,7 +1106,7 @@
     });
 
     QUnit.test('Explicit height/width', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer = OpenSeadragon({
             id:            'example',
             prefixUrl:     '/build/openseadragon/images/',
@@ -1118,7 +1117,7 @@
             navigatorHeight: 300
         });
         viewer.addOnceHandler('open', function() {
-            var $navigator = $('.navigator');
+            const $navigator = $('.navigator');
 
             // With the current configuration, the default values would be 100 x 100 if we hadn't set navigatorWidth and navigatorHeight.
             assert.equal($navigator.width(), 200, "Navigator starts with the correct width.");
