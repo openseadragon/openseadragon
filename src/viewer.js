@@ -148,7 +148,7 @@ $.Viewer = function( options ) {
         overlaysContainer:  null,
 
         //private state properties
-        previousBody:   [],
+        previousDisplayValuesOfBodyChildren:   [],
 
         //This was originally initialized in the constructor and so could never
         //have anything in it.  now it can because we allow it to be specified
@@ -1406,20 +1406,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.bodyDisplay = bodyStyle.display;
             bodyStyle.display = "block";
 
-            //when entering full screen on the ipad it wasn't sufficient to leave
-            //the body intact as only only the top half of the screen would
-            //respond to touch events on the canvas, while the bottom half treated
-            //them as touch events on the document body.  Thus we remove and store
-            //the bodies elements and replace them when we leave full screen.
-            this.previousBody = [];
+            //when entering full screen on the ipad it wasn't sufficient to
+            //leave the body intact as only only the top half of the screen
+            //would respond to touch events on the canvas, while the bottom half
+            //treated them as touch events on the document body.  Thus we make
+            //them invisible (display: none) and apply the older values when we
+            //go out of full screen.
+            this.previousDisplayValuesOfBodyChildren = [];
             THIS[ this.hash ].prevElementParent = this.element.parentNode;
             THIS[ this.hash ].prevNextSibling = this.element.nextSibling;
             THIS[ this.hash ].prevElementWidth = this.element.style.width;
             THIS[ this.hash ].prevElementHeight = this.element.style.height;
-            nodes = body.childNodes.length;
+            nodes = body.children.length;
             for ( let i = 0; i < nodes; i++ ) {
-                this.previousBody.push( body.childNodes[ 0 ] );
-                body.removeChild( body.childNodes[ 0 ] );
+                const node = body.children[i];
+                this.previousDisplayValuesOfBodyChildren.push(node.style.display);
+                node.style.display = 'none';
             }
 
             //If we've got a toolbar, we need to enable the user to use css to
@@ -1473,9 +1475,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             bodyStyle.display = this.bodyDisplay;
 
             body.removeChild( this.element );
-            nodes = this.previousBody.length;
+            nodes = this.previousDisplayValuesOfBodyChildren.length;
             for ( let i = 0; i < nodes; i++ ) {
-                body.appendChild( this.previousBody.shift() );
+                const node = body.children[i];
+                const oldDisplay = this.previousDisplayValuesOfBodyChildren[i];
+                node.style.display = oldDisplay;
             }
 
             $.removeClass( this.element, 'fullpage' );
