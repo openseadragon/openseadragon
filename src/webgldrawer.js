@@ -56,6 +56,7 @@
     * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
     * @param {Element} options.element - Parent element.
     * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
+    * @param {Boolean} [options.unpackWithPremultipliedAlpha=false] - Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
     */
     OpenSeadragon.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
         constructor(options){
@@ -89,6 +90,7 @@
             this._backupCanvasDrawer = null;
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
+            this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
 
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
@@ -109,6 +111,7 @@
                 // use detached cache: our type conversion will not collide (and does not have to preserve CPU data ref)
                 usePrivateCache: true,
                 preloadCache: false,
+                unpackWithPremultipliedAlpha: false,
             };
         }
 
@@ -488,6 +491,21 @@
         }
 
         /**
+        * Sets whether textures are unpacked with premultiplied alpha
+        * @param {Boolean} enabled If true, sets gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL to true.
+        */
+        setUnpackWithPremultipliedAlpha(enabled){
+            if (this._unpackWithPremultipliedAlpha !== enabled){
+                this._unpackWithPremultipliedAlpha = enabled;
+                if (this._gl){
+                    this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, enabled);
+                }
+                this.setInternalCacheNeedsRefresh();
+                this.viewer.forceRedraw();
+            }
+        }
+
+        /**
         * Draw a rect onto the output canvas for debugging purposes
         * @param {OpenSeadragon.Rect} rect
         */
@@ -825,6 +843,7 @@
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
             this._gl = this._renderingCanvas.getContext('webgl');
+            this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
 
             this._resizeHandler = function(){
 
@@ -912,6 +931,7 @@
                     try {
                         // This depends on gl.TEXTURE_2D being bound to the texture
                         // associated with this canvas before calling this function
+                        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
                         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
                         // TextureInfo stored in the cache
                         return {
