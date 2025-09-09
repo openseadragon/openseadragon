@@ -18,7 +18,6 @@ OPENSEADRAGON CHANGELOG
     * CacheRecord supports 'internal cache' of 'SimpleCache' type. This cache can be used by drawers to hide complex types used for rendering. Such caches are stored internally on CacheRecord objects.
     * CacheRecord drives asynchronous data management and ensures correct behavior through awaiting Promises.
     * TileCache adds new methods for cache modification: renameCache, cloneCache, injectCache, replaceCache, restoreTilesThatShareOriginalCache, safeUnloadCache, unloadCacheForTile and more. Used internally within invalidation events
-* Added: WebGLDrawer option to unpack textures with premultiplied alpha.
     * Tiles have up to two 'originalCacheKey' and 'cacheKey' caches, which keep original data and target drawn data (if modified).
     * Invalidation Pipeline: New event 'tile-invalidated' and requestInvalidate methods on World and TiledImage. Tiles get methods to modify data to draw, system prepares data for drawing and swaps them with the current main tile cache.
     * New test suites for the new cache system, conversion pipeline and invalidation events.
@@ -38,6 +37,7 @@ OPENSEADRAGON CHANGELOG
 * Now if you hold down navigation keys (pan or zoom), the movement is continuous rather than having a pause after the initial start (#2735 @achu1998)
 * Added tries and maxReached properties to tile-load-failed event (#2777 @Tobio89)
 * You can now turn off keyboard navigation (#2773 @colinrlim @yurii2007)
+* Added: WebGLDrawer option to unpack textures with premultiplied alpha (#2776 @adriandarian)
 * Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
 * Improved documentation and code naming (#2676 @bennlich, #2729 @shaswata-26, #2754 @ganglike248)
