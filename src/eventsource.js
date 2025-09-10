@@ -249,6 +249,7 @@ $.EventSource.prototype = {
                         if (!args.stopPropagation) {
                             return loop(index + 1);
                         }
+                        return undefined;
                     });
                 }
                 loop(0);
