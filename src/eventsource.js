@@ -35,6 +35,12 @@
 (function($){
 
 /**
+ * @typedef {Object} Event
+ * @memberof OpenSeadragon
+ * @param {boolean} [stopPropagation=undefined] - If set to true, the event exits after handling the current call.
+ */
+
+/**
  * Event handler method signature used by all OpenSeadragon events.
  *
  * @typedef {function(OpenSeadragon.Event): void} OpenSeadragon.EventHandler
@@ -199,6 +205,10 @@ $.EventSource.prototype = {
                     args.eventSource = source;
                     args.userData = events[ i ].userData;
                     events[ i ].handler( args );
+
+                    if (args.stopPropagation) {
+                        break;
+                    }
                 }
             }
         };
@@ -235,7 +245,11 @@ $.EventSource.prototype = {
                     args.userData = events[ index ].userData;
                     let result = events[ index ].handler( args );
                     result = (!result || $.type(result) !== "promise") ? $.Promise.resolve() : result;
-                    return result.then(() => loop(index + 1));
+                    return result.then(() => {
+                        if (!args.stopPropagation) {
+                            return loop(index + 1);
+                        }
+                    });
                 }
                 loop(0);
             });
