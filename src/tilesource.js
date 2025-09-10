@@ -779,10 +779,14 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Download tile data.
+     * Download tile data. The context attribute is the reference to the job object itself, which is extended
+     * by ImageLoader.addJob(options) options object, so there are also properties like context.source (reference to self).
+     *
      * Note that if you override this function, you should override also downloadTileAbort().
      * @param {ImageJob} context job context that you have to call finish(...) on.
      * @param {String} [context.src] - URL of image to download.
+     * @param {OpenSeadragon.Tile} [context.tile] - Tile that initiated the load. Note the data might be shared between tiles.
+     * @param {OpenSeadragon.TileSource} [context.source] - TileSource that initiated the load (this).
      * @param {String} [context.loadWithAjax] - Whether to load this image with AJAX.
      * @param {String} [context.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {Boolean} [context.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
