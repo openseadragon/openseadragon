@@ -45,7 +45,8 @@
  *
  * @property {boolean} [preloadCache=true] When internalCacheCreate is used, it can be applied offline
  *   (asynchronously) during data processing = preloading, or just in time before rendering (if necessary).
- *   Preloading supports
+ *   Preloading supports async handlers, and can use promises. If preloadCache=false, no async (e.g. cache conversion)
+ *   logics can be used!
  *
  * @property {boolean} [offScreen=false] When true, the drawer is not attached to DOM. This must be false
  *   for all drawers created and used for rendering, particularly the main viewer drawer. However,
