@@ -35,8 +35,8 @@
 (function( $ ){
 
 // dictionary from hash to private properties
-var THIS = {};
-var nextHash = 1;
+const THIS = {};
+let nextHash = 1;
 
 /**
  *
@@ -64,9 +64,9 @@ var nextHash = 1;
  **/
 $.Viewer = function( options ) {
 
-    var args  = arguments,
-        _this = this,
-        i;
+    const args  = arguments;
+    const _this = this;
+    let i;
 
 
     //backward compatibility for positional args while preferring more
@@ -93,7 +93,7 @@ $.Viewer = function( options ) {
     // This is an array to make it easy to add additional properties to convert to
     // drawer options later if it makes sense to set at the drawer level rather than
     // per tiled image (for example, subPixelRoundingForTransparency).
-    let drawerOptionList = [
+    const drawerOptionList = [
             'useCanvas', // deprecated
         ];
     options.drawerOptions = Object.assign({},
@@ -267,7 +267,7 @@ $.Viewer = function( options ) {
     $.EventSource.call( this );
 
     this.addHandler( 'open-failed', function ( event ) {
-        var msg = $.getString( "Errors.OpenFailed", event.eventSource, event.message);
+        const msg = $.getString( "Errors.OpenFailed", event.eventSource, event.message);
         _this._showMessage( msg );
     });
 
@@ -285,7 +285,7 @@ $.Viewer = function( options ) {
 
     // Injecting mobile-only CSS to remove focus outline
     if (!document.querySelector('style[data-openseadragon-mobile-css]')) {
-        var style = document.createElement('style');
+        const style = document.createElement('style');
         style.setAttribute('data-openseadragon-mobile-css', 'true');
         style.textContent =
             '@media (hover: none) {' +
@@ -406,9 +406,9 @@ $.Viewer = function( options ) {
             _this._updateRequestId = scheduleUpdate( _this, updateMulti );
         }
 
-        var tiledImage = event.item;
-        var fullyLoadedHandler =  function() {
-            var newFullyLoaded = _this._areAllFullyLoaded();
+        const tiledImage = event.item;
+        const fullyLoadedHandler =  function() {
+            const newFullyLoaded = _this._areAllFullyLoaded();
             if (newFullyLoaded !== _this._fullyLoaded) {
                 _this._fullyLoaded = newFullyLoaded;
 
@@ -433,7 +433,7 @@ $.Viewer = function( options ) {
     });
 
     this.world.addHandler('remove-item', function(event) {
-        var tiledImage = event.item;
+        const tiledImage = event.item;
 
         // SAFE cleanup with existence check
         if (tiledImage._fullyLoadedHandlerForViewer) {
@@ -523,7 +523,7 @@ $.Viewer = function( options ) {
 
     this.drawer = null;
     for (const drawerCandidate of drawerCandidates){
-        let success = this.requestDrawer(drawerCandidate, {mainDrawer: true, redrawImmediately: false});
+        const success = this.requestDrawer(drawerCandidate, {mainDrawer: true, redrawImmediately: false});
         if(success){
             break;
         }
@@ -635,12 +635,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *                    false if any image still has pending tiles
      */
     _areAllFullyLoaded: function() {
-        var tiledImage;
-        var count = this.world.getItemCount();
+        const count = this.world.getItemCount();
 
         // Iterate through all TiledImages in the viewer's world
-        for (var i = 0; i < count; i++) {
-            tiledImage = this.world.getItemAt(i);
+        for (let i = 0; i < count; i++) {
+            let tiledImage = this.world.getItemAt(i);
 
             // Return immediately if any image isn't fully loaded
             if (!tiledImage.getFullyLoaded()) {
@@ -713,7 +712,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
     open: function (tileSources, initialPage) {
-        var _this = this;
+        const _this = this;
 
         this.close();
 
@@ -755,12 +754,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this._opening = true;
 
-        var expected = tileSources.length;
-        var successes = 0;
-        var failures = 0;
-        var failEvent;
+        const expected = tileSources.length;
+        let successes = 0;
+        let failures = 0;
+        let failEvent;
 
-        var checkCompletion = function() {
+        const checkCompletion = function() {
             if (successes + failures === expected) {
                 if (successes) {
                     if (_this._firstOpen || !_this.preserveViewport) {
@@ -770,14 +769,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
                     _this._firstOpen = false;
 
-                    var source = tileSources[0];
+                    let source = tileSources[0];
                     if (source.tileSource) {
                         source = source.tileSource;
                     }
 
                     // Global overlays
                     if( _this.overlays && !_this.preserveOverlays ){
-                        for ( var i = 0; i < _this.overlays.length; i++ ) {
+                        for ( let i = 0; i < _this.overlays.length; i++ ) {
                             _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
                         }
                     }
@@ -816,7 +815,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         };
 
-        var doOne = function(options) {
+        const doOne = function(options) {
             if (!$.isPlainObject(options) || !options.tileSource) {
                 options = {
                     tileSource: options
@@ -832,14 +831,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 options.collectionImmediately = true;
             }
 
-            var originalSuccess = options.success;
+            const originalSuccess = options.success;
             options.success = function(event) {
                 successes++;
 
                 // TODO: now that options has other things besides tileSource, the overlays
                 // should probably be at the options level, not the tileSource level.
                 if (options.tileSource.overlays) {
-                    for (var i = 0; i < options.tileSource.overlays.length; i++) {
+                    for (let i = 0; i < options.tileSource.overlays.length; i++) {
                         _this.addOverlay(options.tileSource.overlays[i]);
                     }
                 }
@@ -851,7 +850,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 checkCompletion();
             };
 
-            var originalError = options.error;
+            const originalError = options.error;
             options.error = function(event) {
                 failures++;
 
@@ -870,7 +869,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         };
 
         // TileSources
-        for (var i = 0; i < tileSources.length; i++) {
+        for (let i = 0; i < tileSources.length; i++) {
             doOne(tileSources[i]);
         }
 
@@ -1181,10 +1180,41 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @function
      * @returns {Boolean}
      */
+    isKeyboardNavEnabled: function () {
+        return this.keyboardNavEnabled;
+    },
+
+    /**
+     * @function
+     * @param {Boolean} enabled - true to enable, false to disable
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     * @fires OpenSeadragon.Viewer.event:keyboard-enabled
+     */
+    setKeyboardNavEnabled: function( enabled ){
+        this.keyboardNavEnabled = enabled;
+
+        /**
+         * Raised when keyboard navigation is enabled or disabled (see {@link OpenSeadragon.Viewer#setKeyboardNavEnabled}).
+         *
+         * @event keyboard-enabled
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Boolean} enabled
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'keyboard-enabled', { enabled: enabled } );
+        return this;
+    },
+
+
+    /**
+     * @function
+     * @returns {Boolean}
+     */
     areControlsEnabled: function () {
-        var enabled = this.controls.length,
-            i;
-        for( i = 0; i < this.controls.length; i++ ){
+        let enabled = this.controls.length;
+        for( let i = 0; i < this.controls.length; i++ ){
             enabled = enabled && this.controls[ i ].isVisible();
         }
         return enabled;
@@ -1227,7 +1257,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     setDebugMode: function(debugMode){
 
-        for (var i = 0; i < this.world.getItemCount(); i++) {
+        for (let i = 0; i < this.world.getItemCount(); i++) {
             this.world.getItemAt(i).debugMode = debugMode;
         }
 
@@ -1266,7 +1296,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this.ajaxHeaders = ajaxHeaders;
 
         if (propagate) {
-            for (var i = 0; i < this.world.getItemCount(); i++) {
+            for (let i = 0; i < this.world.getItemCount(); i++) {
                 this.world.getItemAt(i)._updateAjaxHeaders(true);
             }
 
@@ -1275,7 +1305,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
 
             if (this.referenceStrip && this.referenceStrip.miniViewers) {
-                for (var key in this.referenceStrip.miniViewers) {
+                for (const key in this.referenceStrip.miniViewers) {
                     this.referenceStrip.miniViewers[key].setAjaxHeaders(this.ajaxHeaders, true);
                 }
             }
@@ -1312,19 +1342,18 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
     setFullPage: function( fullPage ) {
 
-        var body = document.body,
-            bodyStyle = body.style,
-            docStyle = document.documentElement.style,
-            _this = this,
-            nodes,
-            i;
+        const body = document.body;
+        const bodyStyle = body.style;
+        const docStyle = document.documentElement.style;
+        const _this = this;
+        let nodes;
 
         //don't bother modifying the DOM if we are already in full page mode.
         if ( fullPage === this.isFullPage() ) {
             return this;
         }
 
-        var fullPageEventArgs = {
+        const fullPageEventArgs = {
             fullPage: fullPage,
             preventDefaultAction: false
         };
@@ -1388,7 +1417,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             THIS[ this.hash ].prevElementWidth = this.element.style.width;
             THIS[ this.hash ].prevElementHeight = this.element.style.height;
             nodes = body.childNodes.length;
-            for ( i = 0; i < nodes; i++ ) {
+            for ( let i = 0; i < nodes; i++ ) {
                 this.previousBody.push( body.childNodes[ 0 ] );
                 body.removeChild( body.childNodes[ 0 ] );
             }
@@ -1445,7 +1474,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             body.removeChild( this.element );
             nodes = this.previousBody.length;
-            for ( i = 0; i < nodes; i++ ) {
+            for ( let i = 0; i < nodes; i++ ) {
                 body.appendChild( this.previousBody.shift() );
             }
 
@@ -1477,10 +1506,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             // After exiting fullPage or fullScreen, it can take some time
             // before the browser can actually set the scroll.
-            var restoreScrollCounter = 0;
-            var restoreScroll = function() {
+            let restoreScrollCounter = 0;
+            const restoreScroll = function() {
                 $.setPageScroll( _this.pageScroll );
-                var pageScroll = $.getPageScroll();
+                const pageScroll = $.getPageScroll();
                 restoreScrollCounter++;
                 if (restoreScrollCounter < 10 &&
                     (pageScroll.x !== _this.pageScroll.x ||
@@ -1526,7 +1555,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:full-screen
      */
     setFullScreen: function( fullScreen ) {
-        var _this = this;
+        const _this = this;
 
         if ( !$.supportsFullScreen ) {
             return this.setFullPage( fullScreen );
@@ -1536,7 +1565,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        var fullScreenEventArgs = {
+        const fullScreenEventArgs = {
             fullScreen: fullScreen,
             preventDefaultAction: false
         };
@@ -1573,14 +1602,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.element.style.width = '100%';
             this.element.style.height = '100%';
 
-            var onFullScreenChange = function() {
+            const onFullScreenChange = function() {
                 if (!THIS[ _this.hash ]) {
                     $.removeEvent( document, $.fullScreenEventName, onFullScreenChange );
                     $.removeEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
                     return;
                 }
 
-                var isFullScreen = $.isFullScreen();
+                const isFullScreen = $.isFullScreen();
                 if ( !isFullScreen ) {
                     $.removeEvent( document, $.fullScreenEventName, onFullScreenChange );
                     $.removeEvent( document, $.fullScreenErrorEventName, onFullScreenChange );
@@ -1732,7 +1761,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         $.console.assert(!options.replace || (options.index > -1 && options.index < this.world.getItemCount()),
             "[Viewer.addTiledImage] if options.replace is used, options.index must be a valid index in Viewer.world");
 
-        var _this = this;
+        const _this = this;
 
         if (options.replace) {
             options.replaceItem = _this.world.getItemAt(options.index);
@@ -1765,12 +1794,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             options.ajaxHeaders = {};
         }
 
-        var myQueueItem = {
+        const myQueueItem = {
             options: options
         };
 
         function raiseAddItemFailed( event ) {
-            for (var i = 0; i < _this._loadQueue.length; i++) {
+            for (let i = 0; i < _this._loadQueue.length; i++) {
                 if (_this._loadQueue[i] === myQueueItem) {
                     _this._loadQueue.splice(i, 1);
                     break;
@@ -1827,7 +1856,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this._loadQueue.push(myQueueItem);
 
         function processReadyItems() {
-            var queueItem, tiledImage, optionsClone;
+            let queueItem, tiledImage, optionsClone;
             while (_this._loadQueue.length) {
                 queueItem = _this._loadQueue[0];
                 if (!queueItem.tileSource) {
@@ -1962,7 +1991,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         $.console.assert(options, "[Viewer.addSimpleImage] options is required");
         $.console.assert(options.url, "[Viewer.addSimpleImage] options.url is required");
 
-        var opts = $.extend({}, options, {
+        const opts = $.extend({}, options, {
             tileSource: {
                 type: 'image',
                 url:  options.url
@@ -1974,11 +2003,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     // deprecated
     addLayer: function( options ) {
-        var _this = this;
+        const _this = this;
 
         $.console.error( "[Viewer.addLayer] this function is deprecated; use Viewer.addTiledImage() instead." );
 
-        var optionsClone = $.extend({}, options, {
+        const optionsClone = $.extend({}, options, {
             success: function(event) {
                 _this.raiseEvent("add-layer", {
                     options: options,
@@ -2050,12 +2079,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         // Image Sequence Controls
         //////////////////////////////////////////////////////////////////////////
-        var onFocusHandler          = $.delegate( this, onFocus ),
-            onBlurHandler           = $.delegate( this, onBlur ),
-            onNextHandler           = $.delegate( this, this.goToNextPage ),
-            onPreviousHandler       = $.delegate( this, this.goToPreviousPage ),
-            navImages               = this.navImages,
-            useGroup                = true;
+        const onFocusHandler          = $.delegate( this, onFocus );
+        const onBlurHandler           = $.delegate( this, onBlur );
+        const onNextHandler           = $.delegate( this, this.goToNextPage );
+        const onPreviousHandler       = $.delegate( this, this.goToPreviousPage );
+        const navImages               = this.navImages;
+        let useGroup                  = true;
 
         if( this.showSequenceControl ){
 
@@ -2138,21 +2167,21 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         //////////////////////////////////////////////////////////////////////////
         // Navigation Controls
         //////////////////////////////////////////////////////////////////////////
-        var beginZoomingInHandler   = $.delegate( this, this.startZoomInAction ),
-            endZoomingHandler       = $.delegate( this, this.endZoomAction ),
-            doSingleZoomInHandler   = $.delegate( this, this.singleZoomInAction ),
-            beginZoomingOutHandler  = $.delegate( this, this.startZoomOutAction ),
-            doSingleZoomOutHandler  = $.delegate( this, this.singleZoomOutAction ),
-            onHomeHandler           = $.delegate( this, onHome ),
-            onFullScreenHandler     = $.delegate( this, onFullScreen ),
-            onRotateLeftHandler     = $.delegate( this, onRotateLeft ),
-            onRotateRightHandler    = $.delegate( this, onRotateRight ),
-            onFlipHandler           = $.delegate( this, onFlip),
-            onFocusHandler          = $.delegate( this, onFocus ),
-            onBlurHandler           = $.delegate( this, onBlur ),
-            navImages               = this.navImages,
-            buttons                 = [],
-            useGroup                = true;
+        const beginZoomingInHandler   = $.delegate( this, this.startZoomInAction );
+        const endZoomingHandler       = $.delegate( this, this.endZoomAction );
+        const doSingleZoomInHandler   = $.delegate( this, this.singleZoomInAction );
+        const beginZoomingOutHandler  = $.delegate( this, this.startZoomOutAction );
+        const doSingleZoomOutHandler  = $.delegate( this, this.singleZoomOutAction );
+        const onHomeHandler           = $.delegate( this, onHome );
+        const onFullScreenHandler     = $.delegate( this, onFullScreen );
+        const onRotateLeftHandler     = $.delegate( this, onRotateLeft );
+        const onRotateRightHandler    = $.delegate( this, onRotateRight );
+        const onFlipHandler           = $.delegate( this, onFlip);
+        const onFocusHandler          = $.delegate( this, onFocus );
+        const onBlurHandler           = $.delegate( this, onBlur );
+        const navImages               = this.navImages;
+        const buttons                 = [];
+        let useGroup                = true;
 
 
         if ( this.showNavigationControl ) {
@@ -2376,7 +2405,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:add-overlay
      */
     addOverlay: function( element, location, placement, onDraw ) {
-        var options;
+        let options;
         if( $.isPlainObject( element ) ){
             options = element;
         } else {
@@ -2395,7 +2424,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return this;
         }
 
-        var overlay = getOverlayObject( this, options);
+        const overlay = getOverlayObject( this, options);
         this.currentOverlays.push(overlay);
         overlay.drawHTML( this.overlaysContainer, this.viewport );
 
@@ -2434,10 +2463,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:update-overlay
      */
     updateOverlay: function( element, location, placement ) {
-        var i;
-
         element = $.getElement( element );
-        i = getOverlayIndex( this.currentOverlays, element );
+        const i = getOverlayIndex( this.currentOverlays, element );
 
         if ( i >= 0 ) {
             this.currentOverlays[ i ].update( location, placement );
@@ -2475,10 +2502,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @fires OpenSeadragon.Viewer.event:remove-overlay
      */
     removeOverlay: function( element ) {
-        var i;
-
         element = $.getElement( element );
-        i = getOverlayIndex( this.currentOverlays, element );
+        const i = getOverlayIndex( this.currentOverlays, element );
 
         if ( i >= 0 ) {
             this.currentOverlays[ i ].destroy();
@@ -2537,10 +2562,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {OpenSeadragon.Overlay} the matching overlay or null if none found.
      */
     getOverlayById: function( element ) {
-        var i;
-
         element = $.getElement( element );
-        i = getOverlayIndex( this.currentOverlays, element );
+        const i = getOverlayIndex( this.currentOverlays, element );
 
         if (i >= 0) {
             return this.currentOverlays[i];
@@ -2588,7 +2611,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     _showMessage: function ( message ) {
         this._hideMessage();
 
-        var div = $.makeNeutralElement( "div" );
+        const div = $.makeNeutralElement( "div" );
         div.appendChild( document.createTextNode( message ) );
 
         this.messageDiv = $.makeCenteredNode( div );
@@ -2604,7 +2627,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @private
      */
     _hideMessage: function () {
-        var div = this.messageDiv;
+        const div = this.messageDiv;
         if (div) {
             div.parentNode.removeChild(div);
             delete this.messageDiv;
@@ -2632,9 +2655,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
     // private
     _drawOverlays: function() {
-        var i,
-            length = this.currentOverlays.length;
-        for ( i = 0; i < length; i++ ) {
+        const length = this.currentOverlays.length;
+        for ( let i = 0; i < length; i++ ) {
             this.currentOverlays[ i ].drawHTML( this.overlaysContainer, this.viewport );
         }
     },
@@ -2714,8 +2736,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @private
      */
      _updatePixelDensityRatio: function() {
-        var previusPixelDensityRatio = $.pixelDensityRatio;
-        var currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
+        const previusPixelDensityRatio = $.pixelDensityRatio;
+        const currentPixelDensityRatio = $.getCurrentPixelDensityRatio();
         if (previusPixelDensityRatio !== currentPixelDensityRatio) {
             $.pixelDensityRatio = currentPixelDensityRatio;
             this.forceResize();
@@ -2732,7 +2754,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      */
 
     goToPreviousPage: function () {
-        var previous = this._sequenceIndex - 1;
+        let previous = this._sequenceIndex - 1;
         if(this.navPrevNextWrap && previous < 0){
             previous += this.tileSources.length;
         }
@@ -2748,7 +2770,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @method
      */
     goToNextPage: function () {
-        var next = this._sequenceIndex + 1;
+        let next = this._sequenceIndex + 1;
         if(this.navPrevNextWrap && next >= this.tileSources.length){
             next = 0;
         }
@@ -2855,7 +2877,7 @@ function _getSafeElemSize (oElement) {
  */
 function getTileSourceImplementation( viewer, tileSource, imgOptions, successCallback,
     failCallback ) {
-    var _this = viewer;
+    const _this = viewer;
 
     //allow plain xml strings or json strings to be parsed here
     if ( $.type( tileSource ) === 'string' ) {
@@ -2865,7 +2887,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
         //json should start with "{" or "[" and end with "}" or "]"
         } else if ( tileSource.match(/^\s*[{[].*[}\]]\s*$/ ) ) {
             try {
-              var tileSourceJ = $.parseJSON(tileSource);
+              const tileSourceJ = $.parseJSON(tileSource);
               tileSource = tileSourceJ;
             } catch (e) {
               //tileSource = tileSource;
@@ -2919,12 +2941,12 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
 
             if ( $.isFunction( tileSource.getTileUrl ) ) {
                 //Custom tile source
-                var customTileSource = new $.TileSource( tileSource );
+                const customTileSource = new $.TileSource( tileSource );
                 customTileSource.getTileUrl = tileSource.getTileUrl;
                 successCallback( customTileSource );
             } else {
                 //inline configuration
-                var $TileSource = $.TileSource.determineType( _this, tileSource );
+                const $TileSource = $.TileSource.determineType( _this, tileSource );
                 if ( !$TileSource ) {
                     failCallback( {
                         message: "Unable to load TileSource",
@@ -2932,7 +2954,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                     });
                     return;
                 }
-                var options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
+                const options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
                 waitUntilReady(new $TileSource(options), tileSource);
             }
         } else {
@@ -2947,11 +2969,11 @@ function getOverlayObject( viewer, overlay ) {
         return overlay;
     }
 
-    var element = null;
+    let element = null;
     if ( overlay.element ) {
         element = $.getElement( overlay.element );
     } else {
-        var id = overlay.id ?
+        const id = overlay.id ?
             overlay.id :
             "openseadragon-overlay-" + Math.floor( Math.random() * 10000000 );
 
@@ -2967,14 +2989,14 @@ function getOverlayObject( viewer, overlay ) {
         );
     }
 
-    var location = overlay.location;
-    var width = overlay.width;
-    var height = overlay.height;
+    let location = overlay.location;
+    let width = overlay.width;
+    let height = overlay.height;
     if (!location) {
-        var x = overlay.x;
-        var y = overlay.y;
+        let x = overlay.x;
+        let y = overlay.y;
         if (overlay.px !== undefined) {
-            var rect = viewer.viewport.imageToViewportRectangle(new $.Rect(
+            const rect = viewer.viewport.imageToViewportRectangle(new $.Rect(
                 overlay.px,
                 overlay.py,
                 width || 0,
@@ -2987,7 +3009,7 @@ function getOverlayObject( viewer, overlay ) {
         location = new $.Point(x, y);
     }
 
-    var placement = overlay.placement;
+    let placement = overlay.placement;
     if (placement && $.type(placement) === "string") {
         placement = $.Placement[overlay.placement.toUpperCase()];
     }
@@ -3014,8 +3036,7 @@ function getOverlayObject( viewer, overlay ) {
  * @returns {number} The index of the matching overlay in the array, or -1 if not found.
  */
 function getOverlayIndex( overlays, element ) {
-    var i;
-    for ( i = overlays.length - 1; i >= 0; i-- ) {
+    for ( let i = overlays.length - 1; i >= 0; i-- ) {
         if ( overlays[ i ].element === element ) {
             return i;
         }
@@ -3060,19 +3081,15 @@ function beginControlsAutoHide( viewer ) {
 
 //determines if fade animation is done or continues the animation
 function updateControlsFade( viewer ) {
-    var currentTime,
-        deltaTime,
-        opacity,
-        i;
     if ( viewer.controlsShouldFade ) {
-        currentTime = $.now();
-        deltaTime = currentTime - viewer.controlsFadeBeginTime;
-        opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
+        let currentTime = $.now();
+        let deltaTime = currentTime - viewer.controlsFadeBeginTime;
+        let opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
 
         opacity = Math.min( 1.0, opacity );
         opacity = Math.max( 0.0, opacity );
 
-        for ( i = viewer.controls.length - 1; i >= 0; i--) {
+        for ( let i = viewer.controls.length - 1; i >= 0; i--) {
             if (viewer.controls[ i ].autoFade) {
                 viewer.controls[ i ].setOpacity( opacity );
             }
@@ -3088,9 +3105,8 @@ function updateControlsFade( viewer ) {
 
 //stop the fade animation on the controls and show them
 function abortControlsAutoHide( viewer ) {
-    var i;
     viewer.controlsShouldFade = false;
-    for ( i = viewer.controls.length - 1; i >= 0; i-- ) {
+    for ( let i = viewer.controls.length - 1; i >= 0; i-- ) {
         viewer.controls[ i ].setOpacity( 1.0 );
     }
 }
@@ -3110,7 +3126,7 @@ function onBlur(){
 }
 
 function onCanvasContextMenu( event ) {
-    var eventArgs = {
+    const eventArgs = {
         tracker: event.eventSource,
         position: event.position,
         originalEvent: event.originalEvent,
@@ -3205,9 +3221,9 @@ function onCanvasKeyUp(event) {
 
 function onCanvasKeyDown( event ) {
 
-    var canvasKeyDownEventArgs = {
+    const canvasKeyDownEventArgs = {
       originalEvent: event.originalEvent,
-      preventDefaultAction: false,
+      preventDefaultAction: !this.keyboardNavEnabled,
       preventVerticalPan: event.preventVerticalPan || !this.panVertical,
       preventHorizontalPan: event.preventHorizontalPan || !this.panHorizontal
     };
@@ -3285,7 +3301,7 @@ function onCanvasKeyDown( event ) {
 }
 
 function onCanvasKeyPress( event ) {
-    var canvasKeyPressEventArgs = {
+    const canvasKeyPressEventArgs = {
       originalEvent: event.originalEvent,
     };
 
@@ -3304,9 +3320,9 @@ function onCanvasKeyPress( event ) {
 }
 
 function onCanvasClick( event ) {
-    var gestureSettings;
+    let gestureSettings;
 
-    var haveKeyboardFocus = document.activeElement === this.canvas;
+    const haveKeyboardFocus = document.activeElement === this.canvas;
 
     // If we don't have keyboard focus, request it.
     if ( !haveKeyboardFocus ) {
@@ -3316,7 +3332,7 @@ function onCanvasClick( event ) {
         event.position.x = this.viewport.getContainerSize().x - event.position.x;
     }
 
-    var canvasClickEventArgs = {
+    const canvasClickEventArgs = {
         tracker: event.eventSource,
         position: event.position,
         quick: event.quick,
@@ -3371,9 +3387,9 @@ function onCanvasClick( event ) {
 }
 
 function onCanvasDblClick( event ) {
-    var gestureSettings;
+    let gestureSettings;
 
-    var canvasDblClickEventArgs = {
+    const canvasDblClickEventArgs = {
         tracker: event.eventSource,
         position: event.position,
         shift: event.shift,
@@ -3410,9 +3426,9 @@ function onCanvasDblClick( event ) {
 }
 
 function onCanvasDrag( event ) {
-    var gestureSettings;
+    let gestureSettings;
 
-    var canvasDragEventArgs = {
+    const canvasDragEventArgs = {
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -3449,7 +3465,7 @@ function onCanvasDrag( event ) {
     if(!canvasDragEventArgs.preventDefaultAction && this.viewport){
 
         if (gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom){
-            var factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y / 50);
+            const factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y / 50);
             this.viewport.zoomBy(factor);
         }
         else if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom) {
@@ -3464,12 +3480,12 @@ function onCanvasDrag( event ) {
             }
 
             if( this.constrainDuringPan ){
-                var delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
+                const delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
 
                 this.viewport.centerSpringX.target.value += delta.x;
                 this.viewport.centerSpringY.target.value += delta.y;
 
-                var constrainedBounds = this.viewport.getConstrainedBounds();
+                const constrainedBounds = this.viewport.getConstrainedBounds();
 
                 this.viewport.centerSpringX.target.value -= delta.x;
                 this.viewport.centerSpringY.target.value -= delta.y;
@@ -3490,8 +3506,8 @@ function onCanvasDrag( event ) {
 }
 
 function onCanvasDragEnd( event ) {
-    var gestureSettings;
-    var canvasDragEndEventArgs = {
+    let gestureSettings;
+    const canvasDragEndEventArgs = {
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
@@ -3528,19 +3544,19 @@ function onCanvasDragEnd( event ) {
             gestureSettings.dragToPan &&
             gestureSettings.flickEnabled &&
             event.speed >= gestureSettings.flickMinSpeed) {
-            var amplitudeX = 0;
+            let amplitudeX = 0;
             if (this.panHorizontal) {
                 amplitudeX = gestureSettings.flickMomentum * event.speed *
                     Math.cos(event.direction);
             }
-            var amplitudeY = 0;
+            let amplitudeY = 0;
             if (this.panVertical) {
                 amplitudeY = gestureSettings.flickMomentum * event.speed *
                     Math.sin(event.direction);
             }
-            var center = this.viewport.pixelFromPoint(
+            const center = this.viewport.pixelFromPoint(
                 this.viewport.getCenter(true));
-            var target = this.viewport.pointFromPixel(
+            const target = this.viewport.pointFromPixel(
                 new $.Point(center.x - amplitudeX, center.y - amplitudeY));
             this.viewport.panTo(target, false);
         }
@@ -3616,7 +3632,6 @@ function onCanvasLeave( event ) {
 }
 
 function onCanvasPress( event ) {
-    var gestureSettings;
 
     /**
      * Raised when the primary mouse button is pressed or touch starts on the {@link OpenSeadragon.Viewer#canvas} element.
@@ -3643,10 +3658,10 @@ function onCanvasPress( event ) {
     });
 
 
-    gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+    const gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
     if ( gestureSettings.dblClickDragToZoom ){
-        var lastClickTime = THIS[ this.hash ].lastClickTime;
-        var currClickTime = $.now();
+         const lastClickTime = THIS[ this.hash ].lastClickTime;
+         const currClickTime = $.now();
 
         if ( lastClickTime === null) {
             return;
@@ -3744,12 +3759,11 @@ function onCanvasNonPrimaryRelease( event ) {
 }
 
 function onCanvasPinch( event ) {
-    var gestureSettings,
-        centerPt,
-        lastCenterPt,
-        panByPt;
+    let centerPt;
+    let lastCenterPt;
+    let panByPt;
 
-    var canvasPinchEventArgs = {
+    const canvasPinchEventArgs = {
         tracker: event.eventSource,
         pointerType: event.pointerType,
         gesturePoints: event.gesturePoints,
@@ -3788,7 +3802,7 @@ function onCanvasPinch( event ) {
      this.raiseEvent('canvas-pinch', canvasPinchEventArgs);
 
     if ( this.viewport ) {
-        gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
+        let gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
         if ( gestureSettings.pinchToZoom &&
                     (!canvasPinchEventArgs.preventDefaultPanAction || !canvasPinchEventArgs.preventDefaultZoomAction) ) {
             centerPt = this.viewport.pointFromPixel( event.center, true );
@@ -3810,9 +3824,9 @@ function onCanvasPinch( event ) {
         }
         if ( gestureSettings.pinchRotate && !canvasPinchEventArgs.preventDefaultRotateAction ) {
             // Pinch rotate
-            var angle1 = Math.atan2(event.gesturePoints[0].currentPos.y - event.gesturePoints[1].currentPos.y,
+            const angle1 = Math.atan2(event.gesturePoints[0].currentPos.y - event.gesturePoints[1].currentPos.y,
                 event.gesturePoints[0].currentPos.x - event.gesturePoints[1].currentPos.x);
-            var angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
+            const angle2 = Math.atan2(event.gesturePoints[0].lastPos.y - event.gesturePoints[1].lastPos.y,
                 event.gesturePoints[0].lastPos.x - event.gesturePoints[1].lastPos.x);
             centerPt = this.viewport.pointFromPixel( event.center, true );
             this.viewport.rotateTo(this.viewport.getRotation(true) + ((angle1 - angle2) * (180 / Math.PI)), centerPt, true);
@@ -3842,10 +3856,10 @@ function onCanvasFocus( event ) {
 function onCanvasBlur( event ) {
 
     // When canvas loses focus, clear all navigation key states.
-    for (let action in this._activeActions) {
+    for (const action in this._activeActions) {
         this._activeActions[action] = false;
     }
-    for (let action in this._navActionVirtuallyHeld) {
+    for (const action in this._navActionVirtuallyHeld) {
         this._navActionVirtuallyHeld[action] = false;
     }
 
@@ -3867,17 +3881,15 @@ function onCanvasBlur( event ) {
 }
 
 function onCanvasScroll( event ) {
-    var canvasScrollEventArgs,
-        gestureSettings,
-        factor,
-        thisScrollTime,
-        deltaScrollTime;
+    let canvasScrollEventArgs;
+    let gestureSettings;
+    let factor;
 
     /* Certain scroll devices fire the scroll event way too fast so we are injecting a simple adjustment to keep things
      * partially normalized. If we have already fired an event within the last 'minScrollDelta' milliseconds we skip
      * this one and wait for the next event. */
-    thisScrollTime = $.now();
-    deltaScrollTime = thisScrollTime - this._lastScrollTime;
+    const thisScrollTime = $.now();
+    const deltaScrollTime = thisScrollTime - this._lastScrollTime;
     if (deltaScrollTime > this.minScrollDeltaTime) {
         this._lastScrollTime = thisScrollTime;
 
@@ -4016,18 +4028,18 @@ function updateMulti( viewer ) {
 }
 
 function doViewerResize(viewer, containerSize){
-    var viewport = viewer.viewport;
-    var zoom = viewport.getZoom();
-    var center = viewport.getCenter();
+    const viewport = viewer.viewport;
+    const zoom = viewport.getZoom();
+    const center = viewport.getCenter();
     viewport.resize(containerSize, viewer.preserveImageSizeOnResize);
     viewport.panTo(center, true);
-    var resizeRatio;
+    let resizeRatio;
     if (viewer.preserveImageSizeOnResize) {
         resizeRatio = THIS[viewer.hash].prevContainerSize.x / containerSize.x;
     } else {
-        var origin = new $.Point(0, 0);
-        var prevDiag = new $.Point(THIS[viewer.hash].prevContainerSize.x, THIS[viewer.hash].prevContainerSize.y).distanceTo(origin);
-        var newDiag = new $.Point(containerSize.x, containerSize.y).distanceTo(origin);
+        const origin = new $.Point(0, 0);
+        const prevDiag = new $.Point(THIS[viewer.hash].prevContainerSize.x, THIS[viewer.hash].prevContainerSize.y).distanceTo(origin);
+        const newDiag = new $.Point(containerSize.x, containerSize.y).distanceTo(origin);
         resizeRatio = newDiag / prevDiag * THIS[viewer.hash].prevContainerSize.x / containerSize.x;
     }
     viewport.zoomTo(zoom * resizeRatio, null, true);
@@ -4039,7 +4051,7 @@ function doViewerResize(viewer, containerSize){
 
 function handleNavKeys(viewer) {
     // Iterate over all navigation actions.
-    for (let action in viewer._activeActions) {
+    for (const action in viewer._activeActions) {
         if (viewer._activeActions[action] || viewer._navActionVirtuallyHeld[action]) {
             viewer._navActionFrames[action]++;
             if (viewer._navActionFrames[action] >= viewer._minNavActionFrames) {
@@ -4107,10 +4119,10 @@ function updateOnce( viewer ) {
         return;
     }
     if (viewer.autoResize || THIS[viewer.hash].forceResize){
-        var containerSize;
+        let containerSize;
         if(viewer._autoResizePolling){
             containerSize = _getSafeElemSize(viewer.container);
-            var prevContainerSize = THIS[viewer.hash].prevContainerSize;
+            const prevContainerSize = THIS[viewer.hash].prevContainerSize;
             if (!containerSize.equals(prevContainerSize)) {
                 THIS[viewer.hash].needsResize = true;
             }
@@ -4123,8 +4135,8 @@ function updateOnce( viewer ) {
 
 
 
-    var viewportChange = viewer.viewport.update();
-    var animated = viewer.world.update(viewportChange) || viewportChange;
+    const viewportChange = viewer.viewport.update();
+    let animated = viewer.world.update(viewportChange) || viewportChange;
 
     if (viewportChange) {
         /**
@@ -4144,7 +4156,7 @@ function updateOnce( viewer ) {
         animated = viewer.referenceStrip.update( viewer.viewport ) || animated;
     }
 
-    var currentAnimating = THIS[ viewer.hash ].animating;
+    const currentAnimating = THIS[ viewer.hash ].animating;
 
     if ( !currentAnimating && animated ) {
         /**
@@ -4160,7 +4172,7 @@ function updateOnce( viewer ) {
         abortControlsAutoHide( viewer );
     }
 
-    var isAnimationFinished = currentAnimating && !animated;
+    const isAnimationFinished = currentAnimating && !animated;
 
     if ( isAnimationFinished ) {
         THIS[ viewer.hash ].animating = false;
@@ -4242,14 +4254,10 @@ function scheduleZoom( viewer ) {
 
 
 function doZoom() {
-    var currentTime,
-        deltaTime,
-        adjustedFactor;
-
     if ( THIS[ this.hash ].zooming && this.viewport) {
-        currentTime     = $.now();
-        deltaTime       = currentTime - THIS[ this.hash ].lastZoomTime;
-        adjustedFactor  = Math.pow( THIS[ this.hash ].zoomFactor, deltaTime / 1000 );
+        const currentTime     = $.now();
+        const deltaTime       = currentTime - THIS[ this.hash ].lastZoomTime;
+        const adjustedFactor  = Math.pow( THIS[ this.hash ].zoomFactor, deltaTime / 1000 );
 
         this.viewport.zoomBy( adjustedFactor );
         this.viewport.applyConstraints();
@@ -4293,7 +4301,7 @@ function onFullScreen() {
 
 function onRotateLeft() {
     if ( this.viewport ) {
-        var currRotation = this.viewport.getRotation();
+        let currRotation = this.viewport.getRotation();
 
         if ( this.viewport.flipped ){
           currRotation += this.rotationIncrement;
@@ -4306,7 +4314,7 @@ function onRotateLeft() {
 
 function onRotateRight() {
     if ( this.viewport ) {
-        var currRotation = this.viewport.getRotation();
+        let currRotation = this.viewport.getRotation();
 
         if ( this.viewport.flipped ){
           currRotation -= this.rotationIncrement;
@@ -4327,9 +4335,9 @@ function onFlip() {
  * Find drawer
  */
 $.determineDrawer = function( id ){
-    for (let property in OpenSeadragon) {
-        const drawer = OpenSeadragon[ property ],
-            proto = drawer.prototype;
+    for (const property in OpenSeadragon) {
+        const drawer = OpenSeadragon[ property ];
+        const proto = drawer.prototype;
         if( proto &&
             proto instanceof OpenSeadragon.DrawerBase &&
             $.isFunction( proto.getType ) &&

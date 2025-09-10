@@ -35,7 +35,7 @@ $("#title-w2").html(drawers[drawer2]);
 
 //Double viewer setup for comparison - CanvasDrawer and WebGLDrawer
 // viewer1: canvas drawer
-let viewer1 = window.viewer1 = OpenSeadragon({
+const viewer1 = window.viewer1 = OpenSeadragon({
     id: "canvasdrawer",
     prefixUrl: "../../build/openseadragon/images/",
     minZoomImageRatio:0.01,
@@ -51,7 +51,7 @@ let viewer1 = window.viewer1 = OpenSeadragon({
 });
 
 // viewer2: webgl drawer
-let viewer2 = window.viewer2 = OpenSeadragon({
+const viewer2 = window.viewer2 = OpenSeadragon({
     id: "webgl",
     prefixUrl: "../../build/openseadragon/images/",
     minZoomImageRatio:0.01,
@@ -67,7 +67,7 @@ let viewer2 = window.viewer2 = OpenSeadragon({
 });
 
 // // viewer3: html drawer, unused
-var viewer3 = window.viewer3 = OpenSeadragon({
+const viewer3 = window.viewer3 = OpenSeadragon({
     id: "htmldrawer",
     drawer:'html',
     blendTime:2,
@@ -82,10 +82,10 @@ var viewer3 = window.viewer3 = OpenSeadragon({
 
 
 // Sync navigation of viewer1 and viewer 2
-var viewer1Leading = false;
-var viewer2Leading = false;
+let viewer1Leading = false;
+let viewer2Leading = false;
 
-var viewer1Handler = function() {
+const viewer1Handler = function() {
     if (viewer2Leading) {
         return;
     }
@@ -98,7 +98,7 @@ var viewer1Handler = function() {
     viewer1Leading = false;
 };
 
-var viewer2Handler = function() {
+const viewer2Handler = function() {
     if (viewer1Leading) {
         return;
     }
@@ -140,7 +140,7 @@ $('#image-picker').sortable({
 });
 
 Object.keys(sources).forEach((key, index)=>{
-    let element = makeImagePickerElement(key, labels[key])
+    const element = makeImagePickerElement(key, labels[key])
     $('#image-picker').append(element);
     if(index === 0){
         element.find('.toggle').prop('checked',true);
@@ -150,7 +150,7 @@ Object.keys(sources).forEach((key, index)=>{
 $('#image-picker').append(makeComparisonSwitcher());
 
 $('#image-picker input.toggle').on('change',function(){
-    let data = $(this).data();
+    const data = $(this).data();
     if(this.checked){
         addTileSource(viewer1, data.image, this);
         addTileSource(viewer2, data.image, this);
@@ -164,26 +164,26 @@ $('#image-picker input.toggle').on('change',function(){
 }).trigger('change');
 
 $('#image-picker input:not(.toggle)').on('change',function(){
-    let data = $(this).data();
-    let value = $(this).val();
-    let tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
-    let tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
+    const data = $(this).data();
+    const value = $(this).val();
+    const tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
+    const tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
     updateTiledImage(tiledImage1, data, value, this);
     updateTiledImage(tiledImage2, data, value, this);
 });
 
 function updateTiledImage(tiledImage, data, value, item){
-    let field = data.field;
+    const field = data.field;
 
     if(tiledImage){
         //item = tiledImage
         if(field == 'x'){
-            let bounds = tiledImage.getBoundsNoRotate();
-            let position = new OpenSeadragon.Point(Number(value), bounds.y);
+            const bounds = tiledImage.getBoundsNoRotate();
+            const position = new OpenSeadragon.Point(Number(value), bounds.y);
             tiledImage.setPosition(position);
         } else if ( field == 'y'){
-            let bounds = tiledImage.getBoundsNoRotate();
-            let position = new OpenSeadragon.Point(bounds.x, Number(value));
+            const bounds = tiledImage.getBoundsNoRotate();
+            const position = new OpenSeadragon.Point(bounds.x, Number(value));
             tiledImage.setPosition(position);
         } else if (field == 'width'){
             tiledImage.setWidth(Number(value));
@@ -200,16 +200,16 @@ function updateTiledImage(tiledImage, data, value, item){
             $('[data-field=smoothing]').prop('checked', checked);
         } else if (field == 'cropped'){
             if( $(item).prop('checked') ){
-                let scale = tiledImage.source.width;
-                let croppingPolygons = [ [{x:0.2*scale, y:0.2*scale}, {x:0.8*scale, y:0.2*scale}, {x:0.5*scale, y:0.8*scale}] ];
+                const scale = tiledImage.source.width;
+                const croppingPolygons = [ [{x:0.2*scale, y:0.2*scale}, {x:0.8*scale, y:0.2*scale}, {x:0.5*scale, y:0.8*scale}] ];
                 tiledImage.setCroppingPolygons(croppingPolygons);
             } else {
                 tiledImage.resetCroppingPolygons();
             }
         } else if (field == 'clipped'){
             if( $(item).prop('checked') ){
-                let scale = tiledImage.source.width;
-                let clipRect = new OpenSeadragon.Rect(0.1*scale, 0.2*scale, 0.6*scale, 0.4*scale);
+                const scale = tiledImage.source.width;
+                const clipRect = new OpenSeadragon.Rect(0.1*scale, 0.2*scale, 0.6*scale, 0.4*scale);
                 tiledImage.setClip(clipRect);
             } else {
                 tiledImage.setClip(null);
@@ -227,19 +227,19 @@ function updateTiledImage(tiledImage, data, value, item){
 }
 
 $('.image-options select[data-field=composite]').append(getCompositeOperationOptions()).on('change',function(){
-    let data = $(this).data();
-    let tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
+    const data = $(this).data();
+    const tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
     if(tiledImage1){
         tiledImage1.setCompositeOperation(this.value == 'null' ? null : this.value);
     }
-    let tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
+    const tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
     if(tiledImage2){
         tiledImage2.setCompositeOperation(this.value == 'null' ? null : this.value);
     }
 }).trigger('change');
 
 $('.image-options select[data-field=wrapping]').append(getWrappingOptions()).on('change',function(){
-    let data = $(this).data();
+    const data = $(this).data();
     let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
     if(tiledImage){
         switch(this.value){
@@ -263,9 +263,9 @@ $('.image-options select[data-field=wrapping]').append(getWrappingOptions()).on(
 }).trigger('change');
 
 function getWrappingOptions(){
-    let opts = ['None', 'Horizontal', 'Vertical', 'Both'];
-    let elements = opts.map((opt, i)=>{
-        let el = $('<option>',{value:opt}).text(opt);
+    const opts = ['None', 'Horizontal', 'Vertical', 'Both'];
+    const elements = opts.map((opt, i)=>{
+        const el = $('<option>',{value:opt}).text(opt);
         if(i===0){
             el.attr('selected',true);
         }
@@ -275,13 +275,13 @@ function getWrappingOptions(){
     return $(elements);
 }
 function getCompositeOperationOptions(){
-    let opts = [null,'source-over','source-in','source-out','source-atop',
+    const opts = [null,'source-over','source-in','source-out','source-atop',
                 'destination-over','destination-in','destination-out','destination-atop',
                 'lighten','darken','copy','xor','multiply','screen','overlay','color-dodge',
                 'color-burn','hard-light','soft-light','difference','exclusion',
                 'hue','saturation','color','luminosity'];
-    let elements = opts.map((opt, i)=>{
-        let el = $('<option>',{value:opt}).text(opt);
+    const elements = opts.map((opt, i)=>{
+        const el = $('<option>',{value:opt}).text(opt);
         if(i===0){
             el.attr('selected',true);
         }
@@ -293,8 +293,8 @@ function getCompositeOperationOptions(){
 }
 
 function addTileSource(viewer, image, checkbox){
-    let options = $(`#image-picker input[data-image=${image}][type=number]`).toArray().reduce((acc, input)=>{
-        let field = $(input).data('field');
+    const options = $(`#image-picker input[data-image=${image}][type=number]`).toArray().reduce((acc, input)=>{
+        const field = $(input).data('field');
         if(field){
             acc[field] = Number(input.value);
         }
@@ -303,15 +303,15 @@ function addTileSource(viewer, image, checkbox){
 
     options.flipped = $(`#image-picker input[data-image=${image}][data-type=flipped]`).prop('checked');
 
-    let items = $('#image-picker input.toggle:checked').toArray();
-    let insertionIndex = items.indexOf(checkbox);
+    const items = $('#image-picker input.toggle:checked').toArray();
+    const insertionIndex = items.indexOf(checkbox);
 
-    let tileSource = sources[image];
+    const tileSource = sources[image];
     if(tileSource){
         viewer&&viewer.addTiledImage({tileSource: tileSource, ...options, index: insertionIndex});
         viewer&&viewer.world.addOnceHandler('add-item',function(ev){
-            let item = ev.item;
-            let field = viewer === viewer1 ? 'item1' : 'item2';
+            const item = ev.item;
+            const field = viewer === viewer1 ? 'item1' : 'item2';
             $(checkbox).data(field,item);
             // item.source.hasTransparency = ()=>true; //simulate image with transparency, to show seams in default renderer
         });

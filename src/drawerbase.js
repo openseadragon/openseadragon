@@ -337,8 +337,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
      */
     viewportToDrawerRectangle(rectangle) {
-        var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
-        var size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
+        const topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
+        const size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
 
         return new $.Rect(
             topLeft.x * $.pixelDensityRatio,
@@ -357,7 +357,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
      */
     viewportCoordToDrawerCoord(point) {
-        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
+        const vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
         return new $.Point(
             vpPoint.x * $.pixelDensityRatio,
             vpPoint.y * $.pixelDensityRatio
@@ -374,8 +374,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Point} {x, y} size of the canvas
      */
     _calculateCanvasSize() {
-        var pixelDensityRatio = $.pixelDensityRatio;
-        var viewportSize = this.viewport.getContainerSize();
+        const pixelDensityRatio = $.pixelDensityRatio;
+        const viewportSize = this.viewport.getContainerSize();
         return new OpenSeadragon.Point( Math.round(viewportSize.x * pixelDensityRatio), Math.round(viewportSize.y * pixelDensityRatio));
     }
 

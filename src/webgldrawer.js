@@ -56,6 +56,7 @@
     * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
     * @param {Element} options.element - Parent element.
     * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
+    * @param {Boolean} [options.unpackWithPremultipliedAlpha=false] - Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
     */
     OpenSeadragon.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
         constructor(options){
@@ -89,6 +90,7 @@
             this._backupCanvasDrawer = null;
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
+            this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
 
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
@@ -109,6 +111,7 @@
                 // use detached cache: our type conversion will not collide (and does not have to preserve CPU data ref)
                 usePrivateCache: true,
                 preloadCache: false,
+                unpackWithPremultipliedAlpha: false,
             };
         }
 
@@ -125,10 +128,10 @@
                 return;
             }
             // clear all resources used by the renderer, geometries, textures etc
-            let gl = this._gl;
+            const gl = this._gl;
 
             // adapted from https://stackoverflow.com/a/23606581/1214731
-            var numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+            const numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
             for (let unit = 0; unit < numTextureUnits; ++unit) {
                 gl.activeTexture(gl.TEXTURE0 + unit);
                 gl.bindTexture(gl.TEXTURE_2D, null);
@@ -151,7 +154,7 @@
             this._clippingCanvas = this._clippingContext = null;
             this._outputCanvas = this._outputContext = null;
 
-            let ext = gl.getExtension('WEBGL_lose_context');
+            const ext = gl.getExtension('WEBGL_lose_context');
             if(ext){
                 ext.loseContext();
             }
@@ -189,10 +192,10 @@
         * @returns {Boolean} true if canvas and webgl are supported
         */
         static isSupported(){
-            let canvasElement = document.createElement( 'canvas' );
-            let webglContext = $.isFunction( canvasElement.getContext ) &&
+            const canvasElement = document.createElement( 'canvas' );
+            const webglContext = $.isFunction( canvasElement.getContext ) &&
                         canvasElement.getContext( 'webgl' );
-            let ext = webglContext && webglContext.getExtension('WEBGL_lose_context');
+            const ext = webglContext && webglContext.getExtension('WEBGL_lose_context');
             if(ext){
                 ext.loseContext();
             }
@@ -223,8 +226,8 @@
         * @returns {Element} the canvas to draw into
         */
         _createDrawingElement(){
-            let canvas = $.makeNeutralElement("canvas");
-            let viewportSize = this._calculateCanvasSize();
+            const canvas = $.makeNeutralElement("canvas");
+            const viewportSize = this._calculateCanvasSize();
             canvas.width = viewportSize.x;
             canvas.height = viewportSize.y;
             return canvas;
@@ -252,20 +255,20 @@
         * @param {Array} tiledImages Array of TiledImage objects to draw
         */
         draw(tiledImages){
-            let gl = this._gl;
+            const gl = this._gl;
             const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
-            let view = {
+            const view = {
                 bounds: bounds,
                 center: new OpenSeadragon.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
                 rotation: this.viewport.getRotation(true) * Math.PI / 180
             };
 
-            let flipMultiplier = this.viewport.flipped ? -1 : 1;
+            const flipMultiplier = this.viewport.flipped ? -1 : 1;
             // calculate view matrix for viewer
-            let posMatrix = $.Mat3.makeTranslation(-view.center.x, -view.center.y);
-            let scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
-            let rotMatrix = $.Mat3.makeRotation(-view.rotation);
-            let viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
+            const posMatrix = $.Mat3.makeTranslation(-view.center.x, -view.center.y);
+            const scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
+            const rotMatrix = $.Mat3.makeRotation(-view.rotation);
+            const viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
@@ -295,7 +298,7 @@
                     this._outputContext.drawImage(canvasDrawer.canvas, 0, 0);
 
                 } else {
-                    let tilesToDraw = tiledImage.getTilesToDraw();
+                    const tilesToDraw = tiledImage.getTilesToDraw();
 
                     if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
                         this._drawPlaceholder(tiledImage);
@@ -304,16 +307,16 @@
                     if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
                         return;
                     }
-                    let firstTile = tilesToDraw[0];
+                    const firstTile = tilesToDraw[0];
 
-                    let useContext2dPipeline = ( tiledImage.compositeOperation ||
+                    const useContext2dPipeline = ( tiledImage.compositeOperation ||
                         this.viewer.compositeOperation ||
                         tiledImage._clip ||
                         tiledImage._croppingPolygons ||
                         tiledImage.debugMode
                     );
 
-                    let useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
+                    const useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
 
                     // using the context2d pipeline requires a clean rendering (back) buffer to start
                     if(useContext2dPipeline){
@@ -343,20 +346,20 @@
 
                     let overallMatrix = viewMatrix;
 
-                    let imageRotation = tiledImage.getRotation(true);
+                    const imageRotation = tiledImage.getRotation(true);
                     // if needed, handle the tiledImage being rotated
                     if( imageRotation % 360 !== 0){
-                        let imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
-                        let imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
-                        let t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
-                        let t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
+                        const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
+                        const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
+                        const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
+                        const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
 
                         // update the view matrix to account for this image's rotation
-                        let localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
+                        const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
                         overallMatrix = viewMatrix.multiply(localMatrix);
                     }
 
-                    let maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+                    const maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
                     if(maxTextures <= 0){
                         // This can apparently happen on some systems if too many WebGL contexts have been created
                         // in which case maxTextures can be null, leading to out of bounds errors with the array.
@@ -368,16 +371,16 @@
                         if too many contexts have been created and not released, or there is another problem with the graphics card.`));
                     }
 
-                    let texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
-                    let textureDataArray = new Array(maxTextures);
-                    let matrixArray = new Array(maxTextures);
-                    let opacityArray = new Array(maxTextures);
+                    const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
+                    const textureDataArray = new Array(maxTextures);
+                    const matrixArray = new Array(maxTextures);
+                    const opacityArray = new Array(maxTextures);
 
                     // iterate over tiles and add data for each one to the buffers
                     for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
-                        let tile = tilesToDraw[tileIndex].tile;
-                        let indexInDrawArray = tileIndex % maxTextures;
-                        let numTilesToDraw =  indexInDrawArray + 1;
+                        const tile = tilesToDraw[tileIndex].tile;
+                        const indexInDrawArray = tileIndex % maxTextures;
+                        const numTilesToDraw =  indexInDrawArray + 1;
                         const textureInfo = this.getDataToDraw(tile);
 
                         if (textureInfo && textureInfo.texture) {
@@ -488,11 +491,26 @@
         }
 
         /**
+        * Sets whether textures are unpacked with premultiplied alpha
+        * @param {Boolean} enabled If true, sets gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL to true.
+        */
+        setUnpackWithPremultipliedAlpha(enabled){
+            if (this._unpackWithPremultipliedAlpha !== enabled){
+                this._unpackWithPremultipliedAlpha = enabled;
+                if (this._gl){
+                    this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, enabled);
+                }
+                this.setInternalCacheNeedsRefresh();
+                this.viewer.forceRedraw();
+            }
+        }
+
+        /**
         * Draw a rect onto the output canvas for debugging purposes
         * @param {OpenSeadragon.Rect} rect
         */
         drawDebuggingRect(rect){
-            let context = this._outputContext;
+            const context = this._outputContext;
             context.save();
             context.lineWidth = 2 * $.pixelDensityRatio;
             context.strokeStyle = this.debugGridColor[0];
@@ -546,20 +564,20 @@
         // private
         _getTileData(tile, tiledImage, textureInfo, viewMatrix, index, texturePositionArray, textureDataArray, matrixArray, opacityArray){
 
-            let texture = textureInfo.texture;
-            let textureQuad = textureInfo.position;
-            let overlapFraction = textureInfo.overlapFraction;
+            const texture = textureInfo.texture;
+            const textureQuad = textureInfo.position;
+            const overlapFraction = textureInfo.overlapFraction;
 
             // set the position of this texture
             texturePositionArray.set(textureQuad, index * 12);
 
             // compute offsets that account for tile overlap; needed for calculating the transform matrix appropriately
-            let xOffset = tile.positionedBounds.width * overlapFraction.x;
-            let yOffset = tile.positionedBounds.height * overlapFraction.y;
-            let x = tile.positionedBounds.x + (tile.x === 0 ? 0 : xOffset);
-            let y = tile.positionedBounds.y + (tile.y === 0 ? 0 : yOffset);
-            let right = tile.positionedBounds.x + tile.positionedBounds.width - (tile.isRightMost ? 0 : xOffset);
-            let bottom = tile.positionedBounds.y + tile.positionedBounds.height - (tile.isBottomMost ? 0 : yOffset);
+            const xOffset = tile.positionedBounds.width * overlapFraction.x;
+            const yOffset = tile.positionedBounds.height * overlapFraction.y;
+            const x = tile.positionedBounds.x + (tile.x === 0 ? 0 : xOffset);
+            const y = tile.positionedBounds.y + (tile.y === 0 ? 0 : yOffset);
+            const right = tile.positionedBounds.x + tile.positionedBounds.width - (tile.isRightMost ? 0 : xOffset);
+            const bottom = tile.positionedBounds.y + tile.positionedBounds.height - (tile.isBottomMost ? 0 : yOffset);
 
             const model = new $.Mat3([
                 right - x, 0, 0, // right - x = width
@@ -594,7 +612,7 @@
 
         // private
         _setupRenderer(){
-            let gl = this._gl;
+            const gl = this._gl;
             if(!gl){
                 $.console.error('_setupCanvases must be called before _setupRenderer');
             }
@@ -630,11 +648,11 @@
 
         //private
         _makeFirstPassShaderProgram(){
-            let numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
-            let makeMatrixUniforms = () => {
+            const numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+            const makeMatrixUniforms = () => {
                 return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
             };
-            let makeConditionals = () => {
+            const makeConditionals = () => {
                 return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(int(a_index) == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
             };
 
@@ -683,9 +701,9 @@
             }
             `;
 
-            let gl = this._gl;
+            const gl = this._gl;
 
-            let program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
             gl.useProgram(program);
 
             // get locations of attributes and uniforms, and create buffers for each attribute
@@ -705,7 +723,7 @@
             gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
 
             // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
-            let outputQuads = new Float32Array(numTextures * 12);
+            const outputQuads = new Float32Array(numTextures * 12);
             for(let i = 0; i < numTextures; ++i){
                 outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
             }
@@ -719,7 +737,7 @@
 
             // for each vertex, provide an index into the array of textures/matrices to use for the correct tile
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
-            let indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat(); // repeat each index 6 times, for the 6 vertices per tile (2 triangles)
+            const indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat(); // repeat each index 6 times, for the 6 vertices per tile (2 triangles)
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW); // bind data statically here, since it's unchanging
             gl.enableVertexAttribArray(this._firstPass.aIndex);
 
@@ -759,9 +777,9 @@
             }
             `;
 
-            let gl = this._gl;
+            const gl = this._gl;
 
-            let program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
             gl.useProgram(program);
 
             // get locations of attributes and uniforms, and create buffers for each attribute
@@ -789,9 +807,9 @@
 
         // private
         _resizeRenderer(){
-            let gl = this._gl;
-            let w = this._renderingCanvas.width;
-            let h = this._renderingCanvas.height;
+            const gl = this._gl;
+            const w = this._renderingCanvas.width;
+            const h = this._renderingCanvas.height;
             gl.viewport(0, 0, w, h);
 
             //release the old texture
@@ -812,7 +830,7 @@
 
         // private
         _setupCanvases(){
-            let _this = this;
+            const _this = this;
 
             this._outputCanvas = this.canvas; //output canvas
             this._outputContext = this._outputCanvas.getContext('2d');
@@ -825,6 +843,7 @@
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
             this._gl = this._renderingCanvas.getContext('webgl');
+            this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
 
             this._resizeHandler = function(){
 
@@ -833,7 +852,7 @@
                     _this._outputCanvas.style.height = _this.viewer.drawer.canvas.clientHeight + 'px';
                 }
 
-                let viewportSize = _this._calculateCanvasSize();
+                const viewportSize = _this._calculateCanvasSize();
                 if( _this._outputCanvas.width !== viewportSize.x ||
                     _this._outputCanvas.height !== viewportSize.y ) {
                     _this._outputCanvas.width = viewportSize.x;
@@ -854,8 +873,8 @@
         }
 
         internalCacheCreate(cache, tile) {
-            let tiledImage = tile.tiledImage;
-            let gl = this._gl;
+            const tiledImage = tile.tiledImage;
+            const gl = this._gl;
             let texture;
             let position;
 
@@ -884,15 +903,15 @@
 
                     // create a gl Texture for this tile and bind the canvas with the image data
                     texture = gl.createTexture();
-                    let overlap = tiledImage.source.tileOverlap;
-                    let overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
+                    const overlap = tiledImage.source.tileOverlap;
+                    const overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
                     if( overlap > 0){
                         // calculate the normalized position of the rect to actually draw
                         // discarding overlap.
-                        let left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
-                        let top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
-                        let right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
-                        let bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
+                        const left = (tile.x === 0 ? 0 : overlapFraction.x) * sourceWidthFraction;
+                        const top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
+                        const right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
+                        const bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
                         position = this._makeQuadVertexBuffer(left, right, top, bottom);
                     } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
                         // no overlap and no padding: this texture can use the unit quad as its position data
@@ -912,6 +931,7 @@
                     try {
                         // This depends on gl.TEXTURE_2D being bound to the texture
                         // associated with this canvas before calling this function
+                        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
                         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
                         // TextureInfo stored in the cache
                         return {
@@ -963,13 +983,13 @@
 
         // private
         _calculateOverlapFraction(tile, tiledImage){
-            let overlap = tiledImage.source.tileOverlap;
-            let nativeWidth = tile.sourceBounds.width; // in pixels
-            let nativeHeight = tile.sourceBounds.height; // in pixels
-            let overlapWidth  = (tile.x === 0 ? 0 : overlap) + (tile.isRightMost ? 0 : overlap); // in pixels
-            let overlapHeight = (tile.y === 0 ? 0 : overlap) + (tile.isBottomMost ? 0 : overlap); // in pixels
-            let widthOverlapFraction = overlap / (nativeWidth + overlapWidth); // as a fraction of image including overlap
-            let heightOverlapFraction = overlap / (nativeHeight + overlapHeight); // as a fraction of image including overlap
+            const overlap = tiledImage.source.tileOverlap;
+            const nativeWidth = tile.sourceBounds.width; // in pixels
+            const nativeHeight = tile.sourceBounds.height; // in pixels
+            const overlapWidth  = (tile.x === 0 ? 0 : overlap) + (tile.isRightMost ? 0 : overlap); // in pixels
+            const overlapHeight = (tile.y === 0 ? 0 : overlap) + (tile.isBottomMost ? 0 : overlap); // in pixels
+            const widthOverlapFraction = overlap / (nativeWidth + overlapWidth); // as a fraction of image including overlap
+            const heightOverlapFraction = overlap / (nativeHeight + overlapHeight); // as a fraction of image including overlap
             return {
                 x: widthOverlapFraction,
                 y: heightOverlapFraction
@@ -1000,10 +1020,10 @@
                     {x: item._clip.x + item._clip.width, y: item._clip.y + item._clip.height},
                     {x: item._clip.x, y: item._clip.y + item._clip.height},
                 ];
-                let clipPoints = polygon.map(coord => {
-                    let point = item.imageToViewportCoordinates(coord.x, coord.y, true)
+                const clipPoints = polygon.map(coord => {
+                    const point = item.imageToViewportCoordinates(coord.x, coord.y, true)
                         .rotate(this.viewer.viewport.getRotation(true), this.viewer.viewport.getCenter(true));
-                    let clipPoint = this.viewportCoordToDrawerCoord(point);
+                    const clipPoint = this.viewportCoordToDrawerCoord(point);
                     return clipPoint;
                 });
                 this._clippingContext.beginPath();
@@ -1014,11 +1034,11 @@
                 this._setClip();
             }
             if(item._croppingPolygons){
-                let polygons = item._croppingPolygons.map(polygon => {
+                const polygons = item._croppingPolygons.map(polygon => {
                     return polygon.map(coord => {
-                        let point = item.imageToViewportCoordinates(coord.x, coord.y, true)
+                        const point = item.imageToViewportCoordinates(coord.x, coord.y, true)
                             .rotate(this.viewer.viewport.getRotation(true), this.viewer.viewport.getCenter(true));
-                        let clipPoint = this.viewportCoordToDrawerCoord(point);
+                        const clipPoint = this.viewportCoordToDrawerCoord(point);
                         return clipPoint;
                     });
                 });
@@ -1049,7 +1069,7 @@
          * @param {OpenSeadragon.TiledImage} tiledImage
          */
         _setRotations(tiledImage) {
-            var saveContext = false;
+            let saveContext = false;
             if (this.viewport.getRotation(true) % 360 !== 0) {
                 this._offsetForRotation({
                     degrees: this.viewport.getRotation(true),
@@ -1069,11 +1089,11 @@
 
         // private
         _offsetForRotation(options) {
-            var point = options.point ?
+            const point = options.point ?
                 options.point.times($.pixelDensityRatio) :
                 this._getCanvasCenter();
 
-            var context = this._outputContext;
+            const context = this._outputContext;
             context.save();
 
             context.translate(point.x, point.y);
@@ -1084,10 +1104,10 @@
         // private
         _flip(options) {
             options = options || {};
-            var point = options.point ?
+            const point = options.point ?
             options.point.times($.pixelDensityRatio) :
             this._getCanvasCenter();
-            var context = this._outputContext;
+            const context = this._outputContext;
 
             context.translate(point.x, 0);
             context.scale(-1, 1);
@@ -1097,8 +1117,8 @@
         // private
         _drawDebugInfo( tilesToDraw, tiledImage, flipped ) {
 
-            for ( var i = tilesToDraw.length - 1; i >= 0; i-- ) {
-                var tile = tilesToDraw[ i ].tile;
+            for ( let i = tilesToDraw.length - 1; i >= 0; i-- ) {
+                const tile = tilesToDraw[ i ].tile;
                 try {
                     this._drawDebugInfoOnTile(tile, tilesToDraw.length, i, tiledImage, flipped);
                 } catch(e) {
@@ -1110,8 +1130,8 @@
         // private
         _drawDebugInfoOnTile(tile, count, i, tiledImage, flipped) {
 
-            var colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
-            var context = this.context;
+            const colorIndex = this.viewer.world.getIndexOfItem(tiledImage) % this.debugGridColor.length;
+            const context = this.context;
             context.save();
             context.lineWidth = 2 * $.pixelDensityRatio;
             context.font = 'small-caps bold ' + (13 * $.pixelDensityRatio) + 'px arial';
@@ -1131,8 +1151,8 @@
                 tile.size.y * $.pixelDensityRatio
             );
 
-            var tileCenterX = (tile.position.x + (tile.size.x / 2)) * $.pixelDensityRatio;
-            var tileCenterY = (tile.position.y + (tile.size.y / 2)) * $.pixelDensityRatio;
+            const tileCenterX = (tile.position.x + (tile.size.x / 2)) * $.pixelDensityRatio;
+            const tileCenterY = (tile.position.y + (tile.size.y / 2)) * $.pixelDensityRatio;
 
             // Rotate the text the right way around.
             context.translate( tileCenterX, tileCenterY );
@@ -1228,7 +1248,7 @@
 
         // private
         _restoreRotationChanges() {
-            var context = this._outputContext;
+            const context = this._outputContext;
             context.restore();
         }
 

@@ -2,8 +2,8 @@
 /* global QUnit, $, Util, testLog */
 
 (function () {
-    var viewer;
-    var precision = 0.00000001;
+    let viewer;
+    const precision = 0.00000001;
 
     QUnit.module('Units', {
         beforeEach: function () {
@@ -35,10 +35,10 @@
 
     // Check that f^-1 ( f(x) ) = x
     function checkPoint(assert, context) {
-        var viewport = viewer.viewport;
+        const viewport = viewer.viewport;
 
-        var point = new OpenSeadragon.Point(15, 12);
-        var result = viewport.viewerElementToImageCoordinates(
+        const point = new OpenSeadragon.Point(15, 12);
+        let result = viewport.viewerElementToImageCoordinates(
                 viewport.imageToViewerElementCoordinates(point));
         pointEqual(assert, result, point, 'viewerElement and image ' + context);
 
@@ -54,8 +54,8 @@
                 viewport.viewportToWindowCoordinates(point));
         pointEqual(assert, result, point, 'window and viewport ' + context);
 
-        for (var i = 0; i < viewer.world.getItemCount(); i++) {
-            var tiledImage = viewer.world.getItemAt(i);
+        for (let i = 0; i < viewer.world.getItemCount(); i++) {
+            const tiledImage = viewer.world.getItemAt(i);
             result = tiledImage.viewportToImageCoordinates(
                     tiledImage.imageToViewportCoordinates(point));
             pointEqual(assert, result, point, 'viewport and tiled image ' + i + context);
@@ -72,24 +72,24 @@
 
     // ----------
     QUnit.test('Single image coordinates conversions', function (assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler("open", function () {
-            var viewport = viewer.viewport;
-            var tiledImage = viewer.world.getItemAt(0);
+            const viewport = viewer.viewport;
+            const tiledImage = viewer.world.getItemAt(0);
 
-            var point0_0 = new OpenSeadragon.Point(0, 0);
-            var point = viewport.viewerElementToViewportCoordinates(point0_0);
+            const point0_0 = new OpenSeadragon.Point(0, 0);
+            let point = viewport.viewerElementToViewportCoordinates(point0_0);
             pointEqual(assert, point, point0_0, 'When opening, viewer coordinate 0,0 is also point 0,0');
-            var viewportPixel = viewport.viewerElementToImageCoordinates(point0_0);
+            let viewportPixel = viewport.viewerElementToImageCoordinates(point0_0);
             pointEqual(assert, viewportPixel, point0_0, 'When opening, viewer coordinate 0,0 is also viewport pixel 0,0');
-            var imagePixel = tiledImage.viewerElementToImageCoordinates(point0_0);
+            let imagePixel = tiledImage.viewerElementToImageCoordinates(point0_0);
             pointEqual(assert, imagePixel, point0_0, 'When opening, viewer coordinate 0,0 is also image pixel 0,0');
 
-            var viewerWidth = $(viewer.element).width();
-            var imageWidth = viewer.source.dimensions.x;
-            var point1_0 = new OpenSeadragon.Point(1, 0);
-            var viewerTopRight = new OpenSeadragon.Point(viewerWidth, 0);
-            var imageTopRight = new OpenSeadragon.Point(imageWidth, 0);
+            const viewerWidth = $(viewer.element).width();
+            const imageWidth = viewer.source.dimensions.x;
+            const point1_0 = new OpenSeadragon.Point(1, 0);
+            const viewerTopRight = new OpenSeadragon.Point(viewerWidth, 0);
+            const imageTopRight = new OpenSeadragon.Point(imageWidth, 0);
 
             point = viewport.viewerElementToViewportCoordinates(viewerTopRight);
             pointEqual(assert, point, point1_0, 'Viewer top right has viewport coordinates 1,0.');
@@ -112,27 +112,27 @@
 
     // ---------
     QUnit.test('Multiple images coordinates conversion', function (assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler("open", function () {
-            var viewport = viewer.viewport;
-            var tiledImage1 = viewer.world.getItemAt(0);
-            var tiledImage2 = viewer.world.getItemAt(1);
-            var imageWidth = viewer.source.dimensions.x;
-            var imageHeight = viewer.source.dimensions.y;
+            const viewport = viewer.viewport;
+            const tiledImage1 = viewer.world.getItemAt(0);
+            const tiledImage2 = viewer.world.getItemAt(1);
+            const imageWidth = viewer.source.dimensions.x;
+            const imageHeight = viewer.source.dimensions.y;
 
-            var point0_0 = new OpenSeadragon.Point(0, 0);
-            var point = viewport.viewerElementToViewportCoordinates(point0_0);
+            const point0_0 = new OpenSeadragon.Point(0, 0);
+            let point = viewport.viewerElementToViewportCoordinates(point0_0);
             pointEqual(assert, point, point0_0, 'When opening, viewer coordinate 0,0 is also point 0,0');
-            var image1Pixel = tiledImage1.viewerElementToImageCoordinates(point0_0);
+            let image1Pixel = tiledImage1.viewerElementToImageCoordinates(point0_0);
             pointEqual(assert, image1Pixel, point0_0, 'When opening, viewer coordinate 0,0 is also image 1 pixel 0,0');
-            var image2Pixel = tiledImage2.viewerElementToImageCoordinates(point0_0);
+            let image2Pixel = tiledImage2.viewerElementToImageCoordinates(point0_0);
             pointEqual(assert, image2Pixel,
                     new OpenSeadragon.Point(-2 * imageWidth, -2 * imageHeight),
                     'When opening, viewer coordinates 0,0 is also image 2 pixel -2*imageWidth, -2*imageHeight');
 
-            var viewerWidth = $(viewer.element).width();
-            var viewerHeight = $(viewer.element).height();
-            var viewerBottomRight = new OpenSeadragon.Point(viewerWidth, viewerHeight);
+            const viewerWidth = $(viewer.element).width();
+            const viewerHeight = $(viewer.element).height();
+            const viewerBottomRight = new OpenSeadragon.Point(viewerWidth, viewerHeight);
 
             point = viewport.viewerElementToViewportCoordinates(viewerBottomRight);
             pointEqual(assert, point, new OpenSeadragon.Point(1.5, 1.5),
@@ -170,25 +170,25 @@
 
     // ---------
     QUnit.test('Multiple images coordinates conversion with viewport rotation', function (assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler("open", function () {
-            var viewport = viewer.viewport;
-            var tiledImage1 = viewer.world.getItemAt(0);
-            var tiledImage2 = viewer.world.getItemAt(1);
-            var imageWidth = viewer.source.dimensions.x;
-            var imageHeight = viewer.source.dimensions.y;
+            const viewport = viewer.viewport;
+            const tiledImage1 = viewer.world.getItemAt(0);
+            const tiledImage2 = viewer.world.getItemAt(1);
+            const imageWidth = viewer.source.dimensions.x;
+            const imageHeight = viewer.source.dimensions.y;
 
-            var viewerWidth = $(viewer.element).width();
-            var viewerHeight = $(viewer.element).height();
-            var viewerMiddleTop = new OpenSeadragon.Point(viewerWidth / 2, 0);
-            var viewerMiddleBottom = new OpenSeadragon.Point(viewerWidth / 2, viewerHeight);
+            const viewerWidth = $(viewer.element).width();
+            const viewerHeight = $(viewer.element).height();
+            const viewerMiddleTop = new OpenSeadragon.Point(viewerWidth / 2, 0);
+            const viewerMiddleBottom = new OpenSeadragon.Point(viewerWidth / 2, viewerHeight);
 
-            var point0_0 = new OpenSeadragon.Point(0, 0);
-            var point = viewport.viewerElementToViewportCoordinates(viewerMiddleTop);
+            const point0_0 = new OpenSeadragon.Point(0, 0);
+            let point = viewport.viewerElementToViewportCoordinates(viewerMiddleTop);
             pointEqual(assert, point, point0_0, 'When opening, viewer middle top is also viewport 0,0');
-            var image1Pixel = tiledImage1.viewerElementToImageCoordinates(viewerMiddleTop);
+            let image1Pixel = tiledImage1.viewerElementToImageCoordinates(viewerMiddleTop);
             pointEqual(assert, image1Pixel, point0_0, 'When opening, viewer middle top is also image 1 pixel 0,0');
-            var image2Pixel = tiledImage2.viewerElementToImageCoordinates(viewerMiddleTop);
+            let image2Pixel = tiledImage2.viewerElementToImageCoordinates(viewerMiddleTop);
             pointEqual(assert, image2Pixel,
                     new OpenSeadragon.Point(-2 * imageWidth, -2 * imageHeight),
                     'When opening, viewer middle top is also image 2 pixel -2*imageWidth, -2*imageHeight');
@@ -232,12 +232,12 @@
 
     // ----------
     QUnit.test('ZoomRatio 1 image', function (assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler("open", function () {
 
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var imageWidth = viewer.source.dimensions.x;
+            const imageWidth = viewer.source.dimensions.x;
 
             function getCurrentImageWidth() {
                 return viewport.viewportToViewerElementCoordinates(
@@ -247,20 +247,20 @@
             }
 
             function checkZoom() {
-                var currentImageWidth = getCurrentImageWidth();
-                var expectedImageZoom = currentImageWidth / imageWidth;
-                var expectedViewportZoom = viewport.getZoom(true);
-                var actualImageZoom = viewport.viewportToImageZoom(
+                const currentImageWidth = getCurrentImageWidth();
+                const expectedImageZoom = currentImageWidth / imageWidth;
+                const expectedViewportZoom = viewport.getZoom(true);
+                const actualImageZoom = viewport.viewportToImageZoom(
                         expectedViewportZoom);
                 Util.assessNumericValue(assert, actualImageZoom, expectedImageZoom, precision);
 
-                var actualViewportZoom = viewport.imageToViewportZoom(actualImageZoom);
+                const actualViewportZoom = viewport.imageToViewportZoom(actualImageZoom);
                 Util.assessNumericValue(assert, actualViewportZoom, expectedViewportZoom, precision);
             }
 
             checkZoom();
 
-            var zoomHandler = function () {
+            const zoomHandler = function () {
                 viewer.removeHandler('animation-finish', zoomHandler);
                 checkZoom();
                 done();
@@ -275,17 +275,17 @@
 
     // ----------
     QUnit.test('ZoomRatio 2 images', function (assert) {
-        var done = assert.async();
+        const done = assert.async();
         viewer.addHandler("open", function () {
 
-            var viewport = viewer.viewport;
+            const viewport = viewer.viewport;
 
-            var imageWidth = viewer.source.dimensions.x;
-            var image1 = viewer.world.getItemAt(0);
-            var image2 = viewer.world.getItemAt(1);
+            const imageWidth = viewer.source.dimensions.x;
+            const image1 = viewer.world.getItemAt(0);
+            const image2 = viewer.world.getItemAt(1);
 
             function getCurrentImageWidth(image) {
-                var bounds = image.getBounds();
+                const bounds = image.getBounds();
                 return viewport.viewportToViewerElementCoordinates(
                         bounds.getTopRight()).minus(
                         viewport.viewportToViewerElementCoordinates(
@@ -293,15 +293,15 @@
             }
 
             function checkZoom(image) {
-                var currentImageWidth = getCurrentImageWidth(image);
-                var expectedImageZoom = currentImageWidth / imageWidth;
-                var expectedViewportZoom = viewport.getZoom(true);
-                var actualImageZoom = image.viewportToImageZoom(
+                const currentImageWidth = getCurrentImageWidth(image);
+                const expectedImageZoom = currentImageWidth / imageWidth;
+                const expectedViewportZoom = viewport.getZoom(true);
+                const actualImageZoom = image.viewportToImageZoom(
                         expectedViewportZoom);
                 Util.assessNumericValue(assert, actualImageZoom, expectedImageZoom,
                         precision);
 
-                var actualViewportImage1Zoom = image.imageToViewportZoom(actualImageZoom);
+                const actualViewportImage1Zoom = image.imageToViewportZoom(actualImageZoom);
                 Util.assessNumericValue(
                         assert, actualViewportImage1Zoom, expectedViewportZoom, precision);
             }
@@ -309,7 +309,7 @@
             checkZoom(image1);
             checkZoom(image2);
 
-            var zoomHandler = function () {
+            const zoomHandler = function () {
                 viewer.removeHandler('animation-finish', zoomHandler);
                 checkZoom(image1);
                 checkZoom(image2);

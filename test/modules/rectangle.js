@@ -4,10 +4,10 @@
 
     QUnit.module('Rectangle', {});
 
-    var precision = 0.000000001;
+    const precision = 0.000000001;
 
     QUnit.test('Constructor', function(assert) {
-        var rect = new OpenSeadragon.Rect(1, 2, 3, 4, 5);
+        let rect = new OpenSeadragon.Rect(1, 2, 3, 4, 5);
         assert.strictEqual(rect.x, 1, 'rect.x should be 1');
         assert.strictEqual(rect.y, 2, 'rect.y should be 2');
         assert.strictEqual(rect.width, 3, 'rect.width should be 3');
@@ -45,14 +45,14 @@
     });
 
     QUnit.test('getTopLeft', function(assert) {
-        var rect = new OpenSeadragon.Rect(1, 2, 3, 4, 5);
-        var expected = new OpenSeadragon.Point(1, 2);
+        const rect = new OpenSeadragon.Rect(1, 2, 3, 4, 5);
+        const expected = new OpenSeadragon.Point(1, 2);
         assert.ok(expected.equals(rect.getTopLeft()), "Incorrect top left point.");
     });
 
     QUnit.test('getTopRight', function(assert) {
-        var rect = new OpenSeadragon.Rect(0, 0, 1, 3);
-        var expected = new OpenSeadragon.Point(1, 0);
+        const rect = new OpenSeadragon.Rect(0, 0, 1, 3);
+        let expected = new OpenSeadragon.Point(1, 0);
         assert.ok(expected.equals(rect.getTopRight()), "Incorrect top right point.");
 
         rect.degrees = 45;
@@ -62,8 +62,8 @@
     });
 
     QUnit.test('getBottomLeft', function(assert) {
-        var rect = new OpenSeadragon.Rect(0, 0, 3, 1);
-        var expected = new OpenSeadragon.Point(0, 1);
+        const rect = new OpenSeadragon.Rect(0, 0, 3, 1);
+        let expected = new OpenSeadragon.Point(0, 1);
         assert.ok(expected.equals(rect.getBottomLeft()), "Incorrect bottom left point.");
 
         rect.degrees = 45;
@@ -73,8 +73,8 @@
     });
 
     QUnit.test('getBottomRight', function(assert) {
-        var rect = new OpenSeadragon.Rect(0, 0, 1, 1);
-        var expected = new OpenSeadragon.Point(1, 1);
+        const rect = new OpenSeadragon.Rect(0, 0, 1, 1);
+        let expected = new OpenSeadragon.Point(1, 1);
         assert.ok(expected.equals(rect.getBottomRight()), "Incorrect bottom right point.");
 
         rect.degrees = 45;
@@ -94,8 +94,8 @@
     });
 
     QUnit.test('getCenter', function(assert) {
-        var rect = new OpenSeadragon.Rect(0, 0, 1, 1);
-        var expected = new OpenSeadragon.Point(0.5, 0.5);
+        const rect = new OpenSeadragon.Rect(0, 0, 1, 1);
+        let expected = new OpenSeadragon.Point(0.5, 0.5);
         assert.ok(expected.equals(rect.getCenter()), "Incorrect center point.");
 
         rect.degrees = 45;
@@ -115,26 +115,26 @@
     });
 
     QUnit.test('times', function(assert) {
-        var rect = new OpenSeadragon.Rect(1, 2, 3, 4, 45);
-        var expected = new OpenSeadragon.Rect(2, 4, 6, 8, 45);
-        var actual = rect.times(2);
+        const rect = new OpenSeadragon.Rect(1, 2, 3, 4, 45);
+        const expected = new OpenSeadragon.Rect(2, 4, 6, 8, 45);
+        const actual = rect.times(2);
         Util.assertRectangleEquals(assert, expected, actual, precision,
             "Incorrect x2 rectangles.");
     });
 
     QUnit.test('translate', function(assert) {
-        var rect = new OpenSeadragon.Rect(1, 2, 3, 4, 45);
-        var expected = new OpenSeadragon.Rect(2, 4, 3, 4, 45);
-        var actual = rect.translate(new OpenSeadragon.Point(1, 2));
+        const rect = new OpenSeadragon.Rect(1, 2, 3, 4, 45);
+        const expected = new OpenSeadragon.Rect(2, 4, 3, 4, 45);
+        const actual = rect.translate(new OpenSeadragon.Point(1, 2));
         Util.assertRectangleEquals(assert, expected, actual, precision,
             "Incorrect translation.");
     });
 
     QUnit.test('union', function(assert) {
-        var rect1 = new OpenSeadragon.Rect(2, 2, 2, 3);
-        var rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
-        var expected = new OpenSeadragon.Rect(0, 1, 4, 4);
-        var actual = rect1.union(rect2);
+        let rect1 = new OpenSeadragon.Rect(2, 2, 2, 3);
+        let rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
+        let expected = new OpenSeadragon.Rect(0, 1, 4, 4);
+        let actual = rect1.union(rect2);
         Util.assertRectangleEquals(assert, expected, actual, precision,
             "Incorrect union with horizontal rectangles.");
 
@@ -151,10 +151,10 @@
     });
 
     QUnit.test('intersection', function(assert) {
-        var rect1 = new OpenSeadragon.Rect(2, 2, 2, 3);
-        var rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
-        var expected = null;
-        var actual = rect1.intersection(rect2);
+        let rect1 = new OpenSeadragon.Rect(2, 2, 2, 3);
+        let rect2 = new OpenSeadragon.Rect(0, 1, 1, 1);
+        let expected = null;
+        let actual = rect1.intersection(rect2);
         assert.equal(expected, actual,
             "Rectangle " + rect2 + " should not intersect " + rect1);
         actual = rect2.intersection(rect1);
@@ -210,15 +210,15 @@
     });
 
     QUnit.test('rotate', function(assert) {
-        var rect = new OpenSeadragon.Rect(0, 0, 2, 1);
+        const rect = new OpenSeadragon.Rect(0, 0, 2, 1);
 
-        var expected = new OpenSeadragon.Rect(
+        let expected = new OpenSeadragon.Rect(
             1 - 1 / (2 * Math.sqrt(2)),
             0.5 - 3 / (2 * Math.sqrt(2)),
             2,
             1,
             45);
-        var actual = rect.rotate(-675);
+        let actual = rect.rotate(-675);
         Util.assertRectangleEquals(assert, expected, actual, precision,
             "Incorrect rectangle after rotation of -675deg around center.");
 
@@ -244,14 +244,14 @@
     });
 
     QUnit.test('getBoundingBox', function(assert) {
-        var rect = new OpenSeadragon.Rect(0, 0, 2, 3);
+        const rect = new OpenSeadragon.Rect(0, 0, 2, 3);
 
-        var bb = rect.getBoundingBox();
+        const bb = rect.getBoundingBox();
         assert.ok(rect.equals(bb), "Bounding box of horizontal rectangle should be " +
             "identical to rectangle.");
 
         rect.degrees = 90;
-        var expected = new OpenSeadragon.Rect(-3, 0, 3, 2);
+        let expected = new OpenSeadragon.Rect(-3, 0, 3, 2);
         Util.assertRectangleEquals(assert, expected, rect.getBoundingBox(), precision,
             "Bounding box of rect rotated 90deg.");
 
@@ -267,7 +267,7 @@
     });
 
     QUnit.test('containsPoint', function(assert) {
-        var rect = new OpenSeadragon.Rect(0, 0, 1, 1, 45);
+        const rect = new OpenSeadragon.Rect(0, 0, 1, 1, 45);
 
         assert.ok(rect.containsPoint(new OpenSeadragon.Point(0, 0)),
             'Point 0,0 should be inside ' + rect);

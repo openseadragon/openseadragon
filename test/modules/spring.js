@@ -2,8 +2,8 @@
 
 (function () {
 
-    var originalNow;
-    var now;
+    let originalNow;
+    let now;
 
     QUnit.module("spring", {
         beforeEach: function () {
@@ -20,8 +20,8 @@
     });
 
     QUnit.test('regular spring', function(assert) {
-        var done = assert.async();
-        var spring = new OpenSeadragon.Spring({
+        const done = assert.async();
+        const spring = new OpenSeadragon.Spring({
             initial: 5,
             animationTime: 1,
             springStiffness: 0.000001
@@ -48,8 +48,8 @@
     });
 
     QUnit.test('exponential spring', function(assert) {
-        var done = assert.async();
-        var spring = new OpenSeadragon.Spring({
+        const done = assert.async();
+        const spring = new OpenSeadragon.Spring({
             exponential: true,
             initial: 1,
             animationTime: 1,

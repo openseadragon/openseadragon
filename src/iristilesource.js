@@ -69,7 +69,7 @@
       this.ready = true;
       this.raiseEvent('ready', { tileSource: this });
     } else {
-      var url = this.getMetadataUrl();
+      const url = this.getMetadataUrl();
       this.getImageInfo(url);
     }
   };
@@ -135,7 +135,7 @@
      * @param {String} url - The metadata URL
      */
     getImageInfo: function(url) {
-      var _this = this;
+      const _this = this;
 
       $.makeAjaxRequest({
         url: url,
@@ -149,13 +149,13 @@
             _this.raiseEvent('ready', { tileSource: _this });
           }
           catch (e) {
-            var msg = "IrisTileSource: Error parsing metadata: " + e.message;
+            const msg = "IrisTileSource: Error parsing metadata: " + e.message;
             $.console.error(msg);
             _this.raiseEvent('open-failed', { message: msg, source: url });
           }
         },
         error: function(xhr, exc) {
-          var msg = "IrisTileSource: Unable to get metadata from " + url;
+          const msg = "IrisTileSource: Unable to get metadata from " + url;
           $.console.error(msg);
           _this.raiseEvent('open-failed', { message: msg, source: url });
         }

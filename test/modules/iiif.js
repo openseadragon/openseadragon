@@ -1,19 +1,19 @@
 (function() {
 
-    var id = "http://example.com/identifier";
+    const id = "http://example.com/identifier";
 
-    var configure = function(data) {
+    const configure = function(data) {
         return OpenSeadragon.IIIFTileSource.prototype.configure.apply(
             new OpenSeadragon.TileSource(), [ data, 'http://example.com/identifier' ]
         );
     };
 
-    var getSource = function( data ) {
-        var options = configure( data );
+    const getSource = function( data ) {
+        const options = configure( data );
         return new OpenSeadragon.IIIFTileSource( options );
     };
 
-    var infoXml10level0 = new DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?>' +
+    const infoXml10level0 = new DOMParser().parseFromString('<?xml version="1.0" encoding="UTF-8"?>' +
             '<info xmlns="http://library.stanford.edu/iiif/image-api/ns/">' +
             '<identifier>http://example.com/identifier</identifier>' +
             '<width>6000</width>' +
@@ -176,34 +176,34 @@
     QUnit.module('IIIF');
 
     QUnit.test('IIIFTileSource.configure determines correct version', function(assert) {
-        var options1_0xml = configure(infoXml10level0);
+        const options1_0xml = configure(infoXml10level0);
         assert.ok(options1_0xml.version);
         assert.equal(options1_0xml.version, 1, 'Version is 1 for version 1.0 info.xml');
 
-        var options1_0 = configure(infoJson10level0);
+        const options1_0 = configure(infoJson10level0);
         assert.ok(options1_0.version);
         assert.equal(options1_0.version, 1, 'Version is 1 for version 1.0 info.json');
 
-        var options1_1 = configure(infoJson11level0);
+        const options1_1 = configure(infoJson11level0);
         assert.ok(options1_1.version);
         assert.equal(options1_1.version, 1, 'Version is 1 for version 1.1 info.json');
 
-        var options2 = configure(infoJson2level0);
+        const options2 = configure(infoJson2level0);
         assert.ok(options2.version);
         assert.equal(options2.version, 2, 'Version is 2 for version 2 info.json');
 
-        var options3 = configure(infoJson3level0);
+        const options3 = configure(infoJson3level0);
         assert.ok(options3.version);
         assert.equal(options3.version, 3, 'Version is 3 for version 3 info.json');
 
-        var options3withContextExtension = configure(infoJson3level0ContextExtension);
+        const options3withContextExtension = configure(infoJson3level0ContextExtension);
         assert.ok(options3withContextExtension.version);
         assert.equal(options3withContextExtension.version, 3, 'Version is 3 for version 3 info.json');
     });
 
     QUnit.test('IIIFTileSource private function canBeTiled works as expected', function(assert) {
-        var canBeTiled = function( data ) {
-            var source = getSource( data );
+        const canBeTiled = function( data ) {
+            const source = getSource( data );
             return source.__testonly__.canBeTiled( source );
         };
 
@@ -223,11 +223,11 @@
     });
 
     QUnit.test('IIIFTileSource private function constructLevels creates correct URLs for legacy pyramid', function( assert ) {
-        var constructLevels = function( data ) {
-            var source = getSource( data );
+        const constructLevels = function( data ) {
+            const source = getSource( data );
             return source.__testonly__.constructLevels( source );
         };
-        var levelsVersion2 = constructLevels(infoJson2level0);
+        const levelsVersion2 = constructLevels(infoJson2level0);
         assert.ok(Array.isArray(levelsVersion2));
         assert.equal(levelsVersion2.length, 2, 'Constructed levels contain 2 entries');
         assert.equal(levelsVersion2[0].url, 'http://example.com/identifier/full/1000,/0/default.jpg');
@@ -235,7 +235,7 @@
         // FIXME see below
         // assert.equal(levelsVersion2[1].url, 'http://example.com/identifier/full/full/0/default.jpg');
 
-        var levelsVersion3 = constructLevels(infoJson3level0);
+        const levelsVersion3 = constructLevels(infoJson3level0);
         assert.ok(Array.isArray(levelsVersion3));
         assert.equal(levelsVersion3.length, 2, 'Constructed levels contain 2 entries');
         assert.equal(levelsVersion3[0].url, 'http://example.com/identifier/full/1000,500/0/default.jpg');
@@ -249,13 +249,13 @@
     });
 
     QUnit.test('IIIFTileSource.getTileUrl returns the correct URLs', function( assert ) {
-        var source11Level1 = getSource(infoJson11level1);
+        const source11Level1 = getSource(infoJson11level1);
         assert.equal(source11Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/native.jpg");
         assert.equal(source11Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,500/0/native.jpg");
         assert.equal(source11Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/native.jpg");
         assert.equal(source11Level1.getTileUrl(8, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/native.jpg");
 
-        var source2Level1 = getSource(infoJson2level1);
+        const source2Level1 = getSource(infoJson2level1);
         assert.equal(source2Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/default.jpg");
         assert.equal(source2Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,500/0/default.jpg");
         assert.equal(source2Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
@@ -264,16 +264,16 @@
         assert.equal(source2Level1.getTileUrl(8, 0, 1), "http://example.com/identifier/0,512,512,488/512,488/0/default.jpg");
         assert.equal(source2Level1.getTileUrl(8, 3, 1), "http://example.com/identifier/1536,512,464,488/464,488/0/default.jpg");
 
-        var source2Level0 = getSource(infoJson2level0);
+        const source2Level0 = getSource(infoJson2level0);
         assert.equal(source2Level0.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,/0/default.jpg");
         assert.equal(source2Level0.getTileUrl(1, 0, 0), "http://example.com/identifier/full/2000,/0/default.jpg");
 
-        var source3Level0WithTiles = getSource(infoJson3level0WithTiles);
+        const source3Level0WithTiles = getSource(infoJson3level0WithTiles);
         assert.equal(source3Level0WithTiles.getTileUrl(0, 0, 0), "http://example.com/identifier/0,0,1024,1000/256,250/0/default.jpg");
         assert.equal(source3Level0WithTiles.getTileUrl(1, 1, 0), "http://example.com/identifier/512,0,512,512/256,256/0/default.jpg");
         assert.equal(source3Level0WithTiles.getTileUrl(2, 0, 0), "http://example.com/identifier/0,0,256,256/256,256/0/default.jpg");
 
-        var source3Level1 = getSource(infoJson3level1);
+        const source3Level1 = getSource(infoJson3level1);
         assert.equal(source3Level1.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,4/0/default.jpg");
         assert.equal(source3Level1.getTileUrl(7, 0, 0), "http://example.com/identifier/0,0,1024,1000/512,500/0/default.jpg");
         assert.equal(source3Level1.getTileUrl(7, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
@@ -282,7 +282,7 @@
         assert.equal(source3Level1.getTileUrl(8, 0, 1), "http://example.com/identifier/0,512,512,488/512,488/0/default.jpg");
         assert.equal(source3Level1.getTileUrl(8, 3, 1), "http://example.com/identifier/1536,512,464,488/464,488/0/default.jpg");
 
-        var source3DescendingSizeOrder = getSource(infoJson3DescendingSizeOrder);
+        const source3DescendingSizeOrder = getSource(infoJson3DescendingSizeOrder);
         assert.equal(source3DescendingSizeOrder.getTileUrl(0, 0, 0), "http://example.com/identifier/full/500,250/0/default.jpg");
         assert.equal(source3DescendingSizeOrder.getTileUrl(1, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
         assert.equal(source3DescendingSizeOrder.getTileUrl(2, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");

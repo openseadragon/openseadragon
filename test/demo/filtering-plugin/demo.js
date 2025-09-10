@@ -755,8 +755,8 @@ $('#selected').sortable({
 });
 
 function getPromiseResolver() {
-    let call = {};
-    let promise = new OpenSeadragon.Promise(resolve => {
+    const call = {};
+    const promise = new OpenSeadragon.Promise(resolve => {
         call.back = resolve;
     });
     return {call, promise};
@@ -777,8 +777,8 @@ function updateFilters() {
 }
 
 window.debugCache = function () {
-    for (let cacheKey in viewer.tileCache._cachesLoaded) {
-        let cache = viewer.tileCache._cachesLoaded[cacheKey];
+    for (const cacheKey in viewer.tileCache._cachesLoaded) {
+        const cache = viewer.tileCache._cachesLoaded[cacheKey];
         if (!cache.loaded) {
             console.log(cacheKey, "skipping...");
         }
@@ -832,7 +832,7 @@ viewer.addHandler("canvas-release", e => {
 
     const position = viewer.viewport.windowToViewportCoordinates(e.position);
 
-    let tiles = tiledImage._lastDrawn;
+    const tiles = tiledImage._lastDrawn;
     for (let i = 0; i < tiles.length; i++) {
         if (tiles[i].tile.bounds.containsPoint(position)) {
             monitoredTile = tiles[i].tile;

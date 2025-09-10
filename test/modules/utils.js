@@ -6,7 +6,7 @@
 
     // ----------
     QUnit.test("addRemoveClass", function(assert) {
-        var div = OpenSeadragon.makeNeutralElement('div');
+        const div = OpenSeadragon.makeNeutralElement('div');
         assert.strictEqual(div.className, '',
             "makeNeutralElement set no classes");
 
@@ -56,7 +56,7 @@
 
     // ----------
     QUnit.test("makeAjaxRequest", function(assert) {
-        var timeWatcher = Util.timeWatcher(assert);
+        const timeWatcher = Util.timeWatcher(assert);
 
         OpenSeadragon.makeAjaxRequest('data/testpattern.dzi',
             function(xhr) {
@@ -72,7 +72,7 @@
     });
 
     QUnit.test("makeAjaxRequest for invalid file", function(assert) {
-        var timeWatcher = Util.timeWatcher(assert);
+        const timeWatcher = Util.timeWatcher(assert);
 
         OpenSeadragon.makeAjaxRequest('not-a-real-dzi-file',
             function(xhr) {
@@ -113,7 +113,7 @@
 
     // ----------
     QUnit.test("requestAnimationFrame", function(assert) {
-        var timeWatcher = Util.timeWatcher(assert);
+        const timeWatcher = Util.timeWatcher(assert);
 
         OpenSeadragon.requestAnimationFrame(function() {
             assert.ok(true, 'frame fired');
@@ -123,15 +123,15 @@
 
     // ----------
     QUnit.test("cancelAnimationFrame", function(assert) {
-        var done = assert.async();
-        var frameFired = false;
+        const done = assert.async();
+        let frameFired = false;
 
         setTimeout(function() {
             assert.strictEqual(frameFired, false, 'the frame never fired');
             done();
         }, 150);
 
-        var frameId = OpenSeadragon.requestAnimationFrame(function() {
+        const frameId = OpenSeadragon.requestAnimationFrame(function() {
             frameFired = true;
         });
 

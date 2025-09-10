@@ -16,7 +16,7 @@
     $.MouseTracker.mousePointerId = "legacy-mouse";
     // Legacy mouse events capture support (IE/Firefox only?)
     $.MouseTracker.havePointerCapture = (function () {
-        var divElement = document.createElement( 'div' );
+        const divElement = document.createElement( 'div' );
         return $.isFunction( divElement.setCapture ) && $.isFunction( divElement.releaseCapture );
     }());
     if ( $.MouseTracker.havePointerCapture ) {
