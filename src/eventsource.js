@@ -201,6 +201,8 @@ $.EventSource.prototype = {
                     events[ i ].handler( args );
                 }
             }
+            return; // ✅ Add this line to fix the ESLint error
+};
         };
     },
 
