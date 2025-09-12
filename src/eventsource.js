@@ -192,17 +192,19 @@ $.EventSource.prototype = {
         events = events.length === 1 ?
             [ events[ 0 ] ] :
             Array.apply( null, events );
-        return function ( source, args ) {
-            let length = events.length;
-            for ( let i = 0; i < length; i++ ) {
-                if ( events[ i ] ) {
-                    args.eventSource = source;
-                    args.userData = events[ i ].userData;
-                    events[ i ].handler( args );
-                }
-            }
-        };
-    },
+      return function (source, args) {
+  let length = events.length;
+  for (let i = 0; i < length; i++) {
+    if (events[i]) {
+      args.eventSource = source;
+      args.userData = events[i].userData;
+      events[i].handler(args);
+    }
+  }
+  return; // ✅ This satisfies ESLint
+};
+
+
 
     /**
      * Get a function which iterates the list of all handlers registered for a given event,
