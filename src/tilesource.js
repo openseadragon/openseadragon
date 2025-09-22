@@ -37,41 +37,41 @@
 
 /**
  * @typedef {Object} OpenSeadragon.TileSourceOptions
- * @param {String} [options.url]
+ * @property {String} [options.url]
  *      The URL for the data necessary for this TileSource.
- * @param {String} [options.referenceStripThumbnailUrl]
+ * @property {String} [options.referenceStripThumbnailUrl]
  *      The URL for a thumbnail image to be used by the reference strip
- * @param {Function} [options.success]
+ * @property {Function} [options.success]
  *      A function to be called upon successful creation.
- * @param {Boolean} [options.ajaxWithCredentials]
+ * @property {Boolean} [options.ajaxWithCredentials]
  *      If this TileSource needs to make an AJAX call, this specifies whether to set
  *      the XHR's withCredentials (for accessing secure data).
- * @param {Object} [options.ajaxHeaders]
+ * @property {Object} [options.ajaxHeaders]
  *      A set of headers to include in AJAX requests.
- * @param {Boolean} [options.splitHashDataForPost]
+ * @property {Boolean} [options.splitHashDataForPost]
  *      First occurrence of '#' in the options.url is used to split URL
  *      and the latter part is treated as POST data (applies to getImageInfo(...))
  *      Does not work if getImageInfo() is overridden and used (see the options description)
- * @param {Number} [options.width]
+ * @property {Number} [options.width]
  *      Width of the source image at max resolution in pixels.
- * @param {Number} [options.height]
+ * @property {Number} [options.height]
  *      Height of the source image at max resolution in pixels.
- * @param {Number} [options.tileSize]
+ * @property {Number} [options.tileSize]
  *      The size of the tiles to assumed to make up each pyramid layer in pixels.
  *      Tile size determines the point at which the image pyramid must be
  *      divided into a matrix of smaller images.
  *      Use options.tileWidth and options.tileHeight to support non-square tiles.
- * @param {Number} [options.tileWidth]
+ * @property {Number} [options.tileWidth]
  *      The width of the tiles to assumed to make up each pyramid layer in pixels.
- * @param {Number} [options.tileHeight]
+ * @property {Number} [options.tileHeight]
  *      The height of the tiles to assumed to make up each pyramid layer in pixels.
- * @param {Number} [options.tileOverlap]
+ * @property {Number} [options.tileOverlap]
  *      The number of pixels each tile is expected to overlap touching tiles.
- * @param {Number} [options.minLevel]
+ * @property {Number} [options.minLevel]
  *      The minimum level to attempt to load.
- * @param {Number} [options.maxLevel]
+ * @property {Number} [options.maxLevel]
  *      The maximum level to attempt to load.
- * @param {Boolean} [options.ready=true]
+ * @property {Boolean} [options.ready=true]
  *      If true, the event 'ready' is called immediately after the TileSource is created.
  *      This is important because some flows rely on immediate initialization, which
  *      computes additional properties like dimensions or aspect ratio.

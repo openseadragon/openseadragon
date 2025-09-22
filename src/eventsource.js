@@ -37,7 +37,7 @@
 /**
  * @typedef {Object} Event
  * @memberof OpenSeadragon
- * @param {boolean} [stopPropagation=undefined] - If set to true, the event exits after handling the current call.
+ * @property {boolean} [stopPropagation=undefined] - If set to true, the event exits after handling the current call.
  */
 
 /**
@@ -45,7 +45,7 @@
  *
  * @typedef {function(OpenSeadragon.Event): void} OpenSeadragon.EventHandler
  * @memberof OpenSeadragon
- * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @property {OpenSeadragon.Event} event - The event object containing event-specific properties.
  * @returns {void} This handler does not return a value.
  */
 
@@ -54,7 +54,7 @@
  *
  * @typedef {function(OpenSeadragon.Event): Promise<void>} OpenSeadragon.AsyncEventHandler
  * @memberof OpenSeadragon
- * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @property {OpenSeadragon.Event} event - The event object containing event-specific properties.
  * @returns {Promise<void>} This handler does not return a value.
  */
 
