@@ -2899,8 +2899,8 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
         if (tileSource.ready) {
             successCallback(tileSource);
         } else {
-            tileSource.addHandler('ready', function () {
-                successCallback(tileSource);
+            tileSource.addHandler('ready', function (event) {
+                successCallback(event.tileSource);
             });
             tileSource.addHandler('open-failed', function (event) {
                 failCallback({
@@ -2911,7 +2911,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
         }
     }
 
-    setTimeout( function() {
+    setTimeout(() => {
         if ( $.type( tileSource ) === 'string' ) {
             //If its still a string it means it must be a url at this point
             tileSource = new $.TileSource({
@@ -2921,14 +2921,8 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 ajaxWithCredentials: viewer.ajaxWithCredentials,
                 ajaxHeaders: $.extend({}, viewer.ajaxHeaders, imgOptions.ajaxHeaders),
                 splitHashDataForPost: viewer.splitHashDataForPost,
-                success: function( event ) {
-                    successCallback( event.tileSource );
-                }
             });
-            tileSource.addHandler( 'open-failed', function( event ) {
-                failCallback( event );
-            } );
-
+            waitUntilReady(tileSource, tileSource);
         } else if ($.isPlainObject(tileSource) || tileSource.nodeType) {
             if (tileSource.crossOriginPolicy === undefined &&
                 (imgOptions.crossOriginPolicy !== undefined || viewer.crossOriginPolicy !== undefined)) {
@@ -2943,7 +2937,8 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 //Custom tile source
                 const customTileSource = new $.TileSource( tileSource );
                 customTileSource.getTileUrl = tileSource.getTileUrl;
-                successCallback( customTileSource );
+                tileSource.ready = false;
+                waitUntilReady(customTileSource, tileSource);
             } else {
                 //inline configuration
                 const $TileSource = $.TileSource.determineType( _this, tileSource );
@@ -2955,6 +2950,7 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                     return;
                 }
                 const options = $TileSource.prototype.configure.apply( _this, [ tileSource ] );
+                options.ready = false;
                 waitUntilReady(new $TileSource(options), tileSource);
             }
         } else {

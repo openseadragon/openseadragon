@@ -36,29 +36,7 @@
 
 
 /**
- * @class TileSource
- * @classdesc The TileSource contains the most basic implementation required to create a
- * smooth transition between layers in an image pyramid. It has only a single key
- * interface that must be implemented to complete its key functionality:
- * 'getTileUrl'.  It also has several optional interfaces that can be
- * implemented if a new TileSource wishes to support configuration via a simple
- * object or array ('configure') and if the tile source supports or requires
- * configuration via retrieval of a document on the network ala AJAX or JSONP,
- * ('getImageInfo').
- * <br/>
- * By default the image pyramid is split into N layers where the image's longest
- * side in M (in pixels), where N is the smallest integer which satisfies
- *      <strong>2^(N+1) >= M</strong>.
- *
- * @memberof OpenSeadragon
- * @extends OpenSeadragon.EventSource
- * @param {Object} options
- *      You can either specify a URL, or literally define the TileSource (by specifying
- *      width, height, tileSize, tileOverlap, minLevel, and maxLevel). For the former,
- *      the extending class is expected to implement 'supports' and 'configure'.
- *      Note that _in this case, the child class of getImageInfo() is ignored!_
- *      For the latter, the construction is assumed to occur through
- *      the extending classes implementation of 'configure'.
+ * @typedef {Object} OpenSeadragon.TileSourceOptions
  * @param {String} [options.url]
  *      The URL for the data necessary for this TileSource.
  * @param {String} [options.referenceStripThumbnailUrl]
@@ -93,60 +71,57 @@
  *      The minimum level to attempt to load.
  * @param {Number} [options.maxLevel]
  *      The maximum level to attempt to load.
+ * @param {Boolean} [options.ready=true]
+ *      If true, the event 'ready' is called immediately after the TileSource is created.
+ *      This is important because some flows rely on immediate initialization, which
+ *      computes additional properties like dimensions or aspect ratio.
+ *
+ *
+ *      TODO: could be removed completely:
+ *        - do not use Tiled Image's getImageInfo, implement it separately
+ *        - call getImageInfo as perviously, by default just call raiseEvent('ready', { tileSource: this })
  */
-$.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLevel ) {
-    const _this = this;
 
-    const args = arguments;
-    let options;
-    let i;
+/**
+ * @class TileSource
+ * @classdesc The TileSource contains the most basic implementation required to create a
+ * smooth transition between layers in an image pyramid. It has only a single key
+ * interface that must be implemented to complete its key functionality:
+ * 'getTileUrl'.  It also has several optional interfaces that can be
+ * implemented if a new TileSource wishes to support configuration via a simple
+ * object or array ('configure') and if the tile source supports or requires
+ * configuration via retrieval of a document on the network ala AJAX or JSONP,
+ * ('getImageInfo').
+ * <br/>
+ * By default the image pyramid is split into N layers where the image's longest
+ * side in M (in pixels), where N is the smallest integer which satisfies
+ *      <strong>2^(N+1) >= M</strong>.
+ *
+ * @memberof OpenSeadragon
+ * @extends OpenSeadragon.EventSource
+ * @param {OpenSeadragon.TileSourceOptions|string} options
+ *      You can either specify a URL, or literally define the TileSource (by specifying
+ *      width, height, tileSize, tileOverlap, minLevel, and maxLevel). For the former,
+ *      the extending class is expected to implement 'supports' and 'configure'.
+ *      Note that _in this case, the child class of getImageInfo() is ignored!_
+ *      For the latter, the construction is assumed to occur through
+ *      the extending classes implementation of 'configure'.
+ */
+$.TileSource = function( options ) {
 
-    if( $.isPlainObject( width ) ){
-        options = width;
-    }else{
-        options = {
-            width: args[0],
-            height: args[1],
-            tileSize: args[2],
-            tileOverlap: args[3],
-            minLevel: args[4],
-            maxLevel: args[5]
-        };
-    }
+    // NOTE! Manually rewriting this to a class syntax is problematic, since apply(...) would have to be overridden
+    //   static apply( target, args ) {...}
+    // and check if target inherits TileSource and if not, copy all props to the __proto__ of the target
+    $.EventSource.apply( this );
 
-    //Tile sources supply some events, namely 'ready' when they must be configured
-    //by asynchronously fetching their configuration data.
-    $.EventSource.call( this );
-
-    //we allow options to override anything we don't treat as
-    //required via idiomatic options or which is functionally
-    //set depending on the state of the readiness of this tile
-    //source
-    $.extend( true, this, options );
-
-    if (!this.success) {
-        //Any functions that are passed as arguments are bound to the ready callback
-        for ( i = 0; i < arguments.length; i++ ) {
-            if ( $.isFunction( arguments[ i ] ) ) {
-                this.success = arguments[ i ];
-                //only one callback per constructor
-                break;
-            }
-        }
-    }
-
-    if (this.success) {
-        this.addHandler( 'ready', function ( event ) {
-            _this.success( event );
-        } );
-    }
 
     /**
-     * Retrieve context2D of this tile source
-     * @memberOf OpenSeadragon.TileSource
-     * @function getContext2D
+     * The URL of the image to be loaded. Can be undefined if the configuration happened
+     * via plain object or class injection
+     * @member {String} url
+     * @memberof OpenSeadragon.TileSource#
      */
-
+    this.url = null;
     /**
      * Ratio of width to height
      * @member {Number} aspectRatio
@@ -178,13 +153,63 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
      * @memberof OpenSeadragon.TileSource#
      */
 
-    // TODO potentially buggy behavior: what if .url is used by child class before it calls super constructor?
-    //  this can happen if old JS class definition is used
-    if( 'string' === $.type( arguments[ 0 ] ) ){
-        this.url = arguments[0];
+    this.addHandler('ready', e => {
+        const source = e.tileSource;
+        //explicit configuration via positional args in constructor
+        //or the more idiomatic 'options' object
+        this.ready       = true;
+        this.aspectRatio = (source.width && source.height) ?
+            (source.width / source.height) : 1;
+        this.dimensions  = new $.Point( source.width, source.height );
+
+        if ( source.tileSize ){
+            this._tileWidth = this._tileHeight = source.tileSize;
+            delete this.tileSize;
+        } else {
+            if( source.tileWidth ){
+                // We were passed tileWidth in options, but we want to rename it
+                // with a leading underscore to make clear that it is not safe to directly modify it
+                this._tileWidth = source.tileWidth;
+                delete this.tileWidth;
+            } else {
+                this._tileWidth = 0;
+            }
+
+            if( source.tileHeight ){
+                // See note above about renaming this.tileWidth
+                this._tileHeight = source.tileHeight;
+                delete this.tileHeight;
+            } else {
+                this._tileHeight = 0;
+            }
+        }
+
+        this.tileOverlap = source.tileOverlap ? source.tileOverlap : 0;
+        this.minLevel    = source.minLevel ? source.minLevel : 0;
+        this.maxLevel    = ( undefined !== source.maxLevel && null !== source.maxLevel ) ?
+            source.maxLevel : (
+                ( source.width && source.height ) ? Math.ceil(
+                    Math.log( Math.max( source.width, source.height ) ) /
+                    Math.log( 2 )
+                ) : 0
+            );
+        if( source.success && $.isFunction( source.success ) ){
+            source.success( this );
+        }
+    }, null, Infinity); // important! go first to finish initialization
+
+    if( 'string' === $.type( options ) ){
+        this.url = options;
+        options = undefined;
+    } else {
+        //we allow options to override anything we don't treat as
+        //required via idiomatic options or which is functionally
+        //set depending on the state of the readiness of this tile
+        //source
+        $.extend( true, this, options );
     }
 
-    if (this.url) {
+    if (this.url && !this.ready) {
         //in case the getImageInfo method is overridden and/or implies an
         //async mechanism set some safe defaults first
         this.aspectRatio = 1;
@@ -197,54 +222,16 @@ $.TileSource = function( width, height, tileSize, tileOverlap, minLevel, maxLeve
         this.ready       = false;
         //configuration via url implies the extending class
         //implements and 'configure'
-        this.getImageInfo( this.url );
-
+        setTimeout(() => this.getImageInfo(this.url)); //needs async in case someone exits imediatelly
     } else {
-
-        //explicit configuration via positional args in constructor
-        //or the more idiomatic 'options' object
-        this.ready       = true;
-        this.aspectRatio = (options.width && options.height) ?
-            (options.width / options.height) : 1;
-        this.dimensions  = new $.Point( options.width, options.height );
-
-        if ( this.tileSize ){
-            this._tileWidth = this._tileHeight = this.tileSize;
-            delete this.tileSize;
+        // by default it used to fire immediately, so make the ready default
+        if (this.ready || this.ready === undefined) {
+            this.raiseEvent('ready', { tileSource: this });
         } else {
-            if( this.tileWidth ){
-                // We were passed tileWidth in options, but we want to rename it
-                // with a leading underscore to make clear that it is not safe to directly modify it
-                this._tileWidth = this.tileWidth;
-                delete this.tileWidth;
-            } else {
-                this._tileWidth = 0;
-            }
-
-            if( this.tileHeight ){
-                // See note above about renaming this.tileWidth
-                this._tileHeight = this.tileHeight;
-                delete this.tileHeight;
-            } else {
-                this._tileHeight = 0;
-            }
-        }
-
-        this.tileOverlap = options.tileOverlap ? options.tileOverlap : 0;
-        this.minLevel    = options.minLevel ? options.minLevel : 0;
-        this.maxLevel    = ( undefined !== options.maxLevel && null !== options.maxLevel ) ?
-            options.maxLevel : (
-                ( options.width && options.height ) ? Math.ceil(
-                    Math.log( Math.max( options.width, options.height ) ) /
-                    Math.log( 2 )
-                ) : 0
-            );
-        if( this.success && $.isFunction( this.success ) ){
-            this.success( this );
+            setTimeout(() => this.raiseEvent('ready', { tileSource: this }));
         }
     }
-
-
+    return this;
 };
 
 /** @lends OpenSeadragon.TileSource.prototype */
@@ -438,6 +425,9 @@ $.TileSource.prototype = {
      * There are three scenarios of opening a tile source: providing a parseable string, plain object, or an URL.
      * This method is only called by OSD if the TileSource configuration is a non-parseable string (~url).
      *
+     * Note: you can access the properties sent to the TileSource constructor via the options object
+     * directly on 'this' reference.
+     *
      * The string can contain a hash `#` symbol, followed by
      * key=value arguments. If this is the case, this method sends this
      * data as a POST body.
@@ -501,6 +491,7 @@ $.TileSource.prototype = {
                 options.ajaxWithCredentials = _this.ajaxWithCredentials;
             }
 
+            options.ready = true;  // force synchronous finish
             readySource = new $TileSource( options );
             _this.ready = true;
             /**
