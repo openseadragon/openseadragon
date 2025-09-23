@@ -699,19 +699,19 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * {@link OpenSeadragon.Viewer.html#.event:open}, which when fired can be used to get access
      * to the instance, i.e., viewer.world.getItemAt(0).
      * @function
-     * @param {Array|String|Object|Function} tileSources - This can be a TiledImage
+     * @param {OpenSeadragon.TileSourceSpecifier|[OpenSeadragon.TileSourceSpecifier]} tileSources - This can be a TiledImage
      * specifier, a TileSource specifier, or an array of either. A TiledImage specifier
      * is the same as the options parameter for {@link OpenSeadragon.Viewer#addTiledImage},
      * except for the index property; images are added in sequence.
      * A TileSource specifier is anything you could pass as the tileSource property
      * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
-     * @param {Number} initialPage - If sequenceMode is true, display this page initially
+     * @param {Number} [initialPage = undefined] - If sequenceMode is true, display this page initially
      * for the given tileSources. If specified, will overwrite the Viewer's existing initialPage property.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:open
      * @fires OpenSeadragon.Viewer.event:open-failed
      */
-    open: function (tileSources, initialPage) {
+    open: function (tileSources, initialPage = undefined) {
         const _this = this;
 
         this.close();
@@ -1690,16 +1690,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Add a tiled image to the viewer.
-     * options.tileSource can be anything that {@link OpenSeadragon.Viewer#open}
-     *  supports except arrays of images.
-     * Note that you can specify options.width or options.height, but not both.
-     * The other dimension will be calculated according to the item's aspect ratio.
-     * If collectionMode is on (see {@link OpenSeadragon.Options}), the new image is
-     * automatically arranged with the others.
-     * @function
-     * @param {Object} options
-     * @param {String|Object|Function} options.tileSource - The TileSource specifier.
+     * @typedef OpenSeadragon.TileSourceSpecifier
+     * @property {Object} options
+     * @property {OpenSeadragon.TileSource|String|Object|Function} options.tileSource - The TileSource specifier.
      * A String implies a url used to determine the tileSource implementation
      *      based on the file extension of url. JSONP is implied by *.js,
      *      otherwise the url is retrieved as text and the resulting text is
@@ -1708,50 +1701,62 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      *      property sufficient for being able to determine tileSource
      *      implementation. If the object has a property which is a function
      *      named 'getTileUrl', it is treated as a custom TileSource.
-     * @param {Number} [options.index] The index of the item. Added on top of
+     * @property {Number} [options.index] The index of the item. Added on top of
      * all other items if not specified.
-     * @param {Boolean} [options.replace=false] If true, the item at options.index will be
+     * @property {Boolean} [options.replace=false] If true, the item at options.index will be
      * removed and the new item is added in its place. options.tileSource will be
      * interpreted and fetched if necessary before the old item is removed to avoid leaving
      * a gap in the world.
-     * @param {Number} [options.x=0] The X position for the image in viewport coordinates.
-     * @param {Number} [options.y=0] The Y position for the image in viewport coordinates.
-     * @param {Number} [options.width=1] The width for the image in viewport coordinates.
-     * @param {Number} [options.height] The height for the image in viewport coordinates.
-     * @param {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
+     * @property {Number} [options.x=0] The X position for the image in viewport coordinates.
+     * @property {Number} [options.y=0] The Y position for the image in viewport coordinates.
+     * @property {Number} [options.width=1] The width for the image in viewport coordinates.
+     * @property {Number} [options.height] The height for the image in viewport coordinates.
+     * @property {OpenSeadragon.Rect} [options.fitBounds] The bounds in viewport coordinates
      * to fit the image into. If specified, x, y, width and height get ignored.
-     * @param {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
+     * @property {OpenSeadragon.Placement} [options.fitBoundsPlacement=OpenSeadragon.Placement.CENTER]
      * How to anchor the image in the bounds if options.fitBounds is set.
-     * @param {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
+     * @property {OpenSeadragon.Rect} [options.clip] - An area, in image pixels, to clip to
      * (portions of the image outside of this area will not be visible). Only works on
      * browsers that support the HTML5 canvas.
-     * @param {Number} [options.opacity=1] Proportional opacity of the tiled images (1=opaque, 0=hidden)
-     * @param {Boolean} [options.preload=false] Default switch for loading hidden images (true loads, false blocks)
-     * @param {Boolean} [options.zombieCache] In the case that this method removes any TiledImage instance,
+     * @property {Number} [options.opacity=1] Proportional opacity of the tiled images (1=opaque, 0=hidden)
+     * @property {Boolean} [options.preload=false] Default switch for loading hidden images (true loads, false blocks)
+     * @property {Boolean} [options.zombieCache] In the case that this method removes any TiledImage instance,
      *      allow the item-referenced cache to remain in memory even without active tiles. Default false.
-     * @param {Number} [options.degrees=0] Initial rotation of the tiled image around
+     * @property {Number} [options.degrees=0] Initial rotation of the tiled image around
      * its top left corner in degrees.
-     * @param {Boolean} [options.flipped=false] Whether to horizontally flip the image.
-     * @param {String} [options.compositeOperation] How the image is composited onto other images.
-     * @param {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
+     * @property {Boolean} [options.flipped=false] Whether to horizontally flip the image.
+     * @property {String} [options.compositeOperation] How the image is composited onto other images.
+     * @property {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
-     * @param {Boolean} [options.ajaxWithCredentials] Whether to set withCredentials on tile AJAX
-     * @param {Boolean} [options.loadTilesWithAjax]
+     * @property {Boolean} [options.ajaxWithCredentials] Whether to set withCredentials on tile AJAX
+     * @property {Boolean} [options.loadTilesWithAjax]
      *      Whether to load tile data using AJAX requests.
      *      Defaults to the setting in {@link OpenSeadragon.Options}.
-     * @param {Object} [options.ajaxHeaders]
+     * @property {Object} [options.ajaxHeaders]
      *      A set of headers to include when making tile AJAX requests.
      *      Note that these headers will be merged over any headers specified in {@link OpenSeadragon.Options}.
      *      Specifying a falsy value for a header will clear its existing value set at the Viewer level (if any).
-     * @param {Function} [options.success] A function that gets called when the image is
+     * @property {Function} [options.success] A function that gets called when the image is
      * successfully added. It's passed the event object which contains a single property:
      * "item", which is the resulting instance of TiledImage.
-     * @param {Function} [options.error] A function that gets called if the image is
+     * @property {Function} [options.error] A function that gets called if the image is
      * unable to be added. It's passed the error event object, which contains "message"
      * and "source" properties.
-     * @param {Boolean} [options.collectionImmediately=false] If collectionMode is on,
+     * @property {Boolean} [options.collectionImmediately=false] If collectionMode is on,
      * specifies whether to snap to the new arrangement immediately or to animate to it.
-     * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
+     * @property {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
+     */
+
+    /**
+     * Add a tiled image to the viewer.
+     * options.tileSource can be anything that {@link OpenSeadragon.Viewer#open}
+     *  supports except arrays of images.
+     * Note that you can specify options.width or options.height, but not both.
+     * The other dimension will be calculated according to the item's aspect ratio.
+     * If collectionMode is on (see {@link OpenSeadragon.Options}), the new image is
+     * automatically arranged with the others.
+     * @function
+     * @param {OpenSeadragon.TileSourceSpecifier} options
      * @fires OpenSeadragon.World.event:add-item
      * @fires OpenSeadragon.Viewer.event:add-item-failed
      */
@@ -1761,14 +1766,147 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         $.console.assert(!options.replace || (options.index > -1 && options.index < this.world.getItemCount()),
             "[Viewer.addTiledImage] if options.replace is used, options.index must be a valid index in Viewer.world");
 
-        const _this = this;
-
-        if (options.replace) {
-            options.replaceItem = _this.world.getItemAt(options.index);
-        }
-
         this._hideMessage();
 
+        if (options.replace) {
+            options.replaceItem = this.world.getItemAt(options.index);
+        }
+
+        const myQueueItem = {
+            options: options
+        };
+
+        this._loadQueue.push(myQueueItem);
+
+        const refreshWorld = theItem => {
+            if (this.collectionMode) {
+                this.world.arrange({
+                    immediately: theItem.options.collectionImmediately,
+                    rows: this.collectionRows,
+                    columns: this.collectionColumns,
+                    layout: this.collectionLayout,
+                    tileSize: this.collectionTileSize,
+                    tileMargin: this.collectionTileMargin
+                });
+                this.world.setAutoRefigureSizes(true);
+            }
+        };
+
+        const raiseAddItemFailed = ( event ) => {
+            for (let i = 0; i < this._loadQueue.length; i++) {
+                if (this._loadQueue[i] === myQueueItem) {
+                    this._loadQueue.splice(i, 1);
+                    break;
+                }
+            }
+
+            if (this._loadQueue.length === 0) {
+                refreshWorld(myQueueItem);
+            }
+
+            /**
+             * Raised when an error occurs while adding a item.
+             * @event add-item-failed
+             * @memberOf OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {String} message
+             * @property {String} source
+             * @property {Object} options The options passed to the addTiledImage method.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.raiseEvent( 'add-item-failed', event );
+
+            if (options.error) {
+                options.error(event);
+            }
+        };
+
+        if ($.isArray(options.tileSource)) {
+            setTimeout(function() {
+                raiseAddItemFailed({
+                    message: "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead.",
+                    source: options.tileSource,
+                    options: options
+                });
+            });
+            return;
+        }
+
+        this.createTiledImage(options, tiledImage => {
+            myQueueItem.tileSource = tiledImage.source;
+
+            let queueItem, optionsClone;
+            while (this._loadQueue.length) {
+                queueItem = this._loadQueue[0];
+                if (!queueItem.tileSource) {
+                    break;
+                }
+
+                this._loadQueue.splice(0, 1);
+
+                if (queueItem.options.replace) {
+                    const replaced = queueItem.options.replaceItem;
+                    const newIndex = this.world.getIndexOfItem(replaced);
+                    if (newIndex !== -1) {
+                        queueItem.options.index = newIndex;
+                    }
+                    if (!replaced._zombieCache && replaced.source.equals(queueItem.tileSource)) {
+                        replaced.allowZombieCache(true);
+                    }
+                    this.world.removeItem(replaced);
+                }
+
+                if (this.collectionMode) {
+                    this.world.setAutoRefigureSizes(false);
+                }
+
+                if (this.navigator) {
+                    optionsClone = $.extend({}, queueItem.options, {
+                        replace: false, // navigator already removed the layer, nothing to replace
+                        originalTiledImage: tiledImage,
+                        tileSource: queueItem.tileSource
+                    });
+
+                    this.navigator.addTiledImage(optionsClone);
+                }
+
+                this.world.addItem( tiledImage, {
+                    index: queueItem.options.index
+                });
+
+                if (this._loadQueue.length === 0) {
+                    //this restores the autoRefigureSizes flag to true.
+                    refreshWorld(queueItem);
+                }
+
+                if (this.world.getItemCount() === 1 && !this.preserveViewport) {
+                    this.viewport.goHome(true);
+                }
+
+                if (queueItem.options.success) {
+                    queueItem.options.success({
+                        item: tiledImage
+                    });
+                }
+
+                // It might happen processReadyItems() is called after viewer.destroy()
+                if (this.drawer) {
+                    // This is necessary since drawer might react upon finalized tiled image, after
+                    // all events have been processed.
+                    this.drawer.tiledImageCreated(tiledImage);
+                }
+            }
+        }, raiseAddItemFailed);
+    },
+
+    /**
+     * Create a TiledImage Instance
+     * @param {OpenSeadragon.TileSourceSpecifier} options
+     * @param {Function} onFinish called zero or more times for each tiledImage
+     * @param {Function} onFail
+     */
+    createTiledImage: function (options, onFinish, onFail) {
         if (options.placeholderFillStyle === undefined) {
             options.placeholderFillStyle = this.placeholderFillStyle;
         }
@@ -1782,7 +1920,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             options.compositeOperation = this.compositeOperation;
         }
         if (options.crossOriginPolicy === undefined) {
-            options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ? options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
+            options.crossOriginPolicy = options.tileSource.crossOriginPolicy !== undefined ?
+                options.tileSource.crossOriginPolicy : this.crossOriginPolicy;
         }
         if (options.ajaxWithCredentials === undefined) {
             options.ajaxWithCredentials = this.ajaxWithCredentials;
@@ -1794,186 +1933,61 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             options.ajaxHeaders = {};
         }
 
-        const myQueueItem = {
-            options: options
-        };
-
-        function raiseAddItemFailed( event ) {
-            for (let i = 0; i < _this._loadQueue.length; i++) {
-                if (_this._loadQueue[i] === myQueueItem) {
-                    _this._loadQueue.splice(i, 1);
-                    break;
+        try {
+            getTileSourceImplementation( this, options.tileSource, options, event => {
+                if (event.message) {
+                    onFail(event);
+                    return;
                 }
-            }
 
-            if (_this._loadQueue.length === 0) {
-                refreshWorld(myQueueItem);
-            }
-
-             /**
-             * Raised when an error occurs while adding a item.
-             * @event add-item-failed
-             * @memberOf OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-             * @property {String} message
-             * @property {String} source
-             * @property {Object} options The options passed to the addTiledImage method.
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            _this.raiseEvent( 'add-item-failed', event );
-
-            if (options.error) {
-                options.error(event);
-            }
-        }
-
-        function refreshWorld(theItem) {
-            if (_this.collectionMode) {
-                _this.world.arrange({
-                    immediately: theItem.options.collectionImmediately,
-                    rows: _this.collectionRows,
-                    columns: _this.collectionColumns,
-                    layout: _this.collectionLayout,
-                    tileSize: _this.collectionTileSize,
-                    tileMargin: _this.collectionTileMargin
+                // add everybody at the front of the queue that's ready to go
+                const tiledImage = new $.TiledImage({
+                    viewer: this,
+                    source: event.source,
+                    viewport: this.viewport,
+                    drawer: this.drawer,
+                    tileCache: this.tileCache,
+                    imageLoader: this.imageLoader,
+                    x: options.x,
+                    y: options.y,
+                    width: options.width,
+                    height: options.height,
+                    fitBounds: options.fitBounds,
+                    fitBoundsPlacement: options.fitBoundsPlacement,
+                    clip: options.clip,
+                    placeholderFillStyle: options.placeholderFillStyle,
+                    opacity: options.opacity,
+                    preload: options.preload,
+                    degrees: options.degrees,
+                    flipped: options.flipped,
+                    compositeOperation: options.compositeOperation,
+                    springStiffness: this.springStiffness,
+                    animationTime: this.animationTime,
+                    minZoomImageRatio: this.minZoomImageRatio,
+                    wrapHorizontal: this.wrapHorizontal,
+                    wrapVertical: this.wrapVertical,
+                    maxTilesPerFrame: this.maxTilesPerFrame,
+                    loadDestinationTilesOnAnimation: this.loadDestinationTilesOnAnimation,
+                    immediateRender: this.immediateRender,
+                    blendTime: this.blendTime,
+                    alwaysBlend: this.alwaysBlend,
+                    minPixelRatio: this.minPixelRatio,
+                    smoothTileEdgesMinZoom: this.smoothTileEdgesMinZoom,
+                    iOSDevice: this.iOSDevice,
+                    crossOriginPolicy: options.crossOriginPolicy,
+                    ajaxWithCredentials: options.ajaxWithCredentials,
+                    loadTilesWithAjax: options.loadTilesWithAjax,
+                    ajaxHeaders: options.ajaxHeaders,
+                    debugMode: this.debugMode,
+                    subPixelRoundingForTransparency: this.subPixelRoundingForTransparency,
+                    callTileLoadedWithCachedData: this.callTileLoadedWithCachedData,
                 });
-                _this.world.setAutoRefigureSizes(true);
-            }
-        }
 
-        if ($.isArray(options.tileSource)) {
-            setTimeout(function() {
-                raiseAddItemFailed({
-                    message: "[Viewer.addTiledImage] Sequences can not be added; add them one at a time instead.",
-                    source: options.tileSource,
-                    options: options
-                });
+                onFinish(tiledImage);
             });
-            return;
+        } catch (e) {
+            onFail(e);
         }
-
-        this._loadQueue.push(myQueueItem);
-
-        function processReadyItems() {
-            let queueItem, tiledImage, optionsClone;
-            while (_this._loadQueue.length) {
-                queueItem = _this._loadQueue[0];
-                if (!queueItem.tileSource) {
-                    break;
-                }
-
-                _this._loadQueue.splice(0, 1);
-
-                if (queueItem.options.replace) {
-                    const replaced = queueItem.options.replaceItem;
-                    const newIndex = _this.world.getIndexOfItem(replaced);
-                    if (newIndex !== -1) {
-                        queueItem.options.index = newIndex;
-                    }
-                    if (!replaced._zombieCache && replaced.source.equals(queueItem.tileSource)) {
-                        replaced.allowZombieCache(true);
-                    }
-                    _this.world.removeItem(replaced);
-                }
-
-                tiledImage = new $.TiledImage({
-                    viewer: _this,
-                    source: queueItem.tileSource,
-                    viewport: _this.viewport,
-                    drawer: _this.drawer,
-                    tileCache: _this.tileCache,
-                    imageLoader: _this.imageLoader,
-                    x: queueItem.options.x,
-                    y: queueItem.options.y,
-                    width: queueItem.options.width,
-                    height: queueItem.options.height,
-                    fitBounds: queueItem.options.fitBounds,
-                    fitBoundsPlacement: queueItem.options.fitBoundsPlacement,
-                    clip: queueItem.options.clip,
-                    placeholderFillStyle: queueItem.options.placeholderFillStyle,
-                    opacity: queueItem.options.opacity,
-                    preload: queueItem.options.preload,
-                    degrees: queueItem.options.degrees,
-                    flipped: queueItem.options.flipped,
-                    compositeOperation: queueItem.options.compositeOperation,
-                    springStiffness: _this.springStiffness,
-                    animationTime: _this.animationTime,
-                    minZoomImageRatio: _this.minZoomImageRatio,
-                    wrapHorizontal: _this.wrapHorizontal,
-                    wrapVertical: _this.wrapVertical,
-                    maxTilesPerFrame: _this.maxTilesPerFrame,
-                    loadDestinationTilesOnAnimation: _this.loadDestinationTilesOnAnimation,
-                    immediateRender: _this.immediateRender,
-                    blendTime: _this.blendTime,
-                    alwaysBlend: _this.alwaysBlend,
-                    minPixelRatio: _this.minPixelRatio,
-                    smoothTileEdgesMinZoom: _this.smoothTileEdgesMinZoom,
-                    iOSDevice: _this.iOSDevice,
-                    crossOriginPolicy: queueItem.options.crossOriginPolicy,
-                    ajaxWithCredentials: queueItem.options.ajaxWithCredentials,
-                    loadTilesWithAjax: queueItem.options.loadTilesWithAjax,
-                    ajaxHeaders: queueItem.options.ajaxHeaders,
-                    debugMode: _this.debugMode,
-                    subPixelRoundingForTransparency: _this.subPixelRoundingForTransparency,
-                    callTileLoadedWithCachedData: _this.callTileLoadedWithCachedData,
-                });
-
-                if (_this.collectionMode) {
-                    _this.world.setAutoRefigureSizes(false);
-                }
-
-                if (_this.navigator) {
-                    optionsClone = $.extend({}, queueItem.options, {
-                        replace: false, // navigator already removed the layer, nothing to replace
-                        originalTiledImage: tiledImage,
-                        tileSource: queueItem.tileSource
-                    });
-
-                    _this.navigator.addTiledImage(optionsClone);
-                }
-
-                _this.world.addItem( tiledImage, {
-                    index: queueItem.options.index
-                });
-
-                if (_this._loadQueue.length === 0) {
-                    //this restores the autoRefigureSizes flag to true.
-                    refreshWorld(queueItem);
-                }
-
-                if (_this.world.getItemCount() === 1 && !_this.preserveViewport) {
-                    _this.viewport.goHome(true);
-                }
-
-                if (queueItem.options.success) {
-                    queueItem.options.success({
-                        item: tiledImage
-                    });
-                }
-
-                // It might happen processReadyItems() is called after viewer.destroy()
-                if (_this.drawer) {
-                    // This is necessary since drawer might react upon finalized tiled image, after
-                    // all events have been processed.
-                    _this.drawer.tiledImageCreated(tiledImage);
-                }
-            }
-        }
-
-        getTileSourceImplementation( this, options.tileSource, options, function( tileSource ) {
-
-            myQueueItem.tileSource = tileSource;
-
-            // add everybody at the front of the queue that's ready to go
-            processReadyItems();
-        }, function( event ) {
-            event.options = options;
-            raiseAddItemFailed(event);
-
-            // add everybody at the front of the queue that's ready to go
-            processReadyItems();
-        } );
     },
 
     /**
@@ -2872,11 +2886,9 @@ function _getSafeElemSize (oElement) {
  * @param {string|Object|Element|OpenSeadragon.TileSource} tileSource - The tile source input, which can be a URL string,
  *        an inline configuration object, raw XML/JSON string, or an existing TileSource instance.
  * @param {Object} imgOptions - Additional options for tile loading (e.g. CORS policy, headers).
- * @param {Function} successCallback - Called with the initialized TileSource once ready.
- * @param {Function} failCallback - Called if initialization fails. Receives an error object with a message and source.
+ * @param {Function} finishCallback
  */
-function getTileSourceImplementation( viewer, tileSource, imgOptions, successCallback,
-    failCallback ) {
+function getTileSourceImplementation( viewer, tileSource, imgOptions, finishCallback ) {
     const _this = viewer;
 
     //allow plain xml strings or json strings to be parsed here
@@ -2897,13 +2909,17 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
 
     function waitUntilReady(tileSource, originalTileSource) {
         if (tileSource.ready) {
-            successCallback(tileSource);
+            finishCallback({
+                source: tileSource
+            });
         } else {
             tileSource.addHandler('ready', function (event) {
-                successCallback(event.tileSource);
+                finishCallback({
+                    source: event.tileSource
+                });
             });
             tileSource.addHandler('open-failed', function (event) {
-                failCallback({
+                finishCallback({
                     message: event.message,
                     source: originalTileSource
                 });
@@ -2941,9 +2957,9 @@ function getTileSourceImplementation( viewer, tileSource, imgOptions, successCal
                 waitUntilReady(customTileSource, tileSource);
             } else {
                 //inline configuration
-                const $TileSource = $.TileSource.determineType( _this, tileSource );
+                const $TileSource = $.TileSource.determineType( _this, tileSource, null );
                 if ( !$TileSource ) {
-                    failCallback( {
+                    finishCallback({
                         message: "Unable to load TileSource",
                         source: tileSource
                     });

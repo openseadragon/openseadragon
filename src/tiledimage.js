@@ -704,7 +704,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * 1 means original image size, 0.5 half size...
      * Viewport zoom: ratio of the displayed image's width to viewport's width.
      * 1 means identical width, 2 means image's width is twice the viewport's width...
-     * Note: not accurate with multi-image.
      * @function
      * @param {Number} imageZoom The image zoom
      * @returns {Number} viewportZoom The viewport zoom
