@@ -1768,6 +1768,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this._hideMessage();
 
+        const originalSuccess = options.success;
+        const origianlError = options.error;
         if (options.replace) {
             options.replaceItem = this.world.getItemAt(options.index);
         }
@@ -1817,8 +1819,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              */
             this.raiseEvent( 'add-item-failed', event );
 
-            if (options.error) {
-                options.error(event);
+            if (origianlError) {
+                origianlError(event);
             }
         };
 
@@ -1833,8 +1835,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
 
-        this.createTiledImage(options, tiledImage => {
+        options.success = event => {
+            const tiledImage = event.item;
             myQueueItem.tileSource = tiledImage.source;
+            myQueueItem.originalSuccess = originalSuccess;
 
             let queueItem, optionsClone;
             while (this._loadQueue.length) {
@@ -1884,10 +1888,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     this.viewport.goHome(true);
                 }
 
-                if (queueItem.options.success) {
-                    queueItem.options.success({
-                        item: tiledImage
-                    });
+                if (queueItem.originalSuccess) {
+                    originalSuccess(event);
                 }
 
                 // It might happen processReadyItems() is called after viewer.destroy()
@@ -1897,16 +1899,18 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     this.drawer.tiledImageCreated(tiledImage);
                 }
             }
-        }, raiseAddItemFailed);
+        };
+        options.error = raiseAddItemFailed;
+        this.createTiledImage(options);
     },
 
     /**
      * Create a TiledImage Instance
-     * @param {OpenSeadragon.TileSourceSpecifier} options
-     * @param {Function} onFinish called zero or more times for each tiledImage
-     * @param {Function} onFail
+     * @param {OpenSeadragon.TileSourceSpecifier} options options to create the image. Some properties
+     *   are unused, these properties drive how the image is inserted into the world, and therefore
+     *   they are not used in the pure creation of the TiledImage.
      */
-    createTiledImage: function (options, onFinish, onFail) {
+    createTiledImage: function (options) {
         if (options.placeholderFillStyle === undefined) {
             options.placeholderFillStyle = this.placeholderFillStyle;
         }
@@ -1936,7 +1940,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         try {
             getTileSourceImplementation( this, options.tileSource, options, event => {
                 if (event.message) {
-                    onFail(event);
+                    if (options.error) {
+                        options.error(event);
+                    }
                     return;
                 }
 
@@ -1983,10 +1989,16 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     callTileLoadedWithCachedData: this.callTileLoadedWithCachedData,
                 });
 
-                onFinish(tiledImage);
+                options.success({
+                    item: tiledImage
+                });
             });
         } catch (e) {
-            onFail(e);
+            if (options.error) {
+                options.error(e);
+            } else {
+                throw e;
+            }
         }
     },
 
