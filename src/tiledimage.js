@@ -100,6 +100,8 @@ $.TiledImage = function( options ) {
         "[TiledImage] options.clip must be an OpenSeadragon.Rect if present");
 
     $.EventSource.call( this );
+    // Asynchronously loaded items remember where users wanted them
+    this._optimalWorldIndex = undefined;
 
     this._tileCache = options.tileCache;
     delete options.tileCache;

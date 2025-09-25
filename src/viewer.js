@@ -815,7 +815,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         };
 
-        const doOne = function(options) {
+        const doOne = function(index, options) {
             if (!$.isPlainObject(options) || !options.tileSource) {
                 options = {
                     tileSource: options
@@ -825,6 +825,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             if (options.index !== undefined) {
                 $.console.error('[Viewer.open] setting indexes here is not supported; use addTiledImage instead');
                 delete options.index;
+                // ensure we keep the order we received
+                options.index = index;
             }
 
             if (options.collectionImmediately === undefined) {
@@ -870,7 +872,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         // TileSources
         for (let i = 0; i < tileSources.length; i++) {
-            doOne(tileSources[i]);
+            doOne(i, tileSources[i]);
         }
 
         return this;

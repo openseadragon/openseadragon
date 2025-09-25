@@ -79,12 +79,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         $.console.assert(item instanceof $.TiledImage, "[World.addItem] only TiledImages supported at this time");
 
         options = options || {};
-        if (options.index !== undefined) {
-            const index = Math.max(0, Math.min(this._items.length, options.index));
-            this._items.splice(index, 0, item);
-        } else {
-            this._items.push( item );
-        }
+        item._optimalWorldIndex = options.index;
+        this._items.push( item );
+        this.refreshItemOrder();
 
         if (this._autoRefigureSizes) {
             this._figureSizes();
@@ -157,9 +154,65 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         if ( index === oldIndex || oldIndex === -1 ) {
             return;
         }
+        this._setItemIndexUnsafe(item, oldIndex, index);
+    },
 
+    /**
+     * Update item order based on _optimalWorldIndex if defined.
+     * The final order is not necessarily conformant to _optimalWorldIndex,
+     * but at least tries to keep as close as possible to the optimal index.
+     * This might happen e.g. when some item fails to load, and there is less items
+     * that possible.
+     */
+    refreshItemOrder: function() {
+        let refreshCount = 0;
+        for (let i = 0; i < this._items.length; i++) {
+            const item = this._items[i];
+            if (item._optimalWorldIndex !== undefined && item._optimalWorldIndex !== i) {
+                let targetIndex = Math.min(item._optimalWorldIndex, this._items.length - 1);
+                const targetItem = this._items[targetIndex];
+                // update only items that are not already at their destined position
+                if (targetItem._optimalWorldIndex === targetItem) {
+                    if (targetItem === this._items.length) {
+                        targetIndex = ++item._optimalWorldIndex;
+                    } else {
+                        targetIndex = --item._optimalWorldIndex;
+                    }
+                }
+                this._setItemIndexUnsafe(item, i, targetIndex, false);
+                i = ++refreshCount;
+            }
+        }
+    },
+
+    /**
+     * Change the index of a item so that it appears over or under others.
+     * @param {OpenSeadragon.TiledImage} item - The item to move.
+     * @param {Number} oldIndex - The old index.
+     * @param {Number} index - The new index.
+     * @param {Boolean} [updateOptimal=true] - Do not change _optimalWorldIndex - we are sorting.
+     * @fires OpenSeadragon.World.event:item-index-change
+     * @private
+     */
+    _setItemIndexUnsafe: function (item, oldIndex, index, updateOptimal = true) {
         this._items.splice( oldIndex, 1 );
         this._items.splice( index, 0, item );
+        if (updateOptimal) {
+            item._optimalWorldIndex = index;
+            if (index < oldIndex) {
+                for ( let i = index + 1; i < Math.min(oldIndex + 1, this._items.length); i++ ) {
+                    if (this._items[i]._optimalWorldIndex !== undefined) {
+                        this._items[i]._optimalWorldIndex++;
+                    }
+                }
+            } else {
+                for ( let i = oldIndex; i < index; i++ ) {
+                    if (this._items[i]._optimalWorldIndex !== undefined) {
+                        this._items[i]._optimalWorldIndex--;
+                    }
+                }
+            }
+        }
         this._needsDraw = true;
 
         /**
