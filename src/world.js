@@ -298,6 +298,23 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
     requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
         $.__invalidatedAt = tStamp;
 
+        let drawnTstamp = Infinity;
+        for (const item of this._items) {
+            if (item._lastDrawn.length) {
+                drawnTstamp = Math.min(drawnTstamp, item._lastDrawn[0].tile.lastTouchTime);
+            }
+            // Might be nested
+            for (const tileSet of item._tilesToDraw) {
+                if (Array.isArray(tileSet)) {
+                    if (tileSet.length) {
+                        drawnTstamp = Math.min(drawnTstamp, tileSet[0].tile.lastTouchTime);
+                    }
+                } else if (tileSet) {
+                    drawnTstamp = Math.min(drawnTstamp, tileSet.tile.lastTouchTime);
+                }
+            }
+        }
+
         const allTiles = this.viewer.tileCache.getLoadedTilesFor(null);
         const tilesToRestore = new Array(allTiles.length);
 
