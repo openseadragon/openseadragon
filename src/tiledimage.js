@@ -152,6 +152,10 @@ $.TiledImage = function( options ) {
     const ajaxHeaders = options.ajaxHeaders;
     delete options.ajaxHeaders;
 
+    // Setter ensures lowercase
+    this.crossOriginPolicy = options.crossOriginPolicy;
+    delete options.crossOriginPolicy;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -186,7 +190,6 @@ $.TiledImage = function( options ) {
         smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:                         $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:                 $.DEFAULT_SETTINGS.crossOriginPolicy,
         ajaxWithCredentials:               $.DEFAULT_SETTINGS.ajaxWithCredentials,
         placeholderFillStyle:              $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                           $.DEFAULT_SETTINGS.opacity,
@@ -367,6 +370,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._needsDraw = this._isBlending || this._wasBlending ||
             (this.opacity > 0 && this._lastDrawn.length < 1);
         return this._needsDraw;
+    },
+
+    get crossOriginPolicy(){
+        return this._crossOriginPolicy;
+    },
+
+    set crossOriginPolicy(crossOriginPolicy) {
+        if (typeof crossOriginPolicy === 'string') {
+            this._crossOriginPolicy = crossOriginPolicy.toLowerCase();
+        } else {
+            this._crossOriginPolicy = $.DEFAULT_SETTINGS.crossOriginPolicy;
+        }
     },
 
     /**
@@ -1147,15 +1162,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // mark the tiles as being drawn, so that they won't be discarded from
         // the tileCache
         insertionIndex = 0;
-        for (const nested of this._tilesToDraw) {
-            if (Array.isArray(nested)) {
-                for (const item of nested) {
+        for (const maybeNested of this._tilesToDraw) {
+            if (Array.isArray(maybeNested)) {
+                for (const item of maybeNested) {
+                    if (!item.tile.loaded) {
+                        console.warn('Tile not loaded: ' + item.tile.image.src);
+                    }
                     item.tile.beingDrawn = true;
                     lastDrawn[insertionIndex++] = item;
                 }
-            } else if (nested) {
-                nested.tile.beingDrawn = true;
-                lastDrawn[insertionIndex++] = nested;
+            } else if (maybeNested) {
+                if (!maybeNested.tile.loaded) {
+                    console.warn('Tile not loaded: ' + maybeNested.tile.image.src);
+                }
+                maybeNested.tile.beingDrawn = true;
+                lastDrawn[insertionIndex++] = maybeNested;
             }
         }
         lastDrawn.length = insertionIndex;

@@ -1771,7 +1771,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         this._hideMessage();
 
         const originalSuccess = options.success;
-        const origianlError = options.error;
+        const originalError = options.error;
         if (options.replace) {
             options.replaceItem = this.world.getItemAt(options.index);
         }
@@ -1821,8 +1821,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
              */
             this.raiseEvent( 'add-item-failed', event );
 
-            if (origianlError) {
-                origianlError(event);
+            if (originalError) {
+                originalError(event);
             }
         };
 
@@ -1891,7 +1891,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
 
                 if (queueItem.originalSuccess) {
-                    originalSuccess(event);
+                    queueItem.originalSuccess(event);
                 }
 
                 // It might happen processReadyItems() is called after viewer.destroy()
@@ -1907,7 +1907,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
-     * Create a TiledImage Instance
+     * Create a TiledImage Instance. This instance is not integrated into the viewer
+     * and can be used to for example draw custom data in offscreen fashion by instantiating
+     * offscreen drawer, creating detached tiled images, forcing them to load certain region
+     * and calling drawer.draw([my tiled images]).
      * @param {OpenSeadragon.TileSourceSpecifier} options options to create the image. Some properties
      *   are unused, these properties drive how the image is inserted into the world, and therefore
      *   they are not used in the pure creation of the TiledImage.

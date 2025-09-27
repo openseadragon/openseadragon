@@ -2906,7 +2906,7 @@ function OpenSeadragon( options ){
      * @template T, A
      * @typedef {function(A): OpenSeadragon.Promise<T>} AsyncUnaryFunction
      * Represents an asynchronous function that:
-     * @property {A} arg - The single argument of type A.
+     * @param {A} arg - The single argument of type A.
      * @returns {OpenSeadragon.Promise<T>} A promise that resolves to a value of type T.
      */
 
@@ -2914,8 +2914,8 @@ function OpenSeadragon( options ){
      * @template T, A, B
      * @typedef {function(A, B): OpenSeadragon.Promise<T>} AsyncBinaryFunction
      * Represents an asynchronous function that:
-     * @property {A} arg1 - The first argument of type A.
-     * @property {B} arg2 - The second argument of type B.
+     * @param {A} arg1 - The first argument of type A.
+     * @param {B} arg2 - The second argument of type B.
      * @returns {OpenSeadragon.Promise<T>} A promise that resolves to a value of type T.
      */
 

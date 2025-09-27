@@ -172,7 +172,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 let targetIndex = Math.min(item._optimalWorldIndex, this._items.length - 1);
                 const targetItem = this._items[targetIndex];
                 // update only items that are not already at their destined position
-                if (targetItem._optimalWorldIndex === targetItem) {
+                if (targetItem._optimalWorldIndex === targetIndex) {
                     if (targetItem === this._items.length) {
                         targetIndex = ++item._optimalWorldIndex;
                     } else {
@@ -296,15 +296,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @return {OpenSeadragon.Promise<?>}
      */
     requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
-        $.__updated = tStamp;
-
-        // Find the earliest needed timestamp
-        let drawnTstamp = Infinity;
-        for (const item of this._items) {
-            if (item._lastDrawn.length) {
-                drawnTstamp = Math.min(drawnTstamp, item._lastDrawn[0].tile.lastTouchTime);
-            }
-        }
+        $.__invalidatedAt = tStamp;
 
         const allTiles = this.viewer.tileCache.getLoadedTilesFor(null);
         const tilesToRestore = new Array(allTiles.length);
@@ -458,7 +450,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             return eventTarget.raiseEventAwaiting('tile-invalidated', {
                 tile: tile,
                 tiledImage: tiledImage,
-                outdated: () => this.viewer.isDestroyed() || originalCache.__invStamp !== tStamp || (!tile.loaded && !tile.loading),
+                outdated: () => this.viewer.isDestroyed() || originalCache.__invStamp < $.__invalidatedAt || (!tile.loaded && !tile.loading),
                 getData: getWorkingCacheData,
                 setData: setWorkingCacheData,
                 resetData: () => {
@@ -470,6 +462,12 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }).then(_ => {
                 if (this.viewer.isDestroyed()) {
                     return null;
+                }
+
+                if (originalCache.__invStamp < $.__invalidatedAt && (tile.loaded || tile.loading)) {
+                    // todo consider some recursion loop prevention
+                    originalCache.__invStamp = null;
+                    return this.requestTileInvalidateEvent([tile], tStamp, restoreTiles, true);
                 }
 
                 if (originalCache.__invStamp === tStamp && (tile.loaded || tile.loading)) {
@@ -500,7 +498,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                         originalCache.__invStamp = null;
                     });
 
-                } else if (workingCache) {
+                }
+
+                if (workingCache) {
                     workingCache.destroy();
                     workingCache = null;
                 }

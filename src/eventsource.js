@@ -45,7 +45,7 @@
  *
  * @typedef {function(OpenSeadragon.Event): void} OpenSeadragon.EventHandler
  * @memberof OpenSeadragon
- * @property {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
  * @returns {void} This handler does not return a value.
  */
 
@@ -54,7 +54,7 @@
  *
  * @typedef {function(OpenSeadragon.Event): Promise<void>} OpenSeadragon.AsyncEventHandler
  * @memberof OpenSeadragon
- * @property {OpenSeadragon.Event} event - The event object containing event-specific properties.
+ * @param {OpenSeadragon.Event} event - The event object containing event-specific properties.
  * @returns {Promise<void>} This handler does not return a value.
  */
 
