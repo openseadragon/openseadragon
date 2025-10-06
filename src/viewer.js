@@ -897,13 +897,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         const _this = this;
 
         // Return a Promise that will resolve/reject based on tile loading success/failure
-        return new $.Promise((resolve, reject) => {
+        return new $.Promise(function(resolve, reject) {
             // First, close any existing content
             this.close();
 
             if (!tileSources) {
                 resolve(this);
-                return this;
+                return;
             }
 
             if (this.sequenceMode && $.isArray(tileSources)) {
@@ -932,7 +932,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     resolve(this);
                 }
 
-                return this;
+                return;
             }
 
             if (!$.isArray(tileSources)) {
@@ -941,7 +941,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
             if (!tileSources.length) {
                 resolve(this);
-                return this;
+                return;
             }
 
             this._opening = true;
