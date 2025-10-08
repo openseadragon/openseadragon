@@ -260,10 +260,10 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     /**
      * Processing promise, resolves when the tile exits processing, or
      * resolves immediatelly if not in the processing state.
-     * @member {OpenSeadragon.Promise}
+     * @member {OpenSeadragon.Promise<OpenSeadragon.Tile>}
      * @private
      */
-    this.processingPromise = $.Promise.resolve();
+    this.processingPromise = $.Promise.resolve(this);
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -663,7 +663,7 @@ $.Tile.prototype = {
      * @returns {number} number of caches
      */
     getCacheSize: function() {
-        return Object.values(this._caches).length;
+        return Object.keys(this._caches).length;
     },
 
     /**
@@ -802,7 +802,6 @@ $.Tile.prototype = {
     _unload: function () {
         this.tiledImage = null;
         this._caches    = {};
-        this._cacheSize = 0;
         this.loaded     = false;
         this.loading    = false;
         this._cKey      = this._ocKey;

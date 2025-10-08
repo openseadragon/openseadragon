@@ -1837,19 +1837,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
 
+        // ensure nobody provided such entry
+        delete myQueueItem.tiledImage;
         options.success = event => {
-            const tiledImage = event.item;
-            myQueueItem.tileSource = tiledImage.source;
+            myQueueItem.tiledImage = event.item;
             myQueueItem.originalSuccess = originalSuccess;
 
             let queueItem, optionsClone;
             while (this._loadQueue.length) {
                 queueItem = this._loadQueue[0];
-                if (!queueItem.tileSource) {
+                const tiledImage = queueItem.tiledImage;
+                if (!tiledImage) {
                     break;
                 }
 
                 this._loadQueue.splice(0, 1);
+                const tileSource = tiledImage.source;
 
                 if (queueItem.options.replace) {
                     const replaced = queueItem.options.replaceItem;
@@ -1857,7 +1860,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     if (newIndex !== -1) {
                         queueItem.options.index = newIndex;
                     }
-                    if (!replaced._zombieCache && replaced.source.equals(queueItem.tileSource)) {
+                    if (!replaced._zombieCache && replaced.source.equals(tileSource)) {
                         replaced.allowZombieCache(true);
                     }
                     this.world.removeItem(replaced);
@@ -1871,7 +1874,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     optionsClone = $.extend({}, queueItem.options, {
                         replace: false, // navigator already removed the layer, nothing to replace
                         originalTiledImage: tiledImage,
-                        tileSource: queueItem.tileSource
+                        tileSource: tileSource
                     });
 
                     this.navigator.addTiledImage(optionsClone);
@@ -1903,7 +1906,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         };
         options.error = raiseAddItemFailed;
-        this.createTiledImage(options);
+        this.instantiateTileImageClass(options);
     },
 
     /**
@@ -1914,8 +1917,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {OpenSeadragon.TileSourceSpecifier} options options to create the image. Some properties
      *   are unused, these properties drive how the image is inserted into the world, and therefore
      *   they are not used in the pure creation of the TiledImage.
+     * @function
      */
-    createTiledImage: function (options) {
+    instantiateTileImageClass: function (options) {
         if (options.placeholderFillStyle === undefined) {
             options.placeholderFillStyle = this.placeholderFillStyle;
         }

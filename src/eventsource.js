@@ -206,7 +206,7 @@ $.EventSource.prototype = {
                     args.userData = events[ i ].userData;
                     events[ i ].handler( args );
 
-                    if (args.stopPropagation) {
+                    if (args.stopPropagation && (typeof args.stopPropagation !== "function" || args.stopPropagation() === true)) {
                         break;
                     }
                 }
@@ -246,10 +246,10 @@ $.EventSource.prototype = {
                     let result = events[ index ].handler( args );
                     result = (!result || $.type(result) !== "promise") ? $.Promise.resolve() : result;
                     return result.then(() => {
-                        if (!args.stopPropagation) {
+                        if (!args.stopPropagation || (typeof args.stopPropagation === "function" && args.stopPropagation() === false)) {
                             return loop(index + 1);
                         }
-                        return undefined;
+                        return loop(length);
                     });
                 }
                 loop(0);
