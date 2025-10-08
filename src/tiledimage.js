@@ -1755,13 +1755,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     if (tile.opacity === 1) {
                         this._setCoverage( this.coverage, level, x, y, true );
                     }
-                    this._positionTile(
-                        tile,
-                        this.source.tileOverlap,
-                        this.viewport,
-                        viewportCenter,
-                        levelVisibility
-                    );
 
                     // Tiles are carried in info objects
                     tilesToDraw[tileIndex++] = {
