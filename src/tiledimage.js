@@ -1750,10 +1750,29 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._setCoverage( this.coverage, level, x, y, false );
 
-            if (tile.exists && tile.loaded) {
-                if (tile.opacity === 1) {
-                    this._setCoverage( this.coverage, level, x, y, true );
+            if (tile.exists) {
+                if (tile.loaded) {
+                    if (tile.opacity === 1) {
+                        this._setCoverage( this.coverage, level, x, y, true );
+                    }
+                    this._positionTile(
+                        tile,
+                        this.source.tileOverlap,
+                        this.viewport,
+                        viewportCenter,
+                        levelVisibility
+                    );
+
+                    // Tiles are carried in info objects
+                    tilesToDraw[tileIndex++] = {
+                        tile: tile,
+                        level: level,
+                        levelOpacity: levelOpacity,
+                        currentTime: currentTime
+                    };
+                    this._setCoverage(this.loadingCoverage, level, x, y, true);
                 }
+
                 this._positionTile(
                     tile,
                     this.source.tileOverlap,
@@ -1761,15 +1780,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     viewportCenter,
                     levelVisibility
                 );
-
-                // Tiles are carried in info objects
-                tilesToDraw[tileIndex++] = {
-                    tile: tile,
-                    level: level,
-                    levelOpacity: levelOpacity,
-                    currentTime: currentTime
-                };
-                this._setCoverage(this.loadingCoverage, level, x, y, true);
             }
 
             /////////////////////////////////////////////////////
