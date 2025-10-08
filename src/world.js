@@ -330,7 +330,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * Requests tile data update.
      * @function OpenSeadragon.Viewer.prototype._updateSequenceButtons
      * @private
-     * @param {Iterable<OpenSeadragon.Tile>} tilesToProcess tiles to update
+     * @param {OpenSeadragon.Tile[]} tilesToProcess tiles to update
      * @param {Number} tStamp timestamp in milliseconds, if active timestamp of the same value is executing,
      *   changes are added to the cycle, else they await next iteration
      * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
@@ -349,40 +349,35 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             tStamp = this.__invalidatedAt;
         }
 
-        const tileList = [];
-        for (const tile of tilesToProcess) {
-            // We allow re-execution on tiles that are in process but have too low processing timestamp,
-            // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
-            // pipeline take no effect.
-            if (!tile || (!_allowTileUnloaded && !tile.loaded && !tile.processing)) {
-                // window.logCache(`Ignoring tile ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
-                continue;
-            }
-            const tileCache = tile.getCache(tile.originalCacheKey);
-            if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
-                // window.logCache(`Ignoring tile - old,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
-                continue;
-            }
-            tileList.push(tile);
-        }
-
-        if (!tileList.length) {
-            return $.Promise.resolve();
-        }
-
         // We call the event on the parent viewer window no matter what
         const eventTarget = this.viewer.viewer || this.viewer;
         // However, we must pick the correct drawer reference (navigator VS viewer)
         const drawer = this.viewer.drawer;
         const tilesThatNeedReprocessing = [];
 
-        const jobList = tileList.map(tile => {
+        const jobList = tilesToProcess.map(tile => {
+            // We allow re-execution on tiles that are in process but have too low processing timestamp,
+            // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
+            // pipeline take no effect.
+            // Note that in the same list we can have tiles that have shared cache and such
+            // cache needs to be processed just once.
+            if (!tile || (!_allowTileUnloaded && !tile.loaded && !tile.processing)) {
+                // window.logCache(`Ignoring tile ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                return Promise.resolve();
+            }
+
             const tiledImage = tile.tiledImage;
             const originalCache = tile.getCache(tile.originalCacheKey);
+            const tileCache = tile.getCache(tile.originalCacheKey);
+            if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
+                // window.logCache(`Ignoring tile - old,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                return Promise.resolve();
+            }
 
 
             let wasOutdatedRun = false;
             if (originalCache.__finishProcessing) {
+                // window.logCache(`                 Tile Pre-Finisher,  ${tile ? tile.toString() : 'null'} as Invalid from future ${tStamp}`);
                 originalCache.__finishProcessing(true);
             }
 
@@ -426,7 +421,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 });
             };
             const setWorkingCacheData = (value, type) => {
-                // window.logCache(`        WORKER tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                // // window.logCache(`        WORKER tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
                 if (!workingCache) {
                     workingCache = new $.CacheRecord().withTileReference(tile);
                     workingCache.addTile(tile, value, type);
