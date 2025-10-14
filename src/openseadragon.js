@@ -190,8 +190,8 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
-  * @property {String|DrawerImplementation|Array} [drawer = ['webgl', 'canvas', 'html']]
-  *     Which drawer to use. Valid strings are 'webgl', 'canvas', and 'html'. Valid drawer
+  * @property {String|DrawerImplementation|Array} [drawer = ['webgl2', 'webgl', 'canvas', 'html']]
+  *     Which drawer to use. Valid strings are 'webgl2', 'webgl', 'canvas', and 'html'. Valid drawer
   *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
   *     of different implementations, which will be tried in order based on browser support.
@@ -214,7 +214,7 @@
   *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
-  *     Image smoothing for rendering (only if the canvas or webgl drawer is used). Note: Ignored
+  *     Image smoothing for rendering (only if the canvas, webgl, or webgl2 drawer is used). Note: Ignored
   *     by some (especially older) browsers which do not support this canvas property.
   *     This property can be changed in {@link Viewer.DrawerBase.setImageSmoothingEnabled}.
   *
@@ -774,7 +774,7 @@
 /**
  * @typedef {OpenSeadragon.BaseDrawerOptions} OpenSeadragon.WebGLDrawerOptions
  * @memberof OpenSeadragon
- * @property {Boolean} [unpackWithPremultipliedAlpha=false]
+ * @property {Boolean} [unpackWithPremultipliedAlpha=true]
  *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
  */
 
