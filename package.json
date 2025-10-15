@@ -30,6 +30,7 @@
         "url": "https://github.com/openseadragon/openseadragon.git"
     },
     "devDependencies": {
+        "@size-limit/file": "^11.2.0",
         "bundlesize": "^0.18.2",
         "eslint-plugin-compat": "^6.0.2",
         "grunt": "^1.6.1",

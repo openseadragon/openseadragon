@@ -53,7 +53,7 @@ jobs:
           echo "pr_full_gzip=$PR_FULL_GZIP" >> $GITHUB_OUTPUT
 
       - name: Check bundle size limits
-        run: npm run analyze
+        run: npm run bundlesize
 
       - name: Checkout base branch
         run: |

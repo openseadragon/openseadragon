@@ -72,6 +72,8 @@ The bundle size check runs automatically in CI/CD, and PRs will fail if bundle s
 - Optimizing imports
 - Refactoring large features
 
+For more details, see [Bundle Size Monitoring Documentation](docs/BUNDLE_SIZE.md).
+
 ### Testing
 
 Our tests are based on [QUnit](https://qunitjs.com/) and [Puppeteer](https://github.com/GoogleChrome/puppeteer); they're both installed when you run `npm install`. To run on the command line:
