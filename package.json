@@ -29,6 +29,8 @@
         "url": "https://github.com/openseadragon/openseadragon.git"
     },
     "devDependencies": {
+        "bundlesize": "^0.18.2",
+        "esbuild-visualizer": "^0.7.0",
         "eslint-plugin-compat": "^6.0.2",
         "grunt": "^1.6.1",
         "grunt-contrib-clean": "^2.0.1",
@@ -42,12 +44,27 @@
         "grunt-git-describe": "^2.4.4",
         "grunt-istanbul": "^0.8.0",
         "grunt-text-replace": "^0.4.0",
+        "gzip-size": "^7.0.0",
         "qunit": "^2.24.1"
     },
     "scripts": {
         "test": "grunt test",
         "prepare": "grunt build",
         "build": "grunt build",
-        "dev": "grunt dev"
-    }
+        "dev": "grunt dev",
+        "analyze": "bundlesize",
+        "package": "grunt package"
+    },
+    "bundlesize": [
+        {
+            "path": "build/openseadragon/openseadragon.min.js",
+            "maxSize": "80 kB",
+            "compression": "gzip"
+        },
+        {
+            "path": "build/openseadragon/openseadragon.min.js",
+            "maxSize": "320 kB",
+            "compression": "none"
+        }
+    ]
 }
