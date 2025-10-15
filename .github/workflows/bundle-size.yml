@@ -13,8 +13,9 @@ jobs:
     name: Check Bundle Size
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: write
       contents: read
+      pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,6 +81,7 @@ jobs:
       - name: Calculate size differences and create comment
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prMinSize = parseInt('${{ steps.pr_size.outputs.pr_min_size }}');
             const prFullSize = parseInt('${{ steps.pr_size.outputs.pr_full_size }}');
