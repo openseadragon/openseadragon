@@ -7,4 +7,17 @@ sudo: false
 node_js:
   - lts/*
 before_install:
-  - npm install -g grunt-cli
+  # Install Bun
+  - curl -fsSL https://bun.sh/install | bash
+  - export PATH="$HOME/.bun/bin:$PATH"
+  - bun --version
+install:
+  # Install dependencies with Bun
+  - bun install
+script:
+  # Run linting
+  - bun run lint
+  # Run build
+  - bun run build
+  # Run tests (manual testing required, automated tests have timing issues)
+  - bun run test:auto
