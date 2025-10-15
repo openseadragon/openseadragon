@@ -1,0 +1,164 @@
+name: 'Bundle Size Check'
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'Gruntfile.js'
+      - 'package.json'
+      - '.github/workflows/bundle-size.yml'
+
+jobs:
+  check_bundle_size:
+    name: Check Bundle Size
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          cache: npm
+          node-version: lts/*
+
+      - name: Install dependencies (PR branch)
+        run: |
+          npm install -g grunt-cli
+          npm ci
+
+      - name: Build PR branch
+        run: npm run build
+
+      - name: Get PR branch bundle sizes
+        id: pr_size
+        run: |
+          # Get file sizes
+          PR_MIN_SIZE=$(stat -f%z "build/openseadragon/openseadragon.min.js" 2>/dev/null || stat -c%s "build/openseadragon/openseadragon.min.js")
+          PR_FULL_SIZE=$(stat -f%z "build/openseadragon/openseadragon.js" 2>/dev/null || stat -c%s "build/openseadragon/openseadragon.js")
+
+          # Get gzipped sizes
+          PR_MIN_GZIP=$(gzip -c "build/openseadragon/openseadragon.min.js" | wc -c | tr -d ' ')
+          PR_FULL_GZIP=$(gzip -c "build/openseadragon/openseadragon.js" | wc -c | tr -d ' ')
+
+          echo "pr_min_size=$PR_MIN_SIZE" >> $GITHUB_OUTPUT
+          echo "pr_full_size=$PR_FULL_SIZE" >> $GITHUB_OUTPUT
+          echo "pr_min_gzip=$PR_MIN_GZIP" >> $GITHUB_OUTPUT
+          echo "pr_full_gzip=$PR_FULL_GZIP" >> $GITHUB_OUTPUT
+
+      - name: Check bundle size limits
+        run: npm run analyze
+
+      - name: Checkout base branch
+        run: |
+          git checkout ${{ github.base_ref }}
+
+      - name: Clean and rebuild base branch
+        run: |
+          npm ci
+          npm run build
+
+      - name: Get base branch bundle sizes
+        id: base_size
+        run: |
+          # Get file sizes
+          BASE_MIN_SIZE=$(stat -f%z "build/openseadragon/openseadragon.min.js" 2>/dev/null || stat -c%s "build/openseadragon/openseadragon.min.js")
+          BASE_FULL_SIZE=$(stat -f%z "build/openseadragon/openseadragon.js" 2>/dev/null || stat -c%s "build/openseadragon/openseadragon.js")
+
+          # Get gzipped sizes
+          BASE_MIN_GZIP=$(gzip -c "build/openseadragon/openseadragon.min.js" | wc -c | tr -d ' ')
+          BASE_FULL_GZIP=$(gzip -c "build/openseadragon/openseadragon.js" | wc -c | tr -d ' ')
+
+          echo "base_min_size=$BASE_MIN_SIZE" >> $GITHUB_OUTPUT
+          echo "base_full_size=$BASE_FULL_SIZE" >> $GITHUB_OUTPUT
+          echo "base_min_gzip=$BASE_MIN_GZIP" >> $GITHUB_OUTPUT
+          echo "base_full_gzip=$BASE_FULL_GZIP" >> $GITHUB_OUTPUT
+
+      - name: Calculate size differences and create comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prMinSize = parseInt('${{ steps.pr_size.outputs.pr_min_size }}');
+            const prFullSize = parseInt('${{ steps.pr_size.outputs.pr_full_size }}');
+            const prMinGzip = parseInt('${{ steps.pr_size.outputs.pr_min_gzip }}');
+            const prFullGzip = parseInt('${{ steps.pr_size.outputs.pr_full_gzip }}');
+
+            const baseMinSize = parseInt('${{ steps.base_size.outputs.base_min_size }}');
+            const baseFullSize = parseInt('${{ steps.base_size.outputs.base_full_size }}');
+            const baseMinGzip = parseInt('${{ steps.base_size.outputs.base_min_gzip }}');
+            const baseFullGzip = parseInt('${{ steps.base_size.outputs.base_full_gzip }}');
+
+            const formatBytes = (bytes) => {
+              if (bytes === 0) return '0 B';
+              const k = 1024;
+              const sizes = ['B', 'KB', 'MB'];
+              const i = Math.floor(Math.log(bytes) / Math.log(k));
+              return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            };
+
+            const formatDiff = (current, base) => {
+              const diff = current - base;
+              const diffPercent = ((diff / base) * 100).toFixed(2);
+              const sign = diff > 0 ? '+' : '';
+              const emoji = diff > 0 ? '📈' : diff < 0 ? '📉' : '➡️';
+              return `${emoji} ${sign}${formatBytes(diff)} (${sign}${diffPercent}%)`;
+            };
+
+            const minDiff = prMinSize - baseMinSize;
+            const minGzipDiff = prMinGzip - baseMinGzip;
+            const minStatus = minGzipDiff > 0 ? '⚠️' : '✅';
+
+            const comment = `## 📦 Bundle Size Report
+
+            ### Minified Bundle
+            | Metric | Base | PR | Change |
+            |--------|------|-----|--------|
+            | **Size** | ${formatBytes(baseMinSize)} | ${formatBytes(prMinSize)} | ${formatDiff(prMinSize, baseMinSize)} |
+            | **Gzipped** | ${formatBytes(baseMinGzip)} | ${formatBytes(prMinGzip)} | ${formatDiff(prMinGzip, baseMinGzip)} |
+
+            ### Full Bundle (unminified)
+            | Metric | Base | PR | Change |
+            |--------|------|-----|--------|
+            | **Size** | ${formatBytes(baseFullSize)} | ${formatBytes(prFullSize)} | ${formatDiff(prFullSize, baseFullSize)} |
+            | **Gzipped** | ${formatBytes(baseFullGzip)} | ${formatBytes(prFullGzip)} | ${formatDiff(prFullGzip, baseFullGzip)} |
+
+            ### Status
+            ${minStatus} **Minified gzipped size**: ${formatBytes(prMinGzip)} (limit: 80 KB)
+
+            ${minGzipDiff > 0 ? '⚠️ **Warning**: Bundle size increased' : minGzipDiff < 0 ? '🎉 **Great**: Bundle size decreased!' : '✨ **Good**: No change in bundle size'}
+
+            ---
+            <sub>Measured on ${new Date().toLocaleString()}</sub>
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Bundle Size Report')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
