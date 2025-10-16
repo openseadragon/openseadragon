@@ -91,13 +91,18 @@ async function copyImages() {
         mkdirSync(targetDir, { recursive: true });
     }
 
-    // Copy all files from images directory
-    const proc = Bun.spawn(["cp", "-r", "images/", targetDir], {
-        stdout: "pipe",
-        stderr: "pipe",
-    });
+    // Copy all files from images directory (cross-platform)
+    const { readdirSync, copyFileSync } = await import("fs");
+    const { join } = await import("path");
 
-    await proc.exited;
+    const sourceDir = "images";
+    const files = readdirSync(sourceDir);
+
+    for (const file of files) {
+        const sourcePath = join(sourceDir, file);
+        const targetPath = join(targetDir, file);
+        copyFileSync(sourcePath, targetPath);
+    }
 }
 
 async function buildBundle(options: BuildOptions = {}) {
