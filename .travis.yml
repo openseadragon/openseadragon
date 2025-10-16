@@ -6,6 +6,8 @@ language: node_js
 sudo: false
 node_js:
   - lts/*
+addons:
+  chrome: stable
 before_install:
   # Install Bun
   - curl -fsSL https://bun.sh/install | bash
@@ -14,10 +16,12 @@ before_install:
 install:
   # Install dependencies with Bun
   - bun install
+  # Install Chrome for Puppeteer
+  - npx puppeteer browsers install chrome
 script:
   # Run linting
   - bun run lint
   # Run build
   - bun run build
-  # Run tests (manual testing required, automated tests have timing issues)
+  # Run tests
   - bun run test:auto
