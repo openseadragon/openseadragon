@@ -21,18 +21,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          cache: npm
-          cache-dependency-path: package.json
-          node-version: lts/*
+          bun-version: latest
 
-      - name: Setup environment and install dependencies
-        run: |
-          npm install -g grunt-cli
-          npm ci
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run linter
+        run: bun run lint
 
       - name: Run tests
-        run: |
-          npm run test
+        run: bun run test:auto
 
