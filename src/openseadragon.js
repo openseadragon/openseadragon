@@ -1992,6 +1992,42 @@ function OpenSeadragon( options ){
             return wrappers[0];
         },
 
+        /**
+         * Log trace information from the system. Useful for logging and debugging
+         * async events. Calls to this function SHOULD NOT BE present in the release.
+         * (or at least used only in debug mode).
+         * @param {OpenSeadragon.Tile|OpenSeadragon.CacheRecord|string} tile message to log or tile to inspect
+         * @param {boolean} stacktrace if true log the stacktrace
+         */
+        trace: function(tile, stacktrace = false) {
+            this.__traceLogs = [];
+            setInterval(() => {
+                if (!this.__traceLogs.length) {
+                    return;
+                }
+                console.log(this.__traceLogs.join('\n'));
+                this.__traceLogs = [];
+            }, 2000);
+            this.trace = function (tile, stacktrace = false) {
+                if (typeof tile === 'string') {
+                    this.__traceLogs.push(tile);
+                    if (stacktrace) {
+                        this.__traceLogs.push(...new Error().stack.split('\n').slice(1));
+                    }
+                    return;
+                }
+                if (tile instanceof OpenSeadragon.Tile) {
+                    tile = tile.getCache(tile.originalCacheKey);
+                }
+                const cacheTile = tile._tiles[0];
+                this.__traceLogs.push(`Cache ${cacheTile.toString()} loaded ${cacheTile.loaded} loading ${cacheTile.loading} cacheCount ${Object.keys(cacheTile._caches).length} - CACHE ${tile.__invStamp}`);
+                if (stacktrace) {
+                    this.__traceLogs.push(...new Error().stack.split('\n').slice(1));
+                }
+            };
+            this.trace(tile, stacktrace);
+        },
+
 
         /**
          * Creates an easily positionable element of the given type that therefor

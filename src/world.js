@@ -34,34 +34,6 @@
 
 (function( $ ){
 
-// For async debugging to avoid console forced synchronization,
-// use this buffered logger.
-var _logs = [];
-setInterval(() => {
-    if (!_logs.length) {
-        return;
-    }
-    console.log(_logs.join('\n'));
-    _logs = [];
-}, 2000);
-window.logCache = function (tile, trace = false) {
-    if (typeof tile === 'string') {
-        _logs.push(tile);
-        if (trace) {
-            _logs.push(...new Error().stack.split('\n').slice(1));
-        }
-        return;
-    }
-    if (tile instanceof OpenSeadragon.Tile) {
-        tile = tile.getCache(tile.originalCacheKey);
-    }
-    const cacheTile = tile._tiles[0];
-    _logs.push(`Cache ${cacheTile.toString()} loaded ${cacheTile.loaded} loading ${cacheTile.loading} cacheCount ${Object.keys(cacheTile._caches).length} - CACHE ${tile.__invStamp}`);
-    if (trace) {
-        _logs.push(...new Error().stack.split('\n').slice(1));
-    }
-};
-
 /**
  * @class World
  * @memberof OpenSeadragon
@@ -276,7 +248,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         //
         // this.__invalidatedAt = tStamp;
         // const batch = this.viewer.tileCache.getLoadedTilesFor(null);
-        // window.logCache(`Invalidate request ${tStamp} - ${batch.length} tiles`);
+        // OpenSeadragon.trace(`Invalidate request ${tStamp} - ${batch.length} tiles`);
         // return this.requestTileInvalidateEvent(batch, tStamp, restoreTiles);
         //
         // This makes the code easier to reason about. Also, recommended is to put logging
@@ -321,8 +293,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }
         }
         tilesToRestore.length = restoreIndex;
-        // window.logCache(`Invalidate request ${tStamp} - ${tilesToRestore.length} tiles`);
-
         return this.requestTileInvalidateEvent(tilesToRestore, tStamp, restoreTiles);
     },
 
@@ -362,7 +332,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             // Note that in the same list we can have tiles that have shared cache and such
             // cache needs to be processed just once.
             if (!tile || (!_allowTileUnloaded && !tile.loaded && !tile.processing)) {
-                // window.logCache(`Ignoring tile ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                // OpenSeadragon.trace(`Ignoring tile ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
                 return Promise.resolve();
             }
 
@@ -370,21 +340,21 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             const originalCache = tile.getCache(tile.originalCacheKey);
             const tileCache = tile.getCache(tile.originalCacheKey);
             if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
-                // window.logCache(`Ignoring tile - old,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                // OpenSeadragon.trace(`Ignoring tile - old,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
                 return Promise.resolve();
             }
 
 
             let wasOutdatedRun = false;
             if (originalCache.__finishProcessing) {
-                // window.logCache(`                 Tile Pre-Finisher,  ${tile ? tile.toString() : 'null'} as Invalid from future ${tStamp}`);
+                // OpenSeadragon.trace(`                 Tile Pre-Finisher,  ${tile ? tile.toString() : 'null'} as Invalid from future ${tStamp}`);
                 originalCache.__finishProcessing(true);
             }
 
             const promise = new $.Promise((resolve) => {
                 originalCache.__finishProcessing = (asInvalidRun) => {
                     wasOutdatedRun = wasOutdatedRun || asInvalidRun;
-                    // window.logCache(`                  Tile Finisher,  ${tile ? tile.toString() : 'null'} as Invalid run ${asInvalidRun} with ${tStamp}`);
+                    // OpenSeadragon.trace(`                  Tile Finisher,  ${tile ? tile.toString() : 'null'} as Invalid run ${asInvalidRun} with ${tStamp}`);
                     tile.processing = false;
                     originalCache.__finishProcessing = null;
                     resolve(tile);
@@ -421,7 +391,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 });
             };
             const setWorkingCacheData = (value, type) => {
-                // // window.logCache(`        WORKER tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                // // OpenSeadragon.trace(`        WORKER tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
                 if (!workingCache) {
                     workingCache = new $.CacheRecord().withTileReference(tile);
                     workingCache.addTile(tile, value, type);
@@ -449,7 +419,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 (originalCache.__invStamp && originalCache.__invStamp < this.__invalidatedAt) ||
                 (!tile.loaded && !tile.loading);
 
-            // window.logCache(`   Procesing tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+            // OpenSeadragon.trace(`   Procesing tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
             /**
              * @event tile-invalidated
              * @memberof OpenSeadragon.Viewer
@@ -480,7 +450,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 stopPropagation: () => {
                     const result = outdatedTest();
                     if (result) {
-                        // window.logCache( `              Stop propagation ${tile.toString()}: out: ${wasOutdatedRun} | ${originalCache.__invStamp} ${tile.loaded} ${tile.loading}`);
+                        // OpenSeadragon.trace( `              Stop propagation ${tile.toString()}: out: ${wasOutdatedRun} | ${originalCache.__invStamp} ${tile.loaded} ${tile.loading}`);
                     }
                     return result;
                 },
@@ -490,7 +460,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     return null;
                 }
 
-                // window.logCache(`           FF Ttile,  ${tile ? tile.toString() : 'null'}    FINISH   ${tStamp}`);
+                // OpenSeadragon.trace(`           FF Ttile,  ${tile ? tile.toString() : 'null'}    FINISH   ${tStamp}`);
 
                 // If we do not have the handler, we were already discarded
                 if (originalCache.__finishProcessing) {
@@ -498,16 +468,16 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     if (!wasOutdatedRun && (tile.loaded || tile.loading)) {
                         // If we find out that processing was outdated but the system did not find about this yet, request re-processing
                         if (originalCache.__invStamp < this.__invalidatedAt) {
-                            // window.logCache(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} needs reprocessing`);
+                            // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} needs reprocessing`);
                             // todo consider some recursion loop prevention
                             tilesThatNeedReprocessing.push(tile);
                             // we will let it fall through to handle later
                         } else if (originalCache.__invStamp === tStamp) {
                             // If we matched the invalidation state, ensure the new working cache (if created) is used
                             if (workingCache) {
-                                // window.logCache(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY WITH WORKING CACHE`);
+                                // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY WITH WORKING CACHE`);
                                 return workingCache.prepareForRendering(drawer).then(c => {
-                                    // window.logCache(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP ${tStamp}`);
+                                    // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP ${tStamp}`);
 
                                     // Inside async then, we need to again check validity of the state
                                     if (!wasOutdatedRun) {
@@ -527,13 +497,13 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
                             // If we requested restore, restore to originalCacheKey
                             if (restoreTiles) {
-                                // window.logCache(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY RESTORE`);
+                                // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY RESTORE`);
 
                                 const mainCacheRef = tile.getCache();
                                 const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
                                 if (mainCacheRef !== freshOriginalCacheRef) {
                                     return freshOriginalCacheRef.prepareForRendering(drawer).then((c) => {
-                                        // window.logCache(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP2 ${tStamp}`);
+                                        // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP2 ${tStamp}`);
                                         // Inside async then, we need to again check validity of the state
                                         if (!wasOutdatedRun) {
                                             if (!outdatedTest() && c) {
@@ -543,7 +513,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                                         }
                                     });
                                 } else {
-                                    // window.logCache(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY NOOP`);
+                                    // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY NOOP`);
                                     return null;
                                 }
                             }
@@ -556,7 +526,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
                         // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
                         if (_isFromTileLoad) {
-                            // window.logCache(`                             Ttile,  ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp}`);
+                            // OpenSeadragon.trace(`                             Ttile,  ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp}`);
                             const freshMainCacheRef = tile.getCache();
                             return freshMainCacheRef.prepareForRendering(drawer).then(() => {
                                 // Inside async then, we need to again check validity of the state
@@ -565,14 +535,14 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                                 }
                                 // else: do not destroy, we are the initial base cache, the system will remove
                                 // any rendering internal cache on events such as atomic cache swap
-                                // window.logCache(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
+                                // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
                             });
                         }
                         originalCache.__finishProcessing();
                         return null;
                     }
                     // else invalid state, let this fall through
-                    // window.logCache(`Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} discard`);
+                    // OpenSeadragon.trace(`Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} discard`);
                     if (!wasOutdatedRun) {
                         originalCache.__finishProcessing(true);
                     }
@@ -580,10 +550,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
                 // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
                 if (_isFromTileLoad) {
-                    // window.logCache(`                             Ttile,  ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp} - from invalid event!`);
+                    // OpenSeadragon.trace(`                             Ttile,  ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp} - from invalid event!`);
                     const freshMainCacheRef = tile.getCache();
                     return freshMainCacheRef.prepareForRendering(drawer).then(() => {
-                        // window.logCache(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
+                        // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
                         if (!wasOutdatedRun && originalCache.__finishProcessing) {
                             originalCache.__finishProcessing();
                         }
@@ -642,7 +612,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }
         }
         if (updateList && updateList.length) {
-            // window.logCache(`Ensure tiles up to date ${this.__invalidatedAt} - ${updateList.length} tiles`);
+            // OpenSeadragon.trace(`Ensure tiles up to date ${this.__invalidatedAt} - ${updateList.length} tiles`);
             this.requestTileInvalidateEvent(updateList, $.now(), wasRestored, false);
         }
     },
