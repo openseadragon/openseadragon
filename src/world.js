@@ -351,20 +351,34 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 originalCache.__finishProcessing(true);
             }
 
-            const promise = new $.Promise((resolve) => {
-                originalCache.__finishProcessing = (asInvalidRun) => {
-                    wasOutdatedRun = wasOutdatedRun || asInvalidRun;
-                    // OpenSeadragon.trace(`                  Tile Finisher,  ${tile ? tile.toString() : 'null'} as Invalid run ${asInvalidRun} with ${tStamp}`);
-                    tile.processing = false;
-                    originalCache.__finishProcessing = null;
-                    resolve(tile);
-                };
-            });
+            // Keep the original promise alive until the processing finished normally. If the
+            // processing was interrupted, the old promise gets reused in the new run - awaited logics
+            // will wait for proper invalidation finish.
+            let promise;
+            if (!originalCache.__resolve) {
+                promise = new $.Promise((resolve) => {
+                    originalCache.__resolve = resolve;
+                });
+            }
+
+            originalCache.__finishProcessing = (asInvalidRun) => {
+                wasOutdatedRun = wasOutdatedRun || asInvalidRun;
+                // OpenSeadragon.trace(`                  Tile Finisher, ${tile ? tile.toString() : 'null'} as Invalid run ${asInvalidRun} with ${tStamp}`);
+                tile.processing = false;
+                originalCache.__finishProcessing = null;
+                // resolve only when finished without interruption
+                if (!asInvalidRun) {
+                    originalCache.__resolve(tile);
+                    originalCache.__resolve = null;
+                }
+            };
 
             for (const t of originalCache._tiles) {
                 // Mark all related tiles as processing and register callback to unmark later on
                 t.processing = tStamp;
-                t.processingPromise = promise;
+                if (promise) {
+                    t.processingPromise = promise;
+                }
             }
             originalCache.__invStamp = tStamp;
             originalCache.__wasRestored = restoreTiles;
@@ -419,7 +433,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 (originalCache.__invStamp && originalCache.__invStamp < this.__invalidatedAt) ||
                 (!tile.loaded && !tile.loading);
 
-            // OpenSeadragon.trace(`   Procesing tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+            // OpenSeadragon.trace(`   Procesing tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
             /**
              * @event tile-invalidated
              * @memberof OpenSeadragon.Viewer
@@ -460,7 +474,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     return null;
                 }
 
-                // OpenSeadragon.trace(`           FF Ttile,  ${tile ? tile.toString() : 'null'}    FINISH   ${tStamp}`);
+                // OpenSeadragon.trace(`           FF Tile, ${tile ? tile.toString() : 'null'}    FINISH   ${tStamp}`);
 
                 // If we do not have the handler, we were already discarded
                 if (originalCache.__finishProcessing) {
@@ -468,16 +482,16 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     if (!wasOutdatedRun && (tile.loaded || tile.loading)) {
                         // If we find out that processing was outdated but the system did not find about this yet, request re-processing
                         if (originalCache.__invStamp < this.__invalidatedAt) {
-                            // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} needs reprocessing`);
+                            // OpenSeadragon.trace(`         Tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} needs reprocessing`);
                             // todo consider some recursion loop prevention
                             tilesThatNeedReprocessing.push(tile);
                             // we will let it fall through to handle later
                         } else if (originalCache.__invStamp === tStamp) {
                             // If we matched the invalidation state, ensure the new working cache (if created) is used
                             if (workingCache) {
-                                // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY WITH WORKING CACHE`);
+                                // OpenSeadragon.trace(`         Tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finishing normally, working cache exists.`);
                                 return workingCache.prepareForRendering(drawer).then(c => {
-                                    // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP ${tStamp}`);
+                                    // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'} swapping working cache ${tStamp}`);
 
                                     // Inside async then, we need to again check validity of the state
                                     if (!wasOutdatedRun) {
@@ -497,13 +511,13 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
                             // If we requested restore, restore to originalCacheKey
                             if (restoreTiles) {
-                                // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY RESTORE`);
+                                // OpenSeadragon.trace(`         Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finishing normally, original data restored.`);
 
                                 const mainCacheRef = tile.getCache();
                                 const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
                                 if (mainCacheRef !== freshOriginalCacheRef) {
                                     return freshOriginalCacheRef.prepareForRendering(drawer).then((c) => {
-                                        // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP2 ${tStamp}`);
+                                        // OpenSeadragon.trace(`            Tile, ${tile ? tile.toString() : 'null'}  SWAP2 ${tStamp}`);
                                         // Inside async then, we need to again check validity of the state
                                         if (!wasOutdatedRun) {
                                             if (!outdatedTest() && c) {
@@ -513,7 +527,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                                         }
                                     });
                                 } else {
-                                    // OpenSeadragon.trace(`         Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} OKAY NOOP`);
+                                    // OpenSeadragon.trace(`         Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finished - no need to swap cache.`);
                                     return null;
                                 }
                             }
@@ -526,7 +540,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
                         // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
                         if (_isFromTileLoad) {
-                            // OpenSeadragon.trace(`                             Ttile,  ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp}`);
+                            // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp}`);
                             const freshMainCacheRef = tile.getCache();
                             return freshMainCacheRef.prepareForRendering(drawer).then(() => {
                                 // Inside async then, we need to again check validity of the state
@@ -535,14 +549,14 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                                 }
                                 // else: do not destroy, we are the initial base cache, the system will remove
                                 // any rendering internal cache on events such as atomic cache swap
-                                // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
+                                // OpenSeadragon.trace(`            Tile, ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
                             });
                         }
                         originalCache.__finishProcessing();
                         return null;
                     }
                     // else invalid state, let this fall through
-                    // OpenSeadragon.trace(`Ttile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} discard`);
+                    // OpenSeadragon.trace(`Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} discarded.`);
                     if (!wasOutdatedRun) {
                         originalCache.__finishProcessing(true);
                     }
@@ -550,10 +564,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
                 // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
                 if (_isFromTileLoad) {
-                    // OpenSeadragon.trace(`                             Ttile,  ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp} - from invalid event!`);
+                    // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp} - from invalid event!`);
                     const freshMainCacheRef = tile.getCache();
                     return freshMainCacheRef.prepareForRendering(drawer).then(() => {
-                        // OpenSeadragon.trace(`            Ttile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
+                        // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
                         if (!wasOutdatedRun && originalCache.__finishProcessing) {
                             originalCache.__finishProcessing();
                         }
