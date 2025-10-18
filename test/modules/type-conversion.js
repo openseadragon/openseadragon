@@ -60,7 +60,7 @@
         return new Promise((resolve, reject) => {
             srcToImage++;
             const img = new Image();
-            img.onerror = img.onabort = reject;
+            img.onerror = img.onabort = e => reject(e.message || e);
             img.onload = () => resolve(img);
             img.src = url;
         });
@@ -386,4 +386,64 @@
             "Type not erased immediatelly as we still process the data.");
         test.ok(!conversionHappened, "We destroyed cache before conversion finished.");
     });
+
+    QUnit.test('Real types conversion', async function (test) {
+        const done = test.async();
+
+        const imageUrl = "data/A.png";
+        const image1 = await OpenSeadragon.converter.convert({}, imageUrl, "imageUrl", "image");
+
+        const blob = await OpenSeadragon.converter.convert({}, imageUrl, "imageUrl", "rasterBlob");
+        const bitmap = await OpenSeadragon.converter.convert({}, blob, "rasterBlob", "imageBitmap");
+        const image2 =  await OpenSeadragon.converter.convert({}, bitmap, "imageBitmap", "image");
+
+        const bitmap2 = await OpenSeadragon.converter.convert({}, imageUrl, "imageUrl", "imageBitmap");
+        const image3 = await OpenSeadragon.converter.convert({}, bitmap2, "imageBitmap", "image");
+
+        const test1 = await compareImages(image1, image2);
+        test.ok(test1.passed, "Images 1-2 are equal.");
+
+        const test2 = await compareImages(image1, image3);
+        test.ok(test2.passed, "Images 1-3 are equal.");
+        done();
+    });
+
+    async function compareImages(imgA, imgB, {
+        perChannel = false,       // compare RGBA channels individually
+        tolerancePct = 1.0,       // allowed % of pixels that differ (0 - 100)
+        threshold = 10            // per-pixel per-channel threshold (0 - 255)
+    } = {}) {
+        const w = imgA.naturalWidth, h = imgA.naturalHeight;
+        if (!w || !h) throw new Error("imgA has no size");
+
+        const ctxA = await OpenSeadragon.converter.convert({}, imgA, "image", "context2d");
+        const a = ctxA.getImageData(0, 0, w, h).data;
+
+        const ctxB = await OpenSeadragon.converter.convert({}, imgB, "image", "context2d");
+        const b = ctxB.getImageData(0, 0, w, h).data;
+
+        // Compare
+        const nPx = w * h;
+        let diffPixels = 0;
+        let sqErrSum = 0;
+
+        for (let i = 0; i < a.length; i += 4) {
+            const dr = Math.abs(a[i  ] - b[i  ]);
+            const dg = Math.abs(a[i+1] - b[i+1]);
+            const db = Math.abs(a[i+2] - b[i+2]);
+            const da = Math.abs(a[i+3] - b[i+3]);
+
+            const d = perChannel ? Math.max(dr, dg, db, da)
+                : Math.abs(0.2126*(a[i]-b[i]) + 0.7152*(a[i+1]-b[i+1]) + 0.0722*(a[i+2]-b[i+2]));
+
+            if (d > threshold) diffPixels++;
+            sqErrSum += dr*dr + dg*dg + db*db;  //RMSE
+        }
+
+        const diffPct = (diffPixels / nPx) * 100;
+        const rmse = Math.sqrt(sqErrSum / (nPx * 3));
+        const passed = diffPct <= tolerancePct;
+
+        return { passed, diffPct, rmse, width: w, height: h };
+    }
 })();

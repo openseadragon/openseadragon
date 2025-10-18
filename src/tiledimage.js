@@ -100,6 +100,8 @@ $.TiledImage = function( options ) {
         "[TiledImage] options.clip must be an OpenSeadragon.Rect if present");
 
     $.EventSource.call( this );
+    // Asynchronously loaded items remember where users wanted them
+    this._optimalWorldIndex = undefined;
 
     this._tileCache = options.tileCache;
     delete options.tileCache;
@@ -150,6 +152,10 @@ $.TiledImage = function( options ) {
     const ajaxHeaders = options.ajaxHeaders;
     delete options.ajaxHeaders;
 
+    // Setter ensures lowercase
+    this.crossOriginPolicy = options.crossOriginPolicy;
+    delete options.crossOriginPolicy;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -184,7 +190,6 @@ $.TiledImage = function( options ) {
         smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:                         $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:                 $.DEFAULT_SETTINGS.crossOriginPolicy,
         ajaxWithCredentials:               $.DEFAULT_SETTINGS.ajaxWithCredentials,
         placeholderFillStyle:              $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                           $.DEFAULT_SETTINGS.opacity,
@@ -365,6 +370,18 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._needsDraw = this._isBlending || this._wasBlending ||
             (this.opacity > 0 && this._lastDrawn.length < 1);
         return this._needsDraw;
+    },
+
+    get crossOriginPolicy(){
+        return this._crossOriginPolicy;
+    },
+
+    set crossOriginPolicy(crossOriginPolicy) {
+        if (typeof crossOriginPolicy === 'string') {
+            this._crossOriginPolicy = crossOriginPolicy.toLowerCase();
+        } else {
+            this._crossOriginPolicy = $.DEFAULT_SETTINGS.crossOriginPolicy;
+        }
     },
 
     /**
@@ -704,7 +721,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * 1 means original image size, 0.5 half size...
      * Viewport zoom: ratio of the displayed image's width to viewport's width.
      * 1 means identical width, 2 means image's width is twice the viewport's width...
-     * Note: not accurate with multi-image.
      * @function
      * @param {Number} imageZoom The image zoom
      * @returns {Number} viewportZoom The viewport zoom
@@ -1129,13 +1145,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const lastDrawn = this._lastDrawn;
 
         let insertionIndex = 0;
-        for (const nested of this._tilesToDraw) {
-            if (Array.isArray(nested)) {
-                for (const item of nested) {
+        for (const maybeNested of this._tilesToDraw) {
+            if (Array.isArray(maybeNested)) {
+                for (const item of maybeNested) {
                     lastDrawn[insertionIndex++] = item;
                 }
-            } else if (nested) {
-                lastDrawn[insertionIndex++] = nested;
+            } else if (maybeNested) {
+                lastDrawn[insertionIndex++] = maybeNested;
             }
         }
         lastDrawn.length = insertionIndex;
@@ -1146,15 +1162,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // mark the tiles as being drawn, so that they won't be discarded from
         // the tileCache
         insertionIndex = 0;
-        for (const nested of this._tilesToDraw) {
-            if (Array.isArray(nested)) {
-                for (const item of nested) {
-                    item.tile.beingDrawn = true;
-                    lastDrawn[insertionIndex++] = item;
+        for (const maybeNested of this._tilesToDraw) {
+            if (Array.isArray(maybeNested)) {
+                for (const item of maybeNested) {
+                    if (item.tile.loaded) {
+                        item.tile.beingDrawn = true;
+                        lastDrawn[insertionIndex++] = item;
+                    }
                 }
-            } else if (nested) {
-                nested.tile.beingDrawn = true;
-                lastDrawn[insertionIndex++] = nested;
+            } else if (maybeNested) {
+                if (maybeNested.tile.loaded) {
+                    maybeNested.tile.beingDrawn = true;
+                    lastDrawn[insertionIndex++] = maybeNested;
+                }
             }
         }
         lastDrawn.length = insertionIndex;
@@ -1498,6 +1518,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 bestLoadTileCandidates
             );
 
+            this.viewer.world.ensureTilesUpToDate(result.tilesToDraw);
+
             bestLoadTileCandidates = result.bestLoadTileCandidates;
             this._tilesToDraw[level] = result.tilesToDraw;
 
@@ -1511,14 +1533,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         // Load the new 'best' n tiles
         if (bestLoadTileCandidates && bestLoadTileCandidates.length > 0) {
-            // Avoid executing this in the frame loop
-            setTimeout(() => {
-                for (const tile of bestLoadTileCandidates) {
-                    if (tile) {
-                        this._loadTile(tile, currentTime);
-                    }
+            // We need to set loading state immediatelly, if we need setTimeout() here,
+            // we should immediatelly set loading=true to all tiles
+            for (const tile of bestLoadTileCandidates) {
+                if (tile) {
+                    this._loadTile(tile, currentTime);
                 }
-            });
+            }
             this._needsDraw = true;
             return false;
         } else {
@@ -1729,19 +1750,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._setCoverage( this.coverage, level, x, y, false );
 
-            if ( tile.exists ) {
-                if (tile.loaded && tile.opacity === 1){
-                    this._setCoverage( this.coverage, level, x, y, true );
-                }
-                this._positionTile(
-                    tile,
-                    this.source.tileOverlap,
-                    this.viewport,
-                    viewportCenter,
-                    levelVisibility
-                );
-
+            if (tile.exists) {
                 if (tile.loaded) {
+                    if (tile.opacity === 1) {
+                        this._setCoverage( this.coverage, level, x, y, true );
+                    }
+
                     // Tiles are carried in info objects
                     tilesToDraw[tileIndex++] = {
                         tile: tile,
@@ -1749,15 +1763,24 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         levelOpacity: levelOpacity,
                         currentTime: currentTime
                     };
+                    this._setCoverage(this.loadingCoverage, level, x, y, true);
                 }
+
+                this._positionTile(
+                    tile,
+                    this.source.tileOverlap,
+                    this.viewport,
+                    viewportCenter,
+                    levelVisibility
+                );
             }
 
             /////////////////////////////////////////////////////
             // Second Part: Decide if tile will be loaded      //
             /////////////////////////////////////////////////////
 
-            if (loadArea) {
-                let loadingCoverage = tile.loaded || tile.loading || this._isCovered(this.loadingCoverage, level, x, y);
+            if (loadArea && !tile.loaded) {
+                let loadingCoverage = tile.loading || this._isCovered(this.loadingCoverage, level, x, y);
                 this._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
 
                 if ( !tile.exists ) {
@@ -1765,12 +1788,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
 
                 // Try-find will populate tile with data if equal tile exists in system
-                if (!tile.loaded && !tile.loading && this._tryFindTileCacheRecord(tile)) {
+                if (!tile.loading && this._tryFindTileCacheRecord(tile)) {
                     loadingCoverage = true;
                 }
 
-                if ( tile.loading ) {
-                    // the tile is already in the download queue
+                if (tile.loading) {
+                    // the tile is already in the download queue or being processed
                     this._tilesLoading++;
                 } else if (!loadingCoverage) {
                     // add tile to best tiles to load only when not loaded already
@@ -2175,8 +2198,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         let resolver = null,
             increment = 0,
             eventFinished = false;
-        const _this = this,
-            now = $.now();
+        const _this = this;
 
         function completionCallback() {
             increment--;
@@ -2253,7 +2275,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
 
         if (tileCacheCreated) {
-            _this.viewer.world.requestTileInvalidateEvent([tile], now, false, true).then(markTileAsReady);
+            // setting invalidation tstamp to 1 makes sure any update gets applied later on
+            this.viewer.world.requestTileInvalidateEvent([tile], undefined, false, true, true).then(markTileAsReady);
         } else {
             // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             const origCache = tile.getCache(tile.originalCacheKey);
@@ -2272,7 +2295,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     t.processingPromise.then(t => {
                         const targetMainCache = t.getCache();
                         tile.setCache(t.cacheKey, targetMainCache, true, false);
-                        markTileAsReady();
+                        if (!targetMainCache.loaded) {
+                            targetMainCache.await().then(markTileAsReady);
+                        } else {
+                            markTileAsReady();
+                        }
                     });
                     return;
                 }

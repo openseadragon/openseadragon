@@ -184,11 +184,11 @@
 
             // Test cache state
             if (!this.loaded) {
-                $.console.error("Attempt to draw tile when not loaded main cache!");
+                $.console.error(`Attempt to draw cache ${this} when not loaded!`);
                 return undefined;
             }
             if (this._destroyed) {
-                $.console.error("Attempt to draw tile with destroyed main cache!");
+                $.console.error(`Attempt to draw tile with destroyed main cache ${this}!`);
                 tileToDraw._unload();  // try to restore the state so that the tile is later on fetched again
                 return undefined;
             }
@@ -198,7 +198,7 @@
             // unable to provide the rendering data immediatelly - return.
             const supportedTypes = drawer.getSupportedDataFormats();
             if (!supportedTypes.includes(this.type)) {
-                $.console.error("Attempt to draw tile with unsupported type for the target drawer!");
+                $.console.error(`Attempt to draw tile cache ${this} with unsupported type '${this.type}' for the target drawer!`);
                 this.prepareForRendering(drawer);
                 return undefined;
             }
@@ -212,7 +212,7 @@
                 // or check internal cache state before returning
                 const internalCache = this._getInternalCacheRef(drawer);
                 if (!internalCache || !internalCache.loaded) {
-                    $.console.error("Attempt to draw tile with internal cache non-ready state!");
+                    $.console.error(`Attempt to draw tile cache ${this} with internal cache non-ready state!`);
                     return undefined;
                 }
                 return internalCache;
