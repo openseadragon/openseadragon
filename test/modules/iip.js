@@ -9,12 +9,14 @@
 
     QUnit.module('IIP');
 
-    QUnit.test('IIPTileSource metadata URL', function(assert) {
-        const expectedUrl =
-            tileSource.iipsrv +
-            '?FIF=' + tileSource.image +
-            '&obj=IIP,1.0&obj=Max-size';
+    QUnit.test('IIPTileSource metadata URL', function(assert) 
+{
+const expectedUrl =
+    tileSource.iipsrv +
+    '?FIF=' + tileSource.image +
+    '&obj=IIP,1.0&obj=Max-size&obj=Tile-size&obj=Resolution-number&obj=Resolutions';
 
+        
         assert.equal(
             tileSource.getMetadataUrl(),
             expectedUrl,
