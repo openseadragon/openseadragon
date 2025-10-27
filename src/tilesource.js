@@ -804,6 +804,17 @@ $.TileSource.prototype = {
         // Load the tile with an AJAX request if the loadWithAjax option is
         // set. Otherwise load the image by setting the source property of the image object.
         if (context.loadWithAjax) {
+            const policy = context.crossOriginPolicy;
+            if (policy === 'anonymous') {
+                context.ajaxHeaders['mode'] = 'cors';
+                context.ajaxHeaders['credentials'] = 'omit';
+            } else if (policy === 'use-credentials') {
+                context.ajaxHeaders['mode'] = 'cors';
+                context.ajaxHeaders['credentials'] = 'include';
+            } else if (policy) {
+                $.console.warn('Unknown crossOriginPolicy: ' + policy);
+            }
+
             $.makeAjaxRequest({
                 url: context.src,
                 withCredentials: context.ajaxWithCredentials,
