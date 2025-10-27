@@ -35,6 +35,17 @@
 (function( $ ){
 
 /**
+ * Object that keeps ready-to-draw tile state information. These properties might differ in time
+ * dynamically, e.g. when blending/animating.
+ * TODO: info.level is probably info.tile.level - remove?
+ * @typedef {Object} OpenSeadragon.TiledImage.DrawTileInfo
+ * @property {Number} level
+ * @property {Number} levelOpacity
+ * @property {Number} currentTime
+ * @property {OpenSeadragon.Tile} tile
+ */
+
+/**
  * You shouldn't have to create a TiledImage instance directly; get it asynchronously by
  * using {@link OpenSeadragon.Viewer#open} or {@link OpenSeadragon.Viewer#addTiledImage} instead.
  * @class TiledImage
@@ -1133,8 +1144,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     *
-     * @returns {Array} Array of Tiles that make up the current view
+     * Get tiles that should be drawn at the current position of tiled image.
+     * Note: this method should be called only once per frame.
+     * @returns {OpenSeadragon.TiledImage.DrawTileInfo[]} Array of Tiles that make up the current view
      */
     getTilesToDraw: function(){
         // start with all the tiles added to this._tilesToDraw during the most recent
