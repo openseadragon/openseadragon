@@ -2323,6 +2323,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             const origCache = tile.getCache(tile.originalCacheKey);
             // First, ensure we really are ready to draw the tile
             const ensureValidDrawerType = (cache) => {
+                if (this.viewer.isDestroyed()) {
+                    return $.Promise.resolve();
+                }
                 const drawer = this.getDrawer();
                 if (!cache.isUsableForDrawer(drawer)) {
                     return cache.prepareForRendering(drawer);
