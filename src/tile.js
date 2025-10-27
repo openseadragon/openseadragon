@@ -567,7 +567,7 @@ $.Tile.prototype = {
         const overwritesMainCache = key === this.cacheKey;
         if (_safely && (overwritesMainCache || setAsMain)) {
             // Need to get the supported type for rendering out of the active drawer.
-            const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
+            const supportedTypes = tiledImage.getDrawer().getSupportedDataFormats();
             const conversion = $.converter.getConversionPath(type, supportedTypes);
             $.console.assert(conversion, "[Tile.addCache] data was set for the default tile cache we are unable" +
                 `to render. Make sure OpenSeadragon.converter was taught to convert ${type} to (one of): ${conversion.toString()}`);
@@ -619,7 +619,7 @@ $.Tile.prototype = {
             $.console.assert(cache instanceof $.CacheRecord, "[Tile.setCache] cache must be a CacheRecord object!");
             if (overwritesMainCache || setAsMain) {
                 // Need to get the supported type for rendering out of the active drawer.
-                const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
+                const supportedTypes = tiledImage.getDrawer().getSupportedDataFormats();
                 const conversion = $.converter.getConversionPath(cache.type, supportedTypes);
                 $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
                     `to render. Make sure OpenSeadragon.converter was taught to convert ${cache.type} to (one of): ${conversion.toString()}`);

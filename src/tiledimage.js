@@ -94,6 +94,10 @@
  *      Defaults to the setting in {@link OpenSeadragon.Options}.
  * @param {Object} [options.ajaxHeaders={}]
  *      A set of headers to include when making tile AJAX requests.
+ * @param {string|string[]} [options.originalDataType=undefined]
+ *      A default format to convert tiles to at the beginning. The format is the base tile format,
+ *      and this can optimize rendering or processing logics, for example, in case a plugin always requires a certain
+ *      format to convert to.
  */
 $.TiledImage = function( options ) {
     this._initialized = false;
@@ -208,6 +212,7 @@ $.TiledImage = function( options ) {
         compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
         subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency,
         maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame,
+        originalDataType:                  undefined,
         _currentMaxTilesPerFrame:          (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10
     }, options );
 
@@ -516,6 +521,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const topLeft = this.imageToWindowCoordinates(new $.Point(0, 0));
         const bottomRight = this.imageToWindowCoordinates(this.getContentSize());
         return new $.Point(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+    },
+
+    /**
+     * Get drawer instance used to draw this tiled image. Normally,
+     * it is the drawer of the base viewer that owns the tiled image.
+     * However, if the image is instantiated manually and used for example
+     * in offscreen rendering, you might need to change the reference drawer.
+     * @returns {OpenSeadragon.DrawerBase} The drawer instance used to draw this tiled image.
+     */
+    getDrawer: function () {
+        return this.viewer.drawer;
     },
 
     // private
@@ -1912,7 +1928,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const tileCenter = positionT.plus( sizeT.divide( 2 ) );
         const tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
-        if(this.viewer.drawer.minimumOverlapRequired(this)){
+        if(this.getDrawer().minimumOverlapRequired(this)){
             if ( !overlap ) {
                 sizeC = sizeC.plus( new $.Point(1, 1));
             }
@@ -2183,7 +2199,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return;
         }
 
-        this._setTileLoaded(tile, data, null, tileRequest, dataType);
+        if (this.originalDataType) {
+            // First fetch conversion path to ensure safe conversion and to deduce target type it chooses as optimal one
+            const conversion = $.converter.getConversionPath(dataType, this.originalDataType);
+            if (conversion) {
+                const desiredType = $.converter.getConversionPathFinalType(conversion);
+                $.converter.convert(tile, data, dataType, desiredType).then(newData => {
+                    this._setTileLoaded(tile, newData, null, tileRequest, desiredType);
+                });
+            } else {
+                $.console.warn( "Ignoring default base tile data type %s: no conversion possible from %s", this.originalDataType, dataType);
+                this._setTileLoaded(tile, data, null, tileRequest, dataType);
+            }
+        } else {
+            this._setTileLoaded(tile, data, null, tileRequest, dataType);
+        }
     },
 
     /**
@@ -2290,33 +2320,47 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // setting invalidation tstamp to 1 makes sure any update gets applied later on
             this.viewer.world.requestTileInvalidateEvent([tile], undefined, false, true, true).then(markTileAsReady);
         } else {
-            // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             const origCache = tile.getCache(tile.originalCacheKey);
+            // First, ensure we really are ready to draw the tile
+            const ensureValidDrawerType = (cache) => {
+                const drawer = this.getDrawer();
+                if (!cache.isUsableForDrawer(drawer)) {
+                    return cache.prepareForRendering(drawer);
+                }
+                return $.Promise.resolve();
+            };
+
+            // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             for (const t of origCache._tiles) {
 
-                // if there exists a tile that has different main cache, inherit it as a main cache
+                // To keep consistent, if we find main cache tile that differs from original cache key, we inherit also main cache
                 if (t.cacheKey !== tile.cacheKey) {
 
                     // add reference also to the main cache, no matter what the other tile state has
                     // completion of the invaldate event should take care of all such tiles
                     const targetMainCache = t.getCache();
-                    tile.setCache(t.cacheKey, targetMainCache, true, false);
-                    break;
-                } else if (t.processing) {
-                    // Await once processing finishes - mark tile as loaded
+                    ensureValidDrawerType(targetMainCache).then(
+                        () => tile.setCache(t.cacheKey, targetMainCache, true, false)
+                    ).then(markTileAsReady);
+                    return;
+                }
+
+                if (t.processing) {
+                    // Or, if there is a processing promise, we wait for it to complete and then update the tile state.
                     t.processingPromise.then(t => {
                         const targetMainCache = t.getCache();
-                        tile.setCache(t.cacheKey, targetMainCache, true, false);
-                        if (!targetMainCache.loaded) {
-                            targetMainCache.await().then(markTileAsReady);
-                        } else {
-                            markTileAsReady();
-                        }
+                        ensureValidDrawerType(targetMainCache).then(() => {
+                            tile.setCache(t.cacheKey, targetMainCache, true, false);
+                            if (!targetMainCache.loaded) {
+                                return targetMainCache.await();
+                            }
+                            return null;
+                        }).then(markTileAsReady);
                     });
                     return;
                 }
             }
-            markTileAsReady();
+            ensureValidDrawerType(origCache).then(markTileAsReady);
         }
     },
 

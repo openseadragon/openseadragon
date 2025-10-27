@@ -1747,6 +1747,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @property {Boolean} [options.collectionImmediately=false] If collectionMode is on,
      * specifies whether to snap to the new arrangement immediately or to animate to it.
      * @property {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
+     * @param {string|string[]} [options.originalDataType=undefined]
+     *      A default format to convert tiles to at the beginning. The format is the base tile format,
+     *      and this can optimize rendering or processing logics in case for example a plugin always requires a certain
+     *      format to convert to.
      */
 
     /**
@@ -1963,6 +1967,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 debugMode: this.debugMode,
                 subPixelRoundingForTransparency: this.subPixelRoundingForTransparency,
                 callTileLoadedWithCachedData: this.callTileLoadedWithCachedData,
+                originalDataType: options.originalDataType
             });
 
             options.success({

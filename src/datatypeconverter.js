@@ -727,6 +727,18 @@ $.DataTypeConverter = class {
     }
 
     /**
+     * Get the final type of the conversion path.
+     * @param {ConversionStep[]} path
+     * @return {undefined|string}  undefined if invalid path
+     */
+    getConversionPathFinalType(path) {
+        if (!path || !path.length) {
+            return undefined;
+        }
+        return path[path.length - 1].target.value;
+    }
+
+    /**
      * Return a list of known conversion types
      * @return {string[]}
      */
