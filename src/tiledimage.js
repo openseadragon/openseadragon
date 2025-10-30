@@ -178,7 +178,6 @@ $.TiledImage = function( options ) {
         tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean; shows what areas have been drawn.
         loadingCoverage: {},   // A '3d' dictionary [level][x][y] --> Boolean; shows what areas are loaded or are being loaded/blended.
-        lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _needsDraw:     true,  // Does the tiledImage need to be drawn again?
         _needsUpdate:   true,  // Does the tiledImage need to update the viewport again?
@@ -521,6 +520,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const topLeft = this.imageToWindowCoordinates(new $.Point(0, 0));
         const bottomRight = this.imageToWindowCoordinates(this.getContentSize());
         return new $.Point(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+    },
+
+    /**
+     * Get tile list that was used to draw the viewport current or last frame.
+     * @return {OpenSeadragon.OpenSeadragon.TiledImage.DrawTileInfo[]}
+     */
+    get lastDrawn() {
+        return this._lastDrawn;
     },
 
     /**
