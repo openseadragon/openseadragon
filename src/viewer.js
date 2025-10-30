@@ -823,7 +823,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
 
             if (options.index !== undefined) {
-                $.console.error('[Viewer.open] setting indexes here is not supported; use addTiledImage instead');
+                $.console.warn('[Viewer.open] Ignoring user-supplied index; preserving order by setting index to ' + index + '. If you need to set indexes, use addTiledImage instead.');
                 delete options.index;
                 // ensure we keep the order we received
                 options.index = index;
@@ -1910,7 +1910,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         };
         options.error = raiseAddItemFailed;
-        this.instantiateTileImageClass(options);
+        this.instantiateTiledImageClass(options);
     },
 
     /**
@@ -1924,7 +1924,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {OpenSeadragon.Promise<OpenSeadragon.TiledImage|object>} A promise that resolves to the created TiledImage.
      *   Also, old options.error and options.success callbacks can be used instead to handle the output.
      */
-    instantiateTileImageClass: function( options) {
+    instantiateTiledImageClass: function( options) {
         return this.instantiateTileSourceClass(options).then(event => {
             // add everybody at the front of the queue that's ready to go
             const tiledImage = new $.TiledImage({
@@ -2091,7 +2091,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                         const $TileSource = $.TileSource.determineType( this, tileSource, null );
                         if ( !$TileSource ) {
                             reject({
-                                message: "Unable to load TileSource,",
+                                message: "Unable to load TileSource",
                                 source: tileSource,
                                 error: true
                             });

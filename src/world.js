@@ -428,7 +428,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             };
 
             const outdatedTest = () => wasOutdatedRun ||
-                (originalCache.__invStamp && originalCache.__invStamp < this.__invalidatedAt) ||
+                (typeof originalCache.__invStamp === "number" && originalCache.__invStamp < this.__invalidatedAt) ||
                 (!tile.loaded && !tile.loading);
 
             // OpenSeadragon.trace(`   Procesing tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
@@ -531,7 +531,14 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                             }
                             // else we will let it fall through to handle later
                         } else {
-                            $.console.error("Invalidation flow error: tile processing state is invalid");
+                            $.console.error(
+                                `Invalidation flow error: tile processing state is invalid. ` +
+                                `Tile: ${tile ? tile.toString() : 'null'}, ` +
+                                `loaded: ${tile ? tile.loaded : 'n/a'}, loading: ${tile ? tile.loading : 'n/a'}, ` +
+                                `originalCache.__invStamp: ${originalCache.__invStamp}, ` +
+                                `this.__invalidatedAt: ${this.__invalidatedAt}, ` +
+                                `tStamp: ${tStamp}, wasOutdatedRun: ${wasOutdatedRun}`
+                            );
                         }
 
                         // If we did not handle the data, finish here - still a valid run.

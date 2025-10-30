@@ -35,9 +35,10 @@
 (function($){
 
 /**
- * @typedef {Object} Event
+ * @typedef {Object} OpenSeadragon.Event
  * @memberof OpenSeadragon
- * @property {boolean} [stopPropagation=undefined] - If set to true, the event exits after handling the current call.
+ * @property {boolean|function} [stopPropagation=undefined] - If set to true or the functional predicate returns true,
+ *   the event exits after handling the current call.
  */
 
 /**

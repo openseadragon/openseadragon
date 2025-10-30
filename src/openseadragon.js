@@ -2665,7 +2665,7 @@ function OpenSeadragon( options ){
         setImageFormatsSupported: function(formats) {
             //TODO: how to deal with this within the data pipeline?
             // $.console.warn("setImageFormatsSupported method is deprecated. You should check that" +
-            //     " the system supports your TileSources by implementing corresponding data type convertors.");
+            //     " the system supports your TileSources by implementing corresponding data type converters.");
 
             // eslint-disable-next-line no-use-before-define
             $.extend(FILEFORMATS, formats);

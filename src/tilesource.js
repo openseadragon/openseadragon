@@ -222,7 +222,7 @@ $.TileSource = function( options ) {
         this.ready       = false;
         //configuration via url implies the extending class
         //implements and 'configure'
-        setTimeout(() => this.getImageInfo(this.url)); //needs async in case someone exits imediatelly
+        setTimeout(() => this.getImageInfo(this.url)); //needs async in case someone exits immediately
     } else {
         // by default it used to fire immediately, so make the ready default
         if (this.ready || this.ready === undefined) {

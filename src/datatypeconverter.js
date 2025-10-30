@@ -255,7 +255,7 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
             } else {
                 if (!__warnedNoSAB) {
                     __warnedNoSAB = true;
-                    console.warn('[Convertor] SharedArrayBuffer unavailable; falling back to ArrayBuffer.');
+                    console.warn('[Converter] SharedArrayBuffer unavailable; falling back to ArrayBuffer.');
                 }
                 const u8 = payload.u8;
                 const tight = (u8.byteOffset === 0 && u8.byteLength === u8.buffer.byteLength) ? u8 : u8.slice();
