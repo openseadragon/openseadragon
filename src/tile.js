@@ -260,10 +260,10 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
     /**
      * Processing promise, resolves when the tile exits processing, or
      * resolves immediatelly if not in the processing state.
-     * @member {OpenSeadragon.Promise}
+     * @member {OpenSeadragon.Promise<OpenSeadragon.Tile>}
      * @private
      */
-    this.processingPromise = $.Promise.resolve();
+    this.processingPromise = $.Promise.resolve(this);
 };
 
 /** @lends OpenSeadragon.Tile.prototype */
@@ -567,7 +567,7 @@ $.Tile.prototype = {
         const overwritesMainCache = key === this.cacheKey;
         if (_safely && (overwritesMainCache || setAsMain)) {
             // Need to get the supported type for rendering out of the active drawer.
-            const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
+            const supportedTypes = tiledImage.getDrawer().getSupportedDataFormats();
             const conversion = $.converter.getConversionPath(type, supportedTypes);
             $.console.assert(conversion, "[Tile.addCache] data was set for the default tile cache we are unable" +
                 `to render. Make sure OpenSeadragon.converter was taught to convert ${type} to (one of): ${conversion.toString()}`);
@@ -619,7 +619,7 @@ $.Tile.prototype = {
             $.console.assert(cache instanceof $.CacheRecord, "[Tile.setCache] cache must be a CacheRecord object!");
             if (overwritesMainCache || setAsMain) {
                 // Need to get the supported type for rendering out of the active drawer.
-                const supportedTypes = tiledImage.viewer.drawer.getSupportedDataFormats();
+                const supportedTypes = tiledImage.getDrawer().getSupportedDataFormats();
                 const conversion = $.converter.getConversionPath(cache.type, supportedTypes);
                 $.console.assert(conversion, "[Tile.setCache] data was set for the default tile cache we are unable" +
                     `to render. Make sure OpenSeadragon.converter was taught to convert ${cache.type} to (one of): ${conversion.toString()}`);
@@ -663,7 +663,7 @@ $.Tile.prototype = {
      * @returns {number} number of caches
      */
     getCacheSize: function() {
-        return Object.values(this._caches).length;
+        return Object.keys(this._caches).length;
     },
 
     /**
@@ -802,7 +802,6 @@ $.Tile.prototype = {
     _unload: function () {
         this.tiledImage = null;
         this._caches    = {};
-        this._cacheSize = 0;
         this.loaded     = false;
         this.loading    = false;
         this._cKey      = this._ocKey;

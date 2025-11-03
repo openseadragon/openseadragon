@@ -779,16 +779,14 @@
  */
 
 /**
- * @typedef {Object.<string, Object>} DrawerOptions - give the renderer options (both shared - BaseDrawerOptions, and custom).
- *   Supports arbitrary keys: you can register any drawer on the OpenSeadragon namespace, it will get automatically recognized
- *   and its getType() implementation will define what key to specify the options with.
+ * @typedef {Object.<string, BaseDrawerOptions>} DrawerOptions
+ * Can support any drawer key as long as a drawer is registered with the drawer id = map key.
+ * Therefore, one can register a new drawer that extends a drawer base and submit a custom key in the options.
  * @memberof OpenSeadragon
- * @property {WebGLDrawerOptions} [webgl] - options if the WebGLDrawer is used.
- * @property {BaseDrawerOptions} [canvas] - options if the CanvasDrawer is used.
- * @property {BaseDrawerOptions} [html] - options if the HTMLDrawer is used.
- * @property {BaseDrawerOptions} [custom] - options if a custom drawer is used.
- *
- * //Note: if you want to add change options for target drawer change type to {BaseDrawerOptions & MyDrawerOpts}
+ * @property {OpenSeadragon.WebGLDrawerOptions} webgl - options if the WebGLDrawer is used.
+ * @property {OpenSeadragon.BaseDrawerOptions} canvas - options if the CanvasDrawer is used.
+ * @property {OpenSeadragon.BaseDrawerOptions} html - options if the HTMLDrawer is used.
+ * @property {OpenSeadragon.BaseDrawerOptions} custom - options if a custom drawer is used.
  */
 
 
@@ -1411,20 +1409,9 @@ function OpenSeadragon( options ){
 
             // DRAWER SETTINGS
             drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
-
+            // DRAWER CONFIGURATIONS
             drawerOptions: {
-                webgl: {
-                    unpackWithPremultipliedAlpha: false,
-                },
-                canvas: {
-
-                },
-                html: {
-
-                },
-                custom: {
-
-                }
+                // [drawer-id]: {options} map
             },
 
             // TILED IMAGE SETTINGS
@@ -2003,6 +1990,42 @@ function OpenSeadragon( options ){
             wrappers[2].appendChild(element);
 
             return wrappers[0];
+        },
+
+        /**
+         * Log trace information from the system. Useful for logging and debugging
+         * async events. Calls to this function SHOULD NOT BE present in the release.
+         * (or at least used only in debug mode).
+         * @param {OpenSeadragon.Tile|OpenSeadragon.CacheRecord|string} tile message to log or tile to inspect
+         * @param {boolean} stacktrace if true log the stacktrace
+         */
+        trace: function(tile, stacktrace = false) {
+            this.__traceLogs = [];
+            setInterval(() => {
+                if (!this.__traceLogs.length) {
+                    return;
+                }
+                console.log(this.__traceLogs.join('\n'));
+                this.__traceLogs = [];
+            }, 2000);
+            this.trace = function (tile, stacktrace = false) {
+                if (typeof tile === 'string') {
+                    this.__traceLogs.push(tile);
+                    if (stacktrace) {
+                        this.__traceLogs.push(...new Error().stack.split('\n').slice(1));
+                    }
+                    return;
+                }
+                if (tile instanceof OpenSeadragon.Tile) {
+                    tile = tile.getCache(tile.originalCacheKey);
+                }
+                const cacheTile = tile._tiles[0];
+                this.__traceLogs.push(`Cache ${cacheTile.toString()} loaded ${cacheTile.loaded} loading ${cacheTile.loading} cacheCount ${Object.keys(cacheTile._caches).length} - CACHE ${tile.__invStamp}`);
+                if (stacktrace) {
+                    this.__traceLogs.push(...new Error().stack.split('\n').slice(1));
+                }
+            };
+            this.trace(tile, stacktrace);
         },
 
 
@@ -2642,7 +2665,7 @@ function OpenSeadragon( options ){
         setImageFormatsSupported: function(formats) {
             //TODO: how to deal with this within the data pipeline?
             // $.console.warn("setImageFormatsSupported method is deprecated. You should check that" +
-            //     " the system supports your TileSources by implementing corresponding data type convertors.");
+            //     " the system supports your TileSources by implementing corresponding data type converters.");
 
             // eslint-disable-next-line no-use-before-define
             $.extend(FILEFORMATS, formats);

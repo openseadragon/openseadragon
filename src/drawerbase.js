@@ -43,9 +43,15 @@
  *   of formats the drawer declares as supported. This method must return object to be used during drawing.
  *   You should probably implement also internalCacheFree() to provide cleanup logics.
  *
- * @property {boolean} [preloadCache=true]
- *  When internalCacheCreate is used, it can be applied offline (asynchronously) during data processing = preloading,
- *  or just in time before rendering (if necessary). Preloading supports
+ * @property {boolean} [preloadCache=true] When internalCacheCreate is used, it can be applied offline
+ *   (asynchronously) during data processing = preloading, or just in time before rendering (if necessary).
+ *   Preloading supports async handlers, and can use promises. If preloadCache=false, no async (e.g. cache conversion)
+ *   logics can be used!
+ *
+ * @property {boolean} [offScreen=false] When true, the drawer is not attached to DOM. This must be false
+ *   for all drawers created and used for rendering, particularly the main viewer drawer. However,
+ *   if you need to use particular viewer API for rendering an offscreen images for further processing,
+ *   you can set this to true.
  */
 
 const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
@@ -75,25 +81,26 @@ OpenSeadragon.DrawerBase = class DrawerBase{
 
         this._renderingTarget = this._createDrawingElement();
 
+        if (!this.options.offScreen) {
+            this.canvas.style.width     = "100%";
+            this.canvas.style.height    = "100%";
+            this.canvas.style.position  = "absolute";
+            // set canvas.style.left = 0 so the canvas is positioned properly in ltr and rtl html
+            this.canvas.style.left = "0";
+            $.setElementOpacity( this.canvas, this.viewer.opacity, true );
 
-        this.canvas.style.width     = "100%";
-        this.canvas.style.height    = "100%";
-        this.canvas.style.position  = "absolute";
-        // set canvas.style.left = 0 so the canvas is positioned properly in ltr and rtl html
-        this.canvas.style.left = "0";
-        $.setElementOpacity( this.canvas, this.viewer.opacity, true );
+            // Allow pointer events to pass through the canvas element so implicit
+            //   pointer capture works on touch devices
+            $.setElementPointerEventsNone( this.canvas );
+            $.setElementTouchActionNone( this.canvas );
 
-        // Allow pointer events to pass through the canvas element so implicit
-        //   pointer capture works on touch devices
-        $.setElementPointerEventsNone( this.canvas );
-        $.setElementTouchActionNone( this.canvas );
-
-        // explicit left-align
-        this.container.style.textAlign = "left";
-        this.container.appendChild( this.canvas );
+            // explicit left-align
+            this.container.style.textAlign = "left";
+            this.container.appendChild( this.canvas );
+        }
 
         this._checkInterfaceImplementation();
-        this.setInternalCacheNeedsRefresh();  // initializes stamp
+        this.setInternalCacheNeedsRefresh();  // initializes timestamp
     }
 
     /**
@@ -107,6 +114,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         return {
             usePrivateCache: false,
             preloadCache: true,
+            offScreen: false
         };
     }
 
