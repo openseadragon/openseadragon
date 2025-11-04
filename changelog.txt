@@ -50,6 +50,11 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Relative panning sometimes used the wrong starting point, causing jumping during touch panning (#2704 @DougTCooke)
 * Fixed: World.arrange would misalign images that were rotated (#2709 @yowzadave)
 * Fixed: In some cases TiledImage would throw an exception if there were no tiles to update (#2733 @DougTCooke)
+* New option: DrawerBase option for offscreen drawer creation, methods for TiledImage and TileSource creation exposed (#2790 @Aiosa)
+* New data types: imageBitmap support with workers, image fetching moved from downloadTileStart to convertor (#2790 @Aiosa)
+* New API: stopPropagation property on events (#2790 @Aiosa)
+* Fixed: TileSource API has now uniform behavior (#2790 @Aiosa)
+* Fixed: Bugfixes and documentation improvement on tile invalidation pipeline (#2790 @Aiosa)
 
 5.0.1:
 
