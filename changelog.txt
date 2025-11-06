@@ -55,6 +55,7 @@ OPENSEADRAGON CHANGELOG
 * Fixed: In some cases TiledImage would throw an exception if there were no tiles to update (#2733 @DougTCooke)
 * Fixed: TileSource API has now uniform behavior (#2790 @Aiosa)
 * Fixed: Bugfixes and documentation improvement on tile invalidation pipeline (#2790 @Aiosa)
+* Fixed: Sometimes the tile positions wouldn't update when the viewer was resized (#2798 @artokai)
 
 5.0.1:
 
