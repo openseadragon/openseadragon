@@ -12,6 +12,7 @@
         "dzi",
         "iiif",
         "osm",
+        "osd",
         "tms"
     ],
     "homepage": "https://openseadragon.github.io/",
@@ -21,8 +22,10 @@
     },
     "license": "BSD-3-Clause",
     "files": [
+        "types/",
         "build/openseadragon/"
     ],
+    "types": "types/index.d.ts",
     "main": "build/openseadragon/openseadragon.js",
     "repository": {
         "type": "git",
