@@ -143,7 +143,7 @@ declare namespace OpenSeadragon {
         error: (obj: object) => void;
         headers: object;
         responseType: string;
-        withCredentials?: boolean | undefined;
+        withCredentials?: boolean;
     }): XMLHttpRequest;
 
     function makeCenteredNode(element: Element | string): Element;
@@ -199,14 +199,14 @@ declare namespace OpenSeadragon {
     function stopEvent(event?: OSDEvent<any>): void;
 
     interface GestureSettings {
-        scrollToZoom?: boolean | undefined;
-        clickToZoom?: boolean | undefined;
-        dblClickToZoom?: boolean | undefined;
-        dragToPan?: boolean | undefined;
-        pinchToZoom?: boolean | undefined;
-        flickEnabled?: boolean | undefined;
-        flickMinSpeed?: number | undefined;
-        flickMomentum?: number | undefined;
+        scrollToZoom?: boolean;
+        clickToZoom?: boolean;
+        dblClickToZoom?: boolean;
+        dragToPan?: boolean;
+        pinchToZoom?: boolean;
+        flickEnabled?: boolean;
+        flickMinSpeed?: number;
+        flickMomentum?: number;
     }
 
     interface NavImagesValues {
@@ -232,8 +232,8 @@ declare namespace OpenSeadragon {
     type DrawerConstructor = new(options: TDrawerOptions) => DrawerBase;
 
     interface Options {
-        id?: string | undefined;
-        element?: HTMLElement | undefined;
+        id?: string;
+        element?: HTMLElement;
         tileSources?:
             | string
             | TileSourceOptions
@@ -247,7 +247,7 @@ declare namespace OpenSeadragon {
         }
             | {
             Image: {
-                xmlns?: string | undefined;
+                xmlns?: string;
                 Url: string;
                 Format: string;
                 Overlap: string;
@@ -259,23 +259,23 @@ declare namespace OpenSeadragon {
             };
         }
             | Array<string | TileSource | { type: "openstreetmaps" }>;
-        tabIndex?: number | undefined;
-        overlays?: any[] | undefined;
+        tabIndex?: number;
+        overlays?: any[];
         xmlPath?: string;
-        prefixUrl?: string | undefined;
-        navImages?: NavImages | undefined;
-        debugMode?: boolean | undefined;
-        debugGridColor?: string | undefined;
+        prefixUrl?: string;
+        navImages?: NavImages;
+        debugMode?: boolean;
+        debugGridColor?: string;
         silenceMultiImageWarnings?: boolean;
-        blendTime?: number | undefined;
-        alwaysBlend?: boolean | undefined;
-        autoHideControls?: boolean | undefined;
-        immediateRender?: boolean | undefined;
-        defaultZoomLevel?: number | undefined;
+        blendTime?: number;
+        alwaysBlend?: boolean;
+        autoHideControls?: boolean;
+        immediateRender?: boolean;
+        defaultZoomLevel?: number;
         drawer?: DrawerType | DrawerConstructor | Array<DrawerType | DrawerConstructor>;
         drawerOptions?: DrawerOptions;
-        opacity?: number | undefined;
-        preload?: boolean | undefined;
+        opacity?: number;
+        preload?: boolean;
         compositeOperation?:
             | "source-over"
             | "source-atop"
@@ -302,142 +302,141 @@ declare namespace OpenSeadragon {
             | "hue"
             | "saturation"
             | "color"
-            | "luminosity"
-            | undefined;
+            | "luminosity";
         imageSmoothingEnabled?: boolean;
-        placeholderFillStyle?: string | CanvasGradient | CanvasPattern | undefined;
+        placeholderFillStyle?: string | CanvasGradient | CanvasPattern;
         subPixelRoundingForTransparency?: object;
-        degrees?: number | undefined;
-        flipped?: boolean | undefined;
+        degrees?: number;
+        flipped?: boolean;
         overlayPreserveContentDirection?: boolean;
-        minZoomLevel?: number | undefined;
-        maxZoomLevel?: number | undefined;
-        homeFillsViewer?: boolean | undefined;
-        panHorizontal?: boolean | undefined;
-        panVertical?: boolean | undefined;
-        constrainDuringPan?: boolean | undefined;
-        wrapHorizontal?: boolean | undefined;
-        wrapVertical?: boolean | undefined;
-        minZoomImageRatio?: number | undefined;
-        maxZoomPixelRatio?: number | undefined;
-        smoothTileEdgesMinZoom?: number | undefined;
-        iOSDevice?: boolean | undefined;
-        autoResize?: boolean | undefined;
-        preserveImageSizeOnResize?: boolean | undefined;
-        minScrollDeltaTime?: number | undefined;
+        minZoomLevel?: number;
+        maxZoomLevel?: number;
+        homeFillsViewer?: boolean;
+        panHorizontal?: boolean;
+        panVertical?: boolean;
+        constrainDuringPan?: boolean;
+        wrapHorizontal?: boolean;
+        wrapVertical?: boolean;
+        minZoomImageRatio?: number;
+        maxZoomPixelRatio?: number;
+        smoothTileEdgesMinZoom?: number;
+        iOSDevice?: boolean;
+        autoResize?: boolean;
+        preserveImageSizeOnResize?: boolean;
+        minScrollDeltaTime?: number;
         rotationIncrement?: number;
         maxTilesPerFrame?: number;
-        pixelsPerWheelLine?: number | undefined;
-        pixelsPerArrowPress?: number | undefined;
-        visibilityRatio?: number | undefined;
-        viewportMargins?: object | undefined;
-        imageLoaderLimit?: number | undefined;
-        clickTimeThreshold?: number | undefined;
-        clickDistThreshold?: number | undefined;
-        dblClickTimeThreshold?: number | undefined;
-        dblClickDistThreshold?: number | undefined;
-        springStiffness?: number | undefined;
-        animationTime?: number | undefined;
-        gestureSettingsMouse?: GestureSettings | undefined;
-        gestureSettingsTouch?: GestureSettings | undefined;
-        gestureSettingsPen?: GestureSettings | undefined;
-        gestureSettingsUnknown?: GestureSettings | undefined;
-        zoomPerClick?: number | undefined;
-        zoomPerScroll?: number | undefined;
+        pixelsPerWheelLine?: number;
+        pixelsPerArrowPress?: number;
+        visibilityRatio?: number;
+        viewportMargins?: object;
+        imageLoaderLimit?: number;
+        clickTimeThreshold?: number;
+        clickDistThreshold?: number;
+        dblClickTimeThreshold?: number;
+        dblClickDistThreshold?: number;
+        springStiffness?: number;
+        animationTime?: number;
+        gestureSettingsMouse?: GestureSettings;
+        gestureSettingsTouch?: GestureSettings;
+        gestureSettingsPen?: GestureSettings;
+        gestureSettingsUnknown?: GestureSettings;
+        zoomPerClick?: number;
+        zoomPerScroll?: number;
         zoomPerDblClickDrag?: number;
-        zoomPerSecond?: number | undefined;
-        showNavigator?: boolean | undefined;
+        zoomPerSecond?: number;
+        showNavigator?: boolean;
         navigatorElement?: Element;
-        navigatorId?: string | undefined;
-        navigatorPosition?: "TOP_LEFT" | "TOP_RIGHT" | "BOTTOM_LEFT" | "BOTTOM_RIGHT" | "ABSOLUTE" | undefined;
-        navigatorSizeRatio?: number | undefined;
-        navigatorMaintainSizeRatio?: boolean | undefined;
-        navigatorTop?: number | string | undefined;
-        navigatorLeft?: number | string | undefined;
-        navigatorHeight?: number | string | undefined;
-        navigatorWidth?: number | string | undefined;
-        navigatorAutoResize?: boolean | undefined;
-        navigatorAutoFade?: boolean | undefined;
-        navigatorRotate?: boolean | undefined;
-        navigatorBackground?: string | undefined;
-        navigatorOpacity?: number | undefined;
-        navigatorBorderColor?: string | undefined;
-        navigatorDisplayRegionColor?: string | undefined;
-        controlsFadeDelay?: number | undefined;
-        controlsFadeLength?: number | undefined;
-        maxImageCacheCount?: number | undefined;
-        timeout?: number | undefined;
+        navigatorId?: string;
+        navigatorPosition?: "TOP_LEFT" | "TOP_RIGHT" | "BOTTOM_LEFT" | "BOTTOM_RIGHT" | "ABSOLUTE";
+        navigatorSizeRatio?: number;
+        navigatorMaintainSizeRatio?: boolean;
+        navigatorTop?: number | string;
+        navigatorLeft?: number | string;
+        navigatorHeight?: number | string;
+        navigatorWidth?: number | string;
+        navigatorAutoResize?: boolean;
+        navigatorAutoFade?: boolean;
+        navigatorRotate?: boolean;
+        navigatorBackground?: string;
+        navigatorOpacity?: number;
+        navigatorBorderColor?: string;
+        navigatorDisplayRegionColor?: string;
+        controlsFadeDelay?: number;
+        controlsFadeLength?: number;
+        maxImageCacheCount?: number;
+        timeout?: number;
         tileRetryMax?: number;
         tileRetryDelay?: number;
         /**
          * @deprecated Use the `drawer` option to specify preferred renderer.
          */
-        useCanvas?: boolean | undefined;
-        minPixelRatio?: number | undefined;
-        mouseNavEnabled?: boolean | undefined;
-        showNavigationControl?: boolean | undefined;
-        navigationControlAnchor?: ControlAnchor | undefined;
-        showZoomControl?: boolean | undefined;
-        showHomeControl?: boolean | undefined;
-        showFullPageControl?: boolean | undefined;
-        showRotationControl?: boolean | undefined;
-        showFlipControl?: boolean | undefined;
-        showSequenceControl?: boolean | undefined;
-        sequenceControlAnchor?: ControlAnchor | undefined;
-        navPrevNextWrap?: boolean | undefined;
-        toolbar?: string | Element | undefined;
-        zoomInButton?: string | Element | undefined;
-        zoomOutButton?: string | Element | undefined;
-        homeButton?: string | Element | undefined;
-        fullPageButton?: string | Element | undefined;
-        rotateLeftButton?: string | Element | undefined;
-        rotateRightButton?: string | Element | undefined;
-        previousButton?: string | Element | undefined;
-        nextButton?: string | Element | undefined;
-        sequenceMode?: boolean | undefined;
+        useCanvas?: boolean;
+        minPixelRatio?: number;
+        mouseNavEnabled?: boolean;
+        showNavigationControl?: boolean;
+        navigationControlAnchor?: ControlAnchor;
+        showZoomControl?: boolean;
+        showHomeControl?: boolean;
+        showFullPageControl?: boolean;
+        showRotationControl?: boolean;
+        showFlipControl?: boolean;
+        showSequenceControl?: boolean;
+        sequenceControlAnchor?: ControlAnchor;
+        navPrevNextWrap?: boolean;
+        toolbar?: string | Element;
+        zoomInButton?: string | Element;
+        zoomOutButton?: string | Element;
+        homeButton?: string | Element;
+        fullPageButton?: string | Element;
+        rotateLeftButton?: string | Element;
+        rotateRightButton?: string | Element;
+        previousButton?: string | Element;
+        nextButton?: string | Element;
+        sequenceMode?: boolean;
         /**
          * If sequenceMode is true, display this page initially.
          * @default 0
          */
-        initialPage?: number | undefined;
-        preserveViewport?: boolean | undefined;
-        preserveOverlays?: boolean | undefined;
-        showReferenceStrip?: boolean | undefined;
-        referenceStripScroll?: string | undefined;
-        referenceStripElement?: HTMLElement | undefined;
-        referenceStripHeight?: number | undefined;
-        referenceStripWidth?: number | undefined;
-        referenceStripPosition?: string | undefined;
-        referenceStripSizeRatio?: number | undefined;
-        collectionMode?: boolean | undefined;
-        collectionRows?: number | undefined;
-        collectionColumns?: number | undefined;
-        collectionLayout?: "horizontal" | "vertical" | undefined;
-        collectionTileSize?: number | undefined;
-        collectionTileMargin?: number | undefined;
-        crossOriginPolicy?: "Anonymous" | "use-credentials" | false | undefined;
-        ajaxWithCredentials?: boolean | undefined;
-        loadTilesWithAjax?: boolean | undefined;
-        ajaxHeaders?: object | undefined;
+        initialPage?: number;
+        preserveViewport?: boolean;
+        preserveOverlays?: boolean;
+        showReferenceStrip?: boolean;
+        referenceStripScroll?: string;
+        referenceStripElement?: HTMLElement;
+        referenceStripHeight?: number;
+        referenceStripWidth?: number;
+        referenceStripPosition?: string;
+        referenceStripSizeRatio?: number;
+        collectionMode?: boolean;
+        collectionRows?: number;
+        collectionColumns?: number;
+        collectionLayout?: "horizontal" | "vertical";
+        collectionTileSize?: number;
+        collectionTileMargin?: number;
+        crossOriginPolicy?: "Anonymous" | "use-credentials" | false;
+        ajaxWithCredentials?: boolean;
+        loadTilesWithAjax?: boolean;
+        ajaxHeaders?: object;
         splitHashDataForPost?: boolean;
     }
 
     interface TileSourceOptions {
-        url?: string | undefined;
-        referenceStripThumbnailUrl?: string | undefined;
-        success?: ((event: Event) => void) | undefined;
-        ajaxWithCredentials?: boolean | undefined;
-        ajaxHeaders?: object | undefined;
+        url?: string;
+        referenceStripThumbnailUrl?: string;
+        success?: ((event: Event) => void);
+        ajaxWithCredentials?: boolean;
+        ajaxHeaders?: object;
         splitHashDataForPost?: boolean;
-        width?: number | undefined;
-        height?: number | undefined;
-        tileSize?: number | undefined;
-        tileWidth?: number | undefined;
-        tileHeight?: number | undefined;
-        tileOverlap?: number | undefined;
-        minLevel?: number | undefined;
-        maxLevel?: number | undefined;
-        getTileUrl?: ((l: number, x: number, y: number) => string) | undefined;
+        width?: number;
+        height?: number;
+        tileSize?: number;
+        tileWidth?: number;
+        tileHeight?: number;
+        tileOverlap?: number;
+        minLevel?: number;
+        maxLevel?: number;
+        getTileUrl?: ((l: number, x: number, y: number) => string);
     }
 
     class Button extends EventSource<ButtonEventMap> {
@@ -448,22 +447,22 @@ declare namespace OpenSeadragon {
         tracker: MouseTracker;
 
         constructor(options: {
-            userData?: string | undefined;
-            element?: Element | undefined;
-            tooltip?: string | undefined;
-            srcRest?: string | undefined;
-            srcGroup?: string | undefined;
-            srcHover?: string | undefined;
-            srcDown?: string | undefined;
-            fadeDelay?: number | undefined;
-            fadeLength?: number | undefined;
-            onPress?: EventHandler<ButtonEvent> | undefined;
-            onRelease?: EventHandler<ButtonEvent> | undefined;
-            onClick?: EventHandler<ButtonEvent> | undefined;
-            onEnter?: EventHandler<ButtonEvent> | undefined;
-            onExit?: EventHandler<ButtonEvent> | undefined;
-            onFocus?: EventHandler<ButtonEvent> | undefined;
-            onBlur?: EventHandler<ButtonEvent> | undefined;
+            userData?: string;
+            element?: Element;
+            tooltip?: string;
+            srcRest?: string;
+            srcGroup?: string;
+            srcHover?: string;
+            srcDown?: string;
+            fadeDelay?: number;
+            fadeLength?: number;
+            onPress?: EventHandler<ButtonEvent>;
+            onRelease?: EventHandler<ButtonEvent>;
+            onClick?: EventHandler<ButtonEvent>;
+            onEnter?: EventHandler<ButtonEvent>;
+            onExit?: EventHandler<ButtonEvent>;
+            onFocus?: EventHandler<ButtonEvent>;
+            onBlur?: EventHandler<ButtonEvent>;
         });
         disable(): void;
         enable(): void;
@@ -477,16 +476,16 @@ declare namespace OpenSeadragon {
         element: Element;
         tracker: MouseTracker;
 
-        constructor(options: { buttons: Button[]; element?: Element | undefined });
+        constructor(options: { buttons: Button[]; element?: Element });
 
         addButton(button: Button): void;
         destroy(): void;
     }
 
     interface TControlOptions {
-        anchor?: ControlAnchor | undefined;
-        attachToViewer?: boolean | undefined;
-        autoFade?: boolean | undefined;
+        anchor?: ControlAnchor;
+        attachToViewer?: boolean;
+        autoFade?: boolean;
     }
 
     class Control {
@@ -531,15 +530,15 @@ declare namespace OpenSeadragon {
             viewer: Viewer;
             viewport: Viewport;
             element: Element;
-            debugGridColor?: string | undefined;
+            debugGridColor?: string;
         });
 
         blendSketch(options: {
             opacity: number;
-            scale?: number | undefined;
-            translate?: Point | undefined;
-            compositeOperation?: string | undefined;
-            bounds?: Rect | undefined;
+            scale?: number;
+            translate?: Point;
+            compositeOperation?: string;
+            bounds?: Rect;
         }): void;
         canRotate(): boolean;
         clear(): void;
@@ -630,7 +629,7 @@ declare namespace OpenSeadragon {
     }
 
     class IIIFTileSource extends TileSource {
-        constructor(options: TileSourceOptions & { tileFormat?: string | undefined });
+        constructor(options: TileSourceOptions & { tileFormat?: string });
     }
 
     interface TImageJobOptions {
@@ -658,7 +657,7 @@ declare namespace OpenSeadragon {
     }
 
     class ImageLoader {
-        constructor(options: { jobLimit?: number | undefined; timeout?: number | undefined });
+        constructor(options: { jobLimit?: number; timeout?: number });
 
         addJob(options: TImageJobOptions): void;
         clear(): void;
@@ -667,9 +666,9 @@ declare namespace OpenSeadragon {
     class ImageTileSource extends TileSource {
         constructor(options: {
             url: string;
-            buildPyramid?: boolean | undefined;
-            crossOriginPolicy?: string | boolean | undefined;
-            ajaxWithCredentials?: string | boolean | undefined;
+            buildPyramid?: boolean;
+            crossOriginPolicy?: string | boolean;
+            ajaxWithCredentials?: string | boolean;
         });
         _freeupCanvasMemory(): void;
         destroy(viewer: Viewer): void;
@@ -703,39 +702,39 @@ declare namespace OpenSeadragon {
 
     interface MouseTrackerOptions {
         element: Element | string;
-        startDisabled?: boolean | undefined;
-        clickTimeThreshold?: number | undefined;
-        clickDistThreshold?: number | undefined;
-        dblClickTimeThreshold?: number | undefined;
-        dblClickDistThreshold?: number | undefined;
-        stopDelay?: number | undefined;
-        preProcessEventHandler?: PreprocessEventHandler | undefined;
-        contextMenuHandler?: EventHandler<ContextMenuMouseTrackerEvent> | undefined;
-        enterHandler?: EventHandler<MouseTrackerEvent> | undefined;
+        startDisabled?: boolean;
+        clickTimeThreshold?: number;
+        clickDistThreshold?: number;
+        dblClickTimeThreshold?: number;
+        dblClickDistThreshold?: number;
+        stopDelay?: number;
+        preProcessEventHandler?: PreprocessEventHandler;
+        contextMenuHandler?: EventHandler<ContextMenuMouseTrackerEvent>;
+        enterHandler?: EventHandler<MouseTrackerEvent>;
         /**
          * @deprecated use leaveHandler instead
          */
-        exitHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        leaveHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        overHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        outHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        pressHandler?: EventHandler<PressMouseTrackerEvent> | undefined;
-        nonPrimaryPressHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        releaseHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        nonPrimaryReleaseHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        moveHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        scrollHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        clickHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        dblClickHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        dragHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        dragEndHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        pinchHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        keyDownHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        keyUpHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        keyHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        focusHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        blurHandler?: EventHandler<MouseTrackerEvent> | undefined;
-        userData?: object | undefined;
+        exitHandler?: EventHandler<MouseTrackerEvent>;
+        leaveHandler?: EventHandler<MouseTrackerEvent>;
+        overHandler?: EventHandler<MouseTrackerEvent>;
+        outHandler?: EventHandler<MouseTrackerEvent>;
+        pressHandler?: EventHandler<PressMouseTrackerEvent>;
+        nonPrimaryPressHandler?: EventHandler<MouseTrackerEvent>;
+        releaseHandler?: EventHandler<MouseTrackerEvent>;
+        nonPrimaryReleaseHandler?: EventHandler<MouseTrackerEvent>;
+        moveHandler?: EventHandler<MouseTrackerEvent>;
+        scrollHandler?: EventHandler<MouseTrackerEvent>;
+        clickHandler?: EventHandler<MouseTrackerEvent>;
+        dblClickHandler?: EventHandler<MouseTrackerEvent>;
+        dragHandler?: EventHandler<MouseTrackerEvent>;
+        dragEndHandler?: EventHandler<MouseTrackerEvent>;
+        pinchHandler?: EventHandler<MouseTrackerEvent>;
+        keyDownHandler?: EventHandler<MouseTrackerEvent>;
+        keyUpHandler?: EventHandler<MouseTrackerEvent>;
+        keyHandler?: EventHandler<MouseTrackerEvent>;
+        focusHandler?: EventHandler<MouseTrackerEvent>;
+        blurHandler?: EventHandler<MouseTrackerEvent>;
+        userData?: object;
     }
 
     class MouseTracker {
@@ -876,12 +875,12 @@ declare namespace OpenSeadragon {
     interface OverlayOptions {
         element: Element;
         location: Point | Rect;
-        placement?: Placement | undefined;
-        onDraw?: OnDrawCallback | undefined;
-        checkResize?: boolean | undefined;
-        width?: number | undefined;
-        height?: number | undefined;
-        rotationMode?: OverlayRotationMode | undefined;
+        placement?: Placement;
+        onDraw?: OnDrawCallback;
+        checkResize?: boolean;
+        width?: number;
+        height?: number;
+        rotationMode?: OverlayRotationMode;
     }
 
     class Overlay {
@@ -958,8 +957,8 @@ declare namespace OpenSeadragon {
         constructor(options: {
             springStiffness: number;
             animationTime: number;
-            initial?: number | undefined;
-            exponential?: boolean | undefined;
+            initial?: number;
+            exponential?: boolean;
         });
         isAtTargetValue(): boolean;
         resetTo(target: number): void;
@@ -1037,12 +1036,12 @@ declare namespace OpenSeadragon {
     }
 
     class TileCache {
-        constructor(options: { maxImageCacheCount?: number | undefined });
+        constructor(options: { maxImageCacheCount?: number });
         cacheTile(options: {
             tile: Tile;
             image: HTMLImageElement; // TODO: check type
             tiledImage: TiledImage;
-            cutoff?: number | undefined;
+            cutoff?: number;
         }): void;
         clearTilesFor(tiledImage: TiledImage): void;
         numTilesLoaded(): number;
@@ -1054,33 +1053,33 @@ declare namespace OpenSeadragon {
         tileCache: TileCache;
         drawer: Drawer;
         imageLoader: ImageLoader;
-        x?: number | undefined;
-        y?: number | undefined;
-        width?: number | undefined;
-        height?: number | undefined;
-        fitBounds?: Rect | undefined;
-        fitBoundsPlacement?: Placement | undefined;
-        clip?: Rect | undefined;
-        springStiffness?: number | undefined;
-        animationTime?: boolean | undefined;
-        minZoomImageRatio?: number | undefined;
-        wrapHorizontal?: boolean | undefined;
-        wrapVertical?: boolean | undefined;
-        immediateRender?: boolean | undefined;
-        blendTime?: number | undefined;
-        alwaysBlend?: boolean | undefined;
-        minPixelRatio?: number | undefined;
-        smoothTileEdgesMinZoom?: number | undefined;
-        iOSDevice?: boolean | undefined;
-        opacity?: number | undefined;
-        preload?: boolean | undefined;
-        compositeOperation?: string | undefined;
-        debugMode?: boolean | undefined;
-        placeholderFillStyle?: string | CanvasGradient | CanvasPattern | undefined;
-        crossOriginPolicy?: string | boolean | undefined;
-        ajaxWithCredentials?: boolean | undefined;
-        loadTilesWithAjax?: boolean | undefined;
-        ajaxHeaders?: object | undefined;
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        fitBounds?: Rect;
+        fitBoundsPlacement?: Placement;
+        clip?: Rect;
+        springStiffness?: number;
+        animationTime?: boolean;
+        minZoomImageRatio?: number;
+        wrapHorizontal?: boolean;
+        wrapVertical?: boolean;
+        immediateRender?: boolean;
+        blendTime?: number;
+        alwaysBlend?: boolean;
+        minPixelRatio?: number;
+        smoothTileEdgesMinZoom?: number;
+        iOSDevice?: boolean;
+        opacity?: number;
+        preload?: boolean;
+        compositeOperation?: string;
+        debugMode?: boolean;
+        placeholderFillStyle?: string | CanvasGradient | CanvasPattern;
+        crossOriginPolicy?: string | boolean;
+        ajaxWithCredentials?: boolean;
+        loadTilesWithAjax?: boolean;
+        ajaxHeaders?: object;
     }
 
     class TiledImage extends EventSource<TiledImageEventMap> {
@@ -1196,28 +1195,28 @@ declare namespace OpenSeadragon {
     }
 
     interface ImageOptions {
-        index?: number | undefined;
-        replace?: boolean | undefined;
-        x?: number | undefined;
-        y?: number | undefined;
-        width?: number | undefined;
-        height?: number | undefined;
-        fitBounds?: Rect | undefined;
-        fitBoundsPlacement?: Placement | undefined;
-        clip?: Rect | undefined;
-        opacity?: number | undefined;
-        preload?: boolean | undefined;
-        degrees?: number | undefined;
-        flipped?: boolean | undefined;
-        compositeOperation?: string | undefined;
-        crossOriginPolicy?: string | undefined;
-        ajaxWithCredentials?: boolean | undefined;
-        loadTilesWithAjax?: boolean | undefined;
-        ajaxHeaders?: object | undefined;
-        success?: ((event: Event) => void) | undefined;
-        error?: ((error: Error) => void) | undefined;
-        collectionImmediately?: boolean | undefined;
-        placeholderFillStyle?: string | CanvasGradient | CanvasPattern | undefined;
+        index?: number;
+        replace?: boolean;
+        x?: number;
+        y?: number;
+        width?: number;
+        height?: number;
+        fitBounds?: Rect;
+        fitBoundsPlacement?: Placement;
+        clip?: Rect;
+        opacity?: number;
+        preload?: boolean;
+        degrees?: number;
+        flipped?: boolean;
+        compositeOperation?: string;
+        crossOriginPolicy?: string;
+        ajaxWithCredentials?: boolean;
+        loadTilesWithAjax?: boolean;
+        ajaxHeaders?: object;
+        success?: ((event: Event) => void);
+        error?: ((error: Error) => void);
+        collectionImmediately?: boolean;
+        placeholderFillStyle?: string | CanvasGradient | CanvasPattern;
     }
 
     interface TiledImageOptions extends ImageOptions {
@@ -1394,14 +1393,14 @@ declare namespace OpenSeadragon {
 
     class World extends EventSource<WorldEventMap> {
         constructor(options: object);
-        addItem(item: TiledImage, options?: { index?: number | undefined }): void;
+        addItem(item: TiledImage, options?: { index?: number }): void;
         arrange(options: {
-            immediately?: boolean | undefined;
-            layout?: "horizontal" | "vertical" | undefined;
-            rows?: number | undefined;
-            columns?: number | undefined;
-            tileSize?: number | undefined;
-            tileMargin?: number | undefined;
+            immediately?: boolean;
+            layout?: "horizontal" | "vertical";
+            rows?: number;
+            columns?: number;
+            tileSize?: number;
+            tileMargin?: number;
         }): void;
         draw(): void;
         getContentFactor(): number;
