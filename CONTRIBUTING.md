@@ -55,6 +55,25 @@ You can also publish the built version to the site-build repository. This assume
 
 ... which will delete the existing openseadragon folder, along with the .zip and .tar.gz files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
 
+### Bundle Size Analysis
+
+To ensure OpenSeadragon stays lean and fast, we track bundle sizes and enforce limits. To check bundle size:
+
+    npm run analyze
+
+This will show you the current bundle sizes and whether they're within acceptable limits:
+- **Minified (gzipped)**: Must be under 80 KB
+- **Minified (uncompressed)**: Must be under 320 KB
+
+**Automated PR Comments**: When you open a PR, a bot will automatically comment with bundle size comparisons showing how your changes affect the bundle size compared to the base branch.
+
+The bundle size check runs automatically in CI/CD, and PRs will fail if bundle sizes exceed these limits. If your changes cause the bundle to grow significantly, consider:
+- Removing unused code
+- Optimizing imports
+- Refactoring large features
+
+For more details, see [Bundle Size Monitoring Documentation](docs/BUNDLE_SIZE.md).
+
 ### Testing
 
 Our tests are based on [QUnit](https://qunitjs.com/) and [Puppeteer](https://github.com/GoogleChrome/puppeteer); they're both installed when you run `npm install`. To run on the command line:
@@ -78,7 +97,7 @@ and open `http://localhost:8000/test/test.html` in your browser.
 Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
 
 
-> [!NOTE] 
+> [!NOTE]
 > corresponding npm commands for the above are:
 >  - npm run test
 >  - npm run test -- --module="navigator"
