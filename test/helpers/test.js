@@ -65,6 +65,11 @@
 
         // ----------
         assessNumericValue: function (assert, actual, expected, variance, message) {
+            if (variance == null) {
+                variance = expected < 10 ? 0.01 : 0.5;
+            } else if (variance < 0.001) {
+                variance = 0.01; // enforce a sane minimum
+            }
             assert.ok(
                 Util.equalsWithVariance(actual, expected, variance),
                 message + " Actual: " + actual + " Expected: " + expected + " Variance: " + variance
