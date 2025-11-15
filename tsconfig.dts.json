@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": false,
+    "strict": true,
+    "moduleResolution": "node",
+    "lib": [
+      "ES2019",
+      "DOM"
+    ],
+    "target": "ES2019",
+    "types": []
+  },
+  "include": [
+    "types/**/*.d.ts"
+  ]
+}
