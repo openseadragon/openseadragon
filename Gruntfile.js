@@ -17,6 +17,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-git-describe");
     grunt.loadNpmTasks('grunt-text-replace');
     grunt.loadNpmTasks('grunt-istanbul');
+    grunt.loadNpmTasks('grunt-shell');
 
     // ----------
     const packageJson = grunt.file.readJSON("package.json"),
@@ -252,7 +253,15 @@ module.exports = function(grunt) {
               dir: coverageDir,
               print: "detail"
           }
-      }
+      },
+      shell: {
+        dts_check: {
+            command: "npx tsc -p tsconfig.dts.json"
+        },
+        dts_smoke: {
+            command: "npx tsc -p test-dts/tsconfig.json"
+        }
+      },
     });
 
     grunt.event.on("qunit.coverage", function(coverage) {
@@ -342,7 +351,7 @@ module.exports = function(grunt) {
     // ----------
     // Test task.
     // Builds and runs unit tests.
-    grunt.registerTask("test", ["build", "connect", "qunit:normal"]);
+    grunt.registerTask("test", ["build", "connect", "qunit:normal", "dts"]);
 
     // ----------
     // Coverage task.
@@ -368,4 +377,10 @@ module.exports = function(grunt) {
     // Default task.
     // Does a normal build.
     grunt.registerTask("default", ["build"]);
+
+    // ----------
+    // DTS tasks
+    grunt.registerTask("dts:check", ["shell:dts_check"]);
+    grunt.registerTask("dts:smoke", ["shell:dts_smoke"]);
+    grunt.registerTask("dts", ["dts:check", "dts:smoke"]);
 };
