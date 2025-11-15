@@ -256,10 +256,10 @@ module.exports = function(grunt) {
       },
       shell: {
         dts_check: {
-            command: "npx tsc -p tsconfig.dts.json"
+            command: "npx tsc --noEmit -p tsconfig.dts.json"
         },
         dts_smoke: {
-            command: "npx tsc -p test-dts/tsconfig.json"
+            command: "npx tsc --noEmit -p test-dts/tsconfig.json"
         }
       },
     });
