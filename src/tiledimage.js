@@ -46,6 +46,11 @@
  */
 
 /**
+ * Issues enum that records issues for the target image
+ * @typedef {('webgl')} OpenSeadragon.TiledImage.Issue
+ */
+
+/**
  * You shouldn't have to create a TiledImage instance directly; get it asynchronously by
  * using {@link OpenSeadragon.Viewer#open} or {@link OpenSeadragon.Viewer#addTiledImage} instead.
  * @class TiledImage
@@ -189,7 +194,7 @@ $.TiledImage = function( options ) {
         _arrayCacheMap: [],    // array cache to avoid constant re-creation and GC overload
         _isBlending:    false, // Are any tiles still being blended?
         _wasBlending:   false, // Were any tiles blending before the last draw?
-        _isTainted:     false, // Has a Tile been found with tainted data?
+        _issues:        {},    // Has a the image was marked as problematic by some entity (usually a drawer)?
         //configurable settings
         springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
         animationTime:                     $.DEFAULT_SETTINGS.animationTime,
@@ -400,22 +405,34 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Set the internal _isTainted flag for this TiledImage. Lazy loaded - not
+     * Set the internal issue flag for this TiledImage. Lazy loaded - not
      * checked each time a Tile is loaded, but can be set if a consumer of the
-     * tiles (e.g. a Drawer) discovers a Tile to have tainted data so that further
+     * tiles (e.g. a Drawer) discovers a Tile to have certain data issue so that further
      * checks are not needed and alternative rendering strategies can be used.
+     * @param {OpenSeadragon.TiledImage.Issue} issueType
+     * @param {string} description
+     * @param {Error|any} error
      * @private
      */
-    setTainted(isTainted){
-        this._isTainted = isTainted;
+    setIssue(issueType, description = undefined, error = undefined){
+        this._issues[issueType] = (description || `TiledImage is ${issueType}}`) + (error.message || error);
+        $.console.warn(this._issues[issueType], error);
     },
 
     /**
-     * @private
-     * @returns {Boolean} whether the TiledImage has been marked as tainted
+     * @param {OpenSeadragon.TiledImage.Issue} issueType
+     * @returns {string} issue details or undefined if the issue does not apply
      */
-    isTainted(){
-        return this._isTainted;
+    getIssue(issueType) {
+        return this._issues[issueType];
+    },
+
+    /**
+     * @param {OpenSeadragon.TiledImage.Issue} issueType
+     * @returns {Boolean} whether the TiledImage has been marked with a given issue
+     */
+    hasIssue(issueType){
+        return !!this.getIssue(issueType);
     },
 
     /**
