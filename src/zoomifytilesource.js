@@ -149,7 +149,7 @@
          * Equality comparator
          */
         equals: function (otherSource) {
-            return this.tilesUrl === otherSource.tilesUrl;
+            return otherSource && this.tilesUrl === otherSource.tilesUrl;
         }
     });
 

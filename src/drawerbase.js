@@ -35,7 +35,7 @@
 (function( $ ){
 
 /**
- * @typedef BaseDrawerOptions
+ * @typedef OpenSeadragon.BaseDrawerOptions
  * @memberOf OpenSeadragon
  * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
  *   detached (=internal) cache object in case it has to perform custom type conversion atop
@@ -52,6 +52,9 @@
  *   for all drawers created and used for rendering, particularly the main viewer drawer. However,
  *   if you need to use particular viewer API for rendering an offscreen images for further processing,
  *   you can set this to true.
+ *
+ * @property {boolean} [connectCache=true] When true, the drawer will reflect changes done to the viewer's
+ *   base drawer instance. For example, navigator will reflect data updates of the main viewport.
  */
 
 const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
@@ -65,7 +68,7 @@ const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
  * @abstract
  */
 
-OpenSeadragon.DrawerBase = class DrawerBase{
+OpenSeadragon.DrawerBase = class DrawerBase {
     constructor(options){
         $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
         $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
@@ -75,7 +78,17 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.viewer = options.viewer;
         this.viewport = options.viewport;
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
-        this.options = $.extend({}, this.defaultOptions, options.options);
+
+        /**
+         * @memberof OpenSeadragon.DrawerBase#
+         * @type OpenSeadragon.BaseDrawerOptions
+         */
+        this.options = $.extend({
+            usePrivateCache: false,
+            preloadCache: true,
+            offScreen: false,
+            connectCache: true,
+        }, this.defaultOptions, options.options);
 
         this.container  = $.getElement( options.element );
 
@@ -97,6 +110,18 @@ OpenSeadragon.DrawerBase = class DrawerBase{
             // explicit left-align
             this.container.style.textAlign = "left";
             this.container.appendChild( this.canvas );
+
+            if (this.options.connectCache) {
+                let parentViewer = this.viewer;
+                while (parentViewer.viewer) {
+                    parentViewer = parentViewer.viewer;
+                }
+                this._parentViewer = parentViewer;
+                parentViewer._registerDrawer(this);
+            } else {
+                this.viewer._registerDrawer(this);
+                this._parentViewer = this.viewer;
+            }
         }
 
         this._checkInterfaceImplementation();
@@ -108,14 +133,11 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * The base implementation provides default shared options.
      * Overrides should enumerate all defaults or extend from this implementation.
      *   return $.extend({}, super.options, { ... custom drawer instance options ... });
-     * @returns {BaseDrawerOptions} common options
+     * @returns {OpenSeadragon.BaseDrawerOptions} common options
      */
     get defaultOptions() {
-        return {
-            usePrivateCache: false,
-            preloadCache: true,
-            offScreen: false
-        };
+        // defaults are defined in constructor to avoid overriding issues
+        return {};
     }
 
     // protect the canvas member with a getter
@@ -148,7 +170,6 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     /**
      * Retrieve required data formats the data must be converted to.
      * This list MUST BE A VALID SUBSET OF getSupportedDataFormats()
-     * @abstract
      * @return {string[]}
      */
     getRequiredDataFormats() {
@@ -218,10 +239,12 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     }
 
     /**
-     * @abstract
+     * Destroy the drawer. Child classes must call this super class.
      */
     destroy() {
-        $.console.error('Drawer.destroy must be implemented by child class');
+        // how to force child classes to call this?
+        // we could force destroy methods to return some unique value that is obtainable only from this method...
+        this._parentViewer._unregisterDrawer(this);
     }
 
     /**

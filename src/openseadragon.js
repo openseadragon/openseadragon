@@ -772,14 +772,14 @@
   */
 
 /**
- * @typedef {BaseDrawerOptions} WebGLDrawerOptions
+ * @typedef {OpenSeadragon.BaseDrawerOptions} OpenSeadragon.WebGLDrawerOptions
  * @memberof OpenSeadragon
  * @property {Boolean} [unpackWithPremultipliedAlpha=false]
  *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
  */
 
 /**
- * @typedef {Object.<string, BaseDrawerOptions>} DrawerOptions
+ * @typedef {Object.<string, OpenSeadragon.BaseDrawerOptions>} DrawerOptions
  * Can support any drawer key as long as a drawer is registered with the drawer id = map key.
  * Therefore, one can register a new drawer that extends a drawer base and submit a custom key in the options.
  * @memberof OpenSeadragon

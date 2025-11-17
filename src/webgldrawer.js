@@ -127,6 +127,7 @@
             if(this._destroyed){
                 return;
             }
+            super.destroy();
             // clear all resources used by the renderer, geometries, textures etc
             const gl = this._gl;
 

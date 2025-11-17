@@ -252,7 +252,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         // return this.requestTileInvalidateEvent(batch, tStamp, restoreTiles);
         //
         // This makes the code easier to reason about. Also, recommended is to put logging
-        // messages into a buffered logger to avoid change of flow in the async execution with detailed logs.
+        // messages into a buffered logger using OpenSeadragon.trace(..)
+        // to avoid change of flow in the async execution with detailed logs.
 
 
         this.__invalidatedAt = tStamp;
@@ -309,7 +310,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      * @fires OpenSeadragon.Viewer.event:tile-invalidated
      * @return {OpenSeadragon.Promise<?>}
      */
-    requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true, _allowTileUnloaded = false, _isFromTileLoad = false) {
+    requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true,
+                                         _allowTileUnloaded = false, _isFromTileLoad = false) {
         // Calling the event is not considered invalidation, as tile load events finishes with this too.
         if (!this.viewer.isOpen()) {
             return $.Promise.resolve();
@@ -319,8 +321,6 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             tStamp = this.__invalidatedAt;
         }
 
-        // We call the event on the parent viewer window no matter what, nested viewers have parent viewer ref.
-        const eventTarget = this.viewer.viewer || this.viewer;
         const tilesThatNeedReprocessing = [];
 
         const jobList = tilesToProcess.map(tile => {
@@ -335,6 +335,11 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             }
 
             const tiledImage = tile.tiledImage;
+            const drawer = tiledImage.getDrawer();
+            // We call the event on the parent viewer window no matter what, nested viewers have parent viewer ref.
+            //  we use the knowledge that drawerBase keeps track of parent viewer to register into, we use this ref.
+            //  We could turn this into API...
+            const eventTarget = drawer._parentViewer || this.viewer;
             const originalCache = tile.getCache(tile.originalCacheKey);
             const tileCache = tile.getCache(tile.originalCacheKey);
             if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
@@ -488,7 +493,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                             // If we matched the invalidation state, ensure the new working cache (if created) is used
                             if (workingCache) {
                                 // OpenSeadragon.trace(`         Tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finishing normally, working cache exists.`);
-                                return workingCache.prepareForRendering(tiledImage.getDrawer()).then(c => {
+                                return workingCache.prepareForRendering(drawer).then(c => {
                                     // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'} swapping working cache ${tStamp}`);
 
                                     // Inside async then, we need to again check validity of the state
@@ -514,7 +519,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                                 const mainCacheRef = tile.getCache();
                                 const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
                                 if (mainCacheRef !== freshOriginalCacheRef) {
-                                    return freshOriginalCacheRef.prepareForRendering(tiledImage.getDrawer()).then((c) => {
+                                    return freshOriginalCacheRef.prepareForRendering(drawer).then((c) => {
                                         // OpenSeadragon.trace(`            Tile, ${tile ? tile.toString() : 'null'}  SWAP2 ${tStamp}`);
                                         // Inside async then, we need to again check validity of the state
                                         if (!wasOutdatedRun) {
@@ -547,7 +552,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                         if (_isFromTileLoad) {
                             // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp}`);
                             const freshMainCacheRef = tile.getCache();
-                            return freshMainCacheRef.prepareForRendering(tiledImage.getDrawer()).then(() => {
+                            return freshMainCacheRef.prepareForRendering(drawer).then(() => {
                                 // Inside async then, we need to again check validity of the state
                                 if (!wasOutdatedRun && originalCache.__finishProcessing) {
                                     originalCache.__finishProcessing();
@@ -571,7 +576,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 if (_isFromTileLoad) {
                     // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp} - from invalid event!`);
                     const freshMainCacheRef = tile.getCache();
-                    return freshMainCacheRef.prepareForRendering(tiledImage.getDrawer()).then(() => {
+                    return freshMainCacheRef.prepareForRendering(drawer).then(() => {
                         // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
                         if (!wasOutdatedRun && originalCache.__finishProcessing) {
                             originalCache.__finishProcessing();
