@@ -900,7 +900,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
 
         const tStamp = $.now();
-        // if drawer option connectCache is enabled, this is NOOP for any but the base drawer, that runs update on all
+        // if drawer option broadCastTileInvalidation is enabled, this is NOOP for any but the base drawer, that runs update on all
         return $.Promise.all(this._drawerList.map(drawer => drawer.viewer.world.requestInvalidate(restoreTiles, tStamp)));
     },
 

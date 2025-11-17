@@ -53,7 +53,7 @@
  *   if you need to use particular viewer API for rendering an offscreen images for further processing,
  *   you can set this to true.
  *
- * @property {boolean} [connectCache=true] When true, the drawer will reflect changes done to the viewer's
+ * @property {boolean} [broadCastTileInvalidation=true] When true, the drawer will reflect changes done to the viewer's
  *   base drawer instance. For example, navigator will reflect data updates of the main viewport.
  */
 
@@ -87,7 +87,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
             usePrivateCache: false,
             preloadCache: true,
             offScreen: false,
-            connectCache: true,
+            broadCastTileInvalidation: true,
         }, this.defaultOptions, options.options);
 
         this.container  = $.getElement( options.element );
@@ -111,7 +111,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
             this.container.style.textAlign = "left";
             this.container.appendChild( this.canvas );
 
-            if (this.options.connectCache) {
+            if (this.options.broadCastTileInvalidation) {
                 let parentViewer = this.viewer;
                 while (parentViewer.viewer) {
                     parentViewer = parentViewer.viewer;

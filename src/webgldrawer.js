@@ -940,7 +940,6 @@
                             overlapFraction: overlapFraction
                         };
                     } catch (e){
-                        // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
                         tiledImage.setIssue('webgl', 'Error uploading image data to WebGL.', e);
                         this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
                         this.setInternalCacheNeedsRefresh();

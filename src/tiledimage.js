@@ -194,7 +194,7 @@ $.TiledImage = function( options ) {
         _arrayCacheMap: [],    // array cache to avoid constant re-creation and GC overload
         _isBlending:    false, // Are any tiles still being blended?
         _wasBlending:   false, // Were any tiles blending before the last draw?
-        _issues:        {},    // Has a the image was marked as problematic by some entity (usually a drawer)?
+        _issues:        {},    // An issue flag map - image was marked as problematic by some entity (usually a drawer)?
         //configurable settings
         springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
         animationTime:                     $.DEFAULT_SETTINGS.animationTime,
