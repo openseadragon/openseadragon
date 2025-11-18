@@ -112,6 +112,13 @@ $.Viewer = function( options ) {
         id:             options.id,
         hash:           options.hash || nextHash++,
         /**
+         * Parent viewer reference. Base Viewer has null reference, child viewers (such as navigator
+         * or reference strip) must reference the parent viewer they were spawned from.
+         * @member {OpenSeadragon.Viewer} viewer
+         * @memberof OpenSeadragon.Viewer#
+         */
+        viewer:         null,
+        /**
          * Index for page to be shown first next time open() is called (only used in sequenceMode).
          * @member {Number} initialPage
          * @memberof OpenSeadragon.Viewer#
@@ -212,7 +219,6 @@ $.Viewer = function( options ) {
         // the previous viewer with the same hash and now want to recreate it.
         $.console.warn("Hash " + this.hash + " has already been used.");
     }
-
 
     //Private state properties
     THIS[ this.hash ] = {
@@ -888,18 +894,14 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @return {OpenSeadragon.Promise<?>}
      */
     requestInvalidate: function (restoreTiles = true) {
-        if ( !THIS[ this.hash ] ) {
-            //this viewer has already been destroyed: returning immediately
+        if ( !THIS[ this.hash ] || !this._drawerList ) {
+            //this viewer has already been destroyed or is a child in connected mode: returning immediately
             return $.Promise.resolve();
         }
 
         const tStamp = $.now();
-        const worldPromise = this.world.requestInvalidate(restoreTiles, tStamp);
-        if (!this.navigator) {
-            return worldPromise;
-        }
-        const navigatorPromise = this.navigator.world.requestInvalidate(restoreTiles, tStamp);
-        return $.Promise.all([worldPromise, navigatorPromise]);
+        // if drawer option broadCastTileInvalidation is enabled, this is NOOP for any but the base drawer, that runs update on all
+        return $.Promise.all(this._drawerList.map(drawer => drawer.viewer.world.requestInvalidate(restoreTiles, tStamp)));
     },
 
 
@@ -2703,6 +2705,30 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         } else {
             return null;
         }
+    },
+
+    /**
+     * Register drawer for shared updates
+     * @param drawer
+     * @private
+     */
+    _registerDrawer: function (drawer) {
+        if (!this._drawerList) {
+            this._drawerList = [];
+        }
+        this._drawerList.push(drawer);
+    },
+    /**
+     * Unregister drawer from shared updates
+     * @param drawer
+     * @private
+     */
+    _unregisterDrawer: function (drawer) {
+        if (!this._drawerList) {
+            $.console.warn('Viewer._unregisterDrawer: cannot unregister on viewer that is not meant to share updates.');
+            return;
+        }
+        this._drawerList.splice(this._drawerList.indexOf(drawer), 1);
     },
 
     /**

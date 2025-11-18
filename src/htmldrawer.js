@@ -34,7 +34,7 @@
 
 (function( $ ){
 
-    const OpenSeadragon = $; // alias back for JSDoc
+const OpenSeadragon = $; // alias back for JSDoc
 
 /**
  * @class OpenSeadragon.HTMLDrawer
@@ -178,6 +178,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      * Destroy the drawer (unload current loaded tiles)
      */
     destroy() {
+        super.destroy();
         this.container.removeChild(this.canvas);
     }
 

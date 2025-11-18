@@ -602,7 +602,7 @@ $.TileSource.prototype = {
      * @returns {Boolean}
      */
     equals: function (otherSource) {
-        return false;
+        return this === otherSource;
     },
 
     /**

@@ -127,6 +127,7 @@
             if(this._destroyed){
                 return;
             }
+            super.destroy();
             // clear all resources used by the renderer, geometries, textures etc
             const gl = this._gl;
 
@@ -216,8 +217,8 @@
          * @private
          */
         minimumOverlapRequired(tiledImage) {
-            // return true if the tiled image is tainted, since the backup canvas drawer will be used.
-            return tiledImage.isTainted();
+            // return true if we cannot render with webgl, since the backup canvas drawer will be used.
+            return tiledImage.hasIssue('webgl');
         }
 
         /**
@@ -282,7 +283,7 @@
             //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
             tiledImages.forEach( (tiledImage, tiledImageIndex) => {
 
-                if(tiledImage.isTainted()){
+                if(tiledImage.getIssue('webgl')){
                     // first, draw any data left in the rendering buffer onto the output canvas
                     if(renderingBufferHasImageData){
                         this._outputContext.drawImage(this._renderingCanvas, 0, 0);
@@ -885,10 +886,9 @@
                 isCanvas = true;
             }
 
-            if (!tiledImage.isTainted()) {
+            if (!tiledImage.getIssue('webgl')) {
                 if (isCanvas && $.isCanvasTainted(data)){
-                    tiledImage.setTainted(true);
-                    $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
+                    tiledImage.setIssue('webgl', 'WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
                     this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
                     this.setInternalCacheNeedsRefresh();
                 } else {
@@ -940,9 +940,7 @@
                             overlapFraction: overlapFraction
                         };
                     } catch (e){
-                        // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
-                        tiledImage.setTainted(true);
-                        $.console.error('Error uploading image data to WebGL. Falling back to canvas renderer.', e);
+                        tiledImage.setIssue('webgl', 'Error uploading image data to WebGL.', e);
                         this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
                         this.setInternalCacheNeedsRefresh();
                     }

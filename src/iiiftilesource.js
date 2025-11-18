@@ -531,7 +531,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      * Equality comparator
      */
     equals: function(otherSource) {
-        return this._id === otherSource._id;
+        return otherSource && this._id === otherSource._id;
     },
 
     __testonly__: {

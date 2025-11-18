@@ -145,7 +145,7 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * Equality comparator
      */
     equals: function(otherSource) {
-        return this.tilesUrl === otherSource.tilesUrl;
+        return otherSource && this.tilesUrl === otherSource.tilesUrl;
     }
 });
 
