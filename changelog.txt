@@ -41,6 +41,7 @@ OPENSEADRAGON CHANGELOG
 * Added tries and maxReached properties to tile-load-failed event (#2777 @Tobio89)
 * You can now turn off keyboard navigation (#2773 @colinrlim @yurii2007)
 * Added: WebGLDrawer option to unpack textures with premultiplied alpha (#2776 @adriandarian)
+* We are now including the TypeScript definitions directly in the project (only v5 so far, and not yet part of the npm package) (#2813 @rssaini01)
 * Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
 * Improved documentation and code naming (#2676 @bennlich, #2729 @shaswata-26, #2754 @ganglike248)
