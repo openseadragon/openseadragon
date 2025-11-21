@@ -88,6 +88,7 @@
             this._clippingContext = null;
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
+            this._webglFailed = false;
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
@@ -256,7 +257,19 @@
         * @param {Array} tiledImages Array of TiledImage objects to draw
         */
         draw(tiledImages){
+            // Skip drawing if WebGL has failed to prevent crashes
+            if (this._webglFailed) {
+                return;
+            }
+
             const gl = this._gl;
+
+            // Check if WebGL context is lost
+            if (!gl || gl.isContextLost()) {
+                $.console.warn('WebGL context is lost. Disabling WebGL to prevent crashes.');
+                this._webglFailed = true;
+                return;
+            }
             const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
             const view = {
                 bounds: bounds,
@@ -368,8 +381,9 @@
                         // occurred in the TravisCI tests, though it did not happen when testing locally either in
                         // a browser or on the command line via grunt test.
 
-                        throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
-                        if too many contexts have been created and not released, or there is another problem with the graphics card.`));
+                        $.console.warn(`WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). Disabling WebGL to prevent crashes.`);
+                        this._webglFailed = true;
+                        return;
                     }
 
                     const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
@@ -613,9 +627,15 @@
 
         // private
         _setupRenderer(){
+            // Skip setup if WebGL has failed
+            if (this._webglFailed) {
+                return;
+            }
+
             const gl = this._gl;
             if(!gl){
                 $.console.error('_setupCanvases must be called before _setupRenderer');
+                return;
             }
             this._unitQuad = this._makeQuadVertexBuffer(0, 1, 0, 1); // used a few places; create once and store the result
 
@@ -650,6 +670,17 @@
         //private
         _makeFirstPassShaderProgram(){
             const numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+            if(numTextures <= 0){
+                // This can apparently happen on some systems if too many WebGL contexts have been created
+                // in which case numTextures can be null, leading to out of bounds errors with the array.
+                // For example, when viewers were created and not destroyed in the test suite, this error
+                // occurred in the TravisCI tests, though it did not happen when testing locally either in
+                // a browser or on the command line via grunt test.
+
+                $.console.warn(`WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${numTextures}). Disabling WebGL to prevent crashes.`);
+                this._webglFailed = true;
+                return;
+            }
             const makeMatrixUniforms = () => {
                 return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
             };
@@ -844,7 +875,35 @@
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
             this._gl = this._renderingCanvas.getContext('webgl');
+
+            // Validate WebGL context and MAX_TEXTURE_IMAGE_UNITS
+            if (!this._gl) {
+                $.console.warn('WebGL context creation failed. Disabling WebGL to prevent crashes.');
+                this._webglFailed = true;
+                return;
+            }
+
+            try {
+                const maxTextureUnits = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+                if (maxTextureUnits <= 0) {
+                    $.console.warn(`WebGL context invalid: MAX_TEXTURE_IMAGE_UNITS is ${maxTextureUnits}. Disabling WebGL to prevent crashes.`);
+                    this._webglFailed = true;
+                    return;
+                }
+            } catch (error) {
+                $.console.warn('Error checking WebGL parameters:', error.message, 'Disabling WebGL to prevent crashes.');
+                this._webglFailed = true;
+                return;
+            }
+
             this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+
+            // Handle WebGL context loss
+            this._renderingCanvas.addEventListener('webglcontextlost', (event) => {
+                event.preventDefault();
+                $.console.warn('WebGL context lost. Disabling WebGL to prevent crashes.');
+                this._webglFailed = true;
+            }, false);
 
             this._resizeHandler = function(){
 
