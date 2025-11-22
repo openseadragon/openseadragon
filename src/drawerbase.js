@@ -61,6 +61,8 @@ const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
 /**
  * @class OpenSeadragon.DrawerBase
  * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
+ *   More viewers can be implemented even as plugins if they are attached to the OpenSeadragon namespace.
+ *   Then you can employ the newly defined type as you would do with built-in drawers.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
  * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
@@ -133,6 +135,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
      * The base implementation provides default shared options.
      * Overrides should enumerate all defaults or extend from this implementation.
      *   return $.extend({}, super.options, { ... custom drawer instance options ... });
+     * @memberof {OpenSeadragon.DrawerBase}
      * @returns {OpenSeadragon.BaseDrawerOptions} common options
      */
     get defaultOptions() {
@@ -140,7 +143,10 @@ OpenSeadragon.DrawerBase = class DrawerBase {
         return {};
     }
 
-    // protect the canvas member with a getter
+    /**
+     * @memberof {OpenSeadragon.DrawerBase}
+     * @return {Element}
+     */
     get canvas(){
         return this._renderingTarget;
     }
@@ -160,6 +166,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
 
     /**
      * @abstract
+     * @memberof {OpenSeadragon.DrawerBase}
      * @returns {String | undefined} What type of drawer this is. Must be overridden by extending classes.
      */
     getType(){
@@ -170,6 +177,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
     /**
      * Retrieve required data formats the data must be converted to.
      * This list MUST BE A VALID SUBSET OF getSupportedDataFormats()
+     * @memberof {OpenSeadragon.DrawerBase}
      * @return {string[]}
      */
     getRequiredDataFormats() {
@@ -179,6 +187,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
     /**
      * Retrieve data types
      * @abstract
+     * @memberof {OpenSeadragon.DrawerBase}
      * @return {string[]}
      */
     getSupportedDataFormats() {
@@ -191,6 +200,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
      * value, the rendering _MUST NOT_ proceed. It should
      * await next animation frames and check again for availability.
      * @param {OpenSeadragon.Tile} tile
+     * @memberof {OpenSeadragon.DrawerBase}
      * @return {any|undefined} undefined if cache not available, compatible data otherwise.
      */
     getDataToDraw(tile) {
