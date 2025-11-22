@@ -4174,6 +4174,8 @@ function updateOnce( viewer ) {
     if (viewer._opening || !THIS[viewer.hash]) {
         return;
     }
+
+    let viewerWasResized = false;
     if (viewer.autoResize || THIS[viewer.hash].forceResize){
         let containerSize;
         if(viewer._autoResizePolling){
@@ -4185,13 +4187,14 @@ function updateOnce( viewer ) {
         }
         if(THIS[viewer.hash].needsResize){
             doViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
+            viewerWasResized = true;
         }
 
     }
 
 
 
-    const viewportChange = viewer.viewport.update();
+    const viewportChange = viewer.viewport.update() || viewerWasResized;
     let animated = viewer.world.update(viewportChange) || viewportChange;
 
     if (viewportChange) {
