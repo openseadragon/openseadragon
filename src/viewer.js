@@ -705,7 +705,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * {@link OpenSeadragon.Viewer.html#.event:open}, which when fired can be used to get access
      * to the instance, i.e., viewer.world.getItemAt(0).
      * @function
-     * @param {OpenSeadragon.TileSourceSpecifier|[OpenSeadragon.TileSourceSpecifier]} tileSources - This can be a TiledImage
+     * @param {OpenSeadragon.TileSourceSpecifier|OpenSeadragon.TileSourceSpecifier[]} tileSources - This can be a TiledImage
      * specifier, a TileSource specifier, or an array of either. A TiledImage specifier
      * is the same as the options parameter for {@link OpenSeadragon.Viewer#addTiledImage},
      * except for the index property; images are added in sequence.
