@@ -230,6 +230,8 @@ declare namespace OpenSeadragon {
 
     type DrawerType = "html" | "canvas" | "webgl";
     type DrawerConstructor = new(options: TDrawerOptions) => DrawerBase;
+    type TypeConverter<TIn = any, TOut = any> = (tile: OpenSeadragon.Tile, data: TIn) => TOut | Promise<TOut>;
+    type TypeDestructor<TIn = any, TOut = any> = (data: TIn) => TOut | Promise<TOut>;
 
     interface Options {
         id?: string;
@@ -439,6 +441,25 @@ declare namespace OpenSeadragon {
         getTileUrl?: ((l: number, x: number, y: number) => string);
     }
 
+    interface ButtonOptions {
+        userData?: object;
+        element?: Element;
+        tooltip?: string;
+        srcRest?: string;
+        srcGroup?: string;
+        srcHover?: string;
+        srcDown?: string;
+        fadeDelay?: number;
+        fadeLength?: number;
+        onPress?: EventHandler<ButtonEvent>;
+        onRelease?: EventHandler<ButtonEvent>;
+        onClick?: EventHandler<ButtonEvent>;
+        onEnter?: EventHandler<ButtonEvent>;
+        onExit?: EventHandler<ButtonEvent>;
+        onFocus?: EventHandler<ButtonEvent>;
+        onBlur?: EventHandler<ButtonEvent>;
+    }
+
     class Button extends EventSource<ButtonEventMap> {
         currentState: ButtonState;
         element: Element;
@@ -446,24 +467,7 @@ declare namespace OpenSeadragon {
         fadeLength: number;
         tracker: MouseTracker;
 
-        constructor(options: {
-            userData?: string;
-            element?: Element;
-            tooltip?: string;
-            srcRest?: string;
-            srcGroup?: string;
-            srcHover?: string;
-            srcDown?: string;
-            fadeDelay?: number;
-            fadeLength?: number;
-            onPress?: EventHandler<ButtonEvent>;
-            onRelease?: EventHandler<ButtonEvent>;
-            onClick?: EventHandler<ButtonEvent>;
-            onEnter?: EventHandler<ButtonEvent>;
-            onExit?: EventHandler<ButtonEvent>;
-            onFocus?: EventHandler<ButtonEvent>;
-            onBlur?: EventHandler<ButtonEvent>;
-        });
+        constructor(options: ButtonOptions);
         disable(): void;
         enable(): void;
         notifyGroupEnter(): void;
@@ -480,6 +484,10 @@ declare namespace OpenSeadragon {
 
         addButton(button: Button): void;
         destroy(): void;
+    }
+
+    class CacheRecord {
+        constructor();
     }
 
     interface TControlOptions {
@@ -512,6 +520,30 @@ declare namespace OpenSeadragon {
         removeControl(element: Control): ControlDock;
         setControlsEnabled(enabled: boolean): ControlDock;
     }
+
+    interface ConversionStep {
+        target: PriorityQueue.Node<string>;
+        origin: PriorityQueue.Node<string>;
+        weight: number;
+        transform: TypeConverter;
+    }
+
+    class DataTypeConverter {
+        constructor();
+
+        guessType(x: any): string;
+        learn(from: string, to: string, callback: TypeConverter, costPower?: number, costMultiplier?: number): void;
+        learnDestroy(type: string, callback: TypeDestructor): void;
+        convert<TOut = any>(tile: Tile, data: any, from: string, ...to: string[]): Promise<TOut | undefined>;
+        copy<TOut = any>(tile: Tile, data: any, type: string): Promise<TOut | undefined>;
+        destroy<TOut = any>(data: any, type: string): Promise<TOut> | undefined;
+        getConversionPath(from: string, to: string | string[]): ConversionStep[] | undefined;
+        getConversionPathFinalType(path: ConversionStep[] | undefined): string | undefined;
+        getKnownTypes(): string[];
+        existsType(type: string): boolean;
+    }
+
+    const converter: DataTypeConverter;
 
     class DisplayRect extends Rect {
         maxLevel: number;
@@ -559,14 +591,32 @@ declare namespace OpenSeadragon {
         clipWithPolygons(polygons: Point[][], useSketch?: boolean): void;
     }
 
+    interface BaseDrawerOptions {
+        usePrivateCache: boolean;
+        preloadCache: boolean;
+        offScreen: boolean;
+        broadCastTileInvalidation: boolean;
+    }
+
     class DrawerBase {
+        defaultOptions: BaseDrawerOptions;
+
         constructor(options: { viewer: Viewer; viewport: Viewport; element: HTMLElement });
         static isSupported(): boolean;
         canRotate(): boolean;
         destroy(): void;
+        destroyInternalCache(): void;
         drawDebuggingRect(rect: Rect): void;
+        getDataToDraw(tile: Tile): any | undefined;
+        getId(): string;
+        getRequiredDataFormats(): string[];
+        getSupportedDataFormats(): string[];
         getType(): string | undefined;
+        internalCacheCreate(cache: CacheRecord, tile: Tile): any;
+        internalCacheFree(data: any): any;
         setImageSmoothingEnabled(imageSmoothingEnabled: boolean): void;
+        setInternalCacheNeedsRefresh(): void;
+        tiledImageCreated(tiledImage: TiledImage): void;
         viewportCoordToDrawerCoord(point: Point): Point;
         viewportToDrawerRectangle(rectangle: Rect): Rect;
     }
@@ -615,10 +665,12 @@ declare namespace OpenSeadragon {
             times?: number,
             priority?: number,
         ): boolean;
+        getAwaitingHandler<K extends keyof EventMap>(eventName: K, bindTarget: any): null | Promise<any>;
         getHandler<K extends keyof EventMap>(eventName: K): void;
         numberOfHandlers<K extends keyof EventMap>(eventName: K): number;
         raiseEvent<K extends keyof EventMap>(eventName: K, eventArgs: object): boolean;
-        removeAllHandlers<K extends keyof EventMap>(eventName?: K): boolean;
+        raiseEventAwaiting<K extends keyof EventMap>(eventName: K, eventArgs: object | undefined, bindTarget: any): Promise<any> | undefined;
+        removeAllHandlers<K extends keyof EventMap>(eventName: K): boolean;
         removeHandler<K extends keyof EventMap>(eventName: K, handler: EventHandler<EventMap[K]>): boolean;
     }
 
@@ -908,6 +960,44 @@ declare namespace OpenSeadragon {
         squaredDistanceTo(point: Point): number;
         times(factor: number): Rect;
         toString(): string;
+    }
+
+    class PriorityQueue<K = number, V = any> {
+        constructor(optHeap?: PriorityQueue<K, V>);
+
+        insert(key: K, value: V): void;
+        insertNode(node: PriorityQueue.Node<K, V>): void;
+        insertAll(heap: PriorityQueue<K, V>): void;
+
+        remove(): PriorityQueue.Node<K, V> | undefined;
+        peek(): V | undefined;
+        peekKey(): K | undefined;
+
+        decreaseKey(node: PriorityQueue.Node<K, V>, key: K): void;
+
+        getValues(): V[];
+        getKeys(): K[];
+
+        containsValue(val: V): boolean;
+        containsKey(key: K): boolean;
+
+        clone(): PriorityQueue<K, V>;
+
+        getCount(): number;
+        isEmpty(): boolean;
+        clear(): void;
+    }
+
+    namespace PriorityQueue {
+        class Node<K = number, V = any> {
+            constructor(key: K, value: V);
+
+            key: K;
+            value: V;
+            index?: number;
+
+            clone(): PriorityQueue.Node<K, V>;
+        }
     }
 
     class Rect {
