@@ -190,7 +190,21 @@
         error: function ( xhr, exc ) {
           const msg = "IIPTileSource: Unable to get IIP metadata from " + url;
           $.console.error( msg );
-          _this.raiseEvent( 'open-failed', { message: msg, source: url });
+
+          let status, statusText, responseText;
+          try { status = xhr.status; } catch (_) {}
+          try { statusText = xhr.statusText; } catch (_) {}
+          try { responseText = xhr.responseText; } catch (_) {}
+
+          _this.raiseEvent( 'open-failed', {
+            message: msg,
+            source: url,
+            xhr: xhr,
+            status: status,
+            statusText: statusText,
+            responseText: responseText,
+            exception: exc || null
+          });
         }
       });
     },

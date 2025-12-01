@@ -2054,7 +2054,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     tileSource.addHandler('open-failed', function (event) {
                         reject({
                             message: event.message,
-                            source: originalTileSource
+                            source: originalTileSource,
+                            status: event.status,
+                            statusText: event.statusText,
+                            xhr: event.xhr,
+                            responseText: event.responseText,
+                            postData: event.postData,
+                            exception: event.exception
                         });
                     });
                 }

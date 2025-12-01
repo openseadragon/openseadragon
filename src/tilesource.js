@@ -552,6 +552,12 @@ $.TileSource.prototype = {
 
                     $.console.error(msg);
 
+                    // Safely read common XHR properties (may throw on old IE for cross-origin)
+                    let status, statusText, responseText;
+                    try { status = xhr.status; } catch (_) {}
+                    try { statusText = xhr.statusText; } catch (_) {}
+                    try { responseText = xhr.responseText; } catch (_) {}
+
                     /***
                      * Raised when an error occurs loading a TileSource.
                      *
@@ -568,7 +574,12 @@ $.TileSource.prototype = {
                     _this.raiseEvent( 'open-failed', {
                         message: msg,
                         source: url,
-                        postData: postData
+                        postData: postData,
+                        xhr: xhr,
+                        status: status,
+                        statusText: statusText,
+                        responseText: responseText,
+                        exception: exc || null
                     });
                 }
             });
