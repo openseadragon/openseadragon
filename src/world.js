@@ -613,7 +613,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
 
     /**
      * Check if a tile needs update, update such tiles in the given list
-     * @param {[OpenSeadragon.Tile]} tileList
+     * @param {OpenSeadragon.Tile[]} tileList
      */
     ensureTilesUpToDate: function(tileList) {
         let updateList;
