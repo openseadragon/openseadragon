@@ -54,7 +54,7 @@
    *          }
    */
 
-  $.IrisTileSource = function(options) {
+  OpenSeadragon[ "IrisTileSource" ] = function( options ) {
 
     $.TileSource.apply(this, [options]);
     if (!options.serverUrl || !options.slideId) {
@@ -142,36 +142,42 @@
         type: "GET",
         async: true,
         success: function(xhr) {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            _this.parseMetadata(data);
-            _this.ready = true;
-            _this.raiseEvent('ready', { tileSource: _this });
-          }
-          catch (e) {
-            const msg = "IrisTileSource: Error parsing metadata: " + e.message;
-            $.console.error(msg);
-            _this.raiseEvent('open-failed', { message: msg, source: url });
-          }
+            try {
+                const data = JSON.parse(xhr.responseText);
+                _this.parseMetadata(data);
+                _this.ready = true;
+                _this.raiseEvent('ready', { tileSource: _this });
+            }
+            catch (e) {
+                const msg = "IrisTileSource: Error parsing metadata: " + e.message;
+                $.console.error(msg);
+                _this.raiseEvent('open-failed', { message: msg, source: url });
+            }
         },
         error: function(xhr, exc) {
-          const msg = "IrisTileSource: Unable to get metadata from " + url;
-          $.console.error(msg);
+            const msg = "IrisTileSource: Unable to get metadata from " + url;
+            $.console.error(msg);
 
-          let status, statusText, responseText;
-          try { status = xhr.status; } catch (_) {}
-          try { statusText = xhr.statusText; } catch (_) {}
-          try { responseText = xhr.responseText; } catch (_) {}
+            function safe(prop) {
+                try {
+                    return xhr[prop];
+                } catch (e) {
+                    return undefined;
+                }
+            }
+            const status = safe('status');
+            const statusText = safe('statusText');
+            const responseText = safe('responseText');
 
-          _this.raiseEvent('open-failed', {
-            message: msg,
-            source: url,
-            xhr: xhr,
-            status: status,
-            statusText: statusText,
-            responseText: responseText,
-            exception: exc || null
-          });
+            _this.raiseEvent('open-failed', {
+                message: msg,
+                source: url,
+                xhr: xhr,
+                status: status,
+                statusText: statusText,
+                responseText: responseText,
+                exception: exc || null
+            });
         }
       });
     },
