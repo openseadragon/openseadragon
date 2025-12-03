@@ -28,7 +28,7 @@ OPENSEADRAGON CHANGELOG
 * New tile source: IIP (Internet Imaging Protocol) (#2719 @ruven)
 * New tile source: Iris (#2759 @nkathawa)
 * New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
-* New option: DrawerBase option for offscreen drawer creation, methods for TiledImage and TileSource creation exposed (#2790 @Aiosa)
+* New option: DrawerBase option for offscreen drawer creation, methods for TiledImage and TileSource creation exposed (#2790, #2822 @Aiosa)
 * New data types: imageBitmap support with workers, image fetching moved from downloadTileStart to convertor (#2790 @Aiosa)
 * New API: stopPropagation property on events (#2790 @Aiosa)
 * Overlay wrapper elements now have a "openseadragon-overlay-wrapper" class. If the overlay element has an ID, the wrapper gets a variant on that ID, but if the overlay element does not have an ID, we no longer give the wrapper an ID. (#2698 @lokaesshwar)
