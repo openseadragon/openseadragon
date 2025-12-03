@@ -45,7 +45,7 @@
    * @param {String} type       - iris
    * @param {String} serverUrl  - Iris host server path (ex: "http://localhost:3000")
    * @param {String} slideId    - Image id (ex: "12345" for 12345.iris)
-   * @param {Object} metadata   - Optional metadata object to use instead of fetching
+   * @param {Object} [metadata] - Optional metadata object to use instead of fetching
    *
    * Example: tileSources: {
    *            type:         "iris",

@@ -100,7 +100,7 @@ $.extend( $.TmsTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url]
      */
     supports: function( data, url ){
         return ( data.type && "tiledmapservice" === data.type );

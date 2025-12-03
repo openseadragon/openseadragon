@@ -618,7 +618,7 @@ declare namespace OpenSeadragon {
         getHandler<K extends keyof EventMap>(eventName: K): void;
         numberOfHandlers<K extends keyof EventMap>(eventName: K): number;
         raiseEvent<K extends keyof EventMap>(eventName: K, eventArgs: object): boolean;
-        removeAllHandlers<K extends keyof EventMap>(eventName: K): boolean;
+        removeAllHandlers<K extends keyof EventMap>(eventName?: K): boolean;
         removeHandler<K extends keyof EventMap>(eventName: K, handler: EventHandler<EventMap[K]>): boolean;
     }
 
