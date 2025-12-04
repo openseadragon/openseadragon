@@ -74,7 +74,7 @@ $.ImageTileSource = class extends $.TileSource {
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} url - optional
+     * @param {String} [url]
      */
     supports(data, url) {
         return data.type && data.type === "image";

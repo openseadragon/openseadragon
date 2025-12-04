@@ -104,7 +104,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url]
      */
     supports: function( data, url ){
         return (
