@@ -27,6 +27,7 @@ OPENSEADRAGON CHANGELOG
 * NEW BEHAVIOR: The per-image ajaxHeaders (specified when opening) are now being merged with the viewer's ajaxHeaders (overriding as appropriate), rather than replacing them (#2757 @hrocha1)
 * New tile source: IIP (Internet Imaging Protocol) (#2719 @ruven)
 * New tile source: Iris (#2759 @nkathawa)
+* The default drawer is now 'auto' which chooses between WebGL or canvas based on the device (@iangilman)
 * New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
 * New option: DrawerBase option for offscreen drawer creation, methods for TiledImage and TileSource creation exposed (#2790, #2822 @Aiosa)
 * New data types: imageBitmap support with workers, image fetching moved from downloadTileStart to convertor (#2790 @Aiosa)
