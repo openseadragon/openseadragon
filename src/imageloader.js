@@ -65,14 +65,6 @@ $.ImageJob = function(options) {
      */
 
     /**
-     * Private parameter. The max number of milliseconds that
-     *   this image job may take to complete.
-     * @member {number} timeout
-     * @memberof OpenSeadragon.ImageJob#
-     * @private
-     */
-
-    /**
      * URL of image (or other data item that will be rendered) to download.
      * @member {src} string
      * @memberof OpenSeadragon.ImageJob#
@@ -121,13 +113,6 @@ $.ImageJob = function(options) {
      * @memberof OpenSeadragon.ImageJob#
      */
 
-    $.extend(true, this, {
-        timeout: $.DEFAULT_SETTINGS.timeout,
-        jobId: null,
-        tries: 0,
-        isBatched: false
-    }, options);
-
     /**
      * Data object which will contain downloaded image data.
      * @member {Image|*} data data object, by default an Image object (depends on TileSource)
@@ -149,6 +134,29 @@ $.ImageJob = function(options) {
      * @private
      */
     this.errorMsg = null;
+
+    /**
+     * Private parameter. The max number of milliseconds that
+     *   this image job may take to complete.
+     * @member {number} timeout
+     * @memberof OpenSeadragon.ImageJob#
+     * @private
+     */
+    this.timeout = $.DEFAULT_SETTINGS.timeout;
+
+    /**
+     * Flag if part of batch query.
+     * @member {boolean} isBatched
+     * @memberof OpenSeadragon.ImageJob#
+     * @private
+     */
+    this.isBatched = false;
+
+
+    $.extend(true, this, {
+        jobId: null,
+        tries: 0,
+    }, options);
 };
 
 $.ImageJob.prototype = {
@@ -346,15 +354,16 @@ $.BatchImageJob.prototype = {
         this.errorMsg = errorMessage;
         this.dataType = null;
 
-        if (this.jobId) {
-            window.clearTimeout(this.jobId);
-            this.jobId = null;
-        }
-
+        // Fail before setting jobId to null, which is checked for in wrapped fail call.
         for (let i = 0; i < this.jobs.length; i++) {
             if (this.jobs[i].jobId) { // If still running
                 this.jobs[i].fail(errorMessage || "Batch failed", request);
             }
+        }
+
+        if (this.jobId) {
+            window.clearTimeout(this.jobId);
+            this.jobId = null;
         }
 
         if (this.callback) {
@@ -559,7 +568,7 @@ $.ImageLoader.prototype = {
  * @method
  * @private
  * @param loader - ImageLoader used to start job.
- * @param {ImageJob} job - The ImageJob that has completed.
+ * @param {OpenSeadragon.ImageJob} job - The ImageJob that has completed.
  * @param callback - Called once cleanup is finished.
  */
 function completeJob(loader, job, callback) {
