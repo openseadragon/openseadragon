@@ -15,7 +15,7 @@ See the [GitHub releases page][github-releases].
 
 The official OpenSeadragon course is now live! Taught by [@iangilman](https://github.com/iangilman/), creator and maintainer, this is your best introduction to working with OpenSeadragon, from basic concepts to coordinate systems, animation, and beyond.
 
-https://www.newline.co/courses/openseadragon-deep-dive
+Learn more at: https://www.newline.co/courses/openseadragon-deep-dive
 
 <a href="https://www.newline.co/courses/openseadragon-deep-dive"><img alt="OpenSeadragon Deep Dive" src="assets/osdnewline.jpg" height="280" /></a>
 
