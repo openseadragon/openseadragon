@@ -303,6 +303,17 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 );
 
             if ( !containerSize.equals( this.oldContainerSize ) ) {
+                // #2801 Resize canvas
+                const dpr = window.devicePixelRatio || 1;
+                this.canvas.width  = containerSize.x * dpr;
+                this.canvas.height = containerSize.y * dpr;
+                this.canvas.style.width  = containerSize.x + 'px';
+                this.canvas.style.height = containerSize.y + 'px';
+
+                const ctx = this.canvas.getContext('2d');
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(dpr, dpr);
+
                 this.viewport.resize( containerSize, true );
                 this.viewport.goHome(true);
                 this.oldContainerSize = containerSize;
