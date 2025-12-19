@@ -815,12 +815,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     /**
                      * Raised when an error occurs loading a TileSource.
                      *
+                     * This event is propagated from the underlying {@link OpenSeadragon.TileSource}
+                     * and therefore carries through any HTTP / XHR details that were available
+                     * when the failure occurred.
+                     *
                      * @event open-failed
                      * @memberof OpenSeadragon.Viewer
                      * @type {object}
                      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                     * @property {String} message - Information about what failed.
-                     * @property {String} source - The tile source that failed.
+                     * @property {String} message - Human‑readable information about what failed.
+                     * @property {String} source - The tile source (or URL / spec) that failed.
+                     * @property {String} [postData] - HTTP POST data used when requesting the TileSource, if any.
+                     * @property {number} [status] - HTTP status code from the failed request, if available.
+                     * @property {String} [statusText] - HTTP status text from the failed request, if available.
+                     * @property {XMLHttpRequest} [xhr] - The underlying XMLHttpRequest instance, if available.
+                     * @property {String} [responseText] - Raw response body from the failed request, if available.
+                     * @property {*} [exception] - Any exception object associated with the failure, if available.
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', failEvent );
@@ -2071,7 +2081,13 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     tileSource.addHandler('open-failed', function (event) {
                         reject({
                             message: event.message,
-                            source: originalTileSource
+                            source: originalTileSource,
+                            status: event.status,
+                            statusText: event.statusText,
+                            xhr: event.xhr,
+                            responseText: event.responseText,
+                            postData: event.postData,
+                            exception: event.exception
                         });
                     });
                 }
