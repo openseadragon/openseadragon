@@ -233,6 +233,7 @@ declare namespace OpenSeadragon {
     type TypeConverter<TIn = any, TOut = any> = (tile: OpenSeadragon.Tile, data: TIn) => TOut | Promise<TOut>;
     type TypeDestructor<TIn = any, TOut = any> = (data: TIn) => TOut | Promise<TOut>;
 
+    // TODO
     interface Options {
         id?: string;
         element?: HTMLElement;
@@ -1251,13 +1252,16 @@ declare namespace OpenSeadragon {
         minLevel: number;
         ready: boolean;
         tileOverlap: number;
+        url: string;
 
         constructor(options: TileSourceOptions);
         configure(data: string | object | any[] | Document, url: string, postData: string): ConfigureOptions;
         createTileCache(cacheObject: object, data: any, tile: Tile): void;
+        destroy(viewer: Viewer): void;
         destroyTileCache(cacheObject: object): void;
         downloadTileAbort(context: ImageJob): void;
         downloadTileStart(context: ImageJob): void;
+        equals(otherSource: TileSource): boolean;
         getClosestLevel(): number;
         getImageInfo(url: string): void;
         getLevelScale(level: number): number;
@@ -1266,22 +1270,37 @@ declare namespace OpenSeadragon {
         getTileAjaxHeaders(level: number, x: number, y: number): object;
         getTileAtPoint(level: number, point: Point): Tile;
         getTileBounds(level: number, x: number, y: number, isSource?: boolean): Rect;
-        getTileCacheData(cacheObject: object): any;
-        getTileCacheDataAsContext2D(cacheObject: object): CanvasRenderingContext2D;
-        getTileCacheDataAsImage(cacheObject: object): HTMLImageElement;
+        getTileCacheData(cacheObject: CacheRecord): Promise<any>; // TODO: Promise to recheck/revisit
+        getTileCacheDataAsContext2D(cacheObject: CacheRecord): CanvasRenderingContext2D;
+
+        //TODO: need to revisit once d.ts is done to check deprecated.
+        /**
+         * @deprecated Use cache API of a tile instead.
+         */
+        getTileCacheDataAsImage(cacheObject: CacheRecord): HTMLImageElement;
         getTileHashKey(level: number, x: number, y: number, url: string, ajaxHeaders: object, postData: any): void;
         getTileHeight(level: number): number;
         getTilePostData(level: number, x: number, y: number): any;
         getTileUrl(level: number, x: number, y: number): string | (() => string);
         getTileWidth(level: number): number;
-        hasTransparency(): boolean;
+
+        /**
+         * Decide whether tiles have transparency: this is crucial for correct images blending.
+         * Overridden on a tile level by setting tile.hasTransparency = true;
+         * @param context2D unused, deprecated argument
+         * @param url tile.getUrl() value for given tile
+         * @param ajaxHeaders tile.ajaxHeaders value for given tile
+         * @param post tile.post value for given tile
+         * @returns {boolean} true if the image has transparency
+         */
+        hasTransparency(context2D: any, url: string, ajaxHeaders: object, post: any): boolean;
         setMaxLevel(level: number): void;
         supports(data: string | object | any[] | Document, url: string): boolean;
         tileExists(level: number, x: number, y: number): boolean;
     }
 
     class TmsTileSource extends TileSource {
-        constructor(width: number, height: number, tileSize: number, tileOverlap: number, tilesUrl: string);
+        constructor(width: number | object, height: number, tileSize: number, tileOverlap: number, tilesUrl: string);
     }
 
     interface ImageOptions {
@@ -1317,6 +1336,7 @@ declare namespace OpenSeadragon {
         url: string;
     }
 
+    // TODO
     class Viewer {
         canvas: Element;
         container: Element;
@@ -1375,7 +1395,8 @@ declare namespace OpenSeadragon {
         updateOverlay(element: Element | string, location: Point | Rect, placement?: Placement): Viewer;
     }
 
-    interface Viewer extends ControlDock, EventSource<ViewerEventMap> {}
+    interface Viewer extends ControlDock, EventSource<ViewerEventMap> {
+    }
 
     interface ViewportOptions {
         margins: object;
@@ -1394,6 +1415,7 @@ declare namespace OpenSeadragon {
         silenceMultiImageWarnings?: boolean;
     }
 
+    // TODO
     class Viewport {
         constructor(options: ViewportOptions);
 
@@ -1577,10 +1599,14 @@ declare namespace OpenSeadragon {
         "container-exit": ContainerEvent;
         "controls-enabled": ControlsEnabledEvent;
         "destroy": ViewerEvent;
+        "drawer-error": DrawerErrorEvent;
         "flip": FlipEvent;
         "full-page": FullPageEvent;
         "full-screen": FullScreenEvent;
+        "fully-loaded-change": FullyLoadedChangeEvent;
         "home": HomeEvent;
+        "job-queue-full": JobQueueFullEvent;
+        "keyboard-enabled": KeyboardEnabledEvent;
         "mouse-enabled": MouseEnabledEvent;
         "navigator-click": NavigatorClickEvent;
         "navigator-drag": NavigatorDragEvent;
@@ -1597,6 +1623,7 @@ declare namespace OpenSeadragon {
         "rotate": RotateEvent;
         "tile-drawing": TileDrawingEvent;
         "tile-drawn": TileEvent;
+        "tile-invalidated": TileInvalidatedEvent;
         "tile-load-failed": TileLoadFailedEvent;
         "tile-loaded": TileLoadedEvent;
         "tile-unloaded": TileEvent;
@@ -1626,7 +1653,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- TILED IMAGE EVENTS --
-    interface TiledImageEvent extends OSDEvent<TiledImage> {}
+    interface TiledImageEvent extends OSDEvent<TiledImage> {
+    }
 
     interface CompositeOperationChangeTiledImageEvent extends TiledImageEvent {
         compositeOperationChange: string;
@@ -1641,7 +1669,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- TILE SOURCE EVENTS --
-    interface TileSourceEvent extends OSDEvent<TileSource> {}
+    interface TileSourceEvent extends OSDEvent<TileSource> {
+    }
 
     interface OpenFailedTileSourceEvent extends TileSourceEvent {
         message: string;
@@ -1653,7 +1682,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- VIEWER EVENTS --
-    interface ViewerEvent extends OSDEvent<Viewer> {}
+    interface ViewerEvent extends OSDEvent<Viewer> {
+    }
 
     interface AddItemFailedEvent extends ViewerEvent {
         message: string;
@@ -1797,6 +1827,12 @@ declare namespace OpenSeadragon {
         enabled: boolean;
     }
 
+    interface DrawerErrorEvent extends ViewerEvent {
+        tiledImage: TiledImage;
+        drawer: DrawerBase;
+        error: string;
+    }
+
     interface FlipEvent extends ViewerEvent {
         flipped: number;
     }
@@ -1809,8 +1845,20 @@ declare namespace OpenSeadragon {
         fullScreen: boolean;
     }
 
+    interface FullyLoadedChangeEvent extends ViewerEvent {
+        fullyLoaded: boolean;
+    }
+
     interface HomeEvent extends ViewerEvent {
         immediately: boolean;
+    }
+
+    interface JobQueueFullEvent extends TileEvent {
+        time: number;
+    }
+
+    interface KeyboardEnabledEvent extends ViewerEvent {
+        enabled: boolean;
     }
 
     interface MouseEnabledEvent extends ViewerEvent {
@@ -1898,6 +1946,13 @@ declare namespace OpenSeadragon {
         rendered: Tile;
     }
 
+    interface TileInvalidatedEvent extends TileEvent {
+        outdated: () => Promise<boolean>;
+        getData: (type: string) => Promise<any>;
+        setData: (data: any, type: string) => Promise<undefined>;
+        resetData: () => void;
+    }
+
     interface TileLoadFailedEvent extends TileEvent {
         time: number;
         message: string;
@@ -1946,7 +2001,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- WORLD EVENTS --
-    interface WorldEvent extends OSDEvent<World> {}
+    interface WorldEvent extends OSDEvent<World> {
+    }
 
     interface AddItemWorldEvent extends WorldEvent {
         item: TiledImage;
