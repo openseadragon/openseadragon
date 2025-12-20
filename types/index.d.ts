@@ -1315,6 +1315,7 @@ declare namespace OpenSeadragon {
         clip?: Rect;
         opacity?: number;
         preload?: boolean;
+        zombieCache?: boolean;
         degrees?: number;
         flipped?: boolean;
         compositeOperation?: string;
@@ -1328,7 +1329,7 @@ declare namespace OpenSeadragon {
         placeholderFillStyle?: string | CanvasGradient | CanvasPattern;
     }
 
-    interface TiledImageOptions extends ImageOptions {
+    interface TileSourceSpecifier extends ImageOptions {
         tileSource: string | object;
     }
 
@@ -1336,7 +1337,6 @@ declare namespace OpenSeadragon {
         url: string;
     }
 
-    // TODO
     class Viewer {
         canvas: Element;
         container: Element;
@@ -1359,26 +1359,32 @@ declare namespace OpenSeadragon {
         ): Viewer;
         addReferenceStrip(): void;
         addSimpleImage(options: SimpleImageOptions): void;
-        addTiledImage(options: TiledImageOptions): void;
+        addTiledImage(options: TileSourceSpecifier): void;
         bindSequenceControls(): Viewer;
         bindStandardControls(): Viewer;
         clearOverlays(): Viewer;
         close(): Viewer;
         currentPage(): number;
         destroy(): void;
+        endZoomAction(): void;
         forceRedraw(): Viewer;
         forceResize(): void;
         gestureSettingsByDeviceType(type: string): GestureSettings;
+        getFullyLoaded(): boolean;
         getOverlayById(element: Element | string): Overlay;
         goToNextPage(): void;
         goToPage(page: number): Viewer;
         goToPreviousPage(): void;
+        instantiateTiledImageClass(options: TileSourceSpecifier): Promise<TiledImage | object>
+        instantiateTileSourceClass(options: TileSourceSpecifier): Promise<object>
+        isDestroyed(): boolean;
         isFullPage(): boolean;
         isFullScreen(): boolean;
+        isKeyboardNavEnabled(): boolean;
         isMouseNavEnabled(): boolean;
         isOpen(): boolean;
         isVisible(): boolean;
-        open(tileSources: string | object | TileSource[], initialPage?: number): Viewer;
+        open(tileSources: TileSourceSpecifier | TileSourceSpecifier[], initialPage?: number): Viewer;
         removeOverlay(overlay: Element | string): Viewer;
         removeReferenceStrip(): void;
         requestDrawer(drawerCandidate: string | DrawerBase, options: {
@@ -1386,13 +1392,20 @@ declare namespace OpenSeadragon {
             redrawImmediately?: boolean;
             drawerOptions: object;
         }): object | boolean;
+        requestInvalidate(restoreTiles?: boolean): Promise<any>;
         setAjaxHeaders(ajaxHeaders: object, propagate?: boolean): void;
         setDebugMode(debug: boolean): Viewer;
         setFullPage(fullScreen: boolean): Viewer;
         setFullScreen(fullScreen: boolean): Viewer;
+        setKeyboardNavEnabled(enabled: boolean): Viewer;
         setMouseNavEnabled(enabled: boolean): Viewer;
         setVisible(visible: boolean): Viewer;
+        singleZoomInAction(): void;
+        singleZoomOutAction(): void;
+        startZoomInAction(): void;
+        startZoomOutAction(): void;
         updateOverlay(element: Element | string, location: Point | Rect, placement?: Placement): Viewer;
+        whenFullyLoaded(callback: () => void): void;
     }
 
     interface Viewer extends ControlDock, EventSource<ViewerEventMap> {
