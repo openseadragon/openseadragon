@@ -230,7 +230,10 @@ declare namespace OpenSeadragon {
 
     type DrawerType = "html" | "canvas" | "webgl";
     type DrawerConstructor = new(options: TDrawerOptions) => DrawerBase;
+    type TypeConverter<TIn = any, TOut = any> = (tile: OpenSeadragon.Tile, data: TIn) => TOut | Promise<TOut>;
+    type TypeDestructor<TIn = any, TOut = any> = (data: TIn) => TOut | Promise<TOut>;
 
+    // TODO
     interface Options {
         id?: string;
         element?: HTMLElement;
@@ -439,6 +442,25 @@ declare namespace OpenSeadragon {
         getTileUrl?: ((l: number, x: number, y: number) => string);
     }
 
+    interface ButtonOptions {
+        userData?: object;
+        element?: Element;
+        tooltip?: string;
+        srcRest?: string;
+        srcGroup?: string;
+        srcHover?: string;
+        srcDown?: string;
+        fadeDelay?: number;
+        fadeLength?: number;
+        onPress?: EventHandler<ButtonEvent>;
+        onRelease?: EventHandler<ButtonEvent>;
+        onClick?: EventHandler<ButtonEvent>;
+        onEnter?: EventHandler<ButtonEvent>;
+        onExit?: EventHandler<ButtonEvent>;
+        onFocus?: EventHandler<ButtonEvent>;
+        onBlur?: EventHandler<ButtonEvent>;
+    }
+
     class Button extends EventSource<ButtonEventMap> {
         currentState: ButtonState;
         element: Element;
@@ -446,24 +468,7 @@ declare namespace OpenSeadragon {
         fadeLength: number;
         tracker: MouseTracker;
 
-        constructor(options: {
-            userData?: string;
-            element?: Element;
-            tooltip?: string;
-            srcRest?: string;
-            srcGroup?: string;
-            srcHover?: string;
-            srcDown?: string;
-            fadeDelay?: number;
-            fadeLength?: number;
-            onPress?: EventHandler<ButtonEvent>;
-            onRelease?: EventHandler<ButtonEvent>;
-            onClick?: EventHandler<ButtonEvent>;
-            onEnter?: EventHandler<ButtonEvent>;
-            onExit?: EventHandler<ButtonEvent>;
-            onFocus?: EventHandler<ButtonEvent>;
-            onBlur?: EventHandler<ButtonEvent>;
-        });
+        constructor(options: ButtonOptions);
         disable(): void;
         enable(): void;
         notifyGroupEnter(): void;
@@ -480,6 +485,10 @@ declare namespace OpenSeadragon {
 
         addButton(button: Button): void;
         destroy(): void;
+    }
+
+    class CacheRecord {
+        constructor();
     }
 
     interface TControlOptions {
@@ -512,6 +521,30 @@ declare namespace OpenSeadragon {
         removeControl(element: Control): ControlDock;
         setControlsEnabled(enabled: boolean): ControlDock;
     }
+
+    interface ConversionStep {
+        target: PriorityQueue.Node<string>;
+        origin: PriorityQueue.Node<string>;
+        weight: number;
+        transform: TypeConverter;
+    }
+
+    class DataTypeConverter {
+        constructor();
+
+        guessType(x: any): string;
+        learn(from: string, to: string, callback: TypeConverter, costPower?: number, costMultiplier?: number): void;
+        learnDestroy(type: string, callback: TypeDestructor): void;
+        convert<TOut = any>(tile: Tile, data: any, from: string, ...to: string[]): Promise<TOut | undefined>;
+        copy<TOut = any>(tile: Tile, data: any, type: string): Promise<TOut | undefined>;
+        destroy<TOut = any>(data: any, type: string): Promise<TOut> | undefined;
+        getConversionPath(from: string, to: string | string[]): ConversionStep[] | undefined;
+        getConversionPathFinalType(path: ConversionStep[] | undefined): string | undefined;
+        getKnownTypes(): string[];
+        existsType(type: string): boolean;
+    }
+
+    const converter: DataTypeConverter;
 
     class DisplayRect extends Rect {
         maxLevel: number;
@@ -559,14 +592,32 @@ declare namespace OpenSeadragon {
         clipWithPolygons(polygons: Point[][], useSketch?: boolean): void;
     }
 
+    interface BaseDrawerOptions {
+        usePrivateCache: boolean;
+        preloadCache: boolean;
+        offScreen: boolean;
+        broadCastTileInvalidation: boolean;
+    }
+
     class DrawerBase {
+        defaultOptions: BaseDrawerOptions;
+
         constructor(options: { viewer: Viewer; viewport: Viewport; element: HTMLElement });
         static isSupported(): boolean;
         canRotate(): boolean;
         destroy(): void;
+        destroyInternalCache(): void;
         drawDebuggingRect(rect: Rect): void;
+        getDataToDraw(tile: Tile): any | undefined;
+        getId(): string;
+        getRequiredDataFormats(): string[];
+        getSupportedDataFormats(): string[];
         getType(): string | undefined;
+        internalCacheCreate(cache: CacheRecord, tile: Tile): any;
+        internalCacheFree(data: any): any;
         setImageSmoothingEnabled(imageSmoothingEnabled: boolean): void;
+        setInternalCacheNeedsRefresh(): void;
+        tiledImageCreated(tiledImage: TiledImage): void;
         viewportCoordToDrawerCoord(point: Point): Point;
         viewportToDrawerRectangle(rectangle: Rect): Rect;
     }
@@ -615,10 +666,12 @@ declare namespace OpenSeadragon {
             times?: number,
             priority?: number,
         ): boolean;
+        getAwaitingHandler<K extends keyof EventMap>(eventName: K, bindTarget: any): null | Promise<any>;
         getHandler<K extends keyof EventMap>(eventName: K): void;
         numberOfHandlers<K extends keyof EventMap>(eventName: K): number;
         raiseEvent<K extends keyof EventMap>(eventName: K, eventArgs: object): boolean;
-        removeAllHandlers<K extends keyof EventMap>(eventName?: K): boolean;
+        raiseEventAwaiting<K extends keyof EventMap>(eventName: K, eventArgs: object | undefined, bindTarget: any): Promise<any> | undefined;
+        removeAllHandlers<K extends keyof EventMap>(eventName: K): boolean;
         removeHandler<K extends keyof EventMap>(eventName: K, handler: EventHandler<EventMap[K]>): boolean;
     }
 
@@ -910,6 +963,44 @@ declare namespace OpenSeadragon {
         toString(): string;
     }
 
+    class PriorityQueue<K = number, V = any> {
+        constructor(optHeap?: PriorityQueue<K, V>);
+
+        insert(key: K, value: V): void;
+        insertNode(node: PriorityQueue.Node<K, V>): void;
+        insertAll(heap: PriorityQueue<K, V>): void;
+
+        remove(): PriorityQueue.Node<K, V> | undefined;
+        peek(): V | undefined;
+        peekKey(): K | undefined;
+
+        decreaseKey(node: PriorityQueue.Node<K, V>, key: K): void;
+
+        getValues(): V[];
+        getKeys(): K[];
+
+        containsValue(val: V): boolean;
+        containsKey(key: K): boolean;
+
+        clone(): PriorityQueue<K, V>;
+
+        getCount(): number;
+        isEmpty(): boolean;
+        clear(): void;
+    }
+
+    namespace PriorityQueue {
+        class Node<K = number, V = any> {
+            constructor(key: K, value: V);
+
+            key: K;
+            value: V;
+            index?: number;
+
+            clone(): PriorityQueue.Node<K, V>;
+        }
+    }
+
     class Rect {
         x: number;
         y: number;
@@ -1161,13 +1252,16 @@ declare namespace OpenSeadragon {
         minLevel: number;
         ready: boolean;
         tileOverlap: number;
+        url: string;
 
         constructor(options: TileSourceOptions);
         configure(data: string | object | any[] | Document, url: string, postData: string): ConfigureOptions;
         createTileCache(cacheObject: object, data: any, tile: Tile): void;
+        destroy(viewer: Viewer): void;
         destroyTileCache(cacheObject: object): void;
         downloadTileAbort(context: ImageJob): void;
         downloadTileStart(context: ImageJob): void;
+        equals(otherSource: TileSource): boolean;
         getClosestLevel(): number;
         getImageInfo(url: string): void;
         getLevelScale(level: number): number;
@@ -1176,22 +1270,37 @@ declare namespace OpenSeadragon {
         getTileAjaxHeaders(level: number, x: number, y: number): object;
         getTileAtPoint(level: number, point: Point): Tile;
         getTileBounds(level: number, x: number, y: number, isSource?: boolean): Rect;
-        getTileCacheData(cacheObject: object): any;
-        getTileCacheDataAsContext2D(cacheObject: object): CanvasRenderingContext2D;
-        getTileCacheDataAsImage(cacheObject: object): HTMLImageElement;
+        getTileCacheData(cacheObject: CacheRecord): Promise<any>; // TODO: Promise to recheck/revisit
+        getTileCacheDataAsContext2D(cacheObject: CacheRecord): CanvasRenderingContext2D;
+
+        //TODO: need to revisit once d.ts is done to check deprecated.
+        /**
+         * @deprecated Use cache API of a tile instead.
+         */
+        getTileCacheDataAsImage(cacheObject: CacheRecord): HTMLImageElement;
         getTileHashKey(level: number, x: number, y: number, url: string, ajaxHeaders: object, postData: any): void;
         getTileHeight(level: number): number;
         getTilePostData(level: number, x: number, y: number): any;
         getTileUrl(level: number, x: number, y: number): string | (() => string);
         getTileWidth(level: number): number;
-        hasTransparency(): boolean;
+
+        /**
+         * Decide whether tiles have transparency: this is crucial for correct images blending.
+         * Overridden on a tile level by setting tile.hasTransparency = true;
+         * @param context2D unused, deprecated argument
+         * @param url tile.getUrl() value for given tile
+         * @param ajaxHeaders tile.ajaxHeaders value for given tile
+         * @param post tile.post value for given tile
+         * @returns {boolean} true if the image has transparency
+         */
+        hasTransparency(context2D: any, url: string, ajaxHeaders: object, post: any): boolean;
         setMaxLevel(level: number): void;
         supports(data: string | object | any[] | Document, url: string): boolean;
         tileExists(level: number, x: number, y: number): boolean;
     }
 
     class TmsTileSource extends TileSource {
-        constructor(width: number, height: number, tileSize: number, tileOverlap: number, tilesUrl: string);
+        constructor(width: number | object, height: number, tileSize: number, tileOverlap: number, tilesUrl: string);
     }
 
     interface ImageOptions {
@@ -1206,6 +1315,7 @@ declare namespace OpenSeadragon {
         clip?: Rect;
         opacity?: number;
         preload?: boolean;
+        zombieCache?: boolean;
         degrees?: number;
         flipped?: boolean;
         compositeOperation?: string;
@@ -1219,7 +1329,7 @@ declare namespace OpenSeadragon {
         placeholderFillStyle?: string | CanvasGradient | CanvasPattern;
     }
 
-    interface TiledImageOptions extends ImageOptions {
+    interface TileSourceSpecifier extends ImageOptions {
         tileSource: string | object;
     }
 
@@ -1249,26 +1359,32 @@ declare namespace OpenSeadragon {
         ): Viewer;
         addReferenceStrip(): void;
         addSimpleImage(options: SimpleImageOptions): void;
-        addTiledImage(options: TiledImageOptions): void;
+        addTiledImage(options: TileSourceSpecifier): void;
         bindSequenceControls(): Viewer;
         bindStandardControls(): Viewer;
         clearOverlays(): Viewer;
         close(): Viewer;
         currentPage(): number;
         destroy(): void;
+        endZoomAction(): void;
         forceRedraw(): Viewer;
         forceResize(): void;
         gestureSettingsByDeviceType(type: string): GestureSettings;
+        getFullyLoaded(): boolean;
         getOverlayById(element: Element | string): Overlay;
         goToNextPage(): void;
         goToPage(page: number): Viewer;
         goToPreviousPage(): void;
+        instantiateTiledImageClass(options: TileSourceSpecifier): Promise<TiledImage | object>
+        instantiateTileSourceClass(options: TileSourceSpecifier): Promise<object>
+        isDestroyed(): boolean;
         isFullPage(): boolean;
         isFullScreen(): boolean;
+        isKeyboardNavEnabled(): boolean;
         isMouseNavEnabled(): boolean;
         isOpen(): boolean;
         isVisible(): boolean;
-        open(tileSources: string | object | TileSource[], initialPage?: number): Viewer;
+        open(tileSources: TileSourceSpecifier | TileSourceSpecifier[], initialPage?: number): Viewer;
         removeOverlay(overlay: Element | string): Viewer;
         removeReferenceStrip(): void;
         requestDrawer(drawerCandidate: string | DrawerBase, options: {
@@ -1276,16 +1392,24 @@ declare namespace OpenSeadragon {
             redrawImmediately?: boolean;
             drawerOptions: object;
         }): object | boolean;
+        requestInvalidate(restoreTiles?: boolean): Promise<any>;
         setAjaxHeaders(ajaxHeaders: object, propagate?: boolean): void;
         setDebugMode(debug: boolean): Viewer;
         setFullPage(fullScreen: boolean): Viewer;
         setFullScreen(fullScreen: boolean): Viewer;
+        setKeyboardNavEnabled(enabled: boolean): Viewer;
         setMouseNavEnabled(enabled: boolean): Viewer;
         setVisible(visible: boolean): Viewer;
+        singleZoomInAction(): void;
+        singleZoomOutAction(): void;
+        startZoomInAction(): void;
+        startZoomOutAction(): void;
         updateOverlay(element: Element | string, location: Point | Rect, placement?: Placement): Viewer;
+        whenFullyLoaded(callback: () => void): void;
     }
 
-    interface Viewer extends ControlDock, EventSource<ViewerEventMap> {}
+    interface Viewer extends ControlDock, EventSource<ViewerEventMap> {
+    }
 
     interface ViewportOptions {
         margins: object;
@@ -1304,6 +1428,7 @@ declare namespace OpenSeadragon {
         silenceMultiImageWarnings?: boolean;
     }
 
+    // TODO
     class Viewport {
         constructor(options: ViewportOptions);
 
@@ -1487,10 +1612,14 @@ declare namespace OpenSeadragon {
         "container-exit": ContainerEvent;
         "controls-enabled": ControlsEnabledEvent;
         "destroy": ViewerEvent;
+        "drawer-error": DrawerErrorEvent;
         "flip": FlipEvent;
         "full-page": FullPageEvent;
         "full-screen": FullScreenEvent;
+        "fully-loaded-change": FullyLoadedChangeEvent;
         "home": HomeEvent;
+        "job-queue-full": JobQueueFullEvent;
+        "keyboard-enabled": KeyboardEnabledEvent;
         "mouse-enabled": MouseEnabledEvent;
         "navigator-click": NavigatorClickEvent;
         "navigator-drag": NavigatorDragEvent;
@@ -1507,6 +1636,7 @@ declare namespace OpenSeadragon {
         "rotate": RotateEvent;
         "tile-drawing": TileDrawingEvent;
         "tile-drawn": TileEvent;
+        "tile-invalidated": TileInvalidatedEvent;
         "tile-load-failed": TileLoadFailedEvent;
         "tile-loaded": TileLoadedEvent;
         "tile-unloaded": TileEvent;
@@ -1536,7 +1666,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- TILED IMAGE EVENTS --
-    interface TiledImageEvent extends OSDEvent<TiledImage> {}
+    interface TiledImageEvent extends OSDEvent<TiledImage> {
+    }
 
     interface CompositeOperationChangeTiledImageEvent extends TiledImageEvent {
         compositeOperationChange: string;
@@ -1551,7 +1682,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- TILE SOURCE EVENTS --
-    interface TileSourceEvent extends OSDEvent<TileSource> {}
+    interface TileSourceEvent extends OSDEvent<TileSource> {
+    }
 
     interface OpenFailedTileSourceEvent extends TileSourceEvent {
         message: string;
@@ -1563,7 +1695,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- VIEWER EVENTS --
-    interface ViewerEvent extends OSDEvent<Viewer> {}
+    interface ViewerEvent extends OSDEvent<Viewer> {
+    }
 
     interface AddItemFailedEvent extends ViewerEvent {
         message: string;
@@ -1707,6 +1840,12 @@ declare namespace OpenSeadragon {
         enabled: boolean;
     }
 
+    interface DrawerErrorEvent extends ViewerEvent {
+        tiledImage: TiledImage;
+        drawer: DrawerBase;
+        error: string;
+    }
+
     interface FlipEvent extends ViewerEvent {
         flipped: number;
     }
@@ -1719,8 +1858,20 @@ declare namespace OpenSeadragon {
         fullScreen: boolean;
     }
 
+    interface FullyLoadedChangeEvent extends ViewerEvent {
+        fullyLoaded: boolean;
+    }
+
     interface HomeEvent extends ViewerEvent {
         immediately: boolean;
+    }
+
+    interface JobQueueFullEvent extends TileEvent {
+        time: number;
+    }
+
+    interface KeyboardEnabledEvent extends ViewerEvent {
+        enabled: boolean;
     }
 
     interface MouseEnabledEvent extends ViewerEvent {
@@ -1808,6 +1959,13 @@ declare namespace OpenSeadragon {
         rendered: Tile;
     }
 
+    interface TileInvalidatedEvent extends TileEvent {
+        outdated: () => Promise<boolean>;
+        getData: (type: string) => Promise<any>;
+        setData: (data: any, type: string) => Promise<undefined>;
+        resetData: () => void;
+    }
+
     interface TileLoadFailedEvent extends TileEvent {
         time: number;
         message: string;
@@ -1856,7 +2014,8 @@ declare namespace OpenSeadragon {
     }
 
     // -- WORLD EVENTS --
-    interface WorldEvent extends OSDEvent<World> {}
+    interface WorldEvent extends OSDEvent<World> {
+    }
 
     interface AddItemWorldEvent extends WorldEvent {
         item: TiledImage;
