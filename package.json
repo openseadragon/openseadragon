@@ -54,6 +54,7 @@
         "build": "grunt build",
         "dev": "grunt dev",
         "analyze": "bundlesize",
+        "analyze:visualize": "node scripts/analyze-bundle.js",
         "check:bundle-size": "bundlesize",
         "package": "grunt package"
     },
