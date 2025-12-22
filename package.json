@@ -46,7 +46,6 @@
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
         "qunit": "^2.24.1",
-        "source-map-explorer": "^2.5.3",
         "typescript": "^5.9.3"
     },
     "scripts": {
