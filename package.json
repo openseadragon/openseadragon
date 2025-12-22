@@ -46,6 +46,7 @@
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
         "qunit": "^2.24.1",
+        "source-map-explorer": "^2.5.3",
         "typescript": "^5.9.3"
     },
     "scripts": {
@@ -54,7 +55,8 @@
         "build": "grunt build",
         "dev": "grunt dev",
         "analyze": "bundlesize",
-        "analyze:visualize": "node scripts/analyze-bundle.js",
+        "analyze:visualize": "source-map-explorer build/openseadragon/openseadragon.min.js --no-border-checks",
+        "analyze:visualize:html": "source-map-explorer build/openseadragon/openseadragon.min.js --no-border-checks --html bundle-analysis.html",
         "check:bundle-size": "bundlesize",
         "package": "grunt package"
     },
