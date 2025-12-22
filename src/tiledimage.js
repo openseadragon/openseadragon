@@ -35,6 +35,22 @@
 (function( $ ){
 
 /**
+ * Object that keeps ready-to-draw tile state information. These properties might differ in time
+ * dynamically, e.g. when blending/animating.
+ * TODO: info.level is probably info.tile.level - remove?
+ * @typedef {Object} OpenSeadragon.TiledImage.DrawTileInfo
+ * @property {Number} level
+ * @property {Number} levelOpacity
+ * @property {Number} currentTime
+ * @property {OpenSeadragon.Tile} tile
+ */
+
+/**
+ * Issues enum that records issues for the target image
+ * @typedef {('webgl')} OpenSeadragon.TiledImage.Issue
+ */
+
+/**
  * You shouldn't have to create a TiledImage instance directly; get it asynchronously by
  * using {@link OpenSeadragon.Viewer#open} or {@link OpenSeadragon.Viewer#addTiledImage} instead.
  * @class TiledImage
@@ -83,6 +99,10 @@
  *      Defaults to the setting in {@link OpenSeadragon.Options}.
  * @param {Object} [options.ajaxHeaders={}]
  *      A set of headers to include when making tile AJAX requests.
+ * @param {string|string[]} [options.originalDataType=undefined]
+ *      A default format to convert tiles to at the beginning. The format is the base tile format,
+ *      and this can optimize rendering or processing logics, for example, in case a plugin always requires a certain
+ *      format to convert to.
  */
 $.TiledImage = function( options ) {
     this._initialized = false;
@@ -100,6 +120,8 @@ $.TiledImage = function( options ) {
         "[TiledImage] options.clip must be an OpenSeadragon.Rect if present");
 
     $.EventSource.call( this );
+    // Asynchronously loaded items remember where users wanted them
+    this._optimalWorldIndex = undefined;
 
     this._tileCache = options.tileCache;
     delete options.tileCache;
@@ -150,6 +172,10 @@ $.TiledImage = function( options ) {
     const ajaxHeaders = options.ajaxHeaders;
     delete options.ajaxHeaders;
 
+    // Setter ensures lowercase
+    this.crossOriginPolicy = options.crossOriginPolicy;
+    delete options.crossOriginPolicy;
+
     $.extend( true, this, {
 
         //internal state properties
@@ -157,7 +183,6 @@ $.TiledImage = function( options ) {
         tilesMatrix:    {},    // A '3d' dictionary [level][x][y] --> Tile.
         coverage:       {},    // A '3d' dictionary [level][x][y] --> Boolean; shows what areas have been drawn.
         loadingCoverage: {},   // A '3d' dictionary [level][x][y] --> Boolean; shows what areas are loaded or are being loaded/blended.
-        lastDrawn:      [],    // An unordered list of Tiles drawn last frame.
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _needsDraw:     true,  // Does the tiledImage need to be drawn again?
         _needsUpdate:   true,  // Does the tiledImage need to update the viewport again?
@@ -169,7 +194,7 @@ $.TiledImage = function( options ) {
         _arrayCacheMap: [],    // array cache to avoid constant re-creation and GC overload
         _isBlending:    false, // Are any tiles still being blended?
         _wasBlending:   false, // Were any tiles blending before the last draw?
-        _isTainted:     false, // Has a Tile been found with tainted data?
+        _issues:        {},    // An issue flag map - image was marked as problematic by some entity (usually a drawer)?
         //configurable settings
         springStiffness:                   $.DEFAULT_SETTINGS.springStiffness,
         animationTime:                     $.DEFAULT_SETTINGS.animationTime,
@@ -184,7 +209,6 @@ $.TiledImage = function( options ) {
         smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:                         $.DEFAULT_SETTINGS.debugMode,
-        crossOriginPolicy:                 $.DEFAULT_SETTINGS.crossOriginPolicy,
         ajaxWithCredentials:               $.DEFAULT_SETTINGS.ajaxWithCredentials,
         placeholderFillStyle:              $.DEFAULT_SETTINGS.placeholderFillStyle,
         opacity:                           $.DEFAULT_SETTINGS.opacity,
@@ -192,6 +216,7 @@ $.TiledImage = function( options ) {
         compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
         subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency,
         maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame,
+        originalDataType:                  undefined,
         _currentMaxTilesPerFrame:          (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10
     }, options );
 
@@ -367,23 +392,47 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this._needsDraw;
     },
 
-    /**
-     * Set the internal _isTainted flag for this TiledImage. Lazy loaded - not
-     * checked each time a Tile is loaded, but can be set if a consumer of the
-     * tiles (e.g. a Drawer) discovers a Tile to have tainted data so that further
-     * checks are not needed and alternative rendering strategies can be used.
-     * @private
-     */
-    setTainted(isTainted){
-        this._isTainted = isTainted;
+    get crossOriginPolicy(){
+        return this._crossOriginPolicy;
+    },
+
+    set crossOriginPolicy(crossOriginPolicy) {
+        if (typeof crossOriginPolicy === 'string') {
+            this._crossOriginPolicy = crossOriginPolicy.toLowerCase();
+        } else {
+            this._crossOriginPolicy = $.DEFAULT_SETTINGS.crossOriginPolicy;
+        }
     },
 
     /**
+     * Set the internal issue flag for this TiledImage. Lazy loaded - not
+     * checked each time a Tile is loaded, but can be set if a consumer of the
+     * tiles (e.g. a Drawer) discovers a Tile to have certain data issue so that further
+     * checks are not needed and alternative rendering strategies can be used.
+     * @param {OpenSeadragon.TiledImage.Issue} issueType
+     * @param {string} description
+     * @param {Error|any} error
      * @private
-     * @returns {Boolean} whether the TiledImage has been marked as tainted
      */
-    isTainted(){
-        return this._isTainted;
+    setIssue(issueType, description = undefined, error = undefined){
+        this._issues[issueType] = (description || `TiledImage is ${issueType}}`) + (error.message || error);
+        $.console.warn(this._issues[issueType], error);
+    },
+
+    /**
+     * @param {OpenSeadragon.TiledImage.Issue} issueType
+     * @returns {string} issue details or undefined if the issue does not apply
+     */
+    getIssue(issueType) {
+        return this._issues[issueType];
+    },
+
+    /**
+     * @param {OpenSeadragon.TiledImage.Issue} issueType
+     * @returns {Boolean} whether the TiledImage has been marked with a given issue
+     */
+    hasIssue(issueType){
+        return !!this.getIssue(issueType);
     },
 
     /**
@@ -488,6 +537,25 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const topLeft = this.imageToWindowCoordinates(new $.Point(0, 0));
         const bottomRight = this.imageToWindowCoordinates(this.getContentSize());
         return new $.Point(bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+    },
+
+    /**
+     * Get tile list that was used to draw the viewport current or last frame.
+     * @return {OpenSeadragon.OpenSeadragon.TiledImage.DrawTileInfo[]}
+     */
+    get lastDrawn() {
+        return this._lastDrawn;
+    },
+
+    /**
+     * Get drawer instance used to draw this tiled image. Normally,
+     * it is the drawer of the base viewer that owns the tiled image.
+     * However, if the image is instantiated manually and used for example
+     * in offscreen rendering, you might need to change the reference drawer.
+     * @returns {OpenSeadragon.DrawerBase} The drawer instance used to draw this tiled image.
+     */
+    getDrawer: function () {
+        return this.viewer.drawer;
     },
 
     // private
@@ -704,7 +772,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * 1 means original image size, 0.5 half size...
      * Viewport zoom: ratio of the displayed image's width to viewport's width.
      * 1 means identical width, 2 means image's width is twice the viewport's width...
-     * Note: not accurate with multi-image.
      * @function
      * @param {Number} imageZoom The image zoom
      * @returns {Number} viewportZoom The viewport zoom
@@ -1117,8 +1184,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     *
-     * @returns {Array} Array of Tiles that make up the current view
+     * Get tiles that should be drawn at the current position of tiled image.
+     * Note: this method should be called only once per frame.
+     * @returns {OpenSeadragon.TiledImage.DrawTileInfo[]} Array of Tiles that make up the current view
      */
     getTilesToDraw: function(){
         // start with all the tiles added to this._tilesToDraw during the most recent
@@ -1129,13 +1197,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const lastDrawn = this._lastDrawn;
 
         let insertionIndex = 0;
-        for (const nested of this._tilesToDraw) {
-            if (Array.isArray(nested)) {
-                for (const item of nested) {
+        for (const maybeNested of this._tilesToDraw) {
+            if (Array.isArray(maybeNested)) {
+                for (const item of maybeNested) {
                     lastDrawn[insertionIndex++] = item;
                 }
-            } else if (nested) {
-                lastDrawn[insertionIndex++] = nested;
+            } else if (maybeNested) {
+                lastDrawn[insertionIndex++] = maybeNested;
             }
         }
         lastDrawn.length = insertionIndex;
@@ -1146,15 +1214,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // mark the tiles as being drawn, so that they won't be discarded from
         // the tileCache
         insertionIndex = 0;
-        for (const nested of this._tilesToDraw) {
-            if (Array.isArray(nested)) {
-                for (const item of nested) {
-                    item.tile.beingDrawn = true;
-                    lastDrawn[insertionIndex++] = item;
+        for (const maybeNested of this._tilesToDraw) {
+            if (Array.isArray(maybeNested)) {
+                for (const item of maybeNested) {
+                    if (item.tile.loaded) {
+                        item.tile.beingDrawn = true;
+                        lastDrawn[insertionIndex++] = item;
+                    }
                 }
-            } else if (nested) {
-                nested.tile.beingDrawn = true;
-                lastDrawn[insertionIndex++] = nested;
+            } else if (maybeNested) {
+                if (maybeNested.tile.loaded) {
+                    maybeNested.tile.beingDrawn = true;
+                    lastDrawn[insertionIndex++] = maybeNested;
+                }
             }
         }
         lastDrawn.length = insertionIndex;
@@ -1498,6 +1570,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 bestLoadTileCandidates
             );
 
+            this.viewer.world.ensureTilesUpToDate(result.tilesToDraw);
+
             bestLoadTileCandidates = result.bestLoadTileCandidates;
             this._tilesToDraw[level] = result.tilesToDraw;
 
@@ -1511,14 +1585,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         // Load the new 'best' n tiles
         if (bestLoadTileCandidates && bestLoadTileCandidates.length > 0) {
-            // Avoid executing this in the frame loop
-            setTimeout(() => {
-                for (const tile of bestLoadTileCandidates) {
-                    if (tile) {
-                        this._loadTile(tile, currentTime);
-                    }
+            // We need to set loading state immediatelly, if we need setTimeout() here,
+            // we should immediatelly set loading=true to all tiles
+            for (const tile of bestLoadTileCandidates) {
+                if (tile) {
+                    this._loadTile(tile, currentTime);
                 }
-            });
+            }
             this._needsDraw = true;
             return false;
         } else {
@@ -1729,19 +1802,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             this._setCoverage( this.coverage, level, x, y, false );
 
-            if ( tile.exists ) {
-                if (tile.loaded && tile.opacity === 1){
-                    this._setCoverage( this.coverage, level, x, y, true );
-                }
-                this._positionTile(
-                    tile,
-                    this.source.tileOverlap,
-                    this.viewport,
-                    viewportCenter,
-                    levelVisibility
-                );
-
+            if (tile.exists) {
                 if (tile.loaded) {
+                    if (tile.opacity === 1) {
+                        this._setCoverage( this.coverage, level, x, y, true );
+                    }
+
                     // Tiles are carried in info objects
                     tilesToDraw[tileIndex++] = {
                         tile: tile,
@@ -1749,15 +1815,24 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         levelOpacity: levelOpacity,
                         currentTime: currentTime
                     };
+                    this._setCoverage(this.loadingCoverage, level, x, y, true);
                 }
+
+                this._positionTile(
+                    tile,
+                    this.source.tileOverlap,
+                    this.viewport,
+                    viewportCenter,
+                    levelVisibility
+                );
             }
 
             /////////////////////////////////////////////////////
             // Second Part: Decide if tile will be loaded      //
             /////////////////////////////////////////////////////
 
-            if (loadArea) {
-                let loadingCoverage = tile.loaded || tile.loading || this._isCovered(this.loadingCoverage, level, x, y);
+            if (loadArea && !tile.loaded) {
+                let loadingCoverage = tile.loading || this._isCovered(this.loadingCoverage, level, x, y);
                 this._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
 
                 if ( !tile.exists ) {
@@ -1765,12 +1840,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
 
                 // Try-find will populate tile with data if equal tile exists in system
-                if (!tile.loaded && !tile.loading && this._tryFindTileCacheRecord(tile)) {
+                if (!tile.loading && this._tryFindTileCacheRecord(tile)) {
                     loadingCoverage = true;
                 }
 
-                if ( tile.loading ) {
-                    // the tile is already in the download queue
+                if (tile.loading) {
+                    // the tile is already in the download queue or being processed
                     this._tilesLoading++;
                 } else if (!loadingCoverage) {
                     // add tile to best tiles to load only when not loaded already
@@ -1877,7 +1952,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const tileCenter = positionT.plus( sizeT.divide( 2 ) );
         const tileSquaredDistance = viewportCenter.squaredDistanceTo( tileCenter );
 
-        if(this.viewer.drawer.minimumOverlapRequired(this)){
+        if(this.getDrawer().minimumOverlapRequired(this)){
             if ( !overlap ) {
                 sizeC = sizeC.plus( new $.Point(1, 1));
             }
@@ -2148,7 +2223,21 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return;
         }
 
-        this._setTileLoaded(tile, data, null, tileRequest, dataType);
+        if (this.originalDataType) {
+            // First fetch conversion path to ensure safe conversion and to deduce target type it chooses as optimal one
+            const conversion = $.converter.getConversionPath(dataType, this.originalDataType);
+            if (conversion) {
+                const desiredType = $.converter.getConversionPathFinalType(conversion);
+                $.converter.convert(tile, data, dataType, desiredType).then(newData => {
+                    this._setTileLoaded(tile, newData, null, tileRequest, desiredType);
+                });
+            } else {
+                $.console.warn( "Ignoring default base tile data type %s: no conversion possible from %s", this.originalDataType, dataType);
+                this._setTileLoaded(tile, data, null, tileRequest, dataType);
+            }
+        } else {
+            this._setTileLoaded(tile, data, null, tileRequest, dataType);
+        }
     },
 
     /**
@@ -2175,8 +2264,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         let resolver = null,
             increment = 0,
             eventFinished = false;
-        const _this = this,
-            now = $.now();
+        const _this = this;
 
         function completionCallback() {
             increment--;
@@ -2253,31 +2341,53 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
 
         if (tileCacheCreated) {
-            _this.viewer.world.requestTileInvalidateEvent([tile], now, false, true).then(markTileAsReady);
+            // setting invalidation tstamp to 1 makes sure any update gets applied later on
+            this.viewer.world.requestTileInvalidateEvent([tile], undefined, false, true, true).then(markTileAsReady);
         } else {
-            // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             const origCache = tile.getCache(tile.originalCacheKey);
+            // First, ensure we really are ready to draw the tile
+            const ensureValidDrawerType = (cache) => {
+                if (this.viewer.isDestroyed()) {
+                    return $.Promise.resolve();
+                }
+                const drawer = this.getDrawer();
+                if (!cache.isUsableForDrawer(drawer)) {
+                    return cache.prepareForRendering(drawer);
+                }
+                return $.Promise.resolve();
+            };
+
+            // Tile-invalidated not called on each tile, but only on tiles with new data! Verify we share the main cache
             for (const t of origCache._tiles) {
 
-                // if there exists a tile that has different main cache, inherit it as a main cache
+                // To keep consistent, if we find main cache tile that differs from original cache key, we inherit also main cache
                 if (t.cacheKey !== tile.cacheKey) {
 
                     // add reference also to the main cache, no matter what the other tile state has
                     // completion of the invaldate event should take care of all such tiles
                     const targetMainCache = t.getCache();
-                    tile.setCache(t.cacheKey, targetMainCache, true, false);
-                    break;
-                } else if (t.processing) {
-                    // Await once processing finishes - mark tile as loaded
+                    ensureValidDrawerType(targetMainCache).then(
+                        () => tile.setCache(t.cacheKey, targetMainCache, true, false)
+                    ).then(markTileAsReady);
+                    return;
+                }
+
+                if (t.processing) {
+                    // Or, if there is a processing promise, we wait for it to complete and then update the tile state.
                     t.processingPromise.then(t => {
                         const targetMainCache = t.getCache();
-                        tile.setCache(t.cacheKey, targetMainCache, true, false);
-                        markTileAsReady();
+                        ensureValidDrawerType(targetMainCache).then(() => {
+                            tile.setCache(t.cacheKey, targetMainCache, true, false);
+                            if (!targetMainCache.loaded) {
+                                return targetMainCache.await();
+                            }
+                            return null;
+                        }).then(markTileAsReady);
                     });
                     return;
                 }
             }
-            markTileAsReady();
+            ensureValidDrawerType(origCache).then(markTileAsReady);
         }
     },
 

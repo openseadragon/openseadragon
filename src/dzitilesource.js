@@ -74,6 +74,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
     this.tilesUrl     = options.tilesUrl;
     this.fileFormat   = options.fileFormat;
     this.displayRects = options.displayRects;
+    this.queryParams  = options.queryParams || "";
 
     if ( this.displayRects ) {
         for ( let i = this.displayRects.length - 1; i >= 0; i-- ) {
@@ -99,7 +100,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url]
      */
     supports: function( data, url ){
         let ns;
@@ -169,7 +170,7 @@ $.extend( $.DziTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * Equality comparator
      */
     equals: function(otherSource) {
-        return this.tilesUrl === otherSource.tilesUrl;
+        return otherSource && this.tilesUrl === otherSource.tilesUrl;
     },
 
 

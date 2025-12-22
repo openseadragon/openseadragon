@@ -454,6 +454,8 @@ function loadPanels( strip, viewerSize, scroll ) {
                 animationTime:          0,
                 loadTilesWithAjax:      strip.viewer.loadTilesWithAjax,
                 ajaxHeaders:            strip.viewer.ajaxHeaders,
+                viewer:                 strip.viewer,
+                // TODO: make possible for users to ensure the sub-drawer is the same type as the base parent drawer
                 drawer:                 'canvas', //always use canvas for the reference strip
             } );
             // Allow pointer events to pass through miniViewer's canvas/container

@@ -1,6 +1,6 @@
 {
     "name": "openseadragon",
-    "version": "5.0.1",
+    "version": "6.0.0",
     "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
     "keywords": [
         "image",
@@ -12,6 +12,7 @@
         "dzi",
         "iiif",
         "osm",
+        "osd",
         "tms"
     ],
     "homepage": "https://openseadragon.github.io/",
@@ -42,8 +43,10 @@
         "grunt-eslint": "^24.3.0",
         "grunt-git-describe": "^2.4.4",
         "grunt-istanbul": "^0.8.0",
+        "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
-        "qunit": "^2.24.1"
+        "qunit": "^2.24.1",
+        "typescript": "^5.9.3"
     },
     "scripts": {
         "test": "grunt test",

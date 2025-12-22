@@ -116,3 +116,8 @@ This project is now compatible with direct installation of forked Github repos/b
 1. Add the specific forked repo/branch by running `npm install git://github.com/username/openseadragon.git#branch-name` or `yarn add git://github.com/username/openseadragon.git#branch-name`. Make sure to replace username and branch-name with proper targets.
 
 During installation, the package should be correctly built via grunt and can then be used via `import Openseadragon from 'openseadragon'` or `var Openseadragon = require('openseadragon')` statements as if the official package were installed.
+
+### Async Debugging
+Some things like data loading and processing is asynchronous. To debug, you can use ``OpenSeadragon.trace(...)``
+method, which does not force synchronization and preserves the original behavior as much as possible.
+Note that you should not publish calls to this method in production code.

@@ -104,7 +104,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url]
      */
     supports: function( data, url ){
         return (
@@ -193,7 +193,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * Equality comparator
      */
     equals: function (otherSource) {
-        if (!otherSource.levels || otherSource.levels.length !== this.levels.length) {
+        if (!otherSource || !otherSource.levels || otherSource.levels.length !== this.levels.length) {
             return false;
         }
         for (let i = this.minLevel; i <= this.maxLevel; i++) {

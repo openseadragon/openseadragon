@@ -180,15 +180,13 @@
          * @private
          */
         getDataForRendering(drawer, tileToDraw) {
-            const keepInternalCopy = drawer.options.usePrivateCache;
-
             // Test cache state
             if (!this.loaded) {
-                $.console.error("Attempt to draw tile when not loaded main cache!");
+                $.console.error(`Attempt to draw cache ${this} when not loaded!`);
                 return undefined;
             }
             if (this._destroyed) {
-                $.console.error("Attempt to draw tile with destroyed main cache!");
+                $.console.error(`Attempt to draw tile with destroyed main cache ${this}!`);
                 tileToDraw._unload();  // try to restore the state so that the tile is later on fetched again
                 return undefined;
             }
@@ -198,13 +196,13 @@
             // unable to provide the rendering data immediatelly - return.
             const supportedTypes = drawer.getSupportedDataFormats();
             if (!supportedTypes.includes(this.type)) {
-                $.console.error("Attempt to draw tile with unsupported type for the target drawer!");
+                $.console.error(`Attempt to draw tile cache ${this} with unsupported type '${this.type}' for the target drawer!`);
                 this.prepareForRendering(drawer);
                 return undefined;
             }
 
             // If we support internal cache
-            if (keepInternalCopy) {
+            if (drawer.options.usePrivateCache) {
                 // let sync preparation handle data if no preloading desired
                 if (!drawer.options.preloadCache) {
                     return this.prepareInternalCacheSync(drawer);
@@ -212,7 +210,7 @@
                 // or check internal cache state before returning
                 const internalCache = this._getInternalCacheRef(drawer);
                 if (!internalCache || !internalCache.loaded) {
-                    $.console.error("Attempt to draw tile with internal cache non-ready state!");
+                    $.console.error(`Attempt to draw tile cache ${this} with internal cache non-ready state!`);
                     return undefined;
                 }
                 return internalCache;
@@ -220,6 +218,27 @@
 
             // else just return self reference
             return this;
+        }
+
+        /**
+         * Check whether the cache is usable for the given drawer. The cache is considered
+         * usable if it is in a format supported by the drawer and, if the drawer uses internal cache,
+         * the internal cache was created (it might not be loaded yet though).
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @return {boolean}
+         */
+        isUsableForDrawer(drawer) {
+            const supportedTypes = drawer.getSupportedDataFormats();
+            if (!supportedTypes.includes(this.type)) {
+                return false;
+            }
+            if (drawer.options.usePrivateCache) {
+                const internalCache = this._getInternalCacheRef(drawer);
+                if (!internalCache) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /**
@@ -338,6 +357,7 @@
         }
 
         /**
+         * Check if internal cache is up to date. Might be in loading state.
          * @param {OpenSeadragon.InternalCacheRecord} internalCache
          * @param {OpenSeadragon.DrawerBase} drawer
          * @return {boolean} false if the internal cache is outdated
@@ -346,7 +366,7 @@
         _checkInternalCacheUpToDate(internalCache, drawer) {
             // We respect existing records, unless they are outdated. Invalidation routine by its nature
             // destroys internal cache, therefore we do not need to check if internal cache is consistent with its parent.
-            return internalCache && internalCache.loaded && internalCache.tstamp >= drawer._dataNeedsRefresh;
+            return internalCache && internalCache.tstamp >= drawer._dataNeedsRefresh;
         }
 
         /**

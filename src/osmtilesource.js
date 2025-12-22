@@ -108,7 +108,7 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url]
      */
     supports: function( data, url ){
         return (
@@ -145,7 +145,7 @@ $.extend( $.OsmTileSource.prototype, $.TileSource.prototype, /** @lends OpenSead
      * Equality comparator
      */
     equals: function(otherSource) {
-        return this.tilesUrl === otherSource.tilesUrl;
+        return otherSource && this.tilesUrl === otherSource.tilesUrl;
     }
 });
 
