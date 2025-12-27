@@ -21,7 +21,15 @@ interface QUnitResults {
 }
 
 const PORT = 8000;
-const TEST_URL = `http://localhost:${PORT}/test/test.html`;
+
+// Parse command line arguments for module filtering
+const args = Bun.argv.slice(2);
+const moduleIndex = args.findIndex(arg => arg === "--module" || arg === "-m");
+const moduleFilter = moduleIndex !== -1 && args[moduleIndex + 1] 
+    ? `?module=${encodeURIComponent(args[moduleIndex + 1])}`
+    : "";
+
+const TEST_URL = `http://localhost:${PORT}/test/test.html${moduleFilter}`;
 
 async function runTests() {
     console.log("🧪 Starting test runner...");

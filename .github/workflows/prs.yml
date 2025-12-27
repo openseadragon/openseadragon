@@ -32,5 +32,5 @@ jobs:
         run: bun run lint
 
       - name: Run tests
-        run: bun run test:auto
+        run: bun run test
 

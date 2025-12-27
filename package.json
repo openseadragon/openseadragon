@@ -41,8 +41,7 @@
         "build": "bun run scripts/build.ts --minify --clean",
         "build:fast": "bun run scripts/build.ts",
         "dev": "bun run scripts/dev.ts",
-        "test": "bun run scripts/test-reminder.ts",
-        "test:auto": "bun run scripts/build.ts --minify --clean && bun run scripts/test.ts",
+        "test": "bun run scripts/build.ts --minify --clean && bun run scripts/test.ts",
         "lint": "bun run scripts/lint.ts",
         "package": "bun run scripts/build.ts --minify --clean && bun run scripts/package.ts",
         "prepare": "bun run scripts/build.ts --minify --clean"

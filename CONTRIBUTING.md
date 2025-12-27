@@ -16,7 +16,7 @@ If you're new to open source in general, check out [GitHub's open source intro g
 
 ### First Time Setup
 
-All command-line operations for building and testing OpenSeadragon are powered by [Bun](https://bun.sh/), a fast all-in-one JavaScript runtime and toolkit. To get set up:
+All command-line operations for building and testing OpenSeadragon are scripted using [Bun](https://bun.sh/). To get set up:
 
 1. Install Bun (visit [bun.sh](https://bun.sh/) for instructions, or run):
    ```bash
@@ -26,7 +26,7 @@ All command-line operations for building and testing OpenSeadragon are powered b
 1. On the command line, go in to the openseadragon folder
 1. Run `bun install`
 
-You're set! All development dependencies should have been installed and the project built automatically via the `prepare` script. Continue reading for build and test instructions.
+You're set! All development dependencies should have been installed and the project built automatically. Continue reading for build and test instructions.
 
 ### Building from Source
 
@@ -59,6 +59,13 @@ Our tests are based on [QUnit](https://qunitjs.com/) and [Puppeteer](https://git
     bun run test
 
 This builds the project and runs all tests in a headless browser.
+
+To test a specific module only (e.g., `navigator`):
+
+    bun run test -- --module="navigator"
+
+> [!TIP]
+> The module name can be found in the test file's module definition: `QUnit.module('<name here>', ...`
 
 If you wish to work interactively with the tests or test your changes:
 
