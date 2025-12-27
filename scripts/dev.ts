@@ -13,7 +13,7 @@ let isBuilding = false;
 
 // Simple debounce for file watching
 function debounce(func: Function, wait: number) {
-    let timeout: Timer;
+    let timeout: ReturnType<typeof setTimeout>;
     return function executedFunction(...args: any[]) {
         const later = () => {
             clearTimeout(timeout);
