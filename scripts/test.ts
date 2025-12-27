@@ -6,6 +6,20 @@
 
 import puppeteer from "puppeteer";
 
+interface TestDetail {
+    name: string;
+    failed: number;
+    passed: number;
+    total: number;
+}
+
+interface QUnitResults {
+    total: number;
+    passed: number;
+    failed: number;
+    runtime: number;
+}
+
 const PORT = 8000;
 const TEST_URL = `http://localhost:${PORT}/test/test.html`;
 
@@ -45,7 +59,7 @@ async function runTests() {
     const page = await browser.newPage();
 
     // Collect test details
-    const testDetails: any[] = [];
+    const testDetails: TestDetail[] = [];
 
     // Collect console logs and test results
     page.on("console", (msg) => {
@@ -62,11 +76,11 @@ async function runTests() {
         }
     });
 
-    let testResults: any = null;
+    let testResults: QUnitResults | null = null;
     let timeout: NodeJS.Timeout;
 
     // Expose a callback for QUnit to call when done
-    await page.exposeFunction("bunTestComplete", (results: any) => {
+    await page.exposeFunction("bunTestComplete", (results: QUnitResults) => {
         testResults = results;
     });
 
