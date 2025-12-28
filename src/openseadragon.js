@@ -191,8 +191,9 @@
   *     If 0, adjusts to fit viewer.
   *
   * @property {String|DrawerImplementation|Array} [drawer = ['webgl2', 'webgl', 'canvas', 'html']]
-  *     Which drawer to use. Valid strings are 'webgl2', 'webgl', 'canvas', and 'html'. Valid drawer
-  *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
+  *     Which drawer to use. Built-in valid strings are 'webgl2', 'webgl', 'canvas', and 'html'.
+  *     External drawer plugins can register additional drawer types as strings.
+  *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
   *     of different implementations, which will be tried in order based on browser support.
   *
@@ -214,8 +215,9 @@
   *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
-  *     Image smoothing for rendering (only if the canvas, webgl, or webgl2 drawer is used). Note: Ignored
-  *     by some (especially older) browsers which do not support this canvas property.
+  *     Image smoothing for rendering. Supported by the canvas, webgl, and webgl2 drawers,
+  *     and may also be supported by external drawer plugins. Note: Ignored by some
+  *     (especially older) browsers which do not support this canvas property.
   *     This property can be changed in {@link Viewer.DrawerBase.setImageSmoothingEnabled}.
   *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
