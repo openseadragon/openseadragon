@@ -78,7 +78,24 @@
             // private members
             this._destroyed = false;
             this._gl = null;
-            this._isWebGL2 = false; // flag to track if we're using WebGL2
+            /**
+             * Flag to track if we're using WebGL2 context.
+             * When true, additional WebGL2-specific optimizations can be enabled.
+             *
+             * TODO: Future WebGL2 enhancements to implement:
+             * - Vertex Array Objects (VAOs): Built-in state management for vertex attributes
+             * - Instanced rendering: Draw multiple tiles in a single draw call
+             * - Uniform Buffer Objects (UBOs): More efficient uniform updates for batched rendering
+             * - Transform feedback: GPU-based computations for tile processing
+             * - Multiple render targets: Advanced compositing with multiple framebuffer attachments
+             * - GLSL ES 3.0 shaders: Enhanced shader capabilities (integer ops, texture arrays, etc.)
+             * - Non-power-of-two texture improvements: Better handling without restrictions
+             *
+             * @member {Boolean} _isWebGL2
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
+            this._isWebGL2 = false;
             this._extTextureFilterAnisotropic = null; // anisotropic filtering extension
             this._maxAnisotropy = 0;
             this._firstPass = null;
