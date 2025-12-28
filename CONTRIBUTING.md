@@ -90,6 +90,25 @@ Then open `http://localhost:8000/test/test.html` in your browser.
 
 Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
 
+### Code Coverage
+
+You can generate a code coverage report for the tests:
+
+    bun run coverage
+
+This instruments the source files, runs the tests, and generates both a text summary and an HTML report in the `coverage/` directory.
+
+### TypeScript Definition Checks
+
+The project maintains TypeScript type definitions in `types/index.d.ts`. To validate these:
+
+    bun run dts
+
+This runs both the definition validation and smoke tests. You can also run them individually:
+
+    bun run dts:check   # Validate the type definitions
+    bun run dts:smoke   # Run compile tests against the definitions
+
 ### Installing from forked Github repo/branch
 
 This project is compatible with direct installation of forked Github repos/branches (possible because of the [prepare](https://docs.npmjs.com/cli/v10/using-npm/scripts#prepare-and-prepublish) script).  This enables quick testing of a bugfix or feature addition via a forked repo.  In order to do this:

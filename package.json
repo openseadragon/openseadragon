@@ -33,6 +33,7 @@
         "@types/bun": "latest",
         "eslint": "^8.57.0",
         "eslint-plugin-compat": "^6.0.2",
+        "nyc": "^17.1.0",
         "puppeteer": "^23.0.0",
         "qunit": "^2.24.1",
         "terser": "^5.44.0"
@@ -43,8 +44,12 @@
         "dev": "bun run scripts/dev.ts",
         "test": "bun run scripts/build.ts --minify --clean && bun run scripts/test.ts",
         "lint": "bun run scripts/lint.ts",
+        "coverage": "bun run scripts/build.ts --minify --clean && bun run scripts/coverage.ts",
         "package": "bun run scripts/build.ts --minify --clean && bun run scripts/package.ts",
         "publish": "bun run scripts/build.ts --minify --clean && bun run scripts/package.ts && bun run scripts/publish.ts",
+        "dts": "bun run scripts/dts.ts",
+        "dts:check": "bun run scripts/dts.ts --check",
+        "dts:smoke": "bun run scripts/dts.ts --smoke",
         "prepare": "bun run scripts/build.ts --minify --clean"
     }
 }
