@@ -606,13 +606,38 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Determines if a tile request from another source can be batched with this source.
-     * By default, checks strict equality or url equality.
+     * Determines if this tile source data can be batched.
+     * @return {boolean}
+     */
+    batchEnabled() {
+        return false;
+    },
+
+    /**
+     * Determines if a tile request from a source (even itself!) can be batched with this source.
+     * By default, returns false -> in this case, each tile falls to a single bucket alone.
      * @param {OpenSeadragon.TileSource} otherSource
      * @return {boolean}
      */
     batchCompatible(otherSource) {
         return false;
+    },
+
+    /**
+     * Maximum batch size. Can, for example, be derived from (average) tile size of the source.
+     * @return {number} integer, number of max jobs per batch
+     */
+    batchMaxJobs() {
+        return -1;
+    },
+
+    /**
+     * How long to await with a batch before processing. Big timeout means larger
+     * batches with fewer requests, at the cost of slower loading.
+     * @return {number} milliseconds to await tiles to add to the batch before processing
+     */
+    batchTimeout() {
+        return 5;
     },
 
     /**
@@ -858,7 +883,7 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Handled the fetching of multiple tiles in a single operation.
+     * Handles the fetching of multiple tiles in a single operation.
      * The TileSource is responsible for calling finish/fail on each of the individual job items
      * carried by batchJob.jobs. Avoid calling finish/fail on `batchJob` itself.
      *
@@ -873,7 +898,7 @@ $.TileSource.prototype = {
     },
 
     /**
-     * Handled abortion of the fetching of multiple tiles.
+     * Handles abortion of the fetching of multiple tiles.
      * @param {OpenSeadragon.BatchImageJob} batchJob
      */
     downloadTileBatchAbort(batchJob) {

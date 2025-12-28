@@ -66,18 +66,18 @@ $.ImageJob = function(options) {
 
     /**
      * URL of image (or other data item that will be rendered) to download.
-     * @member {src} string
+     * @member {string} src
      * @memberof OpenSeadragon.ImageJob#
      */
 
     /**
-     * Tile that initiated the load. Note the data might be shared between tiles.
+     * Tile that owns the load. Note the data might be shared between tiles.
      * @member {OpenSeadragon.Tile} tile
      * @memberof OpenSeadragon.ImageJob#
      */
 
     /**
-     * Tile that initiated the load. Note the data might be shared between tiles.
+     * TileSource that initiated the load and owns the tile. Note the data might be shared between tiles and tile sources.
      * @member {OpenSeadragon.TileSource} source
      * @memberof OpenSeadragon.ImageJob#
      */
@@ -107,8 +107,8 @@ $.ImageJob = function(options) {
      */
 
     /**
-     * CORS policy to use for downloads
-     * @member {(String|Object)} [context.postData] - HTTP POST data (usually but not necessarily
+     * HTTP POST data to send with the request
+     * @member {(String|Object)} [postData] - HTTP POST data (usually but not necessarily
      *   in k=v&k2=v2... form, see TileSource::getTilePostData) or null
      * @memberof OpenSeadragon.ImageJob#
      */
@@ -300,8 +300,8 @@ $.BatchImageJob.prototype = {
             // we don't call job.start() for each job, so abort is callable here
             self.source.downloadTileBatchAbort(self);
             for (let j of this.jobs) {
-                // abort only running jobs test jobId, in theory all should finish at once, but we cannot
-                // enforce the logics executed by a batch job
+                // Abort only running jobs by checking jobId. In theory, all should finish at once,
+                // but we cannot enforce the logic executed by each batch job.
                 if (j.jobId && j.abort) {
                     j.abort();
                 }
@@ -386,17 +386,12 @@ $.ImageLoader = function(options) {
     $.extend(true, this, {
         jobLimit:       $.DEFAULT_SETTINGS.imageLoaderLimit,
         timeout:        $.DEFAULT_SETTINGS.timeout,
-        batchImageLoading: false,
-        batchWaitTimeout:  5,
-        batchMaxJobs:     -1,
         jobQueue:       [],
         failedTiles:    [],
         jobsInProgress: 0
     }, options);
 
-    if (this.batchImageLoading) {
-        this._batchBuckets = [];
-    }
+    this._batchBuckets = [];
 };
 
 /** @lends OpenSeadragon.ImageLoader.prototype */
@@ -447,7 +442,8 @@ $.ImageLoader.prototype = {
             },
             newJob = new $.ImageJob(jobOptions);
 
-        if (this.batchImageLoading) {
+        const sourceWantsBatching = options.source && options.source.batchEnabled();
+        if (sourceWantsBatching) {
             // Mark job as batched so completeJob knows not to decrement global counters
             newJob.isBatched = true;
             this._stageJobForBatching(newJob, options.source);
@@ -480,19 +476,21 @@ $.ImageLoader.prototype = {
             bucket = {
                 source: source,
                 jobs: [],
-                timer: null
+                timer: null,
+                waitTimeout: source.batchTimeout(),
+                maxJobs: source.batchMaxJobs()
             };
-            bucket.timer = setTimeout(() => this._flushBatchBucket(bucket), this.batchWaitTimeout);
+            bucket.timer = setTimeout(() => this._flushBatchBucket(bucket), bucket.waitTimeout);
             this._batchBuckets.push(bucket);
         }
 
         if (!bucket.timer) {
-            $.console.error('Adding to a flushed bucket!');
+            $.console.error('Attempted to add a new job to a batch bucket that has already been flushed. This means the batch timer has expired and the bucket is no longer accepting new jobs. The job will not be processed in this batch. Check the batch logic and timing. Bucket source:', source, 'Job ID:', newJob && newJob.jobId);
         }
 
         bucket.jobs.push(newJob);
 
-        if (this.batchMaxJobs >= 1 && bucket.jobs.length >= this.batchMaxJobs) {
+        if (bucket.maxJobs >= 1 && bucket.jobs.length >= bucket.maxJobs) {
             clearTimeout(bucket.timer);
             this._flushBatchBucket(bucket);
         }
@@ -606,7 +604,7 @@ function completeJob(loader, job, callback) {
 
 /**
  * Cleans up BatchImageJob once completed. Explicit here so it's easier to debug,
- * n fact batch job needs not to do anything except decrementing counter.
+ * In fact batch job does not need to do anything except decrementing counter.
  * @method
  * @private
  * @param loader - ImageLoader used to start job.
