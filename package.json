@@ -44,6 +44,7 @@
         "test": "bun run scripts/build.ts --minify --clean && bun run scripts/test.ts",
         "lint": "bun run scripts/lint.ts",
         "package": "bun run scripts/build.ts --minify --clean && bun run scripts/package.ts",
+        "publish": "bun run scripts/build.ts --minify --clean && bun run scripts/package.ts && bun run scripts/publish.ts",
         "prepare": "bun run scripts/build.ts --minify --clean"
     }
 }

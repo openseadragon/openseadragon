@@ -52,6 +52,21 @@ If you want to build tar and zip files for distribution (they will also appear i
 
 Note that the `build` folder is masked with .gitignore; it's just for your local use, and won't be checked in to the repository.
 
+You can also publish the built version to the site-build repository. This assumes you have cloned it next to this repository. The command is:
+
+    bun run publish
+
+... which will delete the existing openseadragon folder, along with the .zip and .tar.gz files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
+
+### Package Manager and Lock Files
+
+This project uses [Bun](https://bun.sh/) as both the JavaScript runtime and package manager. Bun uses its own binary lock file (`bun.lockb`) instead of npm's `package-lock.json`. This is intentional:
+
+- **`bun.lockb`**: Bun's lock file is committed to the repository to ensure reproducible builds
+- **`package-lock.json`**: Added to `.gitignore` since we use Bun for package management
+
+If you prefer using npm, you can still run `npm install` and it will work, but for consistency and faster installation, we recommend using Bun.
+
 ### Testing
 
 Our tests are based on [QUnit](https://qunitjs.com/) and [Puppeteer](https://github.com/GoogleChrome/puppeteer); they're both installed when you run `bun install`. To run on the command line:
