@@ -25,7 +25,7 @@ const PORT = 8000;
 // Parse command line arguments for module filtering
 const args = Bun.argv.slice(2);
 const moduleIndex = args.findIndex(arg => arg === "--module" || arg === "-m");
-const moduleFilter = moduleIndex !== -1 && args[moduleIndex + 1] 
+const moduleFilter = moduleIndex !== -1 && args[moduleIndex + 1]
     ? `?module=${encodeURIComponent(args[moduleIndex + 1])}`
     : "";
 
@@ -148,10 +148,10 @@ async function runTests() {
 
         console.log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         console.log("📊 Test Results:");
-        console.log(`   Total: ${testResults.total}`);
-        console.log(`   ✅ Passed: ${testResults.passed}`);
-        console.log(`   ❌ Failed: ${testResults.failed}`);
-        console.log(`   ⏱️  Runtime: ${testResults.runtime}ms`);
+        console.log(`   Total: ${testResults!.total}`);
+        console.log(`   ✅ Passed: ${testResults!.passed}`);
+        console.log(`   ❌ Failed: ${testResults!.failed}`);
+        console.log(`   ⏱️  Runtime: ${testResults!.runtime}ms`);
 
         if (testDetails.length > 0) {
             console.log("\n❌ Failed Tests (first 10):");
@@ -167,7 +167,7 @@ async function runTests() {
         await browser.close();
         server.stop();
 
-        if (testResults.failed > 0) {
+        if (testResults!.failed > 0) {
             process.exit(1);
         }
 
