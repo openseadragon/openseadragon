@@ -9,3 +9,10 @@ instrumented/
 .directory
 local-test
 .DS_Store
+
+# Package managers (we use Bun, so ignore other lockfiles)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Note: bun.lockb is NOT ignored - it should be committed for reproducible builds
