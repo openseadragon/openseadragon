@@ -78,6 +78,9 @@
             // private members
             this._destroyed = false;
             this._gl = null;
+            this._isWebGL2 = false; // flag to track if we're using WebGL2
+            this._extTextureFilterAnisotropic = null; // anisotropic filtering extension
+            this._maxAnisotropy = 0;
             this._firstPass = null;
             this._secondPass = null;
             this._glFrameBuffer = null;
@@ -127,6 +130,7 @@
             if(this._destroyed){
                 return;
             }
+            super.destroy();
             // clear all resources used by the renderer, geometries, textures etc
             const gl = this._gl;
 
@@ -211,13 +215,21 @@
         }
 
         /**
+         * Check if the drawer is using WebGL2
+         * @returns {Boolean} true if WebGL2 is being used, false if WebGL1
+         */
+        isWebGL2(){
+            return this._isWebGL2;
+        }
+
+        /**
          * @param {TiledImage} tiledImage the tiled image that is calling the function
          * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
          * @private
          */
         minimumOverlapRequired(tiledImage) {
-            // return true if the tiled image is tainted, since the backup canvas drawer will be used.
-            return tiledImage.isTainted();
+            // return true if we cannot render with webgl, since the backup canvas drawer will be used.
+            return tiledImage.hasIssue('webgl');
         }
 
         /**
@@ -282,7 +294,7 @@
             //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
             tiledImages.forEach( (tiledImage, tiledImageIndex) => {
 
-                if(tiledImage.isTainted()){
+                if(tiledImage.getIssue('webgl')){
                     // first, draw any data left in the rendering buffer onto the output canvas
                     if(renderingBufferHasImageData){
                         this._outputContext.drawImage(this._renderingCanvas, 0, 0);
@@ -607,7 +619,20 @@
 
         // private
         _textureFilter(){
-            return this._imageSmoothingEnabled ? this._gl.LINEAR : this._gl.NEAREST;
+            const gl = this._gl;
+            const filter = this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
+
+            // Apply anisotropic filtering when available and smoothing is enabled
+            // This improves texture quality when viewing at angles
+            if (this._imageSmoothingEnabled && this._extTextureFilterAnisotropic && this._maxAnisotropy > 0) {
+                gl.texParameterf(
+                    gl.TEXTURE_2D,
+                    this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
+                    Math.min(4, this._maxAnisotropy)
+                );
+            }
+
+            return filter;
         }
 
         // private
@@ -842,8 +867,22 @@
             this._renderingCanvas.width = this._clippingCanvas.width = this._outputCanvas.width;
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
-            this._gl = this._renderingCanvas.getContext('webgl');
-            this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            // Try WebGL2 first, then fall back to WebGL1
+            this._gl = this._renderingCanvas.getContext('webgl2');
+            if (this._gl) {
+                this._isWebGL2 = true;
+                this._setupWebGLExtensions();
+            } else {
+                this._gl = this._renderingCanvas.getContext('webgl');
+                this._isWebGL2 = false;
+                if (this._gl) {
+                    this._setupWebGLExtensions();
+                }
+            }
+
+            if (this._gl) {
+                this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            }
 
             this._resizeHandler = function(){
 
@@ -872,6 +911,26 @@
             this.viewer.addHandler("resize", this._resizeHandler);
         }
 
+        /**
+         * Set up WebGL extensions (works for both WebGL1 and WebGL2)
+         * @private
+         */
+        _setupWebGLExtensions() {
+            const gl = this._gl;
+
+            // Anisotropic filtering extension (available in both WebGL1 and WebGL2)
+            this._extTextureFilterAnisotropic =
+                gl.getExtension('EXT_texture_filter_anisotropic') ||
+                gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
+                gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
+
+            if (this._extTextureFilterAnisotropic) {
+                this._maxAnisotropy = gl.getParameter(
+                    this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
+                );
+            }
+        }
+
         internalCacheCreate(cache, tile) {
             const tiledImage = tile.tiledImage;
             const gl = this._gl;
@@ -885,10 +944,9 @@
                 isCanvas = true;
             }
 
-            if (!tiledImage.isTainted()) {
+            if (!tiledImage.getIssue('webgl')) {
                 if (isCanvas && $.isCanvasTainted(data)){
-                    tiledImage.setTainted(true);
-                    $.console.warn('WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
+                    tiledImage.setIssue('webgl', 'WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
                     this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
                     this.setInternalCacheNeedsRefresh();
                 } else {
@@ -940,9 +998,7 @@
                             overlapFraction: overlapFraction
                         };
                     } catch (e){
-                        // Todo a bit dirty re-use of the tainted flag, but makes the code more stable
-                        tiledImage.setTainted(true);
-                        $.console.error('Error uploading image data to WebGL. Falling back to canvas renderer.', e);
+                        tiledImage.setIssue('webgl', 'Error uploading image data to WebGL.', e);
                         this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
                         this.setInternalCacheNeedsRefresh();
                     }

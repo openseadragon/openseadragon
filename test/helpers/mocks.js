@@ -78,6 +78,7 @@ window.MockSeadragon = {
         return new OpenSeadragon.TileSource(OpenSeadragon.extend({
             width: 1500,
             height: 1000,
+            ready: true,
             tileWidth: 200,
             tileHeight: 150,
             tileOverlap: 0

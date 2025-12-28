@@ -6,28 +6,27 @@
     <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
     <style type="text/css">
 
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+
     </style>
 </head>
 <body>
     <div>
         Simple demo page to show a default OpenSeadragon viewer.
     </div>
-    <div id="container" style="display: none;">
-        <div id="openseadragon1" style="width: 800px; height: 600px;"></div>
-    </div>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
 
-    <script>
-        const viewer = OpenSeadragon({
-            id: "openseadragon1",
+        var viewer = OpenSeadragon({
+            // debugMode: true,
+            id: "contentDiv",
             prefixUrl: "../../build/openseadragon/images/",
-            tileSources: "../data/testpattern.dzi"
+            tileSources: "../data/testpattern.dzi",
+            showNavigator: true,
         });
-
-        // Simulate container becoming visible after a delay
-        setTimeout(() => {
-            document.getElementById("container").style.display = "block";
-        }, 2000);
     </script>
-
 </body>
 </html>

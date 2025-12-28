@@ -139,6 +139,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * Destroy the drawer (unload current loaded tiles)
      */
     destroy() {
+        super.destroy();
         //force unloading of current canvas (1x1 will be gc later, trick not necessarily needed)
         this.canvas.width  = 1;
         this.canvas.height = 1;
