@@ -101,6 +101,7 @@
              */
             this._isWebGL2 = false;
             this._extTextureFilterAnisotropic = null; // anisotropic filtering extension
+            this._extVAO = null; // Vertex Array Object extension for WebGL1
             this._maxAnisotropy = 0;
             this._firstPass = null;
             this._secondPass = null;
@@ -166,6 +167,24 @@
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
             gl.bindRenderbuffer(gl.RENDERBUFFER, null);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            // Unbind and delete VAOs
+            if (this._firstPass && this._firstPass.vao) {
+                if (this._isWebGL2) {
+                    gl.bindVertexArray(null);
+                    gl.deleteVertexArray(this._firstPass.vao);
+                } else if (this._extVAO) {
+                    this._extVAO.bindVertexArrayOES(null);
+                    this._extVAO.deleteVertexArrayOES(this._firstPass.vao);
+                }
+            }
+            if (this._secondPass && this._secondPass.vao) {
+                if (this._isWebGL2) {
+                    gl.deleteVertexArray(this._secondPass.vao);
+                } else if (this._extVAO) {
+                    this._extVAO.deleteVertexArrayOES(this._secondPass.vao);
+                }
+            }
 
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
@@ -445,15 +464,24 @@
                             // set the opacity uniform for each tile
                             gl.uniform1fv(this._firstPass.uOpacities, new Float32Array(opacityArray));
 
-                            // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
-                            gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                            // Bind VAO or set vertex attributes manually
+                            if (this._firstPass.vao) {
+                                if (this._isWebGL2) {
+                                    gl.bindVertexArray(this._firstPass.vao);
+                                } else {
+                                    this._extVAO.bindVertexArrayOES(this._firstPass.vao);
+                                }
+                            } else {
+                                // Fallback: bind vertex buffers and (re)set attributes before calling gl.drawArrays()
+                                gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
+                                gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
 
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
-                            gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                                gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+                                gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
 
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
-                            gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+                                gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
+                                gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+                            }
 
                             // Draw! 6 vertices per tile (2 triangles per rectangle)
                             gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
@@ -474,11 +502,20 @@
                         // set opacity to the value for the current tiledImage
                         this._gl.uniform1f(this._secondPass.uOpacityMultiplier, tiledImage.opacity);
 
-                        // bind buffers and set attributes before calling gl.drawArrays
-                        gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
-                        gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
-                        gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                        // Bind VAO or set vertex attributes manually
+                        if (this._secondPass.vao) {
+                            if (this._isWebGL2) {
+                                gl.bindVertexArray(this._secondPass.vao);
+                            } else {
+                                this._extVAO.bindVertexArrayOES(this._secondPass.vao);
+                            }
+                        } else {
+                            // Fallback: bind buffers and set attributes before calling gl.drawArrays
+                            gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
+                            gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                            gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
+                            gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                        }
 
                         // Draw the quad (two triangles)
                         gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -764,7 +801,17 @@
                 bufferOutputPosition: gl.createBuffer(),
                 bufferTexturePosition: gl.createBuffer(),
                 bufferIndex: gl.createBuffer(),
+                vao: null,
             };
+
+            // Create VAO to store vertex attribute state (WebGL2 built-in, WebGL1 via extension)
+            if (this._isWebGL2) {
+                this._firstPass.vao = gl.createVertexArray();
+                gl.bindVertexArray(this._firstPass.vao);
+            } else if (this._extVAO) {
+                this._firstPass.vao = this._extVAO.createVertexArrayOES();
+                this._extVAO.bindVertexArrayOES(this._firstPass.vao);
+            }
 
             gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
 
@@ -775,17 +822,27 @@
             }
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
             gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._firstPass.aOutputPosition);
 
             // provide texture coordinates for the rectangle in image (texture) space. Data will be set later.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+            gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._firstPass.aTexturePosition);
 
             // for each vertex, provide an index into the array of textures/matrices to use for the correct tile
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
             const indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat(); // repeat each index 6 times, for the 6 vertices per tile (2 triangles)
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._firstPass.aIndex);
+
+            // Unbind VAO after setup
+            if (this._isWebGL2) {
+                gl.bindVertexArray(null);
+            } else if (this._extVAO) {
+                this._extVAO.bindVertexArrayOES(null);
+            }
 
         }
 
@@ -837,18 +894,36 @@
                 uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
                 bufferOutputPosition: gl.createBuffer(),
                 bufferTexturePosition: gl.createBuffer(),
+                vao: null,
             };
 
+            // Create VAO to store vertex attribute state (WebGL2 built-in, WebGL1 via extension)
+            if (this._isWebGL2) {
+                this._secondPass.vao = gl.createVertexArray();
+                gl.bindVertexArray(this._secondPass.vao);
+            } else if (this._extVAO) {
+                this._secondPass.vao = this._extVAO.createVertexArrayOES();
+                this._extVAO.bindVertexArrayOES(this._secondPass.vao);
+            }
 
             // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.STATIC_DRAW); // bind data statically here since it's unchanging
+            gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._secondPass.aOutputPosition);
 
             // provide texture coordinates for the rectangle in image (texture) space.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
+            gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
+
+            // Unbind VAO after setup
+            if (this._isWebGL2) {
+                gl.bindVertexArray(null);
+            } else if (this._extVAO) {
+                this._extVAO.bindVertexArrayOES(null);
+            }
         }
 
         // private
@@ -949,6 +1024,11 @@
                 this._maxAnisotropy = gl.getParameter(
                     this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
                 );
+            }
+
+            // VAO extension for WebGL1 (built-in for WebGL2)
+            if (!this._isWebGL2) {
+                this._extVAO = gl.getExtension('OES_vertex_array_object');
             }
         }
 
