@@ -86,9 +86,16 @@
             this._canvas.width = 1;
             this._canvas.height = 1;
 
+            // WebGL context options - preserveDrawingBuffer is required for drawImage() to work
+            const contextOptions = {
+                premultipliedAlpha: true,
+                alpha: true,
+                preserveDrawingBuffer: true
+            };
+
             // Try WebGL2 first if preferred
             if (this._preferWebGL2) {
-                this._gl = this._canvas.getContext('webgl2');
+                this._gl = this._canvas.getContext('webgl2', contextOptions);
                 if (this._gl) {
                     this._isWebGL2 = true;
                 }
@@ -96,7 +103,7 @@
 
             // Fall back to WebGL1
             if (!this._gl) {
-                this._gl = this._canvas.getContext('webgl');
+                this._gl = this._canvas.getContext('webgl', contextOptions);
                 this._isWebGL2 = false;
             }
 
@@ -231,7 +238,12 @@
             }
 
             if (resized) {
-                this._gl.viewport(0, 0, this._canvas.width, this._canvas.height);
+                // Resizing canvas resets WebGL state, so we need to re-initialize some settings
+                const gl = this._gl;
+                gl.viewport(0, 0, this._canvas.width, this._canvas.height);
+                // Re-enable blending after canvas resize
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
             }
 
             return resized;
@@ -404,7 +416,7 @@
                 unpackWithPremultipliedAlpha: false,
                 // EXPERIMENTAL: Use shared WebGL renderer to prevent context limit issues with multiple viewers.
                 // Currently disabled by default while being tested. Set to true to enable.
-                useSharedRenderer: false,
+                useSharedRenderer: true,
             };
         }
 
@@ -600,6 +612,10 @@
                 // Re-enable blending and set blend function (may have been changed)
                 gl.enable(gl.BLEND);
                 gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                // Ensure clear color is transparent black
+                gl.clearColor(0, 0, 0, 0);
+                // Set pixel store state
+                gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
             }
 
             const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
@@ -618,20 +634,29 @@
 
             // When using shared renderer, set viewport and scissor to match our output canvas size
             // This ensures we only draw/clear in our area of the shared canvas
-            // Note: WebGL coordinates have (0,0) at bottom-left, so we render at the bottom
-            // of the larger shared canvas and adjust the copy source Y coordinate accordingly
             if (this._useSharedRenderer) {
                 const w = this._outputCanvas.width;
                 const h = this._outputCanvas.height;
-                const canvasH = this._renderingCanvas.height;
-                const y = canvasH - h; // Render at bottom-left in WebGL coords
-                gl.viewport(0, y, w, h);
-                gl.enable(gl.SCISSOR_TEST);
-                gl.scissor(0, y, w, h);
-            }
+                const canvasHeight = this._renderingCanvas.height;
 
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+                // WebGL has (0,0) at bottom-left, but drawImage reads from top-left
+                // We need to render at the TOP of the canvas so drawImage can read it correctly
+                // The Y offset puts our rendering region at the top of the canvas
+                const yOffset = canvasHeight - h;
+
+                // First, clear the entire area we'll read from (without scissor)
+                gl.viewport(0, yOffset, w, h);
+                gl.disable(gl.SCISSOR_TEST);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+
+                // Now enable scissor for subsequent operations
+                gl.enable(gl.SCISSOR_TEST);
+                gl.scissor(0, yOffset, w, h);
+            } else {
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+            }
 
             // clear the output canvas
             this._outputContext.clearRect(0, 0, this._outputCanvas.width, this._outputCanvas.height);
@@ -697,6 +722,14 @@
                     // bind to the framebuffer for render-to-texture if using two-pass rendering, otherwise back buffer (null)
                     if(useTwoPassRendering){
                         gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
+                        // When using shared renderer with framebuffer, reset viewport to texture size
+                        // (framebuffer texture is sized to output canvas, not shared canvas)
+                        if (this._useSharedRenderer) {
+                            const w = this._outputCanvas.width;
+                            const h = this._outputCanvas.height;
+                            gl.viewport(0, 0, w, h);
+                            gl.scissor(0, 0, w, h);
+                        }
                         // clear the buffer to draw a new image
                         gl.clear(gl.COLOR_BUFFER_BIT);
                     } else {
@@ -794,6 +827,16 @@
                         // set the rendering target to the back buffer (null)
                         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+                        // When using shared renderer, restore viewport for back buffer
+                        if (this._useSharedRenderer) {
+                            const w = this._outputCanvas.width;
+                            const h = this._outputCanvas.height;
+                            const canvasHeight = this._renderingCanvas.height;
+                            const yOffset = canvasHeight - h;
+                            gl.viewport(0, yOffset, w, h);
+                            gl.scissor(0, yOffset, w, h);
+                        }
+
                         // bind the rendered texture from the first pass to use during this second pass
                         gl.activeTexture(gl.TEXTURE0);
                         gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
@@ -851,11 +894,10 @@
             if (this._useSharedRenderer) {
                 const w = this._outputCanvas.width;
                 const h = this._outputCanvas.height;
-                const canvasH = this._renderingCanvas.height;
-                // WebGL renders at bottom-left (0,0), but 2D canvas has top-left (0,0)
-                // So when shared canvas is larger, we need to copy from the bottom portion
-                const srcY = canvasH - h;
-                destContext.drawImage(this._renderingCanvas, 0, srcY, w, h, 0, 0, w, h);
+                // Ensure all rendering is complete before copying
+                this._gl.finish();
+                // Copy from origin - we rendered at viewport (0,0,w,h)
+                destContext.drawImage(this._renderingCanvas, 0, 0, w, h, 0, 0, w, h);
             } else {
                 destContext.drawImage(this._renderingCanvas, 0, 0);
             }
@@ -1006,10 +1048,13 @@
             this._makeSecondPassShaderProgram();
 
             // set up the texture to render to in the first pass, and which will be used for rendering the second pass
+            // Use output canvas dimensions, not rendering canvas (which may be shared and larger)
+            const texWidth = this._outputCanvas.width;
+            const texHeight = this._outputCanvas.height;
             this._renderToTexture = gl.createTexture();
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texWidth, texHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -1197,12 +1242,11 @@
             const w = this._outputCanvas.width;
             const h = this._outputCanvas.height;
 
-            // When using shared renderer, position viewport at bottom of canvas
-            // (WebGL has (0,0) at bottom-left)
+            // Set viewport - when using shared renderer, account for Y offset
             if (this._useSharedRenderer) {
-                const canvasH = this._renderingCanvas.height;
-                const y = canvasH - h;
-                gl.viewport(0, y, w, h);
+                const canvasHeight = this._renderingCanvas.height;
+                const yOffset = canvasHeight - h;
+                gl.viewport(0, yOffset, w, h);
             } else {
                 gl.viewport(0, 0, w, h);
             }
@@ -1228,7 +1272,7 @@
             const _this = this;
 
             this._outputCanvas = this.canvas; //output canvas
-            this._outputContext = this._outputCanvas.getContext('2d');
+            this._outputContext = this._outputCanvas.getContext('2d', { willReadFrequently: true });
 
             this._clippingCanvas = document.createElement('canvas');
             this._clippingContext = this._clippingCanvas.getContext('2d', { willReadFrequently: true });

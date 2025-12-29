@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Shared Renderer Debug</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .viewer-container { 
+            width: 500px; 
+            height: 500px; 
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+        }
+        #debug { 
+            font-family: monospace;
+            white-space: pre;
+            background: #f5f5f5;
+            padding: 10px;
+            margin-top: 20px;
+        }
+    </style>
+    <script src="../../build/openseadragon/openseadragon.js"></script>
+</head>
+<body>
+    <h1>Shared Renderer Debug</h1>
+    <p>Testing transparency with multiple images using shared renderer</p>
+    
+    <div id="viewer" class="viewer-container"></div>
+    
+    <button id="checkPixels">Check Pixels</button>
+    <div id="debug"></div>
+
+    <script>
+        const viewer = OpenSeadragon({
+            id: 'viewer',
+            prefixUrl: '../../build/openseadragon/images/',
+            drawer: 'webgl',
+            debugMode: false
+        });
+
+        const debug = document.getElementById('debug');
+        
+        function log(msg) {
+            debug.textContent += msg + '\n';
+            console.log(msg);
+        }
+
+        viewer.addHandler('open', function() {
+            log('Base image loaded');
+            log('Drawer type: ' + viewer.drawer.getType());
+            log('Using shared renderer: ' + viewer.drawer._useSharedRenderer);
+            
+            if (viewer.drawer._useSharedRenderer) {
+                log('Shared canvas size: ' + viewer.drawer._renderingCanvas.width + 'x' + viewer.drawer._renderingCanvas.height);
+            }
+            log('Output canvas size: ' + viewer.drawer._outputCanvas.width + 'x' + viewer.drawer._outputCanvas.height);
+
+            // Add transparent image on top
+            viewer.addSimpleImage({
+                url: '../data/A.png',
+                success: function() {
+                    log('A.png loaded on top');
+                    
+                    const secondImage = viewer.world.getItemAt(1);
+                    secondImage.addHandler('fully-loaded-change', function() {
+                        log('A.png fully loaded');
+                        viewer.addOnceHandler('update-viewport', function() {
+                            log('Viewport updated - ready to check pixels');
+                        });
+                    });
+                }
+            });
+        });
+
+        document.getElementById('checkPixels').addEventListener('click', function() {
+            // Use the drawer's context - suppress the willReadFrequently warning since it's just for debugging
+            const originalWarn = console.warn;
+            console.warn = function() {};
+            
+            const ctx = viewer.drawer._outputContext;
+            const density = OpenSeadragon.pixelDensityRatio;
+
+            // Get pixel in hole of A (should be from base image)
+            const holePixel = ctx.getImageData(250 * density, 250 * density, 1, 1);
+            log('\nPixel at (250,250) - in hole of A:');
+            log('  R=' + holePixel.data[0] + ' G=' + holePixel.data[1] + ' B=' + holePixel.data[2] + ' A=' + holePixel.data[3]);
+
+            // Get pixel on the A itself (should be black)
+            const onAPixel = ctx.getImageData(333 * density, 250 * density, 1, 1);
+            
+            // Restore console.warn
+            console.warn = originalWarn;
+            
+            log('\nPixel at (333,250) - on the A (should be black):');
+            log('  R=' + onAPixel.data[0] + ' G=' + onAPixel.data[1] + ' B=' + onAPixel.data[2] + ' A=' + onAPixel.data[3]);
+
+            if (onAPixel.data[0] === 0 && onAPixel.data[1] === 0 && onAPixel.data[2] === 0) {
+                log('\n✓ PASS: Pixel on A is black as expected');
+            } else {
+                log('\n✗ FAIL: Pixel on A should be black (0,0,0) but got (' +
+                    onAPixel.data[0] + ',' + onAPixel.data[1] + ',' + onAPixel.data[2] + ')');
+            }
+        });
+
+        viewer.open('../data/testpattern.dzi');
+    </script>
+</body>
+</html>
