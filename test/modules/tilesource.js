@@ -283,73 +283,69 @@
         }, 25);
     });
 
-    function CountingBatchTileSource(cfg) {
-        OpenSeadragon.TileSource.call(this, {
-            width: 1,
-            height: 1,
-            tileWidth: 1,
-            tileHeight: 1
-        });
+    class CountingBatchTileSource extends OpenSeadragon.TileSource{
+        constructor(cfg) {
+            super({
+                width: 1,
+                height: 1,
+                tileWidth: 1,
+                tileHeight: 1
+            });
+            this._cfg = cfg || {};
+            this.singleRequests = 0;
+            this.batchRequests = 0;
+            this.batchSizes = [];
+        }
 
-        this._cfg = cfg || {};
-        this.singleRequests = 0;
-        this.batchRequests = 0;
-        this.batchSizes = [];
+        batchEnabled() {
+            return !!this._cfg.enabled;
+        }
+
+        batchTimeout() {
+            return (typeof this._cfg.timeout === 'number') ? this._cfg.timeout : 5;
+        }
+
+        batchMaxJobs() {
+            return (typeof this._cfg.maxJobs === 'number') ? this._cfg.maxJobs : -1;
+        }
+
+        // Default behavior we want for the tests:
+        // - compatible with itself
+        // - compatible with other CountingBatchTileSource instances that share the same group id
+        batchCompatible(otherSource) {
+            if (!otherSource) {
+                return false;
+            }
+            if (otherSource === this) {
+                return true;
+            }
+            return otherSource instanceof this.constructor &&
+                this._cfg.group != null &&
+                otherSource._cfg &&
+                otherSource._cfg.group === this._cfg.group;
+        }
+
+        // Count a single "request" and immediately finish the job.
+        downloadTileStart(job) {
+            this.singleRequests++;
+            job.finish({ ok: true }, null, 'test');
+        }
+
+        downloadTileAbort() {
+        }
+
+        // Count ONE "request" for the entire batch and finish each child job.
+        downloadTileBatchStart(batchJob) {
+            this.batchRequests++;
+            this.batchSizes.push(batchJob.jobs.length);
+
+            for (let i = 0; i < batchJob.jobs.length; i++) {
+                batchJob.jobs[i].finish({ ok: true }, null, 'test');
+            }
+        }
+
+        downloadTileBatchAbort() {
+            // no-op for tests
+        }
     }
-
-    CountingBatchTileSource.prototype = Object.create(OpenSeadragon.TileSource.prototype);
-    CountingBatchTileSource.prototype.constructor = CountingBatchTileSource;
-
-    CountingBatchTileSource.prototype.batchEnabled = function () {
-        return !!this._cfg.enabled;
-    };
-
-    CountingBatchTileSource.prototype.batchTimeout = function () {
-        return (typeof this._cfg.timeout === 'number') ? this._cfg.timeout : 5;
-    };
-
-    CountingBatchTileSource.prototype.batchMaxJobs = function () {
-        return (typeof this._cfg.maxJobs === 'number') ? this._cfg.maxJobs : -1;
-    };
-
-    // Default behavior we want for the tests:
-    // - compatible with itself
-    // - compatible with other CountingBatchTileSource instances that share the same group id
-    CountingBatchTileSource.prototype.batchCompatible = function (otherSource) {
-        if (!otherSource) {
-            return false;
-        }
-        if (otherSource === this) {
-            return true;
-        }
-        return otherSource instanceof CountingBatchTileSource &&
-            this._cfg.group != null &&
-            otherSource._cfg &&
-            otherSource._cfg.group === this._cfg.group;
-    };
-
-    // Count a single "request" and immediately finish the job.
-    CountingBatchTileSource.prototype.downloadTileStart = function (job) {
-        this.singleRequests++;
-        job.finish({ ok: true }, null, 'test');
-    };
-
-    CountingBatchTileSource.prototype.downloadTileAbort = function () {
-        // no-op for tests
-    };
-
-    // Count ONE "request" for the entire batch and finish each child job.
-    CountingBatchTileSource.prototype.downloadTileBatchStart = function (batchJob) {
-        this.batchRequests++;
-        this.batchSizes.push(batchJob.jobs.length);
-
-        for (let i = 0; i < batchJob.jobs.length; i++) {
-            batchJob.jobs[i].finish({ ok: true }, null, 'test');
-        }
-    };
-
-    CountingBatchTileSource.prototype.downloadTileBatchAbort = function () {
-        // no-op for tests
-    };
-
 }());
