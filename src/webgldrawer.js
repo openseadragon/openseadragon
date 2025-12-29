@@ -37,6 +37,268 @@
 
     const OpenSeadragon = $; // alias for JSDoc
 
+    /**
+     * @class OpenSeadragon.SharedWebGLRenderer
+     * @classdesc Manages a shared WebGL context that can be used by multiple WebGLDrawer instances.
+     * This prevents the browser from hitting WebGL context limits when multiple viewers are on
+     * the same page (e.g., main viewer + navigator, or scrolling pages with many viewers).
+     *
+     * The shared renderer maintains a single off-screen WebGL context and canvas. Each drawer
+     * that uses the shared renderer will render to framebuffers and then copy the result to
+     * their visible output canvas.
+     *
+     * **EXPERIMENTAL**: This feature is currently disabled by default because there is a known
+     * issue with transparency rendering when multiple images are layered. The shared canvas
+     * approach requires additional work to properly handle viewport/scissor coordination when
+     * the shared canvas size differs from individual output canvas sizes. To enable, set
+     * `drawerOptions.useSharedRenderer: true` when creating a viewer.
+     *
+     * @memberof OpenSeadragon
+     */
+    class SharedWebGLRenderer {
+        /**
+         * @param {Object} [options] - Configuration options
+         * @param {Boolean} [options.preferWebGL2=true] - Whether to prefer WebGL2 over WebGL1
+         */
+        constructor(options = {}) {
+            this._preferWebGL2 = options.preferWebGL2 !== false;
+            this._gl = null;
+            this._canvas = null;
+            this._isWebGL2 = false;
+            this._drawers = new Set();
+            this._destroyed = false;
+            this._maxTextureSize = 0;
+
+            // Extensions
+            this._extTextureFilterAnisotropic = null;
+            this._maxAnisotropy = 0;
+
+            this._initialize();
+        }
+
+        /**
+         * Initialize the shared WebGL context
+         * @private
+         */
+        _initialize() {
+            this._canvas = document.createElement('canvas');
+            // Start with a reasonable size; will be resized as needed
+            this._canvas.width = 1;
+            this._canvas.height = 1;
+
+            // Try WebGL2 first if preferred
+            if (this._preferWebGL2) {
+                this._gl = this._canvas.getContext('webgl2');
+                if (this._gl) {
+                    this._isWebGL2 = true;
+                }
+            }
+
+            // Fall back to WebGL1
+            if (!this._gl) {
+                this._gl = this._canvas.getContext('webgl');
+                this._isWebGL2 = false;
+            }
+
+            if (!this._gl) {
+                $.console.error('SharedWebGLRenderer: Failed to create WebGL context');
+                return;
+            }
+
+            this._maxTextureSize = this._gl.getParameter(this._gl.MAX_TEXTURE_SIZE);
+            this._setupExtensions();
+
+            $.console.log('SharedWebGLRenderer: Initialized with ' +
+                (this._isWebGL2 ? 'WebGL2' : 'WebGL1') +
+                ', max texture size: ' + this._maxTextureSize);
+        }
+
+        /**
+         * Set up WebGL extensions
+         * @private
+         */
+        _setupExtensions() {
+            const gl = this._gl;
+
+            // Anisotropic filtering extension
+            this._extTextureFilterAnisotropic =
+                gl.getExtension('EXT_texture_filter_anisotropic') ||
+                gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
+                gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
+
+            if (this._extTextureFilterAnisotropic) {
+                this._maxAnisotropy = gl.getParameter(
+                    this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
+                );
+            }
+        }
+
+        /**
+         * Get the WebGL context
+         * @returns {WebGLRenderingContext|WebGL2RenderingContext} The WebGL context
+         */
+        getContext() {
+            return this._gl;
+        }
+
+        /**
+         * Get the shared canvas
+         * @returns {HTMLCanvasElement} The shared canvas
+         */
+        getCanvas() {
+            return this._canvas;
+        }
+
+        /**
+         * Check if using WebGL2
+         * @returns {Boolean} True if WebGL2 is being used
+         */
+        isWebGL2() {
+            return this._isWebGL2;
+        }
+
+        /**
+         * Get the anisotropic filtering extension
+         * @returns {Object|null} The extension or null
+         */
+        getAnisotropicExtension() {
+            return this._extTextureFilterAnisotropic;
+        }
+
+        /**
+         * Get the maximum anisotropy value
+         * @returns {Number} The max anisotropy
+         */
+        getMaxAnisotropy() {
+            return this._maxAnisotropy;
+        }
+
+        /**
+         * Get the maximum texture size
+         * @returns {Number} The max texture size
+         */
+        getMaxTextureSize() {
+            return this._maxTextureSize;
+        }
+
+        /**
+         * Register a drawer with the shared renderer
+         * @param {OpenSeadragon.WebGLDrawer} drawer - The drawer to register
+         */
+        registerDrawer(drawer) {
+            this._drawers.add(drawer);
+        }
+
+        /**
+         * Unregister a drawer from the shared renderer
+         * @param {OpenSeadragon.WebGLDrawer} drawer - The drawer to unregister
+         */
+        unregisterDrawer(drawer) {
+            this._drawers.delete(drawer);
+
+            // If no more drawers are using this renderer, we could optionally clean up
+            // For now, keep it alive for potential future use
+        }
+
+        /**
+         * Get the number of registered drawers
+         * @returns {Number} The count of registered drawers
+         */
+        getDrawerCount() {
+            return this._drawers.size;
+        }
+
+        /**
+         * Ensure the shared canvas is at least the given size
+         * @param {Number} width - Required width
+         * @param {Number} height - Required height
+         * @returns {Boolean} True if the canvas was resized
+         */
+        ensureSize(width, height) {
+            let resized = false;
+
+            // Clamp to max texture size
+            width = Math.min(width, this._maxTextureSize);
+            height = Math.min(height, this._maxTextureSize);
+
+            if (this._canvas.width < width) {
+                this._canvas.width = width;
+                resized = true;
+            }
+            if (this._canvas.height < height) {
+                this._canvas.height = height;
+                resized = true;
+            }
+
+            if (resized) {
+                this._gl.viewport(0, 0, this._canvas.width, this._canvas.height);
+            }
+
+            return resized;
+        }
+
+        /**
+         * Check if the renderer is valid and ready to use
+         * @returns {Boolean} True if valid
+         */
+        isValid() {
+            return !this._destroyed && this._gl !== null;
+        }
+
+        /**
+         * Destroy the shared renderer and release resources
+         */
+        destroy() {
+            if (this._destroyed) {
+                return;
+            }
+
+            if (this._gl) {
+                const ext = this._gl.getExtension('WEBGL_lose_context');
+                if (ext) {
+                    ext.loseContext();
+                }
+            }
+
+            this._canvas.width = 1;
+            this._canvas.height = 1;
+            this._canvas = null;
+            this._gl = null;
+            this._drawers.clear();
+            this._destroyed = true;
+        }
+    }
+
+    // Singleton instance of the shared renderer
+    let sharedRendererInstance = null;
+
+    /**
+     * Get the shared WebGL renderer instance (singleton)
+     * @memberof OpenSeadragon
+     * @param {Object} [options] - Options for creating the renderer if it doesn't exist
+     * @returns {OpenSeadragon.SharedWebGLRenderer} The shared renderer instance
+     */
+    OpenSeadragon.getSharedWebGLRenderer = function(options) {
+        if (!sharedRendererInstance || !sharedRendererInstance.isValid()) {
+            sharedRendererInstance = new SharedWebGLRenderer(options);
+        }
+        return sharedRendererInstance;
+    };
+
+    /**
+     * Destroy the shared WebGL renderer instance
+     * @memberof OpenSeadragon
+     */
+    OpenSeadragon.destroySharedWebGLRenderer = function() {
+        if (sharedRendererInstance) {
+            sharedRendererInstance.destroy();
+            sharedRendererInstance = null;
+        }
+    };
+
+    // Export the class
+    OpenSeadragon.SharedWebGLRenderer = SharedWebGLRenderer;
+
    /**
     * @class OpenSeadragon.WebGLDrawer
     * @classdesc Default implementation of WebGLDrawer for an {@link OpenSeadragon.Viewer}. The WebGLDrawer
@@ -86,8 +348,6 @@
              * When true, additional WebGL2-specific optimizations can be enabled.
              *
              * TODO: Future WebGL2 enhancements to implement:
-             * - Shared off-screen renderer: Share renderer between multiple drawers to prevent
-             *   context limit crashes (e.g., scroll page with multiple viewers + navigators)
              * - Vertex Array Objects (VAOs): Built-in state management for vertex attributes
              * - Instanced rendering: Draw multiple tiles in a single draw call
              * - Uniform Buffer Objects (UBOs): More efficient uniform updates for batched rendering
@@ -142,6 +402,9 @@
                 usePrivateCache: true,
                 preloadCache: false,
                 unpackWithPremultipliedAlpha: false,
+                // EXPERIMENTAL: Use shared WebGL renderer to prevent context limit issues with multiple viewers.
+                // Currently disabled by default while being tested. Set to true to enable.
+                useSharedRenderer: false,
             };
         }
 
@@ -158,40 +421,83 @@
                 return;
             }
             super.destroy();
-            // clear all resources used by the renderer, geometries, textures etc
+
             const gl = this._gl;
 
-            // adapted from https://stackoverflow.com/a/23606581/1214731
-            const numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-            for (let unit = 0; unit < numTextureUnits; ++unit) {
-                gl.activeTexture(gl.TEXTURE0 + unit);
-                gl.bindTexture(gl.TEXTURE_2D, null);
-                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+            // Clean up our WebGL resources (buffers, textures, framebuffers, programs)
+            // These belong to this drawer even when using shared renderer
+            if (gl) {
+                // Delete our resources
+                if (this._secondPass && this._secondPass.bufferOutputPosition) {
+                    gl.deleteBuffer(this._secondPass.bufferOutputPosition);
+                }
+                if (this._secondPass && this._secondPass.bufferTexturePosition) {
+                    gl.deleteBuffer(this._secondPass.bufferTexturePosition);
+                }
+                if (this._firstPass && this._firstPass.bufferOutputPosition) {
+                    gl.deleteBuffer(this._firstPass.bufferOutputPosition);
+                }
+                if (this._firstPass && this._firstPass.bufferTexturePosition) {
+                    gl.deleteBuffer(this._firstPass.bufferTexturePosition);
+                }
+                if (this._firstPass && this._firstPass.bufferIndex) {
+                    gl.deleteBuffer(this._firstPass.bufferIndex);
+                }
+                if (this._glFrameBuffer) {
+                    gl.deleteFramebuffer(this._glFrameBuffer);
+                }
+                if (this._renderToTexture) {
+                    gl.deleteTexture(this._renderToTexture);
+                }
+                if (this._firstPass && this._firstPass.shaderProgram) {
+                    gl.deleteProgram(this._firstPass.shaderProgram);
+                }
+                if (this._secondPass && this._secondPass.shaderProgram) {
+                    gl.deleteProgram(this._secondPass.shaderProgram);
+                }
             }
-            gl.bindBuffer(gl.ARRAY_BUFFER, null);
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-            gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-            // Delete all our created resources
-            gl.deleteBuffer(this._secondPass.bufferOutputPosition);
-            gl.deleteFramebuffer(this._glFrameBuffer);
+            // If using shared renderer, unregister from it
+            if (this._useSharedRenderer && this._sharedRenderer) {
+                this._sharedRenderer.unregisterDrawer(this);
+                this._sharedRenderer = null;
+                // Don't destroy the rendering canvas or lose context - it's shared!
+            } else if (gl) {
+                // clear all resources used by the renderer, geometries, textures etc
+                // adapted from https://stackoverflow.com/a/23606581/1214731
+                const numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+                for (let unit = 0; unit < numTextureUnits; ++unit) {
+                    gl.activeTexture(gl.TEXTURE0 + unit);
+                    gl.bindTexture(gl.TEXTURE_2D, null);
+                    gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+                }
+                gl.bindBuffer(gl.ARRAY_BUFFER, null);
+                gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+                gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-            // make canvases 1 x 1 px and delete references
-            this._renderingCanvas.width = this._renderingCanvas.height = 1;
-            this._clippingCanvas.width = this._clippingCanvas.height = 1;
-            this._outputCanvas.width = this._outputCanvas.height = 1;
-            this._renderingCanvas = null;
-            this._clippingCanvas = this._clippingContext = null;
-            this._outputCanvas = this._outputContext = null;
+                // make rendering canvas 1 x 1 px and delete reference
+                this._renderingCanvas.width = this._renderingCanvas.height = 1;
 
-            const ext = gl.getExtension('WEBGL_lose_context');
-            if(ext){
-                ext.loseContext();
+                const ext = gl.getExtension('WEBGL_lose_context');
+                if(ext){
+                    ext.loseContext();
+                }
             }
 
             // set our webgl context reference to null to enable garbage collection
             this._gl = null;
+
+            // make clipping and output canvases 1 x 1 px and delete references
+            this._clippingCanvas.width = this._clippingCanvas.height = 1;
+            this._outputCanvas.width = this._outputCanvas.height = 1;
+            if (!this._useSharedRenderer) {
+                // Only reset rendering canvas if we own it
+                this._renderingCanvas.width = this._renderingCanvas.height = 1;
+            }
+            this._renderingCanvas = null;
+            this._clippingCanvas = this._clippingContext = null;
+            this._outputCanvas = this._outputContext = null;
 
             if(this._backupCanvasDrawer){
                 this._backupCanvasDrawer.destroy();
@@ -287,6 +593,15 @@
         */
         draw(tiledImages){
             const gl = this._gl;
+
+            // When using shared renderer, ensure all necessary WebGL state is set correctly
+            // since another drawer might have changed it
+            if (this._useSharedRenderer) {
+                // Re-enable blending and set blend function (may have been changed)
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+            }
+
             const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
             const view = {
                 bounds: bounds,
@@ -300,6 +615,20 @@
             const scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
             const rotMatrix = $.Mat3.makeRotation(-view.rotation);
             const viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
+
+            // When using shared renderer, set viewport and scissor to match our output canvas size
+            // This ensures we only draw/clear in our area of the shared canvas
+            // Note: WebGL coordinates have (0,0) at bottom-left, so we render at the bottom
+            // of the larger shared canvas and adjust the copy source Y coordinate accordingly
+            if (this._useSharedRenderer) {
+                const w = this._outputCanvas.width;
+                const h = this._outputCanvas.height;
+                const canvasH = this._renderingCanvas.height;
+                const y = canvasH - h; // Render at bottom-left in WebGL coords
+                gl.viewport(0, y, w, h);
+                gl.enable(gl.SCISSOR_TEST);
+                gl.scissor(0, y, w, h);
+            }
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
@@ -316,7 +645,7 @@
                 if(tiledImage.getIssue('webgl')){
                     // first, draw any data left in the rendering buffer onto the output canvas
                     if(renderingBufferHasImageData){
-                        this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                        this._copyRenderingCanvasTo(this._outputContext);
                         // clear the buffer
                         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                         gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
@@ -354,7 +683,7 @@
                         // if the rendering buffer has image data currently, write it to the output canvas now and clear it
 
                         if(renderingBufferHasImageData){
-                            this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                            this._copyRenderingCanvasTo(this._outputContext);
                         }
 
                         // clear the buffer
@@ -503,9 +832,33 @@
             });
 
             if(renderingBufferHasImageData){
-                this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                this._copyRenderingCanvasTo(this._outputContext);
             }
 
+            // Disable scissor test when we're done (if we enabled it)
+            if (this._useSharedRenderer) {
+                this._gl.disable(this._gl.SCISSOR_TEST);
+            }
+
+        }
+
+        /**
+         * Copy from rendering canvas to a destination context, handling shared renderer properly.
+         * @private
+         * @param {CanvasRenderingContext2D} destContext - The destination 2D context to draw to
+         */
+        _copyRenderingCanvasTo(destContext) {
+            if (this._useSharedRenderer) {
+                const w = this._outputCanvas.width;
+                const h = this._outputCanvas.height;
+                const canvasH = this._renderingCanvas.height;
+                // WebGL renders at bottom-left (0,0), but 2D canvas has top-left (0,0)
+                // So when shared canvas is larger, we need to copy from the bottom portion
+                const srcY = canvasH - h;
+                destContext.drawImage(this._renderingCanvas, 0, srcY, w, h, 0, 0, w, h);
+            } else {
+                destContext.drawImage(this._renderingCanvas, 0, 0);
+            }
         }
 
         // Public API required by all Drawer implementations
@@ -575,7 +928,7 @@
                 this._outputContext.drawImage(this._clippingCanvas, 0, 0);
 
             } else {
-                this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                this._copyRenderingCanvasTo(this._outputContext);
             }
             this._outputContext.restore();
             if(tiledImage.debugMode){
@@ -839,9 +1192,20 @@
         // private
         _resizeRenderer(){
             const gl = this._gl;
-            const w = this._renderingCanvas.width;
-            const h = this._renderingCanvas.height;
-            gl.viewport(0, 0, w, h);
+            // Use output canvas dimensions for viewport, not the rendering canvas
+            // This is important when using shared renderer where rendering canvas might be larger
+            const w = this._outputCanvas.width;
+            const h = this._outputCanvas.height;
+
+            // When using shared renderer, position viewport at bottom of canvas
+            // (WebGL has (0,0) at bottom-left)
+            if (this._useSharedRenderer) {
+                const canvasH = this._renderingCanvas.height;
+                const y = canvasH - h;
+                gl.viewport(0, y, w, h);
+            } else {
+                gl.viewport(0, 0, w, h);
+            }
 
             //release the old texture
             gl.deleteTexture(this._renderToTexture);
@@ -866,15 +1230,74 @@
             this._outputCanvas = this.canvas; //output canvas
             this._outputContext = this._outputCanvas.getContext('2d');
 
-            this._renderingCanvas = document.createElement('canvas');
-
             this._clippingCanvas = document.createElement('canvas');
-            this._clippingContext = this._clippingCanvas.getContext('2d');
-            this._renderingCanvas.width = this._clippingCanvas.width = this._outputCanvas.width;
-            this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
+            this._clippingContext = this._clippingCanvas.getContext('2d', { willReadFrequently: true });
 
-            this._gl = this._renderingCanvas.getContext('webgl');
-            this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            // Use shared renderer if enabled, otherwise create own context
+            if (this._useSharedRenderer) {
+                this._sharedRenderer = $.getSharedWebGLRenderer();
+                this._sharedRenderer.registerDrawer(this);
+
+                // Use the shared renderer's canvas and context
+                this._renderingCanvas = this._sharedRenderer.getCanvas();
+                this._gl = this._sharedRenderer.getContext();
+
+                if (!this._gl) {
+                    // Shared renderer failed to provide a WebGL context; fall back to
+                    // creating a non-shared context (original behavior).
+                    this._useSharedRenderer = false;
+                    this._sharedRenderer = null;
+
+                    this._renderingCanvas = document.createElement('canvas');
+                    this._renderingCanvas.width = this._outputCanvas.width;
+                    this._renderingCanvas.height = this._outputCanvas.height;
+
+                    // Try WebGL2 first, then fall back to WebGL1
+                    this._gl = this._renderingCanvas.getContext('webgl2');
+                    if (this._gl) {
+                        this._isWebGL2 = true;
+                        this._setupWebGLExtensions();
+                    } else {
+                        this._gl = this._renderingCanvas.getContext('webgl');
+                        this._isWebGL2 = false;
+                        if (this._gl) {
+                            this._setupWebGLExtensions();
+                        }
+                    }
+                } else {
+                    this._isWebGL2 = this._sharedRenderer.isWebGL2();
+                    this._extTextureFilterAnisotropic = this._sharedRenderer.getAnisotropicExtension();
+                    this._maxAnisotropy = this._sharedRenderer.getMaxAnisotropy();
+
+                    // Ensure shared canvas is large enough for our output
+                    this._sharedRenderer.ensureSize(this._outputCanvas.width, this._outputCanvas.height);
+                }
+            } else {
+                // Create our own rendering canvas and context (original behavior)
+                this._renderingCanvas = document.createElement('canvas');
+                this._renderingCanvas.width = this._outputCanvas.width;
+                this._renderingCanvas.height = this._outputCanvas.height;
+
+                // Try WebGL2 first, then fall back to WebGL1
+                this._gl = this._renderingCanvas.getContext('webgl2');
+                if (this._gl) {
+                    this._isWebGL2 = true;
+                    this._setupWebGLExtensions();
+                } else {
+                    this._gl = this._renderingCanvas.getContext('webgl');
+                    this._isWebGL2 = false;
+                    if (this._gl) {
+                        this._setupWebGLExtensions();
+                    }
+                }
+            }
+
+            this._clippingCanvas.width = this._outputCanvas.width;
+            this._clippingCanvas.height = this._outputCanvas.height;
+
+            if (this._gl) {
+                this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            }
 
             this._resizeHandler = function(){
 
@@ -890,10 +1313,20 @@
                     _this._outputCanvas.height = viewportSize.y;
                 }
 
-                _this._renderingCanvas.style.width = _this._outputCanvas.clientWidth + 'px';
-                _this._renderingCanvas.style.height = _this._outputCanvas.clientHeight + 'px';
-                _this._renderingCanvas.width = _this._clippingCanvas.width = _this._outputCanvas.width;
-                _this._renderingCanvas.height = _this._clippingCanvas.height = _this._outputCanvas.height;
+                if (_this._useSharedRenderer && _this._sharedRenderer) {
+                    // Ensure shared canvas is large enough
+                    _this._sharedRenderer.ensureSize(_this._outputCanvas.width, _this._outputCanvas.height);
+                    // Update our reference to the canvas (in case it was resized)
+                    _this._renderingCanvas = _this._sharedRenderer.getCanvas();
+                } else {
+                    _this._renderingCanvas.style.width = _this._outputCanvas.clientWidth + 'px';
+                    _this._renderingCanvas.style.height = _this._outputCanvas.clientHeight + 'px';
+                    _this._renderingCanvas.width = _this._outputCanvas.width;
+                    _this._renderingCanvas.height = _this._outputCanvas.height;
+                }
+
+                _this._clippingCanvas.width = _this._outputCanvas.width;
+                _this._clippingCanvas.height = _this._outputCanvas.height;
 
                 // important - update the size of the rendering viewport!
                 _this._resizeRenderer();
@@ -1086,7 +1519,7 @@
                 this._clippingContext.translate(-point.x, 0);
             }
 
-            this._clippingContext.drawImage(this._renderingCanvas, 0, 0);
+            this._copyRenderingCanvasTo(this._clippingContext);
 
             this._clippingContext.restore();
         }
