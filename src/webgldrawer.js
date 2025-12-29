@@ -56,6 +56,7 @@
             this._gl = null;
             this._isWebGL2 = false;
             this._extTextureFilterAnisotropic = null;
+            this._extVAO = null;
             this._maxAnisotropy = 0;
 
             this._firstPass = null;
@@ -67,17 +68,13 @@
 
             this._destroyed = false;
 
-            // Create WebGL context
-            this._gl = this._renderingCanvas.getContext('webgl2');
+            // Keep the current renderer on WebGL1 until we have WebGL2-specific
+            // shaders and sized internal formats for the render-to-texture path.
+            this._gl = this._renderingCanvas.getContext('webgl') ||
+                this._renderingCanvas.getContext('experimental-webgl');
             if (this._gl) {
-                this._isWebGL2 = true;
-                this._setupWebGLExtensions();
-            } else {
-                this._gl = this._renderingCanvas.getContext('webgl');
                 this._isWebGL2 = false;
-                if (this._gl) {
-                    this._setupWebGLExtensions();
-                }
+                this._setupWebGLExtensions();
             }
 
             if (this._gl) {
@@ -177,6 +174,57 @@
                 this._maxAnisotropy = gl.getParameter(
                     this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
                 );
+            }
+
+            if (!this._isWebGL2) {
+                this._extVAO = gl.getExtension('OES_vertex_array_object');
+            }
+        }
+
+        createVertexArray() {
+            if (!this._gl) {
+                return null;
+            }
+            if (this._isWebGL2 && this._gl.createVertexArray) {
+                return this._gl.createVertexArray();
+            }
+            return this._extVAO ? this._extVAO.createVertexArrayOES() : null;
+        }
+
+        bindVertexArray(vertexArray) {
+            if (!this._gl || !vertexArray) {
+                return false;
+            }
+            if (this._isWebGL2 && this._gl.bindVertexArray) {
+                this._gl.bindVertexArray(vertexArray);
+                return true;
+            }
+            if (this._extVAO) {
+                this._extVAO.bindVertexArrayOES(vertexArray);
+                return true;
+            }
+            return false;
+        }
+
+        unbindVertexArray() {
+            if (!this._gl) {
+                return;
+            }
+            if (this._isWebGL2 && this._gl.bindVertexArray) {
+                this._gl.bindVertexArray(null);
+            } else if (this._extVAO) {
+                this._extVAO.bindVertexArrayOES(null);
+            }
+        }
+
+        deleteVertexArray(vertexArray) {
+            if (!this._gl || !vertexArray) {
+                return;
+            }
+            if (this._isWebGL2 && this._gl.deleteVertexArray) {
+                this._gl.deleteVertexArray(vertexArray);
+            } else if (this._extVAO) {
+                this._extVAO.deleteVertexArrayOES(vertexArray);
             }
         }
 
@@ -434,7 +482,13 @@
                 bufferOutputPosition: gl.createBuffer(),
                 bufferTexturePosition: gl.createBuffer(),
                 bufferIndex: gl.createBuffer(),
+                vao: null,
             };
+
+            this._firstPass.vao = this.createVertexArray();
+            if (this._firstPass.vao) {
+                this.bindVertexArray(this._firstPass.vao);
+            }
 
             gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
 
@@ -445,17 +499,22 @@
             }
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
             gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._firstPass.aOutputPosition);
 
             // provide texture coordinates for the rectangle in image (texture) space. Data will be set later.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+            gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._firstPass.aTexturePosition);
 
             // for each vertex, provide an index into the array of textures/matrices to use for the correct tile
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
             const indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat(); // repeat each index 6 times, for the 6 vertices per tile (2 triangles)
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._firstPass.aIndex);
+
+            this.unbindVertexArray();
         }
 
         /**
@@ -509,17 +568,27 @@
                 uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
                 bufferOutputPosition: gl.createBuffer(),
                 bufferTexturePosition: gl.createBuffer(),
+                vao: null,
             };
+
+            this._secondPass.vao = this.createVertexArray();
+            if (this._secondPass.vao) {
+                this.bindVertexArray(this._secondPass.vao);
+            }
 
             // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.STATIC_DRAW); // bind data statically here since it's unchanging
+            gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._secondPass.aOutputPosition);
 
             // provide texture coordinates for the rectangle in image (texture) space.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
+            gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
+
+            this.unbindVertexArray();
         }
 
         /**
@@ -548,9 +617,26 @@
                     gl.bindRenderbuffer(gl.RENDERBUFFER, null);
                     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
+                    this.unbindVertexArray();
+                    if (this._firstPass && this._firstPass.vao) {
+                        this.deleteVertexArray(this._firstPass.vao);
+                    }
+                    if (this._secondPass && this._secondPass.vao) {
+                        this.deleteVertexArray(this._secondPass.vao);
+                    }
+
                     // Delete all our created resources
-                    if (this._secondPass && this._secondPass.bufferOutputPosition) {
+                    if (this._firstPass) {
+                        gl.deleteBuffer(this._firstPass.bufferOutputPosition);
+                        gl.deleteBuffer(this._firstPass.bufferTexturePosition);
+                        gl.deleteBuffer(this._firstPass.bufferIndex);
+                    }
+                    if (this._secondPass) {
                         gl.deleteBuffer(this._secondPass.bufferOutputPosition);
+                        gl.deleteBuffer(this._secondPass.bufferTexturePosition);
+                    }
+                    if (this._renderToTexture) {
+                        gl.deleteTexture(this._renderToTexture);
                     }
                     if (this._glFrameBuffer) {
                         gl.deleteFramebuffer(this._glFrameBuffer);
@@ -1108,6 +1194,11 @@
 
                         // Draw! 6 vertices per tile (2 triangles per rectangle)
                         gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
+                        if (firstPass.vao) {
+                            this._glContext.bindVertexArray(firstPass.vao);
+                        }
+                        // Draw! 6 vertices per tile (2 triangles per rectangle)
+                        gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
                     }
                 }
 
@@ -1125,11 +1216,15 @@
                     // set opacity to the value for the current tiledImage
                     gl.uniform1f(secondPass.uOpacityMultiplier, tiledImage.opacity);
 
-                    // bind buffers and set attributes before calling gl.drawArrays
-                    gl.bindBuffer(gl.ARRAY_BUFFER, secondPass.bufferTexturePosition);
-                    gl.vertexAttribPointer(secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-                    gl.bindBuffer(gl.ARRAY_BUFFER, secondPass.bufferOutputPosition);
-                    gl.vertexAttribPointer(secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                    if (secondPass.vao) {
+                        this._glContext.bindVertexArray(secondPass.vao);
+                    } else {
+                        // bind buffers and set attributes before calling gl.drawArrays
+                        gl.bindBuffer(gl.ARRAY_BUFFER, secondPass.bufferTexturePosition);
+                        gl.vertexAttribPointer(secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, secondPass.bufferOutputPosition);
+                        gl.vertexAttribPointer(secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                    }
 
                     // Draw the quad (two triangles)
                     gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -1355,7 +1450,6 @@
             }
             this._glContext.setupRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
         }
-
 
         // private
         _resizeRenderer(){
