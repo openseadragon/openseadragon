@@ -86,13 +86,17 @@
              * When true, additional WebGL2-specific optimizations can be enabled.
              *
              * TODO: Future WebGL2 enhancements to implement:
+             * - Shared off-screen renderer: Share renderer between multiple drawers to prevent
+             *   context limit crashes (e.g., scroll page with multiple viewers + navigators)
              * - Vertex Array Objects (VAOs): Built-in state management for vertex attributes
              * - Instanced rendering: Draw multiple tiles in a single draw call
              * - Uniform Buffer Objects (UBOs): More efficient uniform updates for batched rendering
              * - Transform feedback: GPU-based computations for tile processing
              * - Multiple render targets: Advanced compositing with multiple framebuffer attachments
-             * - GLSL ES 3.0 shaders: Enhanced shader capabilities (integer ops, texture arrays, etc.)
-             * - Non-power-of-two texture improvements: Better handling without restrictions
+             * - GLSL ES 3.0 shaders: Enhanced shader capabilities (integer ops, etc.)
+             *
+             * Note: Texture arrays (2D_ARRAY) are not recommended due to HW limitations -
+             * they underperform except when tiles have more than 4 channels.
              *
              * Note: Texture arrays (2D_ARRAY) are not recommended due to HW limitations -
              * they underperform except when tiles have more than 4 channels.
