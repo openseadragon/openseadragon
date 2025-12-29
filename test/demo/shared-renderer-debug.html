@@ -5,13 +5,13 @@
     <title>Shared Renderer Debug</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
-        .viewer-container { 
-            width: 500px; 
-            height: 500px; 
+        .viewer-container {
+            width: 500px;
+            height: 500px;
             border: 1px solid #ccc;
             margin-bottom: 20px;
         }
-        #debug { 
+        #debug {
             font-family: monospace;
             white-space: pre;
             background: #f5f5f5;
@@ -24,9 +24,9 @@
 <body>
     <h1>Shared Renderer Debug</h1>
     <p>Testing transparency with multiple images using shared renderer</p>
-    
+
     <div id="viewer" class="viewer-container"></div>
-    
+
     <button id="checkPixels">Check Pixels</button>
     <div id="debug"></div>
 
@@ -39,7 +39,7 @@
         });
 
         const debug = document.getElementById('debug');
-        
+
         function log(msg) {
             debug.textContent += msg + '\n';
             console.log(msg);
@@ -49,7 +49,7 @@
             log('Base image loaded');
             log('Drawer type: ' + viewer.drawer.getType());
             log('Using shared renderer: ' + viewer.drawer._useSharedRenderer);
-            
+
             if (viewer.drawer._useSharedRenderer) {
                 log('Shared canvas size: ' + viewer.drawer._renderingCanvas.width + 'x' + viewer.drawer._renderingCanvas.height);
             }
@@ -60,7 +60,7 @@
                 url: '../data/A.png',
                 success: function() {
                     log('A.png loaded on top');
-                    
+
                     const secondImage = viewer.world.getItemAt(1);
                     secondImage.addHandler('fully-loaded-change', function() {
                         log('A.png fully loaded');
@@ -76,7 +76,7 @@
             // Use the drawer's context - suppress the willReadFrequently warning since it's just for debugging
             const originalWarn = console.warn;
             console.warn = function() {};
-            
+
             const ctx = viewer.drawer._outputContext;
             const density = OpenSeadragon.pixelDensityRatio;
 
@@ -87,10 +87,10 @@
 
             // Get pixel on the A itself (should be black)
             const onAPixel = ctx.getImageData(333 * density, 250 * density, 1, 1);
-            
+
             // Restore console.warn
             console.warn = originalWarn;
-            
+
             log('\nPixel at (333,250) - on the A (should be black):');
             log('  R=' + onAPixel.data[0] + ' G=' + onAPixel.data[1] + ' B=' + onAPixel.data[2] + ' A=' + onAPixel.data[3]);
 
