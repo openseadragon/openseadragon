@@ -103,6 +103,7 @@
             this._extTextureFilterAnisotropic = null; // anisotropic filtering extension
             this._maxAnisotropy = 0;
             this._firstPass = null;
+            this._firstPassUBO = null; // WebGL2 Uniform Buffer Object for first pass
             this._secondPass = null;
             this._glFrameBuffer = null;
             this._renderToTexture = null;
@@ -170,6 +171,12 @@
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
             gl.deleteFramebuffer(this._glFrameBuffer);
+
+            // Clean up WebGL2 UBO resources
+            if (this._firstPassUBO) {
+                gl.deleteBuffer(this._firstPassUBO.buffer);
+                this._firstPassUBO = null;
+            }
 
             // make canvases 1 x 1 px and delete references
             this._renderingCanvas.width = this._renderingCanvas.height = 1;
@@ -438,10 +445,40 @@
                             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
                             gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
 
-                            // set the transform matrix uniform for each tile
-                            matrixArray.forEach( (matrix, index) => {
-                                gl.uniformMatrix3fv(this._firstPass.uTransformMatrices[index], false, matrix);
-                            });
+                            // Update uniforms - use UBO for matrices when available (WebGL2)
+                            if (this._firstPassUBO) {
+                                // Pack matrices into UBO format (std140 layout)
+                                // Each mat3 is stored as 3 vec4s (padded to 16-byte alignment)
+                                const matrixData = this._firstPassUBO.matrixData;
+                                matrixArray.forEach((matrix, index) => {
+                                    const base = index * 12; // 3 vec4s = 12 floats per matrix
+                                    // Column 0: matrix[0-2] -> vec4(matrix[0], matrix[1], matrix[2], 0)
+                                    matrixData[base + 0] = matrix[0];
+                                    matrixData[base + 1] = matrix[1];
+                                    matrixData[base + 2] = matrix[2];
+                                    matrixData[base + 3] = 0; // padding
+                                    // Column 1: matrix[3-5] -> vec4(matrix[3], matrix[4], matrix[5], 0)
+                                    matrixData[base + 4] = matrix[3];
+                                    matrixData[base + 5] = matrix[4];
+                                    matrixData[base + 6] = matrix[5];
+                                    matrixData[base + 7] = 0; // padding
+                                    // Column 2: matrix[6-8] -> vec4(matrix[6], matrix[7], matrix[8], 0)
+                                    matrixData[base + 8] = matrix[6];
+                                    matrixData[base + 9] = matrix[7];
+                                    matrixData[base + 10] = matrix[8];
+                                    matrixData[base + 11] = 0; // padding
+                                });
+
+                                // Update UBO with all matrices in a single buffer update
+                                gl.bindBuffer(gl.UNIFORM_BUFFER, this._firstPassUBO.buffer);
+                                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, matrixData);
+                            } else {
+                                // WebGL1 fallback: set each matrix uniform individually
+                                matrixArray.forEach((matrix, index) => {
+                                    gl.uniformMatrix3fv(this._firstPass.uTransformMatrices[index], false, matrix);
+                                });
+                            }
+
                             // set the opacity uniform for each tile
                             gl.uniform1fv(this._firstPass.uOpacities, new Float32Array(opacityArray));
 
@@ -664,7 +701,12 @@
             }
             this._unitQuad = this._makeQuadVertexBuffer(0, 1, 0, 1); // used a few places; create once and store the result
 
-            this._makeFirstPassShaderProgram();
+            // Use UBO version for WebGL2, standard uniforms for WebGL1
+            if (this._isWebGL2) {
+                this._makeFirstPassShaderProgramWithUBO();
+            } else {
+                this._makeFirstPassShaderProgram();
+            }
             this._makeSecondPassShaderProgram();
 
             // set up the texture to render to in the first pass, and which will be used for rendering the second pass
@@ -787,6 +829,140 @@
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW); // bind data statically here, since it's unchanging
             gl.enableVertexAttribArray(this._firstPass.aIndex);
 
+        }
+
+        // private
+        // WebGL2 version using Uniform Buffer Objects for efficient batch updates
+        _makeFirstPassShaderProgramWithUBO(){
+            const gl = this._gl;
+            const numTextures = this._glNumTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+
+            // In std140 layout:
+            // - mat3 takes 3 vec4s (48 bytes) due to alignment requirements
+            // - float takes 4 bytes but arrays of floats have 16-byte stride
+            // Each tile needs: 48 bytes for mat3 + 16 bytes for opacity = 64 bytes
+            // But we'll structure it as: mat3 array followed by float array for better access patterns
+
+            // GLSL ES 3.0 vertex shader with uniform block
+            const vertexShaderProgram = `#version 300 es
+// Uniform block for transform matrices (std140 layout)
+// Each mat3 is stored as 3 vec4s (padded for alignment)
+layout(std140) uniform TransformBlock {
+    vec4 u_matrices[${numTextures * 3}]; // 3 vec4s per mat3
+};
+
+in vec2 a_output_position;
+in vec2 a_texture_position;
+in float a_index;
+
+out vec2 v_texture_position;
+out float v_image_index;
+
+mat3 getMatrix(int index) {
+    int base = index * 3;
+    return mat3(
+        u_matrices[base].xyz,
+        u_matrices[base + 1].xyz,
+        u_matrices[base + 2].xyz
+    );
+}
+
+void main() {
+    int idx = int(a_index);
+    mat3 transform_matrix = getMatrix(idx);
+    gl_Position = vec4(transform_matrix * vec3(a_output_position, 1.0), 1.0);
+    v_texture_position = a_texture_position;
+    v_image_index = a_index;
+}
+`;
+
+            // Generate texture lookup conditionals at compile time
+            const makeTextureConditionals = () => {
+                return [...Array(numTextures).keys()].map(index =>
+                    `${index > 0 ? 'else ' : ''}if(idx == ${index}) { color = texture(u_images[${index}], v_texture_position) * u_opacities[${index}]; }`
+                ).join('\n        ');
+            };
+
+            // GLSL ES 3.0 fragment shader
+            const fragmentShaderProgram = `#version 300 es
+precision mediump float;
+
+uniform sampler2D u_images[${numTextures}];
+uniform float u_opacities[${numTextures}];
+
+in vec2 v_texture_position;
+in float v_image_index;
+
+out vec4 fragColor;
+
+void main() {
+    int idx = int(v_image_index);
+    vec4 color = vec4(0.0);
+    ${makeTextureConditionals()}
+    fragColor = color;
+}
+`;
+
+            const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            gl.useProgram(program);
+
+            // get locations of attributes and uniforms, and create buffers for each attribute
+            this._firstPass = {
+                shaderProgram: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                aIndex: gl.getAttribLocation(program, 'a_index'),
+                uImages: gl.getUniformLocation(program, 'u_images'),
+                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+                bufferIndex: gl.createBuffer(),
+            };
+
+            // Set up Uniform Buffer Object for transform matrices
+            const transformBlockIndex = gl.getUniformBlockIndex(program, 'TransformBlock');
+            const transformBlockSize = gl.getActiveUniformBlockParameter(program, transformBlockIndex, gl.UNIFORM_BLOCK_DATA_SIZE);
+
+            // Create UBO
+            const uboBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.UNIFORM_BUFFER, uboBuffer);
+            gl.bufferData(gl.UNIFORM_BUFFER, transformBlockSize, gl.DYNAMIC_DRAW);
+
+            // Bind the uniform block to binding point 0
+            const bindingPoint = 0;
+            gl.uniformBlockBinding(program, transformBlockIndex, bindingPoint);
+            gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, uboBuffer);
+
+            // Store UBO info for later updates
+            this._firstPassUBO = {
+                buffer: uboBuffer,
+                blockSize: transformBlockSize,
+                bindingPoint: bindingPoint,
+                numTextures: numTextures,
+                // Pre-allocate typed array for matrix data (3 vec4s per matrix = 12 floats, padded)
+                matrixData: new Float32Array(numTextures * 12),
+            };
+
+            gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
+
+            // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
+            const outputQuads = new Float32Array(numTextures * 12);
+            for(let i = 0; i < numTextures; ++i){
+                outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(this._firstPass.aOutputPosition);
+
+            // provide texture coordinates for the rectangle in image (texture) space. Data will be set later.
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+            gl.enableVertexAttribArray(this._firstPass.aTexturePosition);
+
+            // for each vertex, provide an index into the array of textures/matrices to use for the correct tile
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
+            const indices = [...Array(numTextures).keys()].map(i => Array(6).fill(i)).flat();
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(this._firstPass.aIndex);
         }
 
         // private
