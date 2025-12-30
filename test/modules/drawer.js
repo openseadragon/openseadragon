@@ -81,6 +81,24 @@
         });
 
         // ----------
+        QUnit.test('uses UBO-backed first pass in WebGL2 mode', function(assert) {
+            const done = assert.async();
+            createViewer();
+
+            if (viewer.drawer.getType() !== 'webgl' || !viewer.drawer.isWebGL2()) {
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            assert.ok(
+                viewer.drawer._glContext.getFirstPassUBO(),
+                'WebGL2 renderer initializes the UBO-backed first-pass resources'
+            );
+            done();
+        });
+
+        // ----------
         QUnit.test('rotation', function(assert) {
             const done = assert.async();
 

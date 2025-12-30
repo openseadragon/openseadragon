@@ -59,6 +59,7 @@
             this._maxAnisotropy = 0;
 
             this._firstPass = null;
+            this._firstPassUBO = null;
             this._secondPass = null;
             this._glFrameBuffer = null;
             this._renderToTexture = null;
@@ -126,6 +127,14 @@
          */
         getFirstPass() {
             return this._firstPass;
+        }
+
+        /**
+         * Get the WebGL2 first pass UBO resources when available
+         * @returns {Object|null} The first pass UBO object
+         */
+        getFirstPassUBO() {
+            return this._firstPassUBO;
         }
 
         /**
@@ -220,8 +229,20 @@
             // Create unit quad once
             this._unitQuad = this.makeQuadVertexBuffer(0, 1, 0, 1);
 
-            this._makeFirstPassShaderProgram();
+            if (this._isWebGL2) {
+                this._makeFirstPassShaderProgramWithUBO();
+            } else {
+                this._makeFirstPassShaderProgram();
+            }
+            if (!this._firstPass) {
+                $.console.error('Failed to create WebGL first-pass shader program');
+                return;
+            }
             this._makeSecondPassShaderProgram();
+            if (!this._secondPass) {
+                $.console.error('Failed to create WebGL second-pass shader program');
+                return;
+            }
 
             // set up the texture to render to in the first pass, and which will be used for rendering the second pass
             this._renderToTexture = gl.createTexture();
@@ -420,6 +441,9 @@
             const gl = this._gl;
 
             const program = this._initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            if (!program) {
+                return;
+            }
             gl.useProgram(program);
 
             // get locations of attributes and uniforms, and create buffers for each attribute
@@ -498,6 +522,9 @@
             const gl = this._gl;
 
             const program = this._initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            if (!program) {
+                return;
+            }
             gl.useProgram(program);
 
             // get locations of attributes and uniforms, and create buffers for each attribute
@@ -520,6 +547,189 @@
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
             gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
             gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
+        }
+
+        /**
+         * Update first-pass transform matrices for either WebGL1 uniforms or the WebGL2 UBO path.
+         * @param {Float32Array[]} matrixArray - Matrices for the current batch of tiles
+         * @returns {Boolean} true if the matrices were uploaded successfully
+         */
+        updateFirstPassMatrices(matrixArray) {
+            const gl = this._gl;
+            if (!gl || !this._firstPass) {
+                return false;
+            }
+
+            if (this._firstPassUBO) {
+                const matrixData = this._firstPassUBO.matrixData;
+                matrixArray.forEach((matrix, index) => {
+                    const base = index * 12; // 3 vec4s = 12 floats per matrix
+                    matrixData[base + 0] = matrix[0];
+                    matrixData[base + 1] = matrix[1];
+                    matrixData[base + 2] = matrix[2];
+                    matrixData[base + 3] = 0;
+                    matrixData[base + 4] = matrix[3];
+                    matrixData[base + 5] = matrix[4];
+                    matrixData[base + 6] = matrix[5];
+                    matrixData[base + 7] = 0;
+                    matrixData[base + 8] = matrix[6];
+                    matrixData[base + 9] = matrix[7];
+                    matrixData[base + 10] = matrix[8];
+                    matrixData[base + 11] = 0;
+                });
+
+                gl.bindBuffer(gl.UNIFORM_BUFFER, this._firstPassUBO.buffer);
+                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, matrixData);
+                return true;
+            }
+
+            if (!this._firstPass.uTransformMatrices) {
+                $.console.error('First-pass shader program has no transform matrix uniforms');
+                return false;
+            }
+
+            matrixArray.forEach((matrix, index) => {
+                gl.uniformMatrix3fv(this._firstPass.uTransformMatrices[index], false, matrix);
+            });
+            return true;
+        }
+
+        /**
+         * Create the WebGL2 first pass shader program using a UBO-backed transform block.
+         * Falls back to the standard first pass shader if the WebGL2 path cannot be initialized safely.
+         * @private
+         */
+        _makeFirstPassShaderProgramWithUBO() {
+            const gl = this._gl;
+            const numTextures = this._glNumTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+
+            // In std140 layout, mat3 values are stored as 3 vec4s (48 bytes) due to alignment requirements.
+            // The UBO only stores transform matrices; opacities continue to use the existing uniform array.
+            const vertexShaderProgram = `#version 300 es
+            layout(std140) uniform TransformBlock {
+                vec4 u_matrices[${numTextures * 3}];
+            };
+
+            in vec2 a_output_position;
+            in vec2 a_texture_position;
+            in float a_index;
+
+            out vec2 v_texture_position;
+            out float v_image_index;
+
+            mat3 getMatrix(int index) {
+                int base = index * 3;
+                return mat3(
+                    u_matrices[base].xyz,
+                    u_matrices[base + 1].xyz,
+                    u_matrices[base + 2].xyz
+                );
+            }
+
+            void main() {
+                int idx = int(a_index);
+                mat3 transform_matrix = getMatrix(idx);
+                gl_Position = vec4(transform_matrix * vec3(a_output_position, 1.0), 1.0);
+                v_texture_position = a_texture_position;
+                v_image_index = a_index;
+            }
+            `;
+
+            const makeTextureConditionals = () => {
+                return [...Array(numTextures).keys()].map(index =>
+                    `${index > 0 ? 'else ' : ''}if(idx == ${index}) { color = texture(u_images[${index}], v_texture_position) * u_opacities[${index}]; }`
+                ).join('\n                ');
+            };
+
+            const fragmentShaderProgram = `#version 300 es
+            precision mediump float;
+
+            uniform sampler2D u_images[${numTextures}];
+            uniform float u_opacities[${numTextures}];
+
+            in vec2 v_texture_position;
+            in float v_image_index;
+
+            out vec4 fragColor;
+
+            void main() {
+                int idx = int(v_image_index);
+                vec4 color = vec4(0.0);
+                ${makeTextureConditionals()}
+                fragColor = color;
+            }
+            `;
+
+            const program = this._initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            if (!program) {
+                $.console.warn('Failed to initialize WebGL2 UBO shader program; falling back to standard first-pass shaders.');
+                this._makeFirstPassShaderProgram();
+                return;
+            }
+            gl.useProgram(program);
+
+            const transformBlockIndex = gl.getUniformBlockIndex(program, 'TransformBlock');
+            if (transformBlockIndex === gl.INVALID_INDEX || transformBlockIndex === 0xFFFFFFFF) {
+                $.console.warn('WebGL2 TransformBlock was not found; falling back to standard first-pass shaders.');
+                this._makeFirstPassShaderProgram();
+                return;
+            }
+
+            const transformBlockSize = gl.getActiveUniformBlockParameter(program, transformBlockIndex, gl.UNIFORM_BLOCK_DATA_SIZE);
+            if (!transformBlockSize) {
+                $.console.warn('WebGL2 TransformBlock size is invalid; falling back to standard first-pass shaders.');
+                this._makeFirstPassShaderProgram();
+                return;
+            }
+
+            const uboBuffer = gl.createBuffer();
+            if (!uboBuffer) {
+                $.console.warn('Failed to create WebGL2 transform UBO; falling back to standard first-pass shaders.');
+                this._makeFirstPassShaderProgram();
+                return;
+            }
+
+            this._firstPass = {
+                shaderProgram: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                aIndex: gl.getAttribLocation(program, 'a_index'),
+                uImages: gl.getUniformLocation(program, 'u_images'),
+                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+                bufferIndex: gl.createBuffer(),
+            };
+
+            gl.bindBuffer(gl.UNIFORM_BUFFER, uboBuffer);
+            gl.bufferData(gl.UNIFORM_BUFFER, transformBlockSize, gl.DYNAMIC_DRAW);
+
+            const bindingPoint = 0;
+            gl.uniformBlockBinding(program, transformBlockIndex, bindingPoint);
+            gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, uboBuffer);
+
+            this._firstPassUBO = {
+                buffer: uboBuffer,
+                matrixData: new Float32Array(numTextures * 12),
+            };
+
+            gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
+
+            const outputQuads = new Float32Array(numTextures * 12);
+            for (let i = 0; i < numTextures; ++i) {
+                outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(this._firstPass.aOutputPosition);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+            gl.enableVertexAttribArray(this._firstPass.aTexturePosition);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
+            const indices = [...Array(numTextures).keys()].map(i => Array(6).fill(i)).flat();
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(this._firstPass.aIndex);
         }
 
         /**
@@ -552,6 +762,9 @@
                     if (this._secondPass && this._secondPass.bufferOutputPosition) {
                         gl.deleteBuffer(this._secondPass.bufferOutputPosition);
                     }
+                    if (this._firstPassUBO && this._firstPassUBO.buffer) {
+                        gl.deleteBuffer(this._firstPassUBO.buffer);
+                    }
                     if (this._glFrameBuffer) {
                         gl.deleteFramebuffer(this._glFrameBuffer);
                     }
@@ -566,13 +779,14 @@
                 }
             }
 
-            // Clean up references
-            this._gl = null;
-            this._firstPass = null;
-            this._secondPass = null;
-            this._glFrameBuffer = null;
-            this._renderToTexture = null;
-            this._unitQuad = null;
+              // Clean up references
+              this._gl = null;
+              this._firstPass = null;
+              this._firstPassUBO = null;
+              this._secondPass = null;
+              this._glFrameBuffer = null;
+              this._renderToTexture = null;
+              this._unitQuad = null;
         }
 
         /**
@@ -805,7 +1019,9 @@
                 gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
                 gl.bufferData(gl.ARRAY_BUFFER, unitQuad, gl.DYNAMIC_DRAW);
                 const ndcMatrix = new Float32Array([2, 0, 0, 0, 2, 0, -1, -1, 1]);
-                gl.uniformMatrix3fv(firstPass.uTransformMatrices[0], false, ndcMatrix);
+                if (!contextManager.updateFirstPassMatrices([ndcMatrix])) {
+                    return false;
+                }
                 gl.uniform1fv(firstPass.uOpacities, new Float32Array([1]));
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
@@ -1089,10 +1305,6 @@
                         gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
                         gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
 
-                        // set the transform matrix uniform for each tile
-                        matrixArray.forEach( (matrix, index) => {
-                            gl.uniformMatrix3fv(firstPass.uTransformMatrices[index], false, matrix);
-                        });
                         // set the opacity uniform for each tile
                         gl.uniform1fv(firstPass.uOpacities, new Float32Array(opacityArray));
 
@@ -1105,6 +1317,10 @@
 
                         gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
                         gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+
+                        if (!this._glContext.updateFirstPassMatrices(matrixArray)) {
+                            throw new Error('WebGL error: failed to upload first-pass transform matrices.');
+                        }
 
                         // Draw! 6 vertices per tile (2 triangles per rectangle)
                         gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
@@ -1355,7 +1571,6 @@
             }
             this._glContext.setupRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
         }
-
 
         // private
         _resizeRenderer(){
