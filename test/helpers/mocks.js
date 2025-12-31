@@ -91,6 +91,154 @@ window.MockSeadragon = {
      */
     getCacheRecord(props={}) {
         return OpenSeadragon.extend(new OpenSeadragon.CacheRecord(), props);
+    },
+
+    /**
+     * Create a mock WebGL context for testing WebGL error handling.
+     * The context includes all necessary WebGL constants and stub methods.
+     *
+     * @param {Object} overrides - Properties to override in the mock context
+     * @param {Function} overrides.getParameter - Custom getParameter implementation
+     * @param {Function} overrides.isContextLost - Custom isContextLost implementation
+     * @return {Object} Mock WebGL context
+     */
+    createMockWebGLContext(overrides = {}) {
+        const defaultContext = {
+            // WebGL constants
+            MAX_TEXTURE_IMAGE_UNITS: 0x8872,
+            UNPACK_PREMULTIPLY_ALPHA_WEBGL: 0x9241,
+            TEXTURE_2D: 0x0DE1,
+            FRAMEBUFFER: 0x8D40,
+            COLOR_ATTACHMENT0: 0x8CE0,
+            ARRAY_BUFFER: 0x8892,
+            STATIC_DRAW: 0x88E4,
+            VERTEX_SHADER: 0x8B31,
+            FRAGMENT_SHADER: 0x8B30,
+            COMPILE_STATUS: 0x8B81,
+            LINK_STATUS: 0x8B82,
+            COLOR_BUFFER_BIT: 0x00004000,
+            BLEND: 0x0BE2,
+            ONE: 1,
+            ONE_MINUS_SRC_ALPHA: 0x0303,
+            CLAMP_TO_EDGE: 0x812F,
+            TEXTURE_WRAP_S: 0x2802,
+            TEXTURE_WRAP_T: 0x2803,
+            TEXTURE_MIN_FILTER: 0x2801,
+            TEXTURE_MAG_FILTER: 0x2800,
+            LINEAR: 0x2601,
+            TEXTURE0: 0x84C0,
+            RGBA: 0x1908,
+            UNSIGNED_BYTE: 0x1401,
+            TEXTURE_CUBE_MAP: 0x8513,
+            ELEMENT_ARRAY_BUFFER: 0x8893,
+            RENDERBUFFER: 0x8D41,
+
+            // Default method implementations
+            getParameter: function(param) {
+                if (param === this.MAX_TEXTURE_IMAGE_UNITS) {
+                    return 16; // Valid default
+                }
+                return 16;
+            },
+            pixelStorei: function() {},
+            isContextLost: function() { return false; },
+            createShader: function() { return {}; },
+            shaderSource: function() {},
+            compileShader: function() {},
+            getShaderParameter: function() { return true; },
+            createProgram: function() { return {}; },
+            attachShader: function() {},
+            linkProgram: function() {},
+            getProgramParameter: function() { return true; },
+            useProgram: function() {},
+            getUniformLocation: function() { return {}; },
+            uniform1iv: function() {},
+            uniform1fv: function() {},
+            uniformMatrix3fv: function() {},
+            uniform1f: function() {},
+            getAttribLocation: function() { return 0; },
+            enableVertexAttribArray: function() {},
+            createBuffer: function() { return {}; },
+            bindBuffer: function() {},
+            bufferData: function() {},
+            vertexAttribPointer: function() {},
+            createTexture: function() { return {}; },
+            bindTexture: function() {},
+            texImage2D: function() {},
+            texParameteri: function() {},
+            activeTexture: function() {},
+            drawArrays: function() {},
+            createFramebuffer: function() { return {}; },
+            bindFramebuffer: function() {},
+            framebufferTexture2D: function() {},
+            viewport: function() {},
+            clearColor: function() {},
+            clear: function() {},
+            enable: function() {},
+            blendFunc: function() {},
+            bindRenderbuffer: function() {},
+            deleteBuffer: function() {},
+            deleteFramebuffer: function() {},
+            deleteTexture: function() {},
+            deleteShader: function() {},
+            deleteProgram: function() {},
+            getExtension: function() { return null; }
+        };
+
+        // Apply overrides
+        return Object.assign(defaultContext, overrides);
+    },
+
+    /**
+     * Create a mock viewer for WebGL drawer testing.
+     *
+     * @param {Object} props - Properties to override in the mock viewer
+     * @return {Object} Mock viewer object
+     */
+    createMockViewerForWebGL(props = {}) {
+        const element = document.createElement('div');
+        const canvas = document.createElement('canvas');
+
+        const defaultViewer = {
+            rejectEventHandler: function() {},
+            addHandler: function() {},
+            canvas: canvas,
+            container: element,
+            viewport: {
+                getContainerSize: function() { return new OpenSeadragon.Point(500, 400); }
+            }
+        };
+
+        return Object.assign(defaultViewer, props);
+    },
+
+    /**
+     * Helper to mock HTMLCanvasElement.getContext for WebGL testing.
+     * Returns the original getContext function for restoration.
+     *
+     * @param {Object|null} mockContext - The mock WebGL context to return, or null to simulate no WebGL support
+     * @return {Function} The original getContext function to restore after testing
+     */
+    mockWebGLContext(mockContext) {
+        const originalGetContext = HTMLCanvasElement.prototype.getContext;
+
+        HTMLCanvasElement.prototype.getContext = function(contextType) {
+            if (contextType === 'webgl' || contextType === 'experimental-webgl') {
+                return mockContext;
+            }
+            return originalGetContext.call(this, contextType);
+        };
+
+        return originalGetContext;
+    },
+
+    /**
+     * Restore the original HTMLCanvasElement.getContext function.
+     *
+     * @param {Function} originalGetContext - The original getContext function to restore
+     */
+    restoreWebGLContext(originalGetContext) {
+        HTMLCanvasElement.prototype.getContext = originalGetContext;
     }
 };
 
