@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GLSL ES 3.0 Shader Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .success { color: #4ec9b0; }
+        .error { color: #f14c4c; }
+        .info { color: #569cd6; }
+        pre { background: #2d2d2d; padding: 10px; border-radius: 4px; overflow-x: auto; }
+        h2 { color: #dcdcaa; }
+    </style>
+</head>
+<body>
+    <h1>GLSL ES 3.0 Shader Test</h1>
+    <canvas id="canvas" width="400" height="400" style="display:none;"></canvas>
+    <div id="output"></div>
+
+    <script>
+        const output = document.getElementById('output');
+
+        function log(msg, className = '') {
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = msg;
+            output.appendChild(div);
+        }
+
+        function logPre(msg) {
+            const pre = document.createElement('pre');
+            pre.textContent = msg;
+            output.appendChild(pre);
+        }
+
+        const canvas = document.getElementById('canvas');
+        const gl = canvas.getContext('webgl2');
+
+        if (!gl) {
+            log('[FAIL] No WebGL2 support', 'error');
+        } else {
+            log('[OK] WebGL2 supported', 'success');
+
+            const numTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+            log('[INFO] MAX_TEXTURE_IMAGE_UNITS: ' + numTextures, 'info');
+
+            // Helper functions matching the actual implementation
+            const makeMatrixUniforms = () => {
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+            };
+            const makeConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(a_index == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+            };
+            const makeFragmentConditionals = () => {
+                return [...Array(numTextures).keys()].map(index =>
+                    `${index > 0 ? 'else ' : ''}if(v_image_index == ${index}) { fragColor = texture(u_images[${index}], v_texture_position) * u_opacities[${index}]; }`
+                ).join('\n    ');
+            };
+
+            // First Pass Shaders (ES 3.0)
+            const firstPassVertexSource = `#version 300 es
+precision highp float;
+precision highp int;
+
+in vec2 a_output_position;
+in vec2 a_texture_position;
+in int a_index;
+
+${makeMatrixUniforms()}
+
+out vec2 v_texture_position;
+flat out int v_image_index;
+
+void main() {
+    mat3 transform_matrix;
+    ${makeConditionals()}
+
+    gl_Position = vec4(transform_matrix * vec3(a_output_position, 1.0), 1.0);
+
+    v_texture_position = a_texture_position;
+    v_image_index = a_index;
+}
+`;
+
+            const firstPassFragmentSource = `#version 300 es
+precision mediump float;
+precision highp int;
+
+uniform sampler2D u_images[${numTextures}];
+uniform float u_opacities[${numTextures}];
+
+in vec2 v_texture_position;
+flat in int v_image_index;
+
+out vec4 fragColor;
+
+void main() {
+    ${makeFragmentConditionals()}
+}
+`;
+
+            // Second Pass Shaders (ES 3.0)
+            const secondPassVertexSource = `#version 300 es
+precision highp float;
+
+in vec2 a_output_position;
+in vec2 a_texture_position;
+
+out vec2 v_texture_position;
+
+void main() {
+    gl_Position = vec4(a_output_position * 2.0 - 1.0, 0.0, 1.0);
+    v_texture_position = a_texture_position;
+}
+`;
+
+            const secondPassFragmentSource = `#version 300 es
+precision mediump float;
+
+uniform sampler2D u_image;
+uniform float u_opacity_multiplier;
+
+in vec2 v_texture_position;
+
+out vec4 fragColor;
+
+void main() {
+    fragColor = texture(u_image, v_texture_position) * u_opacity_multiplier;
+}
+`;
+
+            function compileShader(type, source, name) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    log('[FAIL] ' + name + ' compilation failed:', 'error');
+                    logPre(gl.getShaderInfoLog(shader));
+                    return null;
+                }
+                log('[OK] ' + name + ' compiled successfully', 'success');
+                return shader;
+            }
+
+            // Test First Pass Shaders
+            output.innerHTML += '<h2>First Pass Shaders (Tile Compositing)</h2>';
+            log('Features: in int a_index, flat out int, texture(), out vec4 fragColor', 'info');
+
+            const fp_vs = compileShader(gl.VERTEX_SHADER, firstPassVertexSource, 'First Pass Vertex Shader');
+            const fp_fs = compileShader(gl.FRAGMENT_SHADER, firstPassFragmentSource, 'First Pass Fragment Shader');
+
+            if (fp_vs && fp_fs) {
+                const program = gl.createProgram();
+                gl.attachShader(program, fp_vs);
+                gl.attachShader(program, fp_fs);
+                gl.linkProgram(program);
+
+                if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    log('[OK] First Pass Program linked successfully', 'success');
+                } else {
+                    log('[FAIL] First Pass Program link failed:', 'error');
+                    logPre(gl.getProgramInfoLog(program));
+                }
+            }
+
+            // Test Second Pass Shaders
+            output.innerHTML += '<h2>Second Pass Shaders (Final Output)</h2>';
+            log('Features: in/out keywords, texture(), out vec4 fragColor', 'info');
+
+            const sp_vs = compileShader(gl.VERTEX_SHADER, secondPassVertexSource, 'Second Pass Vertex Shader');
+            const sp_fs = compileShader(gl.FRAGMENT_SHADER, secondPassFragmentSource, 'Second Pass Fragment Shader');
+
+            if (sp_vs && sp_fs) {
+                const program = gl.createProgram();
+                gl.attachShader(program, sp_vs);
+                gl.attachShader(program, sp_fs);
+                gl.linkProgram(program);
+
+                if (gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    log('[OK] Second Pass Program linked successfully', 'success');
+                } else {
+                    log('[FAIL] Second Pass Program link failed:', 'error');
+                    logPre(gl.getProgramInfoLog(program));
+                }
+            }
+
+            // Summary
+            output.innerHTML += '<h2>GLSL ES 3.0 Features Used</h2>';
+            log('- #version 300 es directive', 'info');
+            log('- Native integer attributes (in int a_index)', 'info');
+            log('- flat interpolation qualifier', 'info');
+            log('- in/out keywords instead of attribute/varying', 'info');
+            log('- texture() instead of texture2D()', 'info');
+            log('- Explicit out vec4 fragColor', 'info');
+            log('- precision highp int declarations', 'info');
+        }
+    </script>
+</body>
+</html>
