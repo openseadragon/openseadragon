@@ -202,6 +202,7 @@ window.MockSeadragon = {
         const defaultViewer = {
             rejectEventHandler: function() {},
             addHandler: function() {},
+            _registerDrawer: function() {}, // Required by DrawerBase constructor
             canvas: canvas,
             container: element,
             opacity: 1, // Required by DrawerBase constructor
