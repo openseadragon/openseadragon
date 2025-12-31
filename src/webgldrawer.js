@@ -64,6 +64,10 @@
             this._renderToTexture = null;
             this._glNumTextures = 0;
             this._unitQuad = null;
+            this._transformFeedback = null;
+            this._tfProgram = null;
+            this._tfPositionBuffer = null;
+            this._tfTexCoordBuffer = null;
 
             this._destroyed = false;
 
@@ -246,6 +250,104 @@
 
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+            if (this._isWebGL2) {
+                this._setupTransformFeedback();
+            }
+        }
+
+        /**
+         * Check if Transform Feedback is supported and initialized
+         * @returns {Boolean} True if Transform Feedback is available
+         */
+        hasTransformFeedback() {
+            return this._isWebGL2 && this._transformFeedback !== null && this._tfProgram !== null;
+        }
+
+        /**
+         * Perform a Transform Feedback capture pass
+         * @param {Float32Array} texturePositionArray - Tile texture coordinates
+         * @param {Array<Float32Array>} matrixArray - Tile transform matrices
+         * @param {Number} numTilesToDraw - Number of populated tiles
+         * @returns {Boolean} true if capture succeeded
+         */
+        captureTransformFeedback(texturePositionArray, matrixArray, numTilesToDraw) {
+            if (!this.hasTransformFeedback() || !numTilesToDraw) {
+                return false;
+            }
+
+            const gl = this._gl;
+            const tfProgram = this._tfProgram;
+
+            gl.useProgram(tfProgram.program);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, tfProgram.bufferOutputPosition);
+            gl.enableVertexAttribArray(tfProgram.aOutputPosition);
+            gl.vertexAttribPointer(tfProgram.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, tfProgram.bufferTexturePosition);
+            gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(tfProgram.aTexturePosition);
+            gl.vertexAttribPointer(tfProgram.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+
+            const indexArray = new Int32Array(numTilesToDraw * 6);
+            for (let i = 0; i < numTilesToDraw; ++i) {
+                const offset = i * 6;
+                for (let j = 0; j < 6; ++j) {
+                    indexArray[offset + j] = i;
+                }
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, tfProgram.bufferIndex);
+            gl.bufferData(gl.ARRAY_BUFFER, indexArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(tfProgram.aIndex);
+            gl.vertexAttribIPointer(tfProgram.aIndex, 1, gl.INT, 0, 0);
+
+            for (let i = 0; i < numTilesToDraw; ++i) {
+                gl.uniformMatrix3fv(tfProgram.uTransformMatrices[i], false, matrixArray[i]);
+            }
+
+            gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this._transformFeedback);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, this._tfPositionBuffer);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 1, this._tfTexCoordBuffer);
+
+            gl.enable(gl.RASTERIZER_DISCARD);
+            gl.beginTransformFeedback(gl.TRIANGLES);
+            gl.drawArrays(gl.TRIANGLES, 0, numTilesToDraw * 6);
+            gl.endTransformFeedback();
+            gl.disable(gl.RASTERIZER_DISCARD);
+
+            gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 1, null);
+
+            return true;
+        }
+
+        /**
+         * Read captured Transform Feedback data
+         * @param {Number} numVertices - Number of vertices to read
+         * @returns {Object|null} Captured positions and texture coordinates
+         */
+        readTransformFeedbackData(numVertices) {
+            if (!this.hasTransformFeedback() || !this._tfPositionBuffer) {
+                return null;
+            }
+
+            const gl = this._gl;
+            const positionData = new Float32Array(numVertices * 4);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfPositionBuffer);
+            gl.getBufferSubData(gl.TRANSFORM_FEEDBACK_BUFFER, 0, positionData);
+
+            const texcoordData = new Float32Array(numVertices * 2);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfTexCoordBuffer);
+            gl.getBufferSubData(gl.TRANSFORM_FEEDBACK_BUFFER, 0, texcoordData);
+
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, null);
+
+            return {
+                positions: positionData,
+                texcoords: texcoordData
+            };
         }
 
         /**
@@ -523,6 +625,122 @@
         }
 
         /**
+         * Create Transform Feedback resources for the WebGL2 capture path
+         * @private
+         */
+        _setupTransformFeedback() {
+            const gl = this._gl;
+            const numTextures = this._glNumTextures;
+
+            const makeMatrixUniforms = () => {
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+            };
+            const makeConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(a_index == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+            };
+
+            const tfVertexShader = `#version 300 es
+            precision highp float;
+
+            in vec2 a_output_position;
+            in vec2 a_texture_position;
+            in int a_index;
+
+            ${makeMatrixUniforms()}
+
+            out vec4 tf_position;
+            out vec2 tf_texcoord;
+
+            void main() {
+                mat3 transform_matrix;
+                ${makeConditionals()}
+
+                vec3 transformed = transform_matrix * vec3(a_output_position, 1.0);
+                tf_position = vec4(transformed.xy, 0.0, 1.0);
+                tf_texcoord = a_texture_position;
+
+                gl_Position = tf_position;
+            }
+            `;
+
+            const tfFragmentShader = `#version 300 es
+            precision mediump float;
+            out vec4 fragColor;
+            void main() {
+                fragColor = vec4(0.0);
+            }
+            `;
+
+            const vertShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertShader, tfVertexShader);
+            gl.compileShader(vertShader);
+            if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+                $.console.error('Transform Feedback vertex shader compilation failed:', gl.getShaderInfoLog(vertShader));
+                gl.deleteShader(vertShader);
+                return;
+            }
+
+            const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragShader, tfFragmentShader);
+            gl.compileShader(fragShader);
+            if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+                $.console.error('Transform Feedback fragment shader compilation failed:', gl.getShaderInfoLog(fragShader));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                return;
+            }
+
+            const program = gl.createProgram();
+            gl.attachShader(program, vertShader);
+            gl.attachShader(program, fragShader);
+
+            // Using SEPARATE_ATTRIBS to capture each output into its own buffer
+            gl.transformFeedbackVaryings(program, ['tf_position', 'tf_texcoord'], gl.SEPARATE_ATTRIBS);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                $.console.error('Transform Feedback program linking failed:', gl.getProgramInfoLog(program));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                gl.deleteProgram(program);
+                return;
+            }
+
+            gl.deleteShader(vertShader);
+            gl.deleteShader(fragShader);
+
+            this._transformFeedback = gl.createTransformFeedback();
+
+            const maxVertices = 6 * numTextures;
+            this._tfPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfPositionBuffer);
+            gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER, maxVertices * 4 * 4, gl.DYNAMIC_COPY);
+
+            this._tfTexCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfTexCoordBuffer);
+            gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER, maxVertices * 2 * 4, gl.DYNAMIC_COPY);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, null);
+
+            this._tfProgram = {
+                program: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                aIndex: gl.getAttribLocation(program, 'a_index'),
+                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u_matrix_${i}`)),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+                bufferIndex: gl.createBuffer(),
+            };
+
+            const outputQuads = new Float32Array(numTextures * 12);
+            for (let i = 0; i < numTextures; ++i) {
+                outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._tfProgram.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW);
+        }
+
+        /**
          * Destroy the WebGL context and all resources
          */
         destroy() {
@@ -555,6 +773,22 @@
                     if (this._glFrameBuffer) {
                         gl.deleteFramebuffer(this._glFrameBuffer);
                     }
+                    if (this._transformFeedback) {
+                        gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+                        gl.deleteTransformFeedback(this._transformFeedback);
+                    }
+                    if (this._tfPositionBuffer) {
+                        gl.deleteBuffer(this._tfPositionBuffer);
+                    }
+                    if (this._tfTexCoordBuffer) {
+                        gl.deleteBuffer(this._tfTexCoordBuffer);
+                    }
+                    if (this._tfProgram) {
+                        gl.deleteBuffer(this._tfProgram.bufferOutputPosition);
+                        gl.deleteBuffer(this._tfProgram.bufferTexturePosition);
+                        gl.deleteBuffer(this._tfProgram.bufferIndex);
+                        gl.deleteProgram(this._tfProgram.program);
+                    }
                 } catch (e) {
                     // Context may already be lost, continue with cleanup
                     $.console.warn('Error during WebGL cleanup in WebglContextManager.destroy():', e);
@@ -573,6 +807,10 @@
             this._glFrameBuffer = null;
             this._renderToTexture = null;
             this._unitQuad = null;
+            this._transformFeedback = null;
+            this._tfProgram = null;
+            this._tfPositionBuffer = null;
+            this._tfTexCoordBuffer = null;
         }
 
         /**
@@ -861,6 +1099,14 @@
          */
         isWebGL2(){
             return this._glContext ? this._glContext.isWebGL2() : false;
+        }
+
+        /**
+         * Check if Transform Feedback is supported and initialized
+         * @returns {Boolean} True if Transform Feedback is available
+         */
+        hasTransformFeedback() {
+            return this._glContext ? this._glContext.hasTransformFeedback() : false;
         }
 
         /**
@@ -1355,7 +1601,54 @@
             }
             this._glContext.setupRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
         }
+        /**
+         * Perform a Transform Feedback capture pass and return the captured data.
+         * This is primarily for demonstration and debugging purposes.
+         * The captured data contains transformed vertex positions computed on the GPU.
+         *
+         * @param {Array} tiles - Array of tiles to capture transforms for
+         * @param {OpenSeadragon.TiledImage} tiledImage - The tiled image being rendered
+         * @returns {Object|null} Object containing positions and texcoords arrays, or null if TF not available
+         */
+        captureTransformFeedback(tiles, tiledImage) {
+            if (!this.hasTransformFeedback() || !tiles || tiles.length === 0) {
+                return null;
+            }
 
+            const maxTextures = this._glContext.getMaxTextures();
+            const numTiles = Math.min(tiles.length, maxTextures);
+
+            // Build the texture position and matrix arrays similar to the draw loop
+            const texturePositionArray = new Float32Array(maxTextures * 12);
+            const matrixArray = new Array(maxTextures);
+            const opacityArray = new Array(maxTextures);
+            const textureDataArray = new Array(maxTextures);
+
+            const viewMatrix = tiledImage._viewportToTiledImageMatrix;
+
+            let numTilesToDraw = 0;
+            for (let i = 0; i < numTiles; i++) {
+                const tile = tiles[i].tile || tiles[i];
+                const textureInfo = this.getDataToDraw(tile);
+
+                if (textureInfo && textureInfo.texture) {
+                    this._getTileData(tile, tiledImage, textureInfo, viewMatrix, numTilesToDraw, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                    numTilesToDraw++;
+                }
+            }
+
+            if (!numTilesToDraw) {
+                return null;
+            }
+
+            const success = this._glContext.captureTransformFeedback(texturePositionArray, matrixArray, numTilesToDraw);
+
+            if (success) {
+                return this._glContext.readTransformFeedbackData(numTilesToDraw * 6);
+            }
+
+            return null;
+        }
 
         // private
         _resizeRenderer(){

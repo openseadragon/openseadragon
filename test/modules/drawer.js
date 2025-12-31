@@ -81,6 +81,88 @@
         });
 
         // ----------
+        QUnit.test('transform feedback api', function(assert) {
+            const done = assert.async();
+            createViewer();
+
+            if (viewer.drawer.getType() !== 'webgl') {
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            const drawer = viewer.drawer;
+            assert.equal(
+                drawer.hasTransformFeedback(),
+                drawer.isWebGL2(),
+                'transform feedback availability follows WebGL2 availability'
+            );
+
+            if (!drawer.hasTransformFeedback()) {
+                assert.strictEqual(
+                    drawer.captureTransformFeedback([], {_viewportToTiledImageMatrix: {}}),
+                    null,
+                    'captureTransformFeedback returns null when transform feedback is unavailable'
+                );
+                done();
+                return;
+            }
+
+            const originalGetDataToDraw = drawer.getDataToDraw;
+            const originalGetTileData = drawer._getTileData;
+            const originalCapture = drawer._glContext.captureTransformFeedback;
+            const originalRead = drawer._glContext.readTransformFeedbackData;
+
+            const fakeResult = {
+                positions: new Float32Array(24),
+                texcoords: new Float32Array(12)
+            };
+
+            drawer.getDataToDraw = function() {
+                return {
+                    texture: {},
+                    position: new Float32Array(12),
+                    overlapFraction: {x: 0, y: 0}
+                };
+            };
+            drawer._getTileData = function(tile, tiledImage, textureInfo, viewMatrix, index, texturePositionArray, textureDataArray, matrixArray, opacityArray) {
+                texturePositionArray.set(new Float32Array(12), index * 12);
+                matrixArray[index] = new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1]);
+                textureDataArray[index] = textureInfo.texture;
+                opacityArray[index] = tile.opacity;
+            };
+            drawer._glContext.captureTransformFeedback = function(texturePositionArray, matrixArray, numTilesToDraw) {
+                assert.equal(numTilesToDraw, 1, 'capture delegates only populated tiles');
+                assert.ok(matrixArray[0], 'capture receives populated matrix data');
+                assert.equal(texturePositionArray.length, drawer._glContext.getMaxTextures() * 12, 'capture uses max-texture-sized position buffer');
+                return true;
+            };
+            drawer._glContext.readTransformFeedbackData = function(numVertices) {
+                assert.equal(numVertices, 6, 'capture reads back six vertices for one tile');
+                return fakeResult;
+            };
+
+            const result = drawer.captureTransformFeedback([
+                {
+                    tile: {
+                        opacity: 1
+                    }
+                }
+            ], {
+                _viewportToTiledImageMatrix: {}
+            });
+
+            assert.strictEqual(result, fakeResult, 'captureTransformFeedback returns the context-manager readback result');
+
+            drawer.getDataToDraw = originalGetDataToDraw;
+            drawer._getTileData = originalGetTileData;
+            drawer._glContext.captureTransformFeedback = originalCapture;
+            drawer._glContext.readTransformFeedbackData = originalRead;
+
+            done();
+        });
+
+        // ----------
         QUnit.test('rotation', function(assert) {
             const done = assert.async();
 
