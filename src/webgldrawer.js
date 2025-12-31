@@ -647,6 +647,14 @@
             this._backupCanvasDrawer = null;
             this._canvasFallbackAllowed = this.viewer.drawerCandidates && this.viewer.drawerCandidates.includes('canvas');
 
+            // Multiple Render Targets (MRT) for advanced compositing (WebGL2 only)
+            // Allows writing to multiple textures in a single render pass
+            this._mrtFramebuffer = null;
+            this._mrtTextures = null;      // Array of render target textures
+            this._mrtProgram = null;       // MRT shader program
+            this._mrtMaxTargets = 0;       // Maximum supported render targets
+            this._mrtColorBufferFloatExt = null;
+
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
 
@@ -693,6 +701,10 @@
             }
 
             // Destroy WebGL context manager
+            if (this.isWebGL2()) {
+                this._cleanupMRT();
+            }
+
             if (this._glContext) {
                 this._glContext.destroy();
                 this._glContext = null;
@@ -1354,6 +1366,410 @@
                 return;
             }
             this._glContext.setupRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
+            if (this.isWebGL2()) {
+                this._setupMultipleRenderTargets();
+            }
+        }
+
+        // private
+        _getMRTContext() {
+            return this._glContext ? this._glContext.getContext() : null;
+        }
+
+        // private
+        _setupMultipleRenderTargets() {
+            const gl = this._getMRTContext();
+            if (!gl || !this.isWebGL2()) {
+                return;
+            }
+
+            this._mrtColorBufferFloatExt = gl.getExtension('EXT_color_buffer_float');
+            if (!this._mrtColorBufferFloatExt) {
+                return;
+            }
+
+            this._mrtMaxTargets = Math.min(
+                gl.getParameter(gl.MAX_COLOR_ATTACHMENTS),
+                gl.getParameter(gl.MAX_DRAW_BUFFERS)
+            );
+
+            if (this._mrtMaxTargets < 2) {
+                return;
+            }
+
+            this._mrtFramebuffer = gl.createFramebuffer();
+            this._mrtTextures = [];
+
+            const numTargets = Math.min(4, this._mrtMaxTargets);
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._mrtFramebuffer);
+
+            for (let i = 0; i < numTargets; i++) {
+                const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+                if (i === 0) {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                } else {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.HALF_FLOAT, null);
+                }
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, texture, 0);
+                this._mrtTextures.push(texture);
+            }
+
+            const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            if (status !== gl.FRAMEBUFFER_COMPLETE || this._makeMRTShaderProgram(numTargets) === false) {
+                this._cleanupMRT();
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                gl.bindTexture(gl.TEXTURE_2D, null);
+                return;
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        }
+
+        // private
+        _makeMRTShaderProgram(numTargets) {
+            const gl = this._getMRTContext();
+            if (!gl) {
+                return false;
+            }
+
+            const numTextures = this._glContext.getMaxTextures();
+            const makeMatrixUniforms = () => {
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+            };
+            const makeConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(a_index == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+            };
+
+            const vertexShader = `#version 300 es
+            precision highp float;
+
+            in vec2 a_output_position;
+            in vec2 a_texture_position;
+            in int a_index;
+
+            ${makeMatrixUniforms()}
+
+            out vec2 v_texture_position;
+            flat out int v_image_index;
+            out vec4 v_clip_position;
+
+            void main() {
+                mat3 transform_matrix;
+                ${makeConditionals()}
+
+                vec3 transformed = transform_matrix * vec3(a_output_position, 1.0);
+                gl_Position = vec4(transformed.xy, 0.0, 1.0);
+
+                v_texture_position = a_texture_position;
+                v_image_index = a_index;
+                v_clip_position = gl_Position;
+            }
+            `;
+
+            const makeOutputDeclarations = () => {
+                const outputs = ['layout(location = 0) out vec4 fragColor;'];
+                if (numTargets > 1) {
+                    outputs.push('layout(location = 1) out vec4 fragPosition;');
+                }
+                if (numTargets > 2) {
+                    outputs.push('layout(location = 2) out vec4 fragMetadata;');
+                }
+                if (numTargets > 3) {
+                    outputs.push('layout(location = 3) out vec4 fragTileInfo;');
+                }
+                return outputs.join('\n');
+            };
+
+            const makeOutputAssignments = () => {
+                const assignments = ['fragColor = texColor * u_opacities[v_image_index];'];
+                if (numTargets > 1) {
+                    assignments.push('fragPosition = vec4(v_clip_position.xy * 0.5 + 0.5, v_clip_position.z, 1.0);');
+                }
+                if (numTargets > 2) {
+                    assignments.push('fragMetadata = vec4(v_texture_position, texColor.a, 1.0);');
+                }
+                if (numTargets > 3) {
+                    assignments.push('fragTileInfo = vec4(float(v_image_index) / 255.0, u_opacities[v_image_index], v_texture_position);');
+                }
+                return assignments.join('\n                ');
+            };
+
+            const fragmentShader = `#version 300 es
+            precision mediump float;
+
+            uniform sampler2D u_images[${numTextures}];
+            uniform float u_opacities[${numTextures}];
+
+            in vec2 v_texture_position;
+            flat in int v_image_index;
+            in vec4 v_clip_position;
+
+            ${makeOutputDeclarations()}
+
+            void main() {
+                vec4 texColor = vec4(0.0);
+
+                for (int i = 0; i < ${numTextures}; ++i) {
+                    if (i == v_image_index) {
+                        texColor = texture(u_images[i], v_texture_position);
+                        break;
+                    }
+                }
+
+                ${makeOutputAssignments()}
+            }
+            `;
+
+            const vertShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertShader, vertexShader);
+            gl.compileShader(vertShader);
+            if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+                $.console.error('MRT vertex shader compilation failed:', gl.getShaderInfoLog(vertShader));
+                gl.deleteShader(vertShader);
+                return false;
+            }
+
+            const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragShader, fragmentShader);
+            gl.compileShader(fragShader);
+            if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+                $.console.error('MRT fragment shader compilation failed:', gl.getShaderInfoLog(fragShader));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                return false;
+            }
+
+            const program = gl.createProgram();
+            gl.attachShader(program, vertShader);
+            gl.attachShader(program, fragShader);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                $.console.error('MRT program linking failed:', gl.getProgramInfoLog(program));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                gl.deleteProgram(program);
+                return false;
+            }
+
+            gl.deleteShader(vertShader);
+            gl.deleteShader(fragShader);
+
+            const outputQuads = new Float32Array(numTextures * 12);
+            const indices = new Int32Array(numTextures * 6);
+            const unitQuad = this._glContext.getUnitQuad();
+            for (let i = 0; i < numTextures; ++i) {
+                outputQuads.set(Float32Array.from(unitQuad), i * 12);
+                indices.fill(i, i * 6, (i + 1) * 6);
+            }
+
+            this._mrtProgram = {
+                program: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                aIndex: gl.getAttribLocation(program, 'a_index'),
+                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u_matrix_${i}`)),
+                uImages: gl.getUniformLocation(program, 'u_images'),
+                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+                bufferIndex: gl.createBuffer(),
+                indexArray: indices,
+                maxTextures: numTextures,
+                numTargets: numTargets
+            };
+
+            gl.useProgram(program);
+            gl.uniform1iv(this._mrtProgram.uImages, [...Array(numTextures).keys()]);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._mrtProgram.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._mrtProgram.bufferIndex);
+            gl.bufferData(gl.ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+            return true;
+        }
+
+        // private
+        _cleanupMRT() {
+            const gl = this._getMRTContext();
+            if (gl && this._mrtTextures) {
+                this._mrtTextures.forEach(tex => gl.deleteTexture(tex));
+            }
+            if (gl && this._mrtFramebuffer) {
+                gl.deleteFramebuffer(this._mrtFramebuffer);
+            }
+            if (gl && this._mrtProgram) {
+                gl.deleteBuffer(this._mrtProgram.bufferOutputPosition);
+                gl.deleteBuffer(this._mrtProgram.bufferTexturePosition);
+                gl.deleteBuffer(this._mrtProgram.bufferIndex);
+                gl.deleteProgram(this._mrtProgram.program);
+            }
+            this._mrtTextures = null;
+            this._mrtFramebuffer = null;
+            this._mrtProgram = null;
+            this._mrtMaxTargets = 0;
+            this._mrtColorBufferFloatExt = null;
+        }
+
+        /**
+         * Check if Multiple Render Targets is supported and initialized
+         * @returns {Boolean} True if MRT is available
+         */
+        hasMultipleRenderTargets() {
+            return this.isWebGL2() && this._mrtFramebuffer !== null && this._mrtProgram !== null;
+        }
+
+        /**
+         * Get the number of available render targets
+         * @returns {Number} Number of render targets (0 if MRT not available)
+         */
+        getNumRenderTargets() {
+            return this._mrtProgram ? this._mrtProgram.numTargets : 0;
+        }
+
+        /**
+         * Render tiles to multiple render targets in a single pass.
+         * This writes color, position, metadata, and tile info to separate textures.
+         *
+         * @param {Array} textureDataArray - Array of WebGL textures for tiles
+         * @param {Float32Array} texturePositionArray - Texture coordinates
+         * @param {Array} matrixArray - Transform matrices for each tile
+         * @param {Array} opacityArray - Opacity values for each tile
+         * @param {Number} numTilesToDraw - Number of tiles to render
+         * @returns {Boolean} True if rendering succeeded
+         */
+        renderToMultipleTargets(textureDataArray, texturePositionArray, matrixArray, opacityArray, numTilesToDraw) {
+            if (!this.hasMultipleRenderTargets()) {
+                return false;
+            }
+
+            const gl = this._getMRTContext();
+            const program = this._mrtProgram;
+            const tilesToDraw = Math.min(numTilesToDraw, program.maxTextures, textureDataArray.length, matrixArray.length, opacityArray.length);
+
+            if (!gl || tilesToDraw !== numTilesToDraw) {
+                return false;
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._mrtFramebuffer);
+            const drawBuffers = [];
+            for (let i = 0; i < program.numTargets; i++) {
+                drawBuffers.push(gl.COLOR_ATTACHMENT0 + i);
+            }
+            gl.drawBuffers(drawBuffers);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.useProgram(program.program);
+
+            for (let i = 0; i < tilesToDraw; i++) {
+                gl.activeTexture(gl.TEXTURE0 + i);
+                gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
+            }
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, program.bufferTexturePosition);
+            gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(program.aTexturePosition);
+            gl.vertexAttribPointer(program.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, program.bufferOutputPosition);
+            gl.enableVertexAttribArray(program.aOutputPosition);
+            gl.vertexAttribPointer(program.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, program.bufferIndex);
+            gl.enableVertexAttribArray(program.aIndex);
+            gl.vertexAttribIPointer(program.aIndex, 1, gl.INT, 0, 0);
+
+            for (let i = 0; i < tilesToDraw; i++) {
+                gl.uniformMatrix3fv(program.uTransformMatrices[i], false, matrixArray[i]);
+            }
+            gl.uniform1fv(program.uOpacities, new Float32Array(opacityArray.slice(0, tilesToDraw)));
+            gl.drawArrays(gl.TRIANGLES, 0, 6 * tilesToDraw);
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            return true;
+        }
+
+        /**
+         * Get one of the MRT render target textures.
+         * Can be used for advanced compositing or post-processing effects.
+         *
+         * @param {Number} targetIndex - Index of the render target (0-3)
+         * @returns {WebGLTexture|null} The render target texture, or null if not available
+         */
+        getMRTTexture(targetIndex) {
+            if (!this.hasMultipleRenderTargets() || targetIndex < 0 || targetIndex >= this._mrtTextures.length) {
+                return null;
+            }
+            return this._mrtTextures[targetIndex];
+        }
+
+        /**
+         * Read pixel data from a specific MRT render target.
+         *
+         * @param {Number} targetIndex - Index of the render target to read
+         * @param {Number} x - X coordinate to start reading from
+         * @param {Number} y - Y coordinate to start reading from
+         * @param {Number} width - Width of the region to read
+         * @param {Number} height - Height of the region to read
+         * @returns {Uint16Array|Uint8Array|null} Pixel data, or null if failed
+         */
+        readMRTPixels(targetIndex, x, y, width, height) {
+            if (!this.hasMultipleRenderTargets() || targetIndex < 0 || targetIndex >= this._mrtTextures.length) {
+                return null;
+            }
+
+            const gl = this._getMRTContext();
+            if (!gl) {
+                return null;
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._mrtFramebuffer);
+            gl.readBuffer(gl.COLOR_ATTACHMENT0 + targetIndex);
+
+            let pixels;
+            if (targetIndex === 0) {
+                pixels = new Uint8Array(width * height * 4);
+                gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+            } else {
+                pixels = new Uint16Array(width * height * 4);
+                gl.readPixels(x, y, width, height, gl.RGBA, gl.HALF_FLOAT, pixels);
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            return pixels;
+        }
+
+        /**
+         * Resize MRT textures when canvas size changes.
+         */
+        resizeMRTTextures() {
+            if (!this.hasMultipleRenderTargets()) {
+                return;
+            }
+
+            const gl = this._getMRTContext();
+            if (!gl) {
+                return;
+            }
+
+            const width = this._renderingCanvas.width;
+            const height = this._renderingCanvas.height;
+            for (let i = 0; i < this._mrtTextures.length; i++) {
+                gl.bindTexture(gl.TEXTURE_2D, this._mrtTextures[i]);
+                if (i === 0) {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                } else {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.HALF_FLOAT, null);
+                }
+            }
+            gl.bindTexture(gl.TEXTURE_2D, null);
         }
 
 
@@ -1363,6 +1779,7 @@
                 return;
             }
             this._glContext.resizeRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
+            this.resizeMRTTextures();
         }
 
         // private
