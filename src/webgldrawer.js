@@ -113,6 +113,9 @@
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
 
+            // GLSL ES 3.0 shader support flag (WebGL2 only)
+            this._useGLSL3 = false;
+
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
 
@@ -241,6 +244,20 @@
          */
         isWebGL2(){
             return this._isWebGL2;
+        }
+
+        /**
+         * Check if the drawer is using GLSL ES 3.0 shaders
+         * GLSL ES 3.0 provides:
+         * - Native integer attributes (no float-to-int conversion)
+         * - 'flat' interpolation qualifier for integers
+         * - 'in'/'out' keywords instead of attribute/varying
+         * - texture() function instead of texture2D()
+         * - Explicit fragment output with 'out' declaration
+         * @returns {Boolean} true if GLSL ES 3.0 shaders are in use
+         */
+        isGLSL3(){
+            return this._useGLSL3;
         }
 
         /**
@@ -453,7 +470,13 @@
                             gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
 
                             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
-                            gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+                            if (this._firstPass.useIntegerIndex) {
+                                // GLSL ES 3.0: Use vertexAttribIPointer for integer attributes
+                                gl.vertexAttribIPointer(this._firstPass.aIndex, 1, gl.INT, 0, 0);
+                            } else {
+                                // GLSL ES 1.0: Use vertexAttribPointer for float attributes
+                                gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+                            }
 
                             // Draw! 6 vertices per tile (2 triangles per rectangle)
                             gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
@@ -662,6 +685,10 @@
             if(!gl){
                 $.console.error('_setupCanvases must be called before _setupRenderer');
             }
+
+            // Enable GLSL ES 3.0 for WebGL2 contexts
+            this._useGLSL3 = this._isWebGL2;
+
             this._unitQuad = this._makeQuadVertexBuffer(0, 1, 0, 1); // used a few places; create once and store the result
 
             this._makeFirstPassShaderProgram();
@@ -695,59 +722,122 @@
         //private
         _makeFirstPassShaderProgram(){
             const numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
-            const makeMatrixUniforms = () => {
-                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
-            };
-            const makeConditionals = () => {
-                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(int(a_index) == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
-            };
+            const gl = this._gl;
 
-            const vertexShaderProgram = `
-            attribute vec2 a_output_position;
-            attribute vec2 a_texture_position;
-            attribute float a_index;
+            let vertexShaderProgram, fragmentShaderProgram;
 
-            ${makeMatrixUniforms()} // create a uniform mat3 for each potential tile to draw
+            if (this._useGLSL3) {
+                // GLSL ES 3.0 shaders for WebGL2
+                // Benefits:
+                // - Native integer attributes (no float-to-int conversion needed)
+                // - 'flat' interpolation qualifier prevents interpolation of integers
+                // - 'in'/'out' keywords are more explicit than attribute/varying
+                // - texture() function instead of texture2D()
+                // - Direct integer comparisons without casting
+                const makeMatrixUniforms = () => {
+                    return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+                };
+                const makeConditionals = () => {
+                    return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(a_index == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+                };
 
-            varying vec2 v_texture_position;
-            varying float v_image_index;
+                // Note: #version must be on first line with no preceding whitespace
+                vertexShaderProgram = `#version 300 es
+precision highp float;
+precision highp int;
 
-            void main() {
+in vec2 a_output_position;
+in vec2 a_texture_position;
+in int a_index;
 
-                mat3 transform_matrix; // value will be set by the if/elses in makeConditional()
+${makeMatrixUniforms()}
 
-                ${makeConditionals()}
+out vec2 v_texture_position;
+flat out int v_image_index;
 
-                gl_Position = vec4(transform_matrix * vec3(a_output_position, 1), 1);
+void main() {
+    mat3 transform_matrix;
+    ${makeConditionals()}
 
-                v_texture_position = a_texture_position;
-                v_image_index = a_index;
-            }
-            `;
+    gl_Position = vec4(transform_matrix * vec3(a_output_position, 1.0), 1.0);
 
-            const fragmentShaderProgram = `
-            precision mediump float;
+    v_texture_position = a_texture_position;
+    v_image_index = a_index;
+}
+`;
 
-            // our textures
-            uniform sampler2D u_images[${numTextures}];
-            // our opacities
-            uniform float u_opacities[${numTextures}];
+                // Fragment shader needs compile-time constant indices for sampler arrays
+                // Generate explicit conditionals for each texture
+                const makeFragmentConditionals = () => {
+                    return [...Array(numTextures).keys()].map(index =>
+                        `${index > 0 ? 'else ' : ''}if(v_image_index == ${index}) { fragColor = texture(u_images[${index}], v_texture_position) * u_opacities[${index}]; }`
+                    ).join('\n    ');
+                };
 
-            // the varyings passed in from the vertex shader.
-            varying vec2 v_texture_position;
-            varying float v_image_index;
+                fragmentShaderProgram = `#version 300 es
+precision mediump float;
+precision highp int;
 
-            void main() {
-                // can't index directly with a variable, need to use a loop iterator hack
-                for(int i = 0; i < ${numTextures}; ++i){
-                    if(i == int(v_image_index)){
-                        gl_FragColor = texture2D(u_images[i], v_texture_position) * u_opacities[i];
+uniform sampler2D u_images[${numTextures}];
+uniform float u_opacities[${numTextures}];
+
+in vec2 v_texture_position;
+flat in int v_image_index;
+
+out vec4 fragColor;
+
+void main() {
+    ${makeFragmentConditionals()}
+}
+`;
+            } else {
+                // GLSL ES 1.0 shaders for WebGL1 fallback
+                const makeMatrixUniforms = () => {
+                    return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+                };
+                const makeConditionals = () => {
+                    return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(int(a_index) == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+                };
+
+                vertexShaderProgram = `
+                attribute vec2 a_output_position;
+                attribute vec2 a_texture_position;
+                attribute float a_index;
+
+                ${makeMatrixUniforms()}
+
+                varying vec2 v_texture_position;
+                varying float v_image_index;
+
+                void main() {
+                    mat3 transform_matrix;
+                    ${makeConditionals()}
+
+                    gl_Position = vec4(transform_matrix * vec3(a_output_position, 1), 1);
+
+                    v_texture_position = a_texture_position;
+                    v_image_index = a_index;
+                }
+                `;
+
+                fragmentShaderProgram = `
+                precision mediump float;
+
+                uniform sampler2D u_images[${numTextures}];
+                uniform float u_opacities[${numTextures}];
+
+                varying vec2 v_texture_position;
+                varying float v_image_index;
+
+                void main() {
+                    for (int i = 0; i < ${numTextures}; ++i) {
+                        if (i == int(v_image_index)) {
+                            gl_FragColor = texture2D(u_images[i], v_texture_position) * u_opacities[i];
+                        }
                     }
                 }
+                `;
             }
-            `;
-
-            const gl = this._gl;
 
             const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
             gl.useProgram(program);
@@ -764,6 +854,7 @@
                 bufferOutputPosition: gl.createBuffer(),
                 bufferTexturePosition: gl.createBuffer(),
                 bufferIndex: gl.createBuffer(),
+                useIntegerIndex: this._useGLSL3,  // Track if we're using integer indices
             };
 
             gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
@@ -774,7 +865,7 @@
                 outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
             }
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
-            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW);
             gl.enableVertexAttribArray(this._firstPass.aOutputPosition);
 
             // provide texture coordinates for the rectangle in image (texture) space. Data will be set later.
@@ -783,47 +874,82 @@
 
             // for each vertex, provide an index into the array of textures/matrices to use for the correct tile
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
-            const indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat(); // repeat each index 6 times, for the 6 vertices per tile (2 triangles)
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            const indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat();
+
+            if (this._useGLSL3) {
+                // Use Int32Array for integer attributes in GLSL ES 3.0
+                gl.bufferData(gl.ARRAY_BUFFER, new Int32Array(indices), gl.STATIC_DRAW);
+            } else {
+                // Use Float32Array for float attributes in GLSL ES 1.0
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW);
+            }
             gl.enableVertexAttribArray(this._firstPass.aIndex);
 
         }
 
         // private
         _makeSecondPassShaderProgram(){
-            const vertexShaderProgram = `
-            attribute vec2 a_output_position;
-            attribute vec2 a_texture_position;
-
-            varying vec2 v_texture_position;
-
-            void main() {
-                // Transform to clip space (0:1 --> -1:1)
-                gl_Position = vec4(vec3(a_output_position * 2.0 - 1.0, 1), 1);
-
-                v_texture_position = a_texture_position;
-            }
-            `;
-
-            const fragmentShaderProgram = `
-            precision mediump float;
-
-            // our texture
-            uniform sampler2D u_image;
-
-            // the texCoords passed in from the vertex shader.
-            varying vec2 v_texture_position;
-
-            // the opacity multiplier for the image
-            uniform float u_opacity_multiplier;
-
-            void main() {
-                gl_FragColor = texture2D(u_image, v_texture_position);
-                gl_FragColor *= u_opacity_multiplier;
-            }
-            `;
-
             const gl = this._gl;
+            let vertexShaderProgram, fragmentShaderProgram;
+
+            if (this._useGLSL3) {
+                // GLSL ES 3.0 version - note: #version must be on first line with no preceding whitespace
+                vertexShaderProgram = `#version 300 es
+precision highp float;
+
+in vec2 a_output_position;
+in vec2 a_texture_position;
+
+out vec2 v_texture_position;
+
+void main() {
+    gl_Position = vec4(a_output_position * 2.0 - 1.0, 0.0, 1.0);
+    v_texture_position = a_texture_position;
+}
+`;
+
+                fragmentShaderProgram = `#version 300 es
+precision mediump float;
+
+uniform sampler2D u_image;
+uniform float u_opacity_multiplier;
+
+in vec2 v_texture_position;
+
+out vec4 fragColor;
+
+void main() {
+    fragColor = texture(u_image, v_texture_position) * u_opacity_multiplier;
+}
+`;
+            } else {
+                // GLSL ES 1.0 fallback
+                vertexShaderProgram = `
+                attribute vec2 a_output_position;
+                attribute vec2 a_texture_position;
+
+                varying vec2 v_texture_position;
+
+                void main() {
+                    gl_Position = vec4(vec3(a_output_position * 2.0 - 1.0, 1), 1);
+                    v_texture_position = a_texture_position;
+                }
+                `;
+
+                fragmentShaderProgram = `
+                precision mediump float;
+
+                uniform sampler2D u_image;
+                uniform float u_opacity_multiplier;
+
+                varying vec2 v_texture_position;
+
+                void main() {
+                    gl_FragColor = texture2D(u_image, v_texture_position);
+                    gl_FragColor *= u_opacity_multiplier;
+                }
+                `;
+            }
 
             const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
             gl.useProgram(program);
@@ -842,12 +968,12 @@
 
             // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
-            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.STATIC_DRAW); // bind data statically here since it's unchanging
+            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.STATIC_DRAW);
             gl.enableVertexAttribArray(this._secondPass.aOutputPosition);
 
             // provide texture coordinates for the rectangle in image (texture) space.
             gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
-            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
+            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW);
             gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
         }
 
