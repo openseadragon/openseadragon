@@ -204,6 +204,7 @@ window.MockSeadragon = {
             addHandler: function() {},
             canvas: canvas,
             container: element,
+            opacity: 1, // Required by DrawerBase constructor
             viewport: {
                 getContainerSize: function() { return new OpenSeadragon.Point(500, 400); }
             }
