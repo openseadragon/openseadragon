@@ -113,6 +113,14 @@
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
 
+            // Transform Feedback for GPU-side tile position computation (WebGL2 only)
+            this._transformFeedback = null;
+            this._tfProgram = null;
+            this._tfPositionBuffer = null;  // Buffer to capture transformed positions
+            this._tfTexCoordBuffer = null;  // Buffer to capture texture coordinates
+            this._tfCacheValid = false;     // Whether cached TF data is still valid
+            this._tfLastViewMatrix = null;  // Track view matrix for cache invalidation
+
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
 
@@ -166,6 +174,33 @@
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
             gl.bindRenderbuffer(gl.RENDERBUFFER, null);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            // Clean up Transform Feedback resources (WebGL2 only)
+            if (this._isWebGL2 && this._transformFeedback) {
+                gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+                gl.deleteTransformFeedback(this._transformFeedback);
+                this._transformFeedback = null;
+
+                if (this._tfPositionBuffer) {
+                    gl.deleteBuffer(this._tfPositionBuffer);
+                    this._tfPositionBuffer = null;
+                }
+                if (this._tfTexCoordBuffer) {
+                    gl.deleteBuffer(this._tfTexCoordBuffer);
+                    this._tfTexCoordBuffer = null;
+                }
+                if (this._tfIndexBuffer) {
+                    gl.deleteBuffer(this._tfIndexBuffer);
+                    this._tfIndexBuffer = null;
+                }
+                if (this._tfProgram) {
+                    gl.deleteBuffer(this._tfProgram.bufferOutputPosition);
+                    gl.deleteBuffer(this._tfProgram.bufferTexturePosition);
+                    gl.deleteBuffer(this._tfProgram.bufferIndex);
+                    gl.deleteProgram(this._tfProgram.program);
+                    this._tfProgram = null;
+                }
+            }
 
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
@@ -690,9 +725,314 @@
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
+            // Set up Transform Feedback for WebGL2
+            if (this._isWebGL2) {
+                this._setupTransformFeedback();
+            }
         }
 
-        //private
+        // private
+        // Set up Transform Feedback for GPU-side vertex transformation (WebGL2 only)
+        // This allows capturing transformed vertex positions from the GPU, enabling
+        // efficient caching of tile positions when the view matrix hasn't changed
+        _setupTransformFeedback() {
+            const gl = this._gl;
+            const numTextures = this._glNumTextures;
+
+            // Transform Feedback vertex shader - transforms tile positions and outputs to buffer
+            // Uses GLSL ES 3.0 syntax with 'out' varyings for transform feedback capture
+            const makeMatrixUniforms = () => {
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+            };
+            const makeConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(a_index == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+            };
+
+            const tfVertexShader = `#version 300 es
+            precision highp float;
+
+            in vec2 a_output_position;
+            in vec2 a_texture_position;
+            in int a_index;
+
+            ${makeMatrixUniforms()}
+
+            // Transform Feedback outputs - these will be captured to buffers
+            out vec4 tf_position;      // Transformed clip-space position
+            out vec2 tf_texcoord;      // Pass-through texture coordinate
+            flat out int tf_index;     // Pass-through tile index
+
+            void main() {
+                mat3 transform_matrix;
+                ${makeConditionals()}
+
+                vec3 transformed = transform_matrix * vec3(a_output_position, 1.0);
+                tf_position = vec4(transformed.xy, 0.0, 1.0);
+                tf_texcoord = a_texture_position;
+                tf_index = a_index;
+
+                gl_Position = tf_position;
+            }
+            `;
+
+            // Minimal fragment shader (required but not used during TF capture)
+            const tfFragmentShader = `#version 300 es
+            precision mediump float;
+            out vec4 fragColor;
+            void main() {
+                fragColor = vec4(0.0);
+            }
+            `;
+
+            // Compile shaders
+            const vertShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertShader, tfVertexShader);
+            gl.compileShader(vertShader);
+
+            if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+                $.console.error('Transform Feedback vertex shader compilation failed:', gl.getShaderInfoLog(vertShader));
+                gl.deleteShader(vertShader);
+                return;
+            }
+
+            const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragShader, tfFragmentShader);
+            gl.compileShader(fragShader);
+
+            if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+                $.console.error('Transform Feedback fragment shader compilation failed:', gl.getShaderInfoLog(fragShader));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                return;
+            }
+
+            // Create program and specify transform feedback varyings BEFORE linking
+            const program = gl.createProgram();
+            gl.attachShader(program, vertShader);
+            gl.attachShader(program, fragShader);
+
+            // Specify which outputs to capture - must be done before linking
+            // Using INTERLEAVED_ATTRIBS to capture all outputs into a single buffer
+            gl.transformFeedbackVaryings(program, ['tf_position', 'tf_texcoord', 'tf_index'], gl.SEPARATE_ATTRIBS);
+
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                $.console.error('Transform Feedback program linking failed:', gl.getProgramInfoLog(program));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                gl.deleteProgram(program);
+                return;
+            }
+
+            // Clean up shaders after linking
+            gl.deleteShader(vertShader);
+            gl.deleteShader(fragShader);
+
+            // Create Transform Feedback object
+            this._transformFeedback = gl.createTransformFeedback();
+
+            // Create buffers to capture TF output
+            // Position buffer: vec4 per vertex (x, y, z, w)
+            // 6 vertices per quad * numTextures quads * 4 floats
+            const maxVertices = 6 * numTextures;
+            this._tfPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfPositionBuffer);
+            gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER, maxVertices * 4 * 4, gl.DYNAMIC_COPY);
+
+            // TexCoord buffer: vec2 per vertex
+            this._tfTexCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfTexCoordBuffer);
+            gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER, maxVertices * 2 * 4, gl.DYNAMIC_COPY);
+
+            // Index buffer: int per vertex
+            this._tfIndexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfIndexBuffer);
+            gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER, maxVertices * 4, gl.DYNAMIC_COPY);
+
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, null);
+
+            // Store program and attribute/uniform locations
+            this._tfProgram = {
+                program: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                aIndex: gl.getAttribLocation(program, 'a_index'),
+                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u_matrix_${i}`)),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+                bufferIndex: gl.createBuffer(),
+            };
+
+            // Set up static output position data (unit quads)
+            const outputQuads = new Float32Array(numTextures * 12);
+            for (let i = 0; i < numTextures; ++i) {
+                outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._tfProgram.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW);
+
+            $.console.log('Transform Feedback initialized successfully');
+        }
+
+        // private
+        // Perform Transform Feedback capture pass - transforms tile vertices on the GPU
+        // and captures the results into buffers for later rendering
+        _captureTransformFeedback(texturePositionArray, matrixArray, numTilesToDraw) {
+            if (!this._transformFeedback || !this._tfProgram) {
+                return false;
+            }
+
+            const gl = this._gl;
+            const tfProgram = this._tfProgram;
+
+            // Use TF program
+            gl.useProgram(tfProgram.program);
+
+            // Set up output position attribute (static unit quads)
+            gl.bindBuffer(gl.ARRAY_BUFFER, tfProgram.bufferOutputPosition);
+            gl.enableVertexAttribArray(tfProgram.aOutputPosition);
+            gl.vertexAttribPointer(tfProgram.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+            // Set up texture position attribute
+            gl.bindBuffer(gl.ARRAY_BUFFER, tfProgram.bufferTexturePosition);
+            gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(tfProgram.aTexturePosition);
+            gl.vertexAttribPointer(tfProgram.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+
+            // Set up index attribute - create index array for tiles
+            const indexArray = new Int32Array(numTilesToDraw * 6);
+            for (let i = 0; i < numTilesToDraw; ++i) {
+                const offset = i * 6;
+                for (let j = 0; j < 6; ++j) {
+                    indexArray[offset + j] = i;
+                }
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, tfProgram.bufferIndex);
+            gl.bufferData(gl.ARRAY_BUFFER, indexArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(tfProgram.aIndex);
+            gl.vertexAttribIPointer(tfProgram.aIndex, 1, gl.INT, 0, 0);
+
+            // Set transform matrices
+            for (let i = 0; i < numTilesToDraw; ++i) {
+                gl.uniformMatrix3fv(tfProgram.uTransformMatrices[i], false, matrixArray[i]);
+            }
+
+            // Bind Transform Feedback buffers
+            gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this._transformFeedback);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, this._tfPositionBuffer);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 1, this._tfTexCoordBuffer);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 2, this._tfIndexBuffer);
+
+            // Disable rasterization during TF capture (we only want the transformed vertices)
+            gl.enable(gl.RASTERIZER_DISCARD);
+
+            // Begin Transform Feedback and draw
+            gl.beginTransformFeedback(gl.TRIANGLES);
+            gl.drawArrays(gl.TRIANGLES, 0, numTilesToDraw * 6);
+            gl.endTransformFeedback();
+
+            // Re-enable rasterization
+            gl.disable(gl.RASTERIZER_DISCARD);
+
+            // Unbind TF
+            gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 1, null);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 2, null);
+
+            this._tfCacheValid = true;
+            this._tfCachedTileCount = numTilesToDraw;
+
+            return true;
+        }
+
+        // private
+        // Read back Transform Feedback data for debugging/validation
+        // This demonstrates that TF data can be read back if needed
+        _readTransformFeedbackData(numVertices) {
+            if (!this._transformFeedback || !this._tfPositionBuffer) {
+                return null;
+            }
+
+            const gl = this._gl;
+
+            // Read position data
+            const positionData = new Float32Array(numVertices * 4);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfPositionBuffer);
+            gl.getBufferSubData(gl.TRANSFORM_FEEDBACK_BUFFER, 0, positionData);
+
+            // Read texcoord data
+            const texcoordData = new Float32Array(numVertices * 2);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfTexCoordBuffer);
+            gl.getBufferSubData(gl.TRANSFORM_FEEDBACK_BUFFER, 0, texcoordData);
+
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, null);
+
+            return {
+                positions: positionData,
+                texcoords: texcoordData
+            };
+        }
+
+        // private
+        // Invalidate Transform Feedback cache - called when view changes
+        _invalidateTransformFeedbackCache() {
+            this._tfCacheValid = false;
+        }
+
+        /**
+         * Check if Transform Feedback is supported and initialized
+         * @returns {Boolean} True if Transform Feedback is available
+         */
+        hasTransformFeedback() {
+            return this._isWebGL2 && this._transformFeedback !== null;
+        }
+
+        /**
+         * Perform a Transform Feedback capture pass and return the captured data.
+         * This is primarily for demonstration and debugging purposes.
+         * The captured data contains transformed vertex positions computed on the GPU.
+         *
+         * @param {Array} tiles - Array of tiles to capture transforms for
+         * @param {OpenSeadragon.TiledImage} tiledImage - The tiled image being rendered
+         * @returns {Object|null} Object containing positions and texcoords arrays, or null if TF not available
+         */
+        captureTransformFeedback(tiles, tiledImage) {
+            if (!this.hasTransformFeedback() || !tiles || tiles.length === 0) {
+                return null;
+            }
+
+            const maxTextures = this._glNumTextures;
+            const numTiles = Math.min(tiles.length, maxTextures);
+
+            // Build the texture position and matrix arrays similar to the draw loop
+            const texturePositionArray = new Float32Array(maxTextures * 12);
+            const matrixArray = new Array(maxTextures);
+            const opacityArray = new Array(maxTextures);
+            const textureDataArray = new Array(maxTextures);
+
+            const viewMatrix = tiledImage._viewportToTiledImageMatrix;
+
+            for (let i = 0; i < numTiles; i++) {
+                const tile = tiles[i].tile || tiles[i];
+                const textureInfo = this.getDataToDraw(tile);
+
+                if (textureInfo && textureInfo.texture) {
+                    this._getTileData(tile, tiledImage, textureInfo, viewMatrix, i, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                }
+            }
+
+            // Perform the TF capture
+            const success = this._captureTransformFeedback(texturePositionArray, matrixArray, numTiles);
+
+            if (success) {
+                // Read back the captured data
+                return this._readTransformFeedbackData(numTiles * 6);
+            }
+
+            return null;
+        }
         _makeFirstPassShaderProgram(){
             const numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
             const makeMatrixUniforms = () => {
