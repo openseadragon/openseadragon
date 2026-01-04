@@ -198,6 +198,7 @@ declare namespace OpenSeadragon {
 
     function stopEvent(event?: OSDEvent<any>): void;
 
+    //TODO
     interface GestureSettings {
         scrollToZoom?: boolean;
         clickToZoom?: boolean;
@@ -216,6 +217,7 @@ declare namespace OpenSeadragon {
         DOWN: string;
     }
 
+    //TODO
     interface NavImages {
         zoomIn: NavImagesValues;
         zoomOut: NavImagesValues;
@@ -233,7 +235,7 @@ declare namespace OpenSeadragon {
     type TypeConverter<TIn = any, TOut = any> = (tile: OpenSeadragon.Tile, data: TIn) => TOut | Promise<TOut>;
     type TypeDestructor<TIn = any, TOut = any> = (data: TIn) => TOut | Promise<TOut>;
 
-    // TODO
+    // Done
     interface Options {
         id?: string;
         element?: HTMLElement;
@@ -261,7 +263,8 @@ declare namespace OpenSeadragon {
                 };
             };
         }
-            | Array<string | TileSource | { type: "openstreetmaps" }>;
+            | Array<string | TileSource | { type: "openstreetmaps" }>
+            | ((l: number, x: number, y: number) => string); //TODO
         tabIndex?: number;
         overlays?: any[];
         xmlPath?: string;
@@ -340,6 +343,7 @@ declare namespace OpenSeadragon {
         dblClickDistThreshold?: number;
         springStiffness?: number;
         animationTime?: number;
+        loadDestinationTilesOnAnimation?: boolean;
         gestureSettingsMouse?: GestureSettings;
         gestureSettingsTouch?: GestureSettings;
         gestureSettingsPen?: GestureSettings;
@@ -422,8 +426,10 @@ declare namespace OpenSeadragon {
         loadTilesWithAjax?: boolean;
         ajaxHeaders?: object;
         splitHashDataForPost?: boolean;
+        callTileLoadedWithCachedData?: boolean;
     }
 
+    // Done
     interface TileSourceOptions {
         url?: string;
         referenceStripThumbnailUrl?: string;
@@ -439,7 +445,7 @@ declare namespace OpenSeadragon {
         tileOverlap?: number;
         minLevel?: number;
         maxLevel?: number;
-        getTileUrl?: ((l: number, x: number, y: number) => string);
+        ready?: boolean;
     }
 
     interface ButtonOptions {
@@ -553,50 +559,23 @@ declare namespace OpenSeadragon {
         constructor(x: number, y: number, width: number, height: number, minLevel: number, maxLevel: number);
     }
 
-    class Drawer {
-        canvas: HTMLCanvasElement | HTMLElement;
-        container: Element;
-        context: CanvasRenderingContext2D | null;
-        // element : Element; // Deprecated
-
-        constructor(options: {
-            viewer: Viewer;
-            viewport: Viewport;
-            element: Element;
-            debugGridColor?: string;
-        });
-
-        blendSketch(options: {
-            opacity: number;
-            scale?: number;
-            translate?: Point;
-            compositeOperation?: string;
-            bounds?: Rect;
-        }): void;
-        canRotate(): boolean;
-        clear(): void;
-        destroy(): void;
-        drawTile(
-            tile: Tile,
-            drawingHandler: (context: CanvasRenderingContext2D, tile: any, rendered: any) => void, // TODO: determine handler parameter types
-            useSketch: boolean,
-            scale?: number,
-            translate?: Point,
-        ): void;
-        getCanvasSize(sketch: boolean): Point;
-        getOpacity(): number;
-        setOpacity(opacity: number): Drawer;
-        viewportToDrawerRectangle(rectangle: Rect): Rect;
-        setImageSmoothingEnabled(imageSmoothingEnabled?: boolean): void;
-        viewportCoordToDrawerCoord(point: Point): Point;
-        clipWithPolygons(polygons: Point[][], useSketch?: boolean): void;
-    }
-
     interface BaseDrawerOptions {
         usePrivateCache: boolean;
         preloadCache: boolean;
         offScreen: boolean;
         broadCastTileInvalidation: boolean;
+    }
+
+    interface WebGLDrawerOptions extends BaseDrawerOptions {
+        unpackWithPremultipliedAlpha?: boolean;
+    }
+
+    interface DrawerOptions {
+        webgl?: WebGLDrawerOptions;
+        canvas?: BaseDrawerOptions;
+        html?: BaseDrawerOptions;
+        custom?: BaseDrawerOptions;
+        [key: string]: BaseDrawerOptions | undefined;
     }
 
     class DrawerBase {
@@ -965,25 +944,18 @@ declare namespace OpenSeadragon {
 
     class PriorityQueue<K = number, V = any> {
         constructor(optHeap?: PriorityQueue<K, V>);
-
         insert(key: K, value: V): void;
         insertNode(node: PriorityQueue.Node<K, V>): void;
         insertAll(heap: PriorityQueue<K, V>): void;
-
         remove(): PriorityQueue.Node<K, V> | undefined;
         peek(): V | undefined;
         peekKey(): K | undefined;
-
         decreaseKey(node: PriorityQueue.Node<K, V>, key: K): void;
-
         getValues(): V[];
         getKeys(): K[];
-
         containsValue(val: V): boolean;
         containsKey(key: K): boolean;
-
         clone(): PriorityQueue<K, V>;
-
         getCount(): number;
         isEmpty(): boolean;
         clear(): void;
@@ -991,12 +963,10 @@ declare namespace OpenSeadragon {
 
     namespace PriorityQueue {
         class Node<K = number, V = any> {
-            constructor(key: K, value: V);
-
             key: K;
             value: V;
             index?: number;
-
+            constructor(key: K, value: V);
             clone(): PriorityQueue.Node<K, V>;
         }
     }
@@ -1142,7 +1112,7 @@ declare namespace OpenSeadragon {
         source: TileSource;
         viewer: Viewer;
         tileCache: TileCache;
-        drawer: Drawer;
+        drawer: DrawerBase;
         imageLoader: ImageLoader;
         x?: number;
         y?: number;
@@ -1329,6 +1299,7 @@ declare namespace OpenSeadragon {
         placeholderFillStyle?: string | CanvasGradient | CanvasPattern;
     }
 
+    // Done
     interface TileSourceSpecifier extends ImageOptions {
         tileSource: string | object;
     }
@@ -1337,10 +1308,11 @@ declare namespace OpenSeadragon {
         url: string;
     }
 
+    // Done
     class Viewer {
         canvas: Element;
         container: Element;
-        drawer: Drawer;
+        drawer: DrawerBase;
         element: Element;
         initialPage: number;
         navigator: Navigator;
@@ -1547,13 +1519,6 @@ declare namespace OpenSeadragon {
     }
 
     type EventHandler<T> = (event: T) => void;
-
-    interface DrawerOptions {
-        webgl?: object;
-        canvas?: object;
-        html?: object;
-        custom?: object;
-    }
 
     type PreprocessEventHandler = (event: EventProcessInfo) => void;
 
