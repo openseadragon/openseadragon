@@ -264,9 +264,11 @@ declare namespace OpenSeadragon {
             };
         }
             | Array<string | TileSource | { type: "openstreetmaps" }>
-            | ((l: number, x: number, y: number) => string); //TODO
+            | (() => string)
+            | { getTileUrl: (level: number, x: number, y: number) => string }
         tabIndex?: number;
         overlays?: any[];
+        toolbar?: string | Element;
         xmlPath?: string;
         prefixUrl?: string;
         navImages?: NavImages;
@@ -381,6 +383,7 @@ declare namespace OpenSeadragon {
         useCanvas?: boolean;
         minPixelRatio?: number;
         mouseNavEnabled?: boolean;
+        keyboardNavEnabled?: boolean;
         showNavigationControl?: boolean;
         navigationControlAnchor?: ControlAnchor;
         showZoomControl?: boolean;
@@ -391,7 +394,6 @@ declare namespace OpenSeadragon {
         showSequenceControl?: boolean;
         sequenceControlAnchor?: ControlAnchor;
         navPrevNextWrap?: boolean;
-        toolbar?: string | Element;
         zoomInButton?: string | Element;
         zoomOutButton?: string | Element;
         homeButton?: string | Element;
@@ -662,6 +664,39 @@ declare namespace OpenSeadragon {
 
     class IIIFTileSource extends TileSource {
         constructor(options: TileSourceOptions & { tileFormat?: string });
+    }
+
+    interface IrisTileSourceOptions extends TileSourceOptions {
+        type: 'iris';
+        serverUrl: string;
+        slideId: string;
+        metadata?: {
+            extent: {
+                width: number;
+                height: number;
+                layers: Array<{
+                    scale: number;
+                    x_tiles: number;
+                    y_tiles: number;
+                }>;
+            };
+        };
+    }
+
+    class IrisTileSource extends TileSource {
+        serverUrl: string;
+        slideId: string;
+        levelSizes: Array<{
+            width: number;
+            height: number;
+            xTiles: number;
+            yTiles: number;
+        }>;
+        levelScales: number[];
+
+        constructor(options: IrisTileSourceOptions);
+        getMetadataUrl(): string;
+        parseMetadata(data: IrisTileSourceOptions['metadata']): void;
     }
 
     interface TImageJobOptions {

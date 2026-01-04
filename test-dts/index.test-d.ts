@@ -145,7 +145,7 @@ if (viewer.navigator) {
 }
 
 // Drawer
-expectType<OpenSeadragon.Drawer>(viewer.drawer);
+expectType<OpenSeadragon.DrawerBase>(viewer.drawer);
 expectType<boolean>(viewer.drawer.canRotate());
 expectType<OpenSeadragon.Point>(viewer.drawer.viewportCoordToDrawerCoord(new OpenSeadragon.Point(0, 0)));
 
