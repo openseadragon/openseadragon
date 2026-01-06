@@ -315,6 +315,7 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
  * - "context2d" - HtmlRenderingContext2D, a 2D canvas context
  * - "imageUrl" - string, a URL to a resource carrying image data
  * - "rasterBlob" - Blob, a binary file-like object carrying image data
+ * - "imageBitmap" - ImageBitmap, a bitmap image object
  *
  * The system uses these to deliver desired data from TileSource (which implements fetching logics)
  * through plugins to the renderer with preserving data type compatibility. Typical example is:
@@ -326,6 +327,10 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
  *  If some plugin required context2d type, the pipeline would deliver this type and used
  *  it also for WebGL, as texture loading function accepts canvas object as well as image.
  *
+ * Conversion costs can be specified manually via learn() or automatically evaluated
+ * using learnWithBenchmark() which measures actual performance. For custom types,
+ * use registerTestDataGenerator() to enable automatic cost evaluation.
+ *
  * @class DataTypeConverter
  * @memberOf OpenSeadragon
  */
@@ -335,6 +340,9 @@ $.DataTypeConverter = class {
         this.graph = new WeightedGraph();
         this.destructors = {};
         this.copyings = {};
+
+        // Initialize test data generators for benchmarking
+        this._initTestDataGenerators();
 
         // Teaching OpenSeadragon built-in conversions:
         const imageCreator = (tile, url) => new $.Promise((resolve, reject) => {
@@ -511,6 +519,327 @@ $.DataTypeConverter = class {
     }
 
     /**
+     * Initialize test data generators for benchmarking conversions.
+     * Maps type names to functions that create test data of a given size.
+     * @private
+     */
+    _initTestDataGenerators() {
+        this._testDataGenerators = {
+            context2d: function(size) {
+                var canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                var ctx = canvas.getContext('2d', { willReadFrequently: true });
+                // Fill with noise pattern for realistic test
+                var imageData = ctx.createImageData(size, size);
+                for (var i = 0; i < imageData.data.length; i += 4) {
+                    imageData.data[i] = Math.random() * 255;     // R
+                    imageData.data[i + 1] = Math.random() * 255; // G
+                    imageData.data[i + 2] = Math.random() * 255; // B
+                    imageData.data[i + 3] = 255;                 // A
+                }
+                ctx.putImageData(imageData, 0, 0);
+                return ctx;
+            },
+            image: function(size) {
+                // Create a canvas with noise, then convert to image via data URL
+                var canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                var ctx = canvas.getContext('2d');
+                var imageData = ctx.createImageData(size, size);
+                for (var i = 0; i < imageData.data.length; i += 4) {
+                    imageData.data[i] = Math.random() * 255;
+                    imageData.data[i + 1] = Math.random() * 255;
+                    imageData.data[i + 2] = Math.random() * 255;
+                    imageData.data[i + 3] = 255;
+                }
+                ctx.putImageData(imageData, 0, 0);
+                var img = new Image();
+                img.src = canvas.toDataURL();
+                return img;
+            },
+            imageUrl: function(size) {
+                var canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                var ctx = canvas.getContext('2d');
+                var imageData = ctx.createImageData(size, size);
+                for (var i = 0; i < imageData.data.length; i += 4) {
+                    imageData.data[i] = Math.random() * 255;
+                    imageData.data[i + 1] = Math.random() * 255;
+                    imageData.data[i + 2] = Math.random() * 255;
+                    imageData.data[i + 3] = 255;
+                }
+                ctx.putImageData(imageData, 0, 0);
+                return canvas.toDataURL();
+            },
+            rasterBlob: function(size) {
+                return new $.Promise(function(resolve) {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    var ctx = canvas.getContext('2d');
+                    var imageData = ctx.createImageData(size, size);
+                    for (var i = 0; i < imageData.data.length; i += 4) {
+                        imageData.data[i] = Math.random() * 255;
+                        imageData.data[i + 1] = Math.random() * 255;
+                        imageData.data[i + 2] = Math.random() * 255;
+                        imageData.data[i + 3] = 255;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    canvas.toBlob(resolve);
+                });
+            },
+            imageBitmap: function(size) {
+                return new $.Promise(function(resolve) {
+                    var canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    var ctx = canvas.getContext('2d');
+                    var imageData = ctx.createImageData(size, size);
+                    for (var i = 0; i < imageData.data.length; i += 4) {
+                        imageData.data[i] = Math.random() * 255;
+                        imageData.data[i + 1] = Math.random() * 255;
+                        imageData.data[i + 2] = Math.random() * 255;
+                        imageData.data[i + 3] = 255;
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                    // eslint-disable-next-line compat/compat
+                    createImageBitmap(canvas, { colorSpaceConversion: 'none' }).then(resolve);
+                });
+            }
+        };
+    }
+
+    /**
+     * Register a custom test data generator for a type.
+     * This is useful when you've taught the converter a custom type
+     * and want to use automatic cost evaluation with it.
+     *
+     * @param {string} type - The type name to register a generator for
+     * @param {Function} generator - Function that takes a size (number) and returns
+     *   test data of that approximate size (can be sync or async)
+     */
+    registerTestDataGenerator(type, generator) {
+        $.console.assert($.isFunction(generator), "[DataTypeConverter:registerTestDataGenerator] Generator must be a function!");
+        this._testDataGenerators[type] = generator;
+    }
+
+    /**
+     * Benchmark a conversion function to determine its cost.
+     * Runs the conversion multiple times with different data sizes
+     * and computes cost parameters based on performance measurements.
+     *
+     * @param {string} fromType - Source data type
+     * @param {OpenSeadragon.TypeConverter} callback - The conversion function to benchmark
+     * @param {Object} [options] - Benchmark options
+     * @param {number[]} [options.sizes=[64, 128, 256]] - Array of test sizes to use
+     * @param {number} [options.iterations=3] - Number of iterations per size
+     * @param {number} [options.warmupIterations=1] - Number of warmup iterations (not measured)
+     * @returns {OpenSeadragon.Promise<{costPower: number, costMultiplier: number, measurements: Object}>}
+     *   Returns the computed cost parameters and raw measurements
+     */
+    benchmark(fromType, callback, options) {
+        var self = this;
+        options = options || {};
+        var sizes = options.sizes || [64, 128, 256];
+        var iterations = options.iterations || 3;
+        var warmupIterations = options.warmupIterations || 1;
+
+        var generator = this._testDataGenerators[fromType];
+        if (!generator) {
+            $.console.warn("[DataTypeConverter:benchmark] No test data generator for type '" + fromType + "'. " +
+                "Use registerTestDataGenerator() to add one, or specify costs manually.");
+            return $.Promise.resolve({ costPower: 1, costMultiplier: 1, measurements: null });
+        }
+
+        var measurements = {};
+        var mockTile = { tiledImage: null }; // Minimal tile mock for conversion
+
+        // Helper to ensure a value is wrapped in a promise
+        function ensurePromise(value) {
+            if (value instanceof $.Promise) {
+                return value;
+            }
+            if (value && typeof value.then === 'function') {
+                return new $.Promise(function(resolve, reject) {
+                    value.then(resolve, reject);
+                });
+            }
+            return $.Promise.resolve(value);
+        }
+
+        // Process sizes sequentially
+        var sizeIndex = 0;
+
+        function processNextSize(resolve, reject) {
+            if (sizeIndex >= sizes.length) {
+                // All sizes processed, compute results
+                var result = self._computeCostFromMeasurements(measurements);
+                resolve({
+                    costPower: result.costPower,
+                    costMultiplier: result.costMultiplier,
+                    measurements: measurements
+                });
+                return;
+            }
+
+            var size = sizes[sizeIndex];
+            var times = [];
+            var warmupIndex = 0;
+            var iterIndex = 0;
+
+            // Process warmup iterations
+            function doWarmup() {
+                if (warmupIndex >= warmupIterations) {
+                    doIteration();
+                    return;
+                }
+
+                ensurePromise(generator(size)).then(function(warmupData) {
+                    ensurePromise(callback(mockTile, warmupData)).then(function() {
+                        warmupIndex++;
+                        doWarmup();
+                    });
+                });
+            }
+
+            // Process measured iterations
+            function doIteration() {
+                if (iterIndex >= iterations) {
+                    // All iterations done for this size
+                    times.sort(function(a, b) {
+                        return a - b;
+                    });
+                    var medianTime = times[Math.floor(times.length / 2)];
+                    measurements[size] = {
+                        times: times,
+                        median: medianTime,
+                        pixels: size * size
+                    };
+                    sizeIndex++;
+                    processNextSize(resolve, reject);
+                    return;
+                }
+
+                ensurePromise(generator(size)).then(function(iterData) {
+                    // eslint-disable-next-line compat/compat
+                    var start = performance.now();
+                    ensurePromise(callback(mockTile, iterData)).then(function() {
+                        // eslint-disable-next-line compat/compat
+                        var end = performance.now();
+                        times.push(end - start);
+                        iterIndex++;
+                        doIteration();
+                    });
+                });
+            }
+
+            doWarmup();
+        }
+
+        return new $.Promise(function(resolve, reject) {
+            processNextSize(resolve, reject);
+        });
+    }
+
+    /**
+     * Compute cost parameters from benchmark measurements.
+     * Uses linear regression on log-log scale to estimate complexity.
+     * @private
+     * @param {Object} measurements - Measurements from benchmark()
+     * @returns {{costPower: number, costMultiplier: number}}
+     */
+    _computeCostFromMeasurements(measurements) {
+        var sizes = Object.keys(measurements).map(Number).sort(function(a, b) {
+            return a - b;
+        });
+        var i;
+
+        if (sizes.length < 2) {
+            // Not enough data points, assume linear
+            return { costPower: 1, costMultiplier: 1 };
+        }
+
+        // Use log-log linear regression to estimate complexity
+        // log(time) = costPower * log(pixels) + log(costMultiplier)
+        var logPixels = sizes.map(function(s) {
+            return Math.log(s * s);
+        });
+        var logTimes = sizes.map(function(s) {
+            // Avoid log(0)
+            return Math.log(Math.max(measurements[s].median, 0.001));
+        });
+
+        // Simple linear regression
+        var n = sizes.length;
+        var sumX = 0;
+        var sumY = 0;
+        var sumXY = 0;
+        var sumX2 = 0;
+        for (i = 0; i < n; i++) {
+            sumX += logPixels[i];
+            sumY += logTimes[i];
+            sumXY += logPixels[i] * logTimes[i];
+            sumX2 += logPixels[i] * logPixels[i];
+        }
+
+        var slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+
+        // Convert slope to costPower (0-7 scale)
+        // slope represents the exponent in O(n^slope)
+        // We map this to our 0-7 scale
+        var costPower = Math.round(slope * 2); // Scale factor of 2 to map typical values
+        costPower = Math.max(0, Math.min(7, costPower)); // Clamp to valid range
+
+        // Compute multiplier from intercept and base time
+        // A faster conversion gets a lower multiplier
+        var baseTime = measurements[sizes[0]].median;
+        var costMultiplier;
+
+        if (baseTime < 0.1) {
+            costMultiplier = 1; // Very fast, minimal multiplier
+        } else if (baseTime < 1) {
+            costMultiplier = 2;
+        } else if (baseTime < 5) {
+            costMultiplier = 3;
+        } else if (baseTime < 20) {
+            costMultiplier = 5;
+        } else {
+            costMultiplier = Math.min(Math.ceil(baseTime / 10), 100000);
+        }
+
+        return { costPower: costPower, costMultiplier: costMultiplier };
+    }
+
+    /**
+     * Teach the system to convert data type 'from' -> 'to' with automatic cost evaluation.
+     * This method benchmarks the conversion to determine optimal cost parameters.
+     *
+     * @param {string} from unique ID of the data item 'from'
+     * @param {string} to unique ID of the data item 'to'
+     * @param {OpenSeadragon.TypeConverter} callback converter function
+     * @param {Object} [benchmarkOptions] - Options for benchmarking (see benchmark())
+     * @returns {OpenSeadragon.Promise<{costPower: number, costMultiplier: number, measurements: Object}>}
+     *   Returns the computed cost parameters used
+     */
+    learnWithBenchmark(from, to, callback, benchmarkOptions) {
+        var self = this;
+        $.console.assert($.isFunction(callback), "[DataTypeConverter:learnWithBenchmark] Callback must be a valid function!");
+
+        return this.benchmark(from, callback, benchmarkOptions).then(function(result) {
+            // Register the conversion with computed costs
+            self.learn(from, to, callback, result.costPower, result.costMultiplier);
+
+            $.console.log("[DataTypeConverter] Learned " + from + " -> " + to + " with auto-evaluated cost: " +
+                "power=" + result.costPower + ", multiplier=" + result.costMultiplier);
+
+            return result;
+        });
+    }
+
+    /**
      * Unique identifier (unlike toString.call(x)) to be guessed
      * from the data value. This type guess is more strict than
      * OpenSeadragon.type() implementation, but for most type recognition
@@ -573,6 +902,7 @@ $.DataTypeConverter = class {
      *   - if a linear amount of work is necessary,
      *     return 1
      *   ... and so on, basically the number in O() complexity power exponent (for simplification)
+     *   Alternatively, use learnWithBenchmark() for automatic cost evaluation.
      * @param {Number} [costMultiplier=1] multiplier of the cost class, e.g. O(3n^2) would
      *   use costPower=2, costMultiplier=3; can be between 1 and 10^5
      */
@@ -591,6 +921,83 @@ $.DataTypeConverter = class {
             this.graph.addEdge(from, to, costPower * 10 ^ 5 + costMultiplier, callback);
             this._known = {}; //invalidate precomputed paths :/
         }
+    }
+
+    /**
+     * Re-evaluate costs for all registered conversions by benchmarking them.
+     * This is useful to optimize conversion paths based on actual runtime performance
+     * on the current device/browser.
+     *
+     * Note: This only works for conversions where test data generators are available.
+     * Conversions without generators will retain their original costs.
+     *
+     * @param {Object} [benchmarkOptions] - Options passed to benchmark()
+     * @returns {OpenSeadragon.Promise<Object>} Results object mapping "from->to" to benchmark results
+     */
+    recalibrateAllCosts(benchmarkOptions) {
+        var self = this;
+        var results = {};
+        var types = this.getKnownTypes();
+
+        // Build list of all edges to process
+        var edgesToProcess = [];
+        var i, j;
+        for (i = 0; i < types.length; i++) {
+            var fromType = types[i];
+            var edges = this.graph.adjacencyList[fromType] || [];
+            for (j = 0; j < edges.length; j++) {
+                edgesToProcess.push({
+                    fromType: fromType,
+                    edge: edges[j]
+                });
+            }
+        }
+
+        // Process edges sequentially
+        var edgeIndex = 0;
+
+        function processNextEdge(resolve) {
+            if (edgeIndex >= edgesToProcess.length) {
+                // All edges processed
+                self._known = {}; // Invalidate cached paths since weights changed
+                resolve(results);
+                return;
+            }
+
+            var item = edgesToProcess[edgeIndex];
+            var fromType = item.fromType;
+            var edge = item.edge;
+            var toType = edge.target.value;
+            var key = fromType + "->" + toType;
+
+            edgeIndex++;
+
+            // Skip if no test data generator for source type
+            if (!self._testDataGenerators[fromType]) {
+                $.console.log("[DataTypeConverter:recalibrateAllCosts] Skipping " + key + ": no test data generator for '" + fromType + "'");
+                processNextEdge(resolve);
+                return;
+            }
+
+            self.benchmark(fromType, edge.transform, benchmarkOptions).then(function(result) {
+                // Update the edge weight
+                var costPower = result.costPower + 1;
+                var costMultiplier = Math.min(Math.max(result.costMultiplier, 1), 100000);
+                edge.weight = costPower * 100000 + costMultiplier;
+
+                results[key] = result;
+                $.console.log("[DataTypeConverter:recalibrateAllCosts] " + key + ": power=" + result.costPower + ", multiplier=" + result.costMultiplier);
+                processNextEdge(resolve);
+            }).catch(function(e) {
+                $.console.warn("[DataTypeConverter:recalibrateAllCosts] Failed to benchmark " + key + ":", e);
+                results[key] = { error: e.message || String(e) };
+                processNextEdge(resolve);
+            });
+        }
+
+        return new $.Promise(function(resolve) {
+            processNextEdge(resolve);
+        });
     }
 
     /**
