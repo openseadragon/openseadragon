@@ -37,7 +37,7 @@
             const done = assert.async();
             createViewer();
             assert.ok(viewer.drawer, 'Drawer exists');
-            assert.equal(viewer.drawer.canRotate(), ['webgl','canvas'].includes(drawerType), 'we can rotate if we have canvas');
+            assert.equal(viewer.drawer.canRotate(), ['webgl','canvas'].includes(drawerType), 'we can rotate if we have canvas or webgl');
             done();
         });
 
