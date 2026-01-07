@@ -100,7 +100,23 @@
              * @private
              */
             this._isWebGL2 = false;
-            this._extTextureFilterAnisotropic = null; // anisotropic filtering extension
+            /**
+             * WebGL anisotropic texture filtering extension instance, if supported.
+             * Used to enable higher quality texture filtering for tiles.
+             *
+             * @member {?Object} _extTextureFilterAnisotropic
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
+            this._extTextureFilterAnisotropic = null;
+            /**
+             * Maximum supported anisotropy level for the current WebGL context.
+             * A value of 0 indicates that anisotropic filtering is not available.
+             *
+             * @member {Number} _maxAnisotropy
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
             this._maxAnisotropy = 0;
             this._firstPass = null;
             this._secondPass = null;
