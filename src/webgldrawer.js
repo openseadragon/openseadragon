@@ -92,7 +92,7 @@
              * - Multiple render targets: Advanced compositing with multiple framebuffer attachments
              * - GLSL ES 3.0 shaders: Enhanced shader capabilities (integer ops, etc.)
              *
-             * Note: Texture arrays (2D_ARRAY) are not recommended due to HW limitations -
+             * Note: Texture arrays (2D_ARRAY) are not recommended due to hardware limitations -
              * they underperform except when tiles have more than 4 channels.
              *
              * @member {Boolean} _isWebGL2
