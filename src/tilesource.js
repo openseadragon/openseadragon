@@ -632,9 +632,9 @@ $.TileSource.prototype = {
     },
 
     /**
-     * How long to await with a batch before processing. Big timeout means larger
+     * How long to wait with a batch before processing. Big timeout means larger
      * batches with fewer requests, at the cost of slower loading.
-     * @return {number} milliseconds to await tiles to add to the batch before processing
+     * @return {number} milliseconds to wait for tiles to be added to the batch before processing
      */
     batchTimeout() {
         return 5;
@@ -886,6 +886,9 @@ $.TileSource.prototype = {
      * Handles the fetching of multiple tiles in a single operation.
      * The TileSource is responsible for calling finish/fail on each of the individual job items
      * carried by batchJob.jobs. Avoid calling finish/fail on `batchJob` itself.
+     *
+     * Note that failed batch jobs are retried in non-batched mode. You should therefore
+     * have a valid downloadTileStart implementation in any case.
      *
      * @param {OpenSeadragon.BatchImageJob} batchJob - The batch job containing .jobs array
      */

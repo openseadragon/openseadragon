@@ -195,13 +195,13 @@ $.ImageJob.prototype = {
     },
 
     /**
-     * Starts the image job when part of the batched mode. It does not override abort
+     * Prepares the image job to be part of batched mode. It does not override abort
      * callback and does not set timeout, nor call any tile source APIs. Managed by parent batch.
      * @method
      * @private
      * @memberof OpenSeadragon.ImageJob#
      */
-    startBatchItem: function() {
+    prepareForBatch: function() {
         this.tries++;
         this.jobId = -1;  // ensures methods above work, calling clearTimeout is noop
     },
@@ -308,13 +308,13 @@ $.BatchImageJob.prototype = {
             }
         };
 
-        const wrap = (fn) => {
+        const wrap = (fn, job) => {
             return (...args) => {
                 if (!this.jobId) {
                     return;
                 }
                 this._finishedJobs++;
-                fn(...args);
+                fn.call(job, ...args);
                 if (this._finishedJobs === this.jobs.length) {
                     window.clearTimeout(this.jobId);
                     this.jobId = null;
@@ -327,9 +327,9 @@ $.BatchImageJob.prototype = {
 
         for (let j of this.jobs) {
             // Handle timeout securely
-            j.finish = wrap(j.finish);
-            j.fail = wrap(j.fail);
-            j.startBatchItem();
+            j.finish = wrap(j.finish, j);
+            j.fail = wrap(j.fail, j);
+            j.prepareForBatch();
         }
 
         this.source.downloadTileBatchStart(this);
@@ -343,8 +343,8 @@ $.BatchImageJob.prototype = {
     },
 
     /**
-     * Finish all batched jobs as a failure. This is available mainly for image loader purposes,
-     * implementations
+     * Finish all batched jobs as a failure. This is available mainly for ImageLoader class logics,
+     * implementations should fail/finish/abort individual jobs directly.
      * @param {string} errorMessage description upon failure
      * @param {XMLHttpRequest} request reference to the request if used
      */
@@ -468,6 +468,16 @@ $.ImageLoader.prototype = {
             }
         }
 
+        if (bucket && !bucket.timer) {
+            $.console.error(
+                'Attempted to add a new job to a batch bucket that has already been flushed. ' +
+                'Creating a new batch bucket for this source. ' +
+                'Check batch logic and timing if this happens frequently. ' +
+                'Bucket source:', source, 'Job ID:', newJob && newJob.jobId
+            );
+            bucket = null;
+        }
+
         if (!bucket) {
             bucket = {
                 source: source,
@@ -478,10 +488,6 @@ $.ImageLoader.prototype = {
             };
             bucket.timer = setTimeout(() => this._flushBatchBucket(bucket), bucket.waitTimeout);
             this._batchBuckets.push(bucket);
-        }
-
-        if (!bucket.timer) {
-            $.console.error('Attempted to add a new job to a batch bucket that has already been flushed. This means the batch timer has expired and the bucket is no longer accepting new jobs. The job will not be processed in this batch. Check the batch logic and timing. Bucket source:', source, 'Job ID:', newJob && newJob.jobId);
         }
 
         bucket.jobs.push(newJob);
