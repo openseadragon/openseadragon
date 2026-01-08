@@ -466,9 +466,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 },
                 stopPropagation: () => {
                     const result = outdatedTest();
-                    if (result) {
-                        // OpenSeadragon.trace( `              Stop propagation ${tile.toString()}: out: ${wasOutdatedRun} | ${originalCache.__invStamp} ${tile.loaded} ${tile.loading}`);
-                    }
+                    // if (result) {
+                    //     OpenSeadragon.trace( `              Stop propagation ${tile.toString()}: out: ${wasOutdatedRun} | ${originalCache.__invStamp} ${tile.loaded} ${tile.loading}`);
+                    // }
                     return result;
                 },
             }).then(_ => {

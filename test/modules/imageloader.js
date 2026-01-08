@@ -41,6 +41,7 @@
         imageLoader.jobsInProgress = imageLoader.jobLimit;
         imageLoader.addJob({
             src: 'test',
+            source: MockSeadragon.getTileSource(),
             loadWithAjax: false,
             crossOriginPolicy: 'test',
             ajaxWithCredentials: false,
@@ -59,7 +60,7 @@
         const options = OpenSeadragon.extend(true, baseOptions, {
                 imageLoaderLimit: 1,
                 timeout: expected
-            });
+            }),
             viewer = OpenSeadragon(options),
             imageLoader = viewer.imageLoader;
 
@@ -70,6 +71,7 @@
         imageLoader.jobsInProgress = imageLoader.jobLimit;
         imageLoader.addJob({
             src: 'test',
+            source: MockSeadragon.getTileSource(),
             loadWithAjax: false,
             crossOriginPolicy: 'test',
             ajaxWithCredentials: false,

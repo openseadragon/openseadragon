@@ -606,6 +606,41 @@ $.TileSource.prototype = {
     },
 
     /**
+     * Determines if this tile source data can be batched.
+     * @return {boolean}
+     */
+    batchEnabled() {
+        return false;
+    },
+
+    /**
+     * Determines if a tile request from a source (even itself!) can be batched with this source.
+     * By default, returns false -> in this case, each tile falls to a single bucket alone.
+     * @param {OpenSeadragon.TileSource} otherSource
+     * @return {boolean}
+     */
+    batchCompatible(otherSource) {
+        return false;
+    },
+
+    /**
+     * Maximum batch size. Can, for example, be derived from (average) tile size of the source.
+     * @return {number} integer, number of max jobs per batch
+     */
+    batchMaxJobs() {
+        return -1;
+    },
+
+    /**
+     * How long to wait with a batch before processing. Big timeout means larger
+     * batches with fewer requests, at the cost of slower loading.
+     * @return {number} milliseconds to wait for tiles to be added to the batch before processing
+     */
+    batchTimeout() {
+        return 5;
+    },
+
+    /**
      * Responsible for parsing and configuring the
      * image metadata pertinent to this TileSources implementation.
      * This method is not implemented by this class other than to throw an Error
@@ -774,31 +809,7 @@ $.TileSource.prototype = {
      * by ImageLoader.addJob(options) options object, so there are also properties like context.source (reference to self).
      *
      * Note that if you override this function, you should override also downloadTileAbort().
-     * @param {ImageJob} context job context that you have to call finish(...) on.
-     * @param {String} [context.src] - URL of image to download.
-     * @param {OpenSeadragon.Tile} [context.tile] - Tile that initiated the load. Note the data might be shared between tiles.
-     * @param {OpenSeadragon.TileSource} [context.source] - TileSource that initiated the load (this).
-     * @param {String} [context.loadWithAjax] - Whether to load this image with AJAX.
-     * @param {String} [context.ajaxHeaders] - Headers to add to the image request if using AJAX.
-     * @param {Boolean} [context.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
-     * @param {String} [context.crossOriginPolicy] - CORS policy to use for downloads
-     * @param {?String|?Object} [context.postData] - HTTP POST data (usually but not necessarily
-     *   in k=v&k2=v2... form, see TileSource::getTilePostData) or null
-     * @param {*} [context.userData] - Empty object to attach your own data and helper variables to.
-     * @param {Function} [context.finish] - Should be called unless abort() was executed upon successful
-     *   data retrieval.
-     *   Usage: context.finish(data, request, dataType=undefined). Pass the downloaded data object
-     *   add also reference to an ajax request if used. Optionally, specify what data type the data is.
-     * @param {Function} [context.fail] - Should be called unless abort() was executed upon unsuccessful request.
-     *   Usage: context.fail(errMessage, request). Provide error message in case of failure,
-     *   add also reference to an ajax request if used.
-     * @param {Function} [context.abort] - Called automatically when the job times out.
-     *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
-     * @param {Function} [context.callback] Private parameter. Called automatically once image has been downloaded
-     *   (triggered by finish).
-     * @param {Number} [context.timeout] Private parameter. The max number of milliseconds that
-     *   this image job may take to complete.
-     * @param {string} [context.errorMsg] Private parameter. The final error message, default null (set by finish).
+     * @param {OpenSeadragon.ImageJob} context job context that you have to call finish(...) on.
      */
     downloadTileStart: function (context) {
         // Load the tile with an AJAX request if the loadWithAjax option is
@@ -815,7 +826,7 @@ $.TileSource.prototype = {
                 $.console.warn('Unknown crossOriginPolicy: ' + policy);
             }
 
-            $.makeAjaxRequest({
+            context.userData.request = $.makeAjaxRequest({
                 url: context.src,
                 withCredentials: context.ajaxWithCredentials,
                 headers: context.ajaxHeaders,
@@ -862,16 +873,40 @@ $.TileSource.prototype = {
      * Note that if you override this function, you should override also downloadTileStart().
      * Note that calling job.abort() would create an infinite loop!
      *
-     * @param {ImageJob} context job, the same object as with downloadTileStart(..)
+     * @param {OpenSeadragon.ImageJob} context job, the same object as with downloadTileStart(..)
      * @param {*} [context.userData] - Empty object to attach (and mainly read) your own data.
      */
     downloadTileAbort: function (context) {
         if (context.userData.request) {
             context.userData.request.abort();
         }
-        const image = context.userData.image;
-        if (context.userData.image) {
-            image.onload = image.onerror = image.onabort = null;
+    },
+
+    /**
+     * Handles the fetching of multiple tiles in a single operation.
+     * The TileSource is responsible for calling finish/fail on each of the individual job items
+     * carried by batchJob.jobs. Avoid calling finish/fail on `batchJob` itself.
+     *
+     * Note that failed batch jobs are retried in non-batched mode. You should therefore
+     * have a valid downloadTileStart implementation in any case.
+     *
+     * @param {OpenSeadragon.BatchImageJob} batchJob - The batch job containing .jobs array
+     */
+    downloadTileBatchStart(batchJob) {
+        // Fallback default implementation: process individually.
+        // Real implementations (e.g. for sprite sheets) should override this and use true batched approach.
+        for (let i = 0; i < batchJob.jobs.length; i++) {
+            this.downloadTileStart(batchJob.jobs[i]);
+        }
+    },
+
+    /**
+     * Handles abortion of the fetching of multiple tiles.
+     * @param {OpenSeadragon.BatchImageJob} batchJob
+     */
+    downloadTileBatchAbort(batchJob) {
+        for (let i = 0; i < batchJob.jobs.length; i++) {
+            this.downloadTileAbort(batchJob.jobs[i]);
         }
     },
 
