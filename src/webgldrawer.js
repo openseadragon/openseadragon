@@ -78,6 +78,46 @@
             // private members
             this._destroyed = false;
             this._gl = null;
+            /**
+             * Flag to track if we're using WebGL2 context.
+             * When true, additional WebGL2-specific optimizations can be enabled.
+             *
+             * TODO: Future WebGL2 enhancements to implement:
+             * - Shared off-screen renderer: Share renderer between multiple drawers to prevent
+             *   context limit crashes (e.g., scroll page with multiple viewers + navigators)
+             * - Vertex Array Objects (VAOs): Built-in state management for vertex attributes
+             * - Instanced rendering: Draw multiple tiles in a single draw call
+             * - Uniform Buffer Objects (UBOs): More efficient uniform updates for batched rendering
+             * - Transform feedback: GPU-based computations for tile processing
+             * - Multiple render targets: Advanced compositing with multiple framebuffer attachments
+             * - GLSL ES 3.0 shaders: Enhanced shader capabilities (integer ops, etc.)
+             *
+             * Note: Texture arrays (2D_ARRAY) are not recommended due to hardware limitations -
+             * they underperform except when tiles have more than 4 channels.
+             *
+             * @member {Boolean} _isWebGL2
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
+            this._isWebGL2 = false;
+            /**
+             * WebGL anisotropic texture filtering extension instance, if supported.
+             * Used to enable higher quality texture filtering for tiles.
+             *
+             * @member {?Object} _extTextureFilterAnisotropic
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
+            this._extTextureFilterAnisotropic = null;
+            /**
+             * Maximum supported anisotropy level for the current WebGL context.
+             * A value of 0 indicates that anisotropic filtering is not available.
+             *
+             * @member {Number} _maxAnisotropy
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
+            this._maxAnisotropy = 0;
             this._firstPass = null;
             this._secondPass = null;
             this._glFrameBuffer = null;
@@ -209,6 +249,14 @@
          */
         getType(){
             return 'webgl';
+        }
+
+        /**
+         * Check if the drawer is using WebGL2
+         * @returns {Boolean} true if WebGL2 is being used, false if WebGL1
+         */
+        isWebGL2(){
+            return this._isWebGL2;
         }
 
         /**
@@ -608,7 +656,20 @@
 
         // private
         _textureFilter(){
-            return this._imageSmoothingEnabled ? this._gl.LINEAR : this._gl.NEAREST;
+            const gl = this._gl;
+            const filter = this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
+
+            // Apply anisotropic filtering when available and smoothing is enabled
+            // This improves texture quality when viewing at angles
+            if (this._imageSmoothingEnabled && this._extTextureFilterAnisotropic && this._maxAnisotropy > 0) {
+                gl.texParameterf(
+                    gl.TEXTURE_2D,
+                    this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
+                    Math.min(4, this._maxAnisotropy)
+                );
+            }
+
+            return filter;
         }
 
         // private
@@ -843,8 +904,22 @@
             this._renderingCanvas.width = this._clippingCanvas.width = this._outputCanvas.width;
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
-            this._gl = this._renderingCanvas.getContext('webgl');
-            this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            // Try WebGL2 first, then fall back to WebGL1
+            this._gl = this._renderingCanvas.getContext('webgl2');
+            if (this._gl) {
+                this._isWebGL2 = true;
+                this._setupWebGLExtensions();
+            } else {
+                this._gl = this._renderingCanvas.getContext('webgl');
+                this._isWebGL2 = false;
+                if (this._gl) {
+                    this._setupWebGLExtensions();
+                }
+            }
+
+            if (this._gl) {
+                this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            }
 
             this._resizeHandler = function(){
 
@@ -871,6 +946,26 @@
 
             //make the additional canvas elements mirror size changes to the output canvas
             this.viewer.addHandler("resize", this._resizeHandler);
+        }
+
+        /**
+         * Set up WebGL extensions (works for both WebGL1 and WebGL2)
+         * @private
+         */
+        _setupWebGLExtensions() {
+            const gl = this._gl;
+
+            // Anisotropic filtering extension (available in both WebGL1 and WebGL2)
+            this._extTextureFilterAnisotropic =
+                gl.getExtension('EXT_texture_filter_anisotropic') ||
+                gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
+                gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
+
+            if (this._extTextureFilterAnisotropic) {
+                this._maxAnisotropy = gl.getParameter(
+                    this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
+                );
+            }
         }
 
         internalCacheCreate(cache, tile) {
