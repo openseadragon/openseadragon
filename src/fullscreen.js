@@ -48,7 +48,7 @@
      * @property {String} fullScreenErrorEventName Event fired when a request to go
      * in full screen mode failed.
      */
-    var fullScreenApi = {
+    const fullScreenApi = {
         supportsFullScreen: false,
         isFullScreen: function() { return false; },
         getFullScreenElement: function() { return null; },

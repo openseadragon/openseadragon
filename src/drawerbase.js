@@ -35,7 +35,7 @@
 (function( $ ){
 
 /**
- * @typedef BaseDrawerOptions
+ * @typedef OpenSeadragon.BaseDrawerOptions
  * @memberOf OpenSeadragon
  * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
  *   detached (=internal) cache object in case it has to perform custom type conversion atop
@@ -43,15 +43,26 @@
  *   of formats the drawer declares as supported. This method must return object to be used during drawing.
  *   You should probably implement also internalCacheFree() to provide cleanup logics.
  *
- * @property {boolean} [preloadCache=true]
- *  When internalCacheCreate is used, it can be applied offline (asynchronously) during data processing = preloading,
- *  or just in time before rendering (if necessary). Preloading supports
+ * @property {boolean} [preloadCache=true] When internalCacheCreate is used, it can be applied offline
+ *   (asynchronously) during data processing = preloading, or just in time before rendering (if necessary).
+ *   Preloading supports async handlers, and can use promises. If preloadCache=false, no async (e.g. cache conversion)
+ *   logics can be used!
+ *
+ * @property {boolean} [offScreen=false] When true, the drawer is not attached to DOM. This must be false
+ *   for all drawers created and used for rendering, particularly the main viewer drawer. However,
+ *   if you need to use particular viewer API for rendering an offscreen images for further processing,
+ *   you can set this to true.
+ *
+ * @property {boolean} [broadCastTileInvalidation=true] When true, the drawer will reflect changes done to the viewer's
+ *   base drawer instance. For example, navigator will reflect data updates of the main viewport.
  */
 
 const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
 /**
  * @class OpenSeadragon.DrawerBase
  * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
+ *   More viewers can be implemented even as plugins if they are attached to the OpenSeadragon namespace.
+ *   Then you can employ the newly defined type as you would do with built-in drawers.
  * @param {Object} options - Options for this Drawer.
  * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
  * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
@@ -59,7 +70,7 @@ const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
  * @abstract
  */
 
-OpenSeadragon.DrawerBase = class DrawerBase{
+OpenSeadragon.DrawerBase = class DrawerBase {
     constructor(options){
         $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
         $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
@@ -69,31 +80,54 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this.viewer = options.viewer;
         this.viewport = options.viewport;
         this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
-        this.options = $.extend({}, this.defaultOptions, options.options);
+
+        /**
+         * @memberof OpenSeadragon.DrawerBase#
+         * @type OpenSeadragon.BaseDrawerOptions
+         */
+        this.options = $.extend({
+            usePrivateCache: false,
+            preloadCache: true,
+            offScreen: false,
+            broadCastTileInvalidation: true,
+        }, this.defaultOptions, options.options);
 
         this.container  = $.getElement( options.element );
 
         this._renderingTarget = this._createDrawingElement();
 
+        if (!this.options.offScreen) {
+            this.canvas.style.width     = "100%";
+            this.canvas.style.height    = "100%";
+            this.canvas.style.position  = "absolute";
+            // set canvas.style.left = 0 so the canvas is positioned properly in ltr and rtl html
+            this.canvas.style.left = "0";
+            $.setElementOpacity( this.canvas, this.viewer.opacity, true );
 
-        this.canvas.style.width     = "100%";
-        this.canvas.style.height    = "100%";
-        this.canvas.style.position  = "absolute";
-        // set canvas.style.left = 0 so the canvas is positioned properly in ltr and rtl html
-        this.canvas.style.left = "0";
-        $.setElementOpacity( this.canvas, this.viewer.opacity, true );
+            // Allow pointer events to pass through the canvas element so implicit
+            //   pointer capture works on touch devices
+            $.setElementPointerEventsNone( this.canvas );
+            $.setElementTouchActionNone( this.canvas );
 
-        // Allow pointer events to pass through the canvas element so implicit
-        //   pointer capture works on touch devices
-        $.setElementPointerEventsNone( this.canvas );
-        $.setElementTouchActionNone( this.canvas );
+            // explicit left-align
+            this.container.style.textAlign = "left";
+            this.container.appendChild( this.canvas );
 
-        // explicit left-align
-        this.container.style.textAlign = "left";
-        this.container.appendChild( this.canvas );
+            if (this.options.broadCastTileInvalidation) {
+                let parentViewer = this.viewer;
+                while (parentViewer.viewer) {
+                    parentViewer = parentViewer.viewer;
+                }
+                this._parentViewer = parentViewer;
+                parentViewer._registerDrawer(this);
+            } else {
+                this.viewer._registerDrawer(this);
+                this._parentViewer = this.viewer;
+            }
+        }
 
         this._checkInterfaceImplementation();
-        this.setInternalCacheNeedsRefresh();  // initializes stamp
+        this.setInternalCacheNeedsRefresh();  // initializes timestamp
     }
 
     /**
@@ -101,16 +135,18 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * The base implementation provides default shared options.
      * Overrides should enumerate all defaults or extend from this implementation.
      *   return $.extend({}, super.options, { ... custom drawer instance options ... });
-     * @returns {BaseDrawerOptions} common options
+     * @memberof {OpenSeadragon.DrawerBase}
+     * @returns {OpenSeadragon.BaseDrawerOptions} common options
      */
     get defaultOptions() {
-        return {
-            usePrivateCache: false,
-            preloadCache: true,
-        };
+        // defaults are defined in constructor to avoid overriding issues
+        return {};
     }
 
-    // protect the canvas member with a getter
+    /**
+     * @memberof {OpenSeadragon.DrawerBase}
+     * @return {Element}
+     */
     get canvas(){
         return this._renderingTarget;
     }
@@ -130,6 +166,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
 
     /**
      * @abstract
+     * @memberof {OpenSeadragon.DrawerBase}
      * @returns {String | undefined} What type of drawer this is. Must be overridden by extending classes.
      */
     getType(){
@@ -140,7 +177,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     /**
      * Retrieve required data formats the data must be converted to.
      * This list MUST BE A VALID SUBSET OF getSupportedDataFormats()
-     * @abstract
+     * @memberof {OpenSeadragon.DrawerBase}
      * @return {string[]}
      */
     getRequiredDataFormats() {
@@ -150,6 +187,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     /**
      * Retrieve data types
      * @abstract
+     * @memberof {OpenSeadragon.DrawerBase}
      * @return {string[]}
      */
     getSupportedDataFormats() {
@@ -162,6 +200,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * value, the rendering _MUST NOT_ proceed. It should
      * await next animation frames and check again for availability.
      * @param {OpenSeadragon.Tile} tile
+     * @memberof {OpenSeadragon.DrawerBase}
      * @return {any|undefined} undefined if cache not available, compatible data otherwise.
      */
     getDataToDraw(tile) {
@@ -210,10 +249,12 @@ OpenSeadragon.DrawerBase = class DrawerBase{
     }
 
     /**
-     * @abstract
+     * Destroy the drawer. Child classes must call this super class.
      */
     destroy() {
-        $.console.error('Drawer.destroy must be implemented by child class');
+        // how to force child classes to call this?
+        // we could force destroy methods to return some unique value that is obtainable only from this method...
+        this._parentViewer._unregisterDrawer(this);
     }
 
     /**
@@ -283,6 +324,16 @@ OpenSeadragon.DrawerBase = class DrawerBase{
         this._dataNeedsRefresh = $.now();
     }
 
+    /**
+     * When a Tiled Image is initialized and ready, this method is called.
+     * Unlike with events, here it is guaranteed that all external code has finished
+     * processing (under normal circumstances) and the tiled image should not change.
+     * @param {OpenSeadragon.TiledImage} tiledImage target image that has been created
+     */
+    tiledImageCreated(tiledImage) {
+        // pass
+    }
+
     // Private functions
 
     /**
@@ -320,8 +371,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
      */
     viewportToDrawerRectangle(rectangle) {
-        var topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
-        var size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
+        const topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
+        const size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
 
         return new $.Rect(
             topLeft.x * $.pixelDensityRatio,
@@ -340,7 +391,7 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
      */
     viewportCoordToDrawerCoord(point) {
-        var vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
+        const vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
         return new $.Point(
             vpPoint.x * $.pixelDensityRatio,
             vpPoint.y * $.pixelDensityRatio
@@ -357,8 +408,8 @@ OpenSeadragon.DrawerBase = class DrawerBase{
      * @returns {OpenSeadragon.Point} {x, y} size of the canvas
      */
     _calculateCanvasSize() {
-        var pixelDensityRatio = $.pixelDensityRatio;
-        var viewportSize = this.viewport.getContainerSize();
+        const pixelDensityRatio = $.pixelDensityRatio;
+        const viewportSize = this.viewport.getContainerSize();
         return new OpenSeadragon.Point( Math.round(viewportSize.x * pixelDensityRatio), Math.round(viewportSize.y * pixelDensityRatio));
     }
 

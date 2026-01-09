@@ -74,7 +74,7 @@ $.ImageTileSource = class extends $.TileSource {
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} url - optional
+     * @param {String} [url]
      */
     supports(data, url) {
         return data.type && data.type === "image";
@@ -112,17 +112,13 @@ $.ImageTileSource = class extends $.TileSource {
         $.addEvent(image, 'load', function () {
             _this.width = image.naturalWidth;
             _this.height = image.naturalHeight;
-            _this.aspectRatio = _this.width / _this.height;
-            _this.dimensions = new $.Point(_this.width, _this.height);
-            _this._tileWidth = _this.width;
-            _this._tileHeight = _this.height;
+            _this.tileWidth = _this.width;
+            _this.tileHeight = _this.height;
             _this.tileOverlap = 0;
             _this.minLevel = 0;
             _this.image = image;
             _this.levels = _this._buildLevels(image);
             _this.maxLevel = _this.levels.length - 1;
-
-            _this.ready = true;
 
             // Note: this event is documented elsewhere, in TileSource
             _this.raiseEvent('ready', {tileSource: _this});

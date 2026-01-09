@@ -85,7 +85,7 @@ class WeightedGraph {
      * @return {{path: ConversionStep[], cost: number}|undefined} cheapest path from start to finish
      */
     dijkstra(start, finish) {
-        let path = []; //to return at end
+        const path = []; //to return at end
         if (start === finish) {
             return {path: path, cost: 0};
         }
@@ -110,11 +110,11 @@ class WeightedGraph {
                 break;
             }
             const neighbors = this.adjacencyList[smallestNode.value];
-            for (let neighborKey in neighbors) {
-                let edge = neighbors[neighborKey];
+            for (const neighborKey in neighbors) {
+                const edge = neighbors[neighborKey];
                 //relax node
-                let newCost = smallestNode.key + edge.weight;
-                let nextNeighbor = edge.target;
+                const newCost = smallestNode.key + edge.weight;
+                const nextNeighbor = edge.target;
                 if (newCost < nextNeighbor.key) {
                     nextNeighbor._previous = smallestNode;
                     //key change
@@ -127,7 +127,7 @@ class WeightedGraph {
             return undefined; //no path
         }
 
-        let finalCost = smallestNode.key; //final weight last node
+        const finalCost = smallestNode.key; //final weight last node
 
         // done, build the shortest path
         while (smallestNode._previous) {
@@ -145,6 +145,127 @@ class WeightedGraph {
             cost: finalCost
         };
     }
+}
+
+let _imageConversionWorker;
+let _conversionId = 0;
+// id -> { resolve, reject, timer? }
+const _pendingConversions = new Map();
+let __warnedNoSAB = false;
+const __hasSAB = typeof SharedArrayBuffer !== 'undefined' && self.crossOriginIsolated === true;
+
+function getIBWorker() {
+    if (_imageConversionWorker) {
+        return _imageConversionWorker;
+    }
+
+    const code = `
+self.onmessage = async (e) => {
+  const { id, op, } = e.data;
+  let error;
+  try {
+    if (op === 'decodeFromBlob') {
+      const bmp = await createImageBitmap(e.data.blob, { colorSpaceConversion: 'none' });
+      postMessage({ id, ok: true, bmp }, [bmp]);
+      return;
+    }
+    if (op === 'decodeFromBytes') {
+      const u8 = new Uint8Array(e.data.bytes);
+      const b  = new Blob([u8], { type: e.data.mime || '' });
+      const bmp = await createImageBitmap(b, { colorSpaceConversion: 'none' });
+      postMessage({ id, ok: true, bmp }, [bmp]);
+      return;
+    }
+    if (op === 'fetchDecode') {
+      const res = await fetch(e.data.url, e.data.setup);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const b = await res.blob();
+      const bmp = await createImageBitmap(b, { colorSpaceConversion: 'none' });
+      postMessage({ id, ok: true, bmp }, [bmp]);
+      return;
+    }
+    error = 'Unknown op: ' + op;
+  } catch (err) {
+    error = String(err && err.message || err);
+  }
+  postMessage({ id, ok: false, err: error });
+};
+`;
+    // eslint-disable-next-line compat/compat
+    const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
+    _imageConversionWorker = new Worker(url);
+
+    _imageConversionWorker.onmessage = (e) => {
+        const { id, ok, bmp, err } = e.data || {};
+        const entry = _pendingConversions.get(id);
+        if (!entry) {
+            return;
+        }
+        _pendingConversions.delete(id);
+        if (entry.timer) {
+            clearTimeout(entry.timer);
+            entry.timer = null;
+        }
+        if (ok) {
+            entry.resolve(bmp);
+        } else {
+            entry.reject(new Error(err));
+        }
+    };
+
+    _imageConversionWorker.onerror = (e) => {
+        for (const [, entry] of _pendingConversions) {
+            if (entry.timer) {
+                clearTimeout(entry.timer);
+                entry.timer = null;
+            }
+            entry.reject(new Error('Worker error'));
+        }
+        _pendingConversions.clear();
+    };
+    return _imageConversionWorker;
+}
+
+function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
+    const worker = getIBWorker();
+    const id = ++_conversionId;
+
+    return new $.Promise((resolve, reject) => {
+        // possibly test $.supportsPromise here as well...
+        payload.id = id;
+        payload.op = op;
+
+        const entry = { resolve, reject, timer: null };
+        if (timeoutMs > 0) {
+            entry.timer = setTimeout(() => {
+                entry.timer = null;
+                _pendingConversions.delete(id);
+                reject(new Error(`Worker timeout (${op})`));
+            }, timeoutMs);
+        }
+        _pendingConversions.set(id, entry);
+
+        if (op === 'decodeFromBytes') {
+            if (__hasSAB) {
+                const u8 = payload.u8;
+                // eslint-disable-next-line no-undef
+                const sab = new SharedArrayBuffer(u8.byteLength);
+                new Uint8Array(sab).set(u8);
+                worker.postMessage({ id, op, bytes: sab, mime: payload.mime });
+            } else {
+                if (!__warnedNoSAB) {
+                    __warnedNoSAB = true;
+                    console.warn('[Converter] SharedArrayBuffer unavailable; falling back to ArrayBuffer.');
+                }
+                const u8 = payload.u8;
+                const tight = (u8.byteOffset === 0 && u8.byteLength === u8.buffer.byteLength) ? u8 : u8.slice();
+                worker.postMessage({ id, op, bytes: tight.buffer, mime: payload.mime }, [tight.buffer]);
+            }
+            return;
+        }
+
+        worker.postMessage(payload);
+    });
 }
 
 /**
@@ -221,7 +342,7 @@ $.DataTypeConverter = class {
                 throw "Not supported in sync mode!";
             }
             const img = new Image();
-            img.onerror = img.onabort = reject;
+            img.onerror = img.onabort = e => reject(`Failed to load image: ${url}`);
             img.onload = () => resolve(img);
             if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
                 img.crossOrigin = tile.tiledImage.crossOriginPolicy;
@@ -244,32 +365,140 @@ $.DataTypeConverter = class {
                 reject("Not supported in sync mode!");
             }
             const img = new Image();
-            img.onerror = img.onabort = reject;
+            img.onerror = img.onabort = e => {
+                // eslint-disable-next-line compat/compat
+                (window.URL || window.webkitURL).revokeObjectURL(blob);
+                reject(e);
+            };
             img.onload = () => {
                 // eslint-disable-next-line compat/compat
                 (window.URL || window.webkitURL).revokeObjectURL(blob);
                 resolve(img);
             };
+            img.decoding = 'async';
             img.src = url;
-        }));
+        }), 1, 2);
+
         this.learn("context2d", "rasterBlob", (tile, ctx) => new $.Promise((resolve, reject) => {
             if (!$.supportsAsync) {
                 reject("Not supported in sync mode!");
             }
             ctx.canvas.toBlob(resolve);
-        }));
+        }), 1, 2);
+
+        // rasterBlob -> imageBitmap (preferred fast path)
+        this.learn("rasterBlob", "imageBitmap", (tile, blob) => new $.Promise((resolve, reject) => {
+            try {
+                if (!$.supportsAsync) {
+                    reject("Not supported in sync mode!");
+                }
+                if (_imageConversionWorker) {
+                    postWorker('decodeFromBlob', {blob}).then(resolve);
+                } else {
+                    // Fallback main thread
+                    createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(resolve);
+                }
+            } catch (e) {
+                reject(e);
+            }
+        }), 1, 1);
+
+        this.learn("imageBitmap", "context2d", (tile, bmp) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            ctx.drawImage(bmp, 0, 0);
+            return ctx;
+        }, 1, 2);
+
+        this.learn("imageBitmap", "imageUrl", (tile, bmp) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = bmp.width;
+            canvas.height = bmp.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bmp, 0, 0);
+            return canvas.toDataURL("image/png");
+        }, 1, 2);
+
+        this.learn("image", "imageBitmap", (tile, img) => {
+            return createImageBitmap(img, { colorSpaceConversion: 'none' });
+        }, 1, 2);
+
+        this.learn("imageUrl", "imageBitmap", (tile, url) => new $.Promise((resolve, reject) => {
+            try {
+                if (!$.supportsAsync) {
+                    reject("Not supported in sync mode!");
+                }
+                let setup;
+                if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
+                    const policy = tile.tiledImage.crossOriginPolicy;
+                    if (policy === 'anonymous') {
+                        setup = {
+                            mode: 'cors',
+                            credentials: 'omit',
+                        };
+                    } else if (policy === 'use-credentials') {
+                        setup = {
+                            mode: 'cors',
+                            credentials: 'include',
+                        };
+                    } else {
+                        reject(new Error(`Unsupported crossOriginPolicy ${policy}`));
+                    }
+                }
+                if (_imageConversionWorker) {
+                    postWorker('fetchDecode', { url, setup }).then(resolve);
+                } else {
+                    // Fallback to the main thread
+                    // eslint-disable-next-line compat/compat
+                    fetch(url, setup).then(res => {
+                        if (!res.ok) {
+                            throw new Error(`HTTP ${res.status} loading ${url}`);
+                        }
+                        return res.blob();
+                    }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
+                    ).then(resolve);
+                }
+            } catch (e) { reject(e); }
+        }), 1, 1);
 
         this.learn("context2d", "imageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
-        this.learn("image", "imageUrl", (tile, image) => image.url);
-        this.learn("image", "context2d", canvasContextCreator, 1, 1);
-        this.learn("imageUrl", "image", imageCreator, 1, 1);
+        this.learn("image", "imageUrl", (tile, image) => image.url, 0, 1);
+        this.learn("image", "context2d", canvasContextCreator, 1, 2);
+        this.learn("imageUrl", "image", imageCreator, 1, 2);
 
         //Copies
         this.learn("image", "image", (tile, image) => imageCreator(tile, image.src), 1, 1);
         this.learn("imageUrl", "imageUrl", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
         this.learn("context2d", "context2d", (tile, ctx) => canvasContextCreator(tile, ctx.canvas));
         this.learn("rasterBlob", "rasterBlob", (tile, blob) => blob, 0, 1); //blobs are immutable, no need to copy
+        this.learn("imageBitmap", "imageBitmap", (tile, bmp) => new $.Promise( (resolve, reject) => {
+            try {
+                if (!$.supportsAsync) {
+                    return reject("Not supported in sync mode!");
+                }
+                if (!bmp) {
+                    return reject(new Error("No ImageBitmap to copy"));
+                }
 
+                if (typeof OffscreenCanvas !== 'undefined' && bmp.width && bmp.height) {
+                    const oc = new OffscreenCanvas(bmp.width, bmp.height);
+                    const ctx = oc.getContext('2d', { willReadFrequently: false });
+                    ctx.drawImage(bmp, 0, 0);
+
+                    if (typeof oc.transferToImageBitmap === 'function') {
+                        const copy = oc.transferToImageBitmap();
+                        return resolve(copy);
+                    }
+                    return createImageBitmap(oc, { colorSpaceConversion: 'none' }).then(resolve);
+                }
+                // Fallback
+                return createImageBitmap(bmp, { colorSpaceConversion: 'none' }).then(resolve);
+            } catch (e) {
+                return reject(e);
+            }
+        }), 1, 1);
         /**
          * Free up canvas memory
          * (iOS 12 or higher on 2GB RAM device has only 224MB canvas memory,
@@ -302,7 +531,7 @@ $.DataTypeConverter = class {
     guessType( x ) {
         if (Array.isArray(x)) {
             const types = [];
-            for (let item of x) {
+            for (const item of x) {
                 if (item === undefined || item === null) {
                     continue;
                 }
@@ -396,14 +625,14 @@ $.DataTypeConverter = class {
             return $.Promise.resolve();
         }
 
-        const stepCount = conversionPath.length,
-            _this = this;
+        const stepCount = conversionPath.length;
+        const _this = this;
         const step = (x, i, destroy = true) => {
             if (i >= stepCount) {
                 return $.Promise.resolve(x);
             }
-            let edge = conversionPath[i];
-            let y = edge.transform(tile, x);
+            const edge = conversionPath[i];
+            const y = edge.transform(tile, x);
             if (y === undefined) {
                 $.console.error(`[OpenSeadragon.converter.convert] data mid result undefined value (while converting using %s)`, edge);
                 return $.Promise.resolve();
@@ -465,7 +694,7 @@ $.DataTypeConverter = class {
      *  Note: if a function is returned, it is a callback called once the data is ready.
      */
     getConversionPath(from, to) {
-        let bestConverterPath, selectedType;
+        let bestConverterPath;
         let knownFrom = this._known[from];
         if (!knownFrom) {
             this._known[from] = knownFrom = {};
@@ -475,29 +704,38 @@ $.DataTypeConverter = class {
             $.console.assert(to.length > 0, "[getConversionPath] conversion 'to' type must be defined.");
             let bestCost = Infinity;
 
-            //FIXME: pre-compute all paths in 'to' array? could be efficient for multiple
-            // type system, but overhead for simple use cases... now we just use the first type if costs unknown
-            selectedType = to[0];
-
             for (const outType of to) {
-                const conversion = knownFrom[outType];
+                let conversion = knownFrom[outType];
+                if (conversion === undefined) {
+                    knownFrom[outType] = conversion = this.graph.dijkstra(from, outType);
+                }
                 if (conversion && bestCost > conversion.cost) {
                     bestConverterPath = conversion;
                     bestCost = conversion.cost;
-                    selectedType = outType;
                 }
             }
         } else {
             $.console.assert(typeof to === "string", "[getConversionPath] conversion 'to' type must be defined.");
             bestConverterPath = knownFrom[to];
-            selectedType = to;
+            if (bestConverterPath === undefined) {
+                bestConverterPath = this.graph.dijkstra(from, to);
+                this._known[from][to] = bestConverterPath;
+            }
         }
 
-        if (!bestConverterPath) {
-            bestConverterPath = this.graph.dijkstra(from, selectedType);
-            this._known[from][selectedType] = bestConverterPath;
-        }
         return bestConverterPath ? bestConverterPath.path : undefined;
+    }
+
+    /**
+     * Get the final type of the conversion path.
+     * @param {ConversionStep[]} path
+     * @return {undefined|string}  undefined if invalid path
+     */
+    getConversionPathFinalType(path) {
+        if (!path || !path.length) {
+            return undefined;
+        }
+        return path[path.length - 1].target.value;
     }
 
     /**

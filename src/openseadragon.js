@@ -190,9 +190,10 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
-  * @property {String|DrawerImplementation|Array} [drawer = ['webgl', 'canvas', 'html']]
-  *     Which drawer to use. Valid strings are 'webgl', 'canvas', and 'html'. Valid drawer
-  *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
+  * @property {String|DrawerImplementation|Array} [drawer = ['auto', 'webgl', 'canvas', 'html']]
+  *     Which drawer to use. Valid strings are 'auto', 'webgl', 'canvas', and 'html'.
+  *     The string 'auto' chooses between WebGL or canvas depending on the device.
+  *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
   *     of different implementations, which will be tried in order based on browser support.
   *
@@ -539,6 +540,9 @@
   *     interactions include draging the image in a plane, and zooming in toward
   *     and away from the image.
   *
+  * @property {boolean} [keyboardNavEnabled=true]
+  *     Is the user able to interact with the image via keyboard.
+  *
   * @property {Boolean} [showNavigationControl=true]
   *     Set to false to prevent the appearance of the default navigation controls.<br>
   *     Note that if set to false, the customs buttons set by the options
@@ -768,18 +772,23 @@
   *
   */
 
- /**
-  * @typedef {Object.<string, Object>} DrawerOptions - give the renderer options (both shared - BaseDrawerOptions, and custom).
-  *   Supports arbitrary keys: you can register any drawer on the OpenSeadragon namespace, it will get automatically recognized
-  *   and its getType() implementation will define what key to specify the options with.
-  * @memberof OpenSeadragon
-  * @property {BaseDrawerOptions} [webgl] - options if the WebGLDrawer is used.
-  * @property {BaseDrawerOptions} [canvas] - options if the CanvasDrawer is used.
-  * @property {BaseDrawerOptions} [html] - options if the HTMLDrawer is used.
-  * @property {BaseDrawerOptions} [custom] - options if a custom drawer is used.
-  *
-  * //Note: if you want to add change options for target drawer change type to {BaseDrawerOptions & MyDrawerOpts}
-  */
+/**
+ * @typedef {OpenSeadragon.BaseDrawerOptions} OpenSeadragon.WebGLDrawerOptions
+ * @memberof OpenSeadragon
+ * @property {Boolean} [unpackWithPremultipliedAlpha=false]
+ *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
+ */
+
+/**
+ * @typedef {Object.<string, OpenSeadragon.BaseDrawerOptions>} DrawerOptions
+ * Can support any drawer key as long as a drawer is registered with the drawer id = map key.
+ * Therefore, one can register a new drawer that extends a drawer base and submit a custom key in the options.
+ * @memberof OpenSeadragon
+ * @property {OpenSeadragon.WebGLDrawerOptions} webgl - options if the WebGLDrawer is used.
+ * @property {OpenSeadragon.BaseDrawerOptions} canvas - options if the CanvasDrawer is used.
+ * @property {OpenSeadragon.BaseDrawerOptions} html - options if the HTMLDrawer is used.
+ * @property {OpenSeadragon.BaseDrawerOptions} custom - options if a custom drawer is used.
+ */
 
 
 /**
@@ -875,7 +884,7 @@ function OpenSeadragon( options ){
      * [[Class]] -> type pairs
      * @private
      */
-    var class2type = {
+    const class2type = {
             '[object Boolean]':                  'boolean',
             '[object Number]':                   'number',
             '[object String]':                   'string',
@@ -890,10 +899,10 @@ function OpenSeadragon( options ){
             '[object HTMLImageElement]':         'image',
             '[object HTMLCanvasElement]':        'canvas',
             '[object CanvasRenderingContext2D]': 'context2d'
-        },
+        };
         // Save a reference to some core methods
-        toString    = Object.prototype.toString,
-        hasOwn      = Object.prototype.hasOwnProperty;
+    const toString    = Object.prototype.toString;
+    const hasOwn      = Object.prototype.hasOwnProperty;
 
     /**
      * Taken from jQuery 1.6.1
@@ -965,8 +974,8 @@ function OpenSeadragon( options ){
         // Own properties are enumerated firstly, so to speed up,
         // if last one is own, then all properties are own.
 
-        var lastKey;
-        for (var key in obj ) {
+        let lastKey;
+        for (const key in obj ) {
             lastKey = key;
         }
 
@@ -981,7 +990,7 @@ function OpenSeadragon( options ){
      * @see {@link http://www.jquery.com/ jQuery}
      */
     $.isEmptyObject = function( obj ) {
-        for ( var name in obj ) {
+        for ( const name in obj ) {
             return false;
         }
         return true;
@@ -1009,7 +1018,7 @@ function OpenSeadragon( options ){
      * @memberof OpenSeadragon
      */
     $.supportsCanvas = (function () {
-        var canvasElement = document.createElement( 'canvas' );
+        const canvasElement = document.createElement( 'canvas' );
         return !!( $.isFunction( canvasElement.getContext ) &&
                     canvasElement.getContext( '2d' ) );
     }());
@@ -1020,7 +1029,7 @@ function OpenSeadragon( options ){
      * @returns {Boolean} True if the canvas is tainted.
      */
     $.isCanvasTainted = function(canvas) {
-        var isTainted = false;
+        let isTainted = false;
         try {
             // We test if the canvas is tainted by retrieving data from it.
             // An exception will be raised if the canvas is tainted.
@@ -1055,11 +1064,11 @@ function OpenSeadragon( options ){
      * @memberof OpenSeadragon
      */
     $.supportsEventListenerOptions = (function () {
-        var supported = 0;
+        let supported = 0;
 
         if ( $.supportsAddEventListener ) {
             try {
-                var options = {
+                const options = {
                     get capture() {
                         supported++;
                         return false;
@@ -1100,9 +1109,9 @@ function OpenSeadragon( options ){
      */
     $.getCurrentPixelDensityRatio = function() {
         if ( $.supportsCanvas ) {
-            var context = document.createElement('canvas').getContext('2d');
-            var devicePixelRatio = window.devicePixelRatio || 1;
-            var backingStoreRatio = context.webkitBackingStorePixelRatio ||
+            const context = document.createElement('canvas').getContext('2d');
+            const devicePixelRatio = window.devicePixelRatio || 1;
+            const backingStoreRatio = context.webkitBackingStorePixelRatio ||
                                     context.mozBackingStorePixelRatio ||
                                     context.msBackingStorePixelRatio ||
                                     context.oBackingStorePixelRatio ||
@@ -1144,16 +1153,16 @@ function OpenSeadragon( options ){
      * @see {@link http://www.jquery.com/ jQuery}
      */
     $.extend = function() {
-        var options,
-            name,
-            src,
-            copy,
-            copyIsArray,
-            clone,
-            target  = arguments[ 0 ] || {},
-            length  = arguments.length,
-            deep    = false,
-            i       = 1;
+        let options;
+        let name;
+        let src;
+        let copy;
+        let copyIsArray;
+        let clone;
+        let target = arguments[ 0 ] || {};
+        const length = arguments.length;
+        let deep = false;
+        let i = 1;
 
         // Handle a deep copy situation
         if ( typeof target === "boolean" ) {
@@ -1180,7 +1189,7 @@ function OpenSeadragon( options ){
             if ( options !== null || options !== undefined ) {
                 // Extend the base object
                 for ( name in options ) {
-                    var descriptor = Object.getOwnPropertyDescriptor(options, name);
+                    const descriptor = Object.getOwnPropertyDescriptor(options, name);
 
                     if (descriptor !== undefined) {
                         if (descriptor.get || descriptor.set) {
@@ -1226,11 +1235,11 @@ function OpenSeadragon( options ){
         return target;
     };
 
-    var isIOSDevice = function () {
+    const isIOSDevice = function () {
         if (typeof navigator !== 'object') {
             return false;
         }
-        var userAgent = navigator.userAgent;
+        const userAgent = navigator.userAgent;
         if (typeof userAgent !== 'string') {
             return false;
         }
@@ -1367,6 +1376,7 @@ function OpenSeadragon( options ){
             controlsFadeDelay:       2000,  //ZOOM/HOME/FULL/SEQUENCE
             controlsFadeLength:      1500,  //ZOOM/HOME/FULL/SEQUENCE
             mouseNavEnabled:         true,  //GENERAL MOUSE INTERACTIVITY
+            keyboardNavEnabled:      true,  //GENERAL KEYBOARD INTERACTIVITY
 
             //VIEWPORT NAVIGATOR SETTINGS
             showNavigator:              false,
@@ -1399,21 +1409,10 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
-
+            drawer:                            ['auto', 'webgl', 'canvas', 'html'], // prefer using auto, then webgl, then canvas (i.e. context2d), then fallback to html
+            // DRAWER CONFIGURATIONS
             drawerOptions: {
-                webgl: {
-
-                },
-                canvas: {
-
-                },
-                html: {
-
-                },
-                custom: {
-
-                }
+                // [drawer-id]: {options} map
             },
 
             // TILED IMAGE SETTINGS
@@ -1521,7 +1520,7 @@ function OpenSeadragon( options ){
          */
         delegate: function( object, method ) {
             return function(){
-                var args = arguments;
+                let args = arguments;
                 if ( args === undefined ){
                     args = [];
                 }
@@ -1610,9 +1609,9 @@ function OpenSeadragon( options ){
          * @returns {OpenSeadragon.Point} - the position of the upper left corner of the element.
          */
         getElementPosition: function( element ) {
-            var result = new $.Point(),
-                isFixed,
-                offsetParent;
+            let result = new $.Point();
+            let isFixed;
+            let offsetParent;
 
             element      = $.getElement( element );
             isFixed      = $.getElementStyle( element ).position === "fixed";
@@ -1645,22 +1644,20 @@ function OpenSeadragon( options ){
         getElementOffset: function( element ) {
             element = $.getElement( element );
 
-            var doc = element && element.ownerDocument,
-                docElement,
-                win,
-                boundingRect = { top: 0, left: 0 };
+            const doc = element && element.ownerDocument;
+            let boundingRect = { top: 0, left: 0 };
 
             if ( !doc ) {
                 return new $.Point();
             }
 
-            docElement = doc.documentElement;
+            const docElement = doc.documentElement;
 
             if ( typeof element.getBoundingClientRect !== typeof undefined ) {
                 boundingRect = element.getBoundingClientRect();
             }
 
-            win = ( doc === doc.window ) ?
+            const win = ( doc === doc.window ) ?
                 doc :
                 ( doc.nodeType === 9 ) ?
                     doc.defaultView || doc.parentWindow :
@@ -1713,22 +1710,22 @@ function OpenSeadragon( options ){
          * supported.
          */
         getCssPropertyWithVendorPrefix: function(property) {
-            var memo = {};
+            const memo = {};
 
             $.getCssPropertyWithVendorPrefix = function(property) {
                 if (memo[property] !== undefined) {
                     return memo[property];
                 }
-                var style = document.createElement('div').style;
-                var result = null;
+                const style = document.createElement('div').style;
+                let result = null;
                 if (style[property] !== undefined) {
                     result = property;
                 } else {
-                    var prefixes = ['Webkit', 'Moz', 'MS', 'O',
+                    const prefixes = ['Webkit', 'Moz', 'MS', 'O',
                         'webkit', 'moz', 'ms', 'o'];
-                    var suffix = $.capitalizeFirstLetter(property);
-                    for (var i = 0; i < prefixes.length; i++) {
-                        var prop = prefixes[i] + suffix;
+                    const suffix = $.capitalizeFirstLetter(property);
+                    for (let i = 0; i < prefixes.length; i++) {
+                        const prop = prefixes[i] + suffix;
                         if (style[prop] !== undefined) {
                             result = prop;
                             break;
@@ -1758,7 +1755,7 @@ function OpenSeadragon( options ){
          * @returns {Number} the result of the modulo of number
          */
         positiveModulo: function(number, modulo) {
-            var result = number % modulo;
+            let result = number % modulo;
             if (result < 0) {
                 result += modulo;
             }
@@ -1775,8 +1772,8 @@ function OpenSeadragon( options ){
          */
         pointInElement: function( element, point ) {
             element = $.getElement( element );
-            var offset = $.getElementOffset( element ),
-                size = $.getElementSize( element );
+            const offset = $.getElementOffset( element );
+            const size = $.getElementSize( element );
             return point.x >= offset.x && point.x < offset.x + size.x && point.y < offset.y + size.y && point.y >= offset.y;
         },
 
@@ -1791,7 +1788,7 @@ function OpenSeadragon( options ){
 
             if ( typeof ( event.pageX ) === "number" ) {
                 $.getMousePosition = function( event ){
-                    var result = new $.Point();
+                    const result = new $.Point();
 
                     result.x = event.pageX;
                     result.y = event.pageY;
@@ -1800,7 +1797,7 @@ function OpenSeadragon( options ){
                 };
             } else if ( typeof ( event.clientX ) === "number" ) {
                 $.getMousePosition = function( event ){
-                    var result = new $.Point();
+                    const result = new $.Point();
 
                     result.x =
                         event.clientX +
@@ -1829,8 +1826,8 @@ function OpenSeadragon( options ){
          * @returns {OpenSeadragon.Point}
          */
         getPageScroll: function() {
-            var docElement  = document.documentElement || {},
-                body        = document.body || {};
+            const docElement = document.documentElement || {};
+            const body = document.body || {};
 
             if ( typeof ( window.pageXOffset ) === "number" ) {
                 $.getPageScroll = function(){
@@ -1872,7 +1869,7 @@ function OpenSeadragon( options ){
                     window.scrollTo( scroll.x, scroll.y );
                 };
             } else {
-                var originalScroll = $.getPageScroll();
+                const originalScroll = $.getPageScroll();
                 if ( originalScroll.x === scroll.x &&
                     originalScroll.y === scroll.y ) {
                     // We are already correctly positioned and there
@@ -1882,7 +1879,7 @@ function OpenSeadragon( options ){
 
                 document.body.scrollLeft = scroll.x;
                 document.body.scrollTop = scroll.y;
-                var currentScroll = $.getPageScroll();
+                let currentScroll = $.getPageScroll();
                 if ( currentScroll.x !== originalScroll.x &&
                     currentScroll.y !== originalScroll.y ) {
                     $.setPageScroll = function( scroll ) {
@@ -1918,8 +1915,8 @@ function OpenSeadragon( options ){
          * @returns {OpenSeadragon.Point}
          */
         getWindowSize: function() {
-            var docElement = document.documentElement || {},
-                body    = document.body || {};
+            const docElement = document.documentElement || {};
+            const body = document.body || {};
 
             if ( typeof ( window.innerWidth ) === 'number' ) {
                 $.getWindowSize = function(){
@@ -1966,7 +1963,7 @@ function OpenSeadragon( options ){
                 three nested wrapper divs:
              */
 
-            var wrappers = [
+            const wrappers = [
                 $.makeNeutralElement( 'div' ),
                 $.makeNeutralElement( 'div' ),
                 $.makeNeutralElement( 'div' )
@@ -1996,6 +1993,42 @@ function OpenSeadragon( options ){
             return wrappers[0];
         },
 
+        /**
+         * Log trace information from the system. Useful for logging and debugging
+         * async events. Calls to this function SHOULD NOT BE present in the release.
+         * (or at least used only in debug mode).
+         * @param {OpenSeadragon.Tile|OpenSeadragon.CacheRecord|string} tile message to log or tile to inspect
+         * @param {boolean} stacktrace if true log the stacktrace
+         */
+        trace: function(tile, stacktrace = false) {
+            this.__traceLogs = [];
+            setInterval(() => {
+                if (!this.__traceLogs.length) {
+                    return;
+                }
+                console.log(this.__traceLogs.join('\n'));
+                this.__traceLogs = [];
+            }, 2000);
+            this.trace = function (tile, stacktrace = false) {
+                if (typeof tile === 'string') {
+                    this.__traceLogs.push(tile);
+                    if (stacktrace) {
+                        this.__traceLogs.push(...new Error().stack.split('\n').slice(1));
+                    }
+                    return;
+                }
+                if (tile instanceof OpenSeadragon.Tile) {
+                    tile = tile.getCache(tile.originalCacheKey);
+                }
+                const cacheTile = tile._tiles[0];
+                this.__traceLogs.push(`Cache ${cacheTile.toString()} loaded ${cacheTile.loaded} loading ${cacheTile.loading} cacheCount ${Object.keys(cacheTile._caches).length} - CACHE ${tile.__invStamp}`);
+                if (stacktrace) {
+                    this.__traceLogs.push(...new Error().stack.split('\n').slice(1));
+                }
+            };
+            this.trace(tile, stacktrace);
+        },
+
 
         /**
          * Creates an easily positionable element of the given type that therefor
@@ -2005,8 +2038,8 @@ function OpenSeadragon( options ){
          * @returns {Element}
          */
         makeNeutralElement: function( tagName ) {
-            var element = document.createElement( tagName ),
-                style   = element.style;
+            const element = document.createElement( tagName );
+            const style   = element.style;
 
             style.background = "transparent none";
             style.border     = "none";
@@ -2042,7 +2075,7 @@ function OpenSeadragon( options ){
          * @returns {Element}
          */
         makeTransparentImage: function( src ) {
-            var img = $.makeNeutralElement( "img" );
+            const img = $.makeNeutralElement( "img" );
 
             img.src = src;
 
@@ -2059,8 +2092,8 @@ function OpenSeadragon( options ){
          */
         setElementOpacity: function( element, opacity, usesAlpha ) {
 
-            var ieOpacity,
-                ieFilter;
+            let ieOpacity;
+            let ieFilter;
 
             element = $.getElement( element );
 
@@ -2158,14 +2191,12 @@ function OpenSeadragon( options ){
                 };
             } else {
                 this.indexOf = function( array, searchElement, fromIndex ) {
-                    var i,
-                        pivot = ( fromIndex ) ? fromIndex : 0,
-                        length;
+                    let pivot = ( fromIndex ) ? fromIndex : 0;
                     if ( !array ) {
                         throw new TypeError( );
                     }
 
-                    length = array.length;
+                    const length = array.length;
                     if ( length === 0 || pivot >= length ) {
                         return -1;
                     }
@@ -2174,7 +2205,7 @@ function OpenSeadragon( options ){
                         pivot = length - Math.abs( pivot );
                     }
 
-                    for ( i = pivot; i < length; i++ ) {
+                    for ( let i = pivot; i < length; i++ ) {
                         if ( array[i] === searchElement ) {
                             return i;
                         }
@@ -2192,13 +2223,11 @@ function OpenSeadragon( options ){
          * @param {String} className
          */
         removeClass: function( element, className ) {
-            var oldClasses,
-                newClasses = [],
-                i;
+            const newClasses = [];
 
             element = $.getElement( element );
-            oldClasses = element.className.split( /\s+/ );
-            for ( i = 0; i < oldClasses.length; i++ ) {
+            const oldClasses = element.className.split( /\s+/ );
+            for ( let i = 0; i < oldClasses.length; i++ ) {
                 if ( oldClasses[ i ] && oldClasses[ i ] !== className ) {
                     newClasses.push( oldClasses[ i ] );
                 }
@@ -2217,7 +2246,7 @@ function OpenSeadragon( options ){
          * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         normalizeEventListenerOptions: function (options) {
-            var opts;
+            let opts;
             if ( typeof options !== 'undefined' ) {
                 if ( typeof options === 'boolean' ) {
                     // Legacy Boolean useCapture
@@ -2332,7 +2361,7 @@ function OpenSeadragon( options ){
          */
         getUrlParameter: function( key ) {
             // eslint-disable-next-line no-use-before-define
-            var value = URLPARAMS[ key ];
+            const value = URLPARAMS[ key ];
             return value ? value : null;
         },
 
@@ -2345,7 +2374,7 @@ function OpenSeadragon( options ){
          * @returns {String} The protocol (http:, https:, file:, ftp: ...)
          */
         getUrlProtocol: function( url ) {
-            var match = url.match(/^([a-z]+:)\/\//i);
+            const match = url.match(/^([a-z]+:)\/\//i);
             if ( match === null ) {
                 // Relative URL, retrive the protocol from window.location
                 return window.location.protocol;
@@ -2393,10 +2422,10 @@ function OpenSeadragon( options ){
          * @returns {XMLHttpRequest}
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
-            var withCredentials;
-            var headers;
-            var responseType;
-            var postData;
+            let withCredentials;
+            let headers;
+            let responseType;
+            let postData;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2412,8 +2441,8 @@ function OpenSeadragon( options ){
                 $.console.warn("OpenSeadragon.makeAjaxRequest() deprecated usage!");
             }
 
-            var protocol = $.getUrlProtocol( url );
-            var request = $.createAjaxRequest();
+            const protocol = $.getUrlProtocol( url );
+            const request = $.createAjaxRequest();
 
             if ( !$.isFunction( onSuccess ) ) {
                 throw new Error( "makeAjaxRequest requires a success callback" );
@@ -2441,7 +2470,7 @@ function OpenSeadragon( options ){
                 }
             };
 
-            var method = postData ? "POST" : "GET";
+            const method = postData ? "POST" : "GET";
             try {
                 request.open( method, url, true );
 
@@ -2450,7 +2479,7 @@ function OpenSeadragon( options ){
                 }
 
                 if (headers) {
-                    for (var headerName in headers) {
+                    for (const headerName in headers) {
                         if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
                             request.setRequestHeader(headerName, headers[headerName]);
                         }
@@ -2487,16 +2516,16 @@ function OpenSeadragon( options ){
          *      request the jsonp provider with.
          */
         jsonp: function( options ){
-            var script,
-                url     = options.url,
-                head    = document.head ||
+            let script;
+            let url     = options.url;
+            const head    = document.head ||
                     document.getElementsByTagName( "head" )[ 0 ] ||
-                    document.documentElement,
-                jsonpCallback = options.callbackName || 'openseadragon' + $.now(),
-                previous      = window[ jsonpCallback ],
-                replace       = "$1" + jsonpCallback + "$2",
-                callbackParam = options.param || 'callback',
-                callback      = options.callback;
+                    document.documentElement;
+            const jsonpCallback = options.callbackName || 'openseadragon' + $.now();
+            const previous      = window[ jsonpCallback ];
+            const replace       = "$1" + jsonpCallback + "$2";
+            const callbackParam = options.param || 'callback';
+            const callback      = options.callback;
 
             url = url.replace( /(=)\?(&|$)|\?\?/i, replace );
             // Add callback manually
@@ -2574,10 +2603,9 @@ function OpenSeadragon( options ){
             if ( window.DOMParser ) {
 
                 $.parseXml = function( string ) {
-                    var xmlDoc = null,
-                        parser;
+                    let xmlDoc = null;
 
-                    parser = new DOMParser();
+                    const parser = new DOMParser();
                     xmlDoc = parser.parseFromString( string, "text/xml" );
                     return xmlDoc;
                 };
@@ -2638,7 +2666,7 @@ function OpenSeadragon( options ){
         setImageFormatsSupported: function(formats) {
             //TODO: how to deal with this within the data pipeline?
             // $.console.warn("setImageFormatsSupported method is deprecated. You should check that" +
-            //     " the system supports your TileSources by implementing corresponding data type convertors.");
+            //     " the system supports your TileSources by implementing corresponding data type converters.");
 
             // eslint-disable-next-line no-use-before-define
             $.extend(FILEFORMATS, formats);
@@ -2657,7 +2685,7 @@ function OpenSeadragon( options ){
      * @static
      * @private
      */
-    var nullfunction = function( msg ){
+    const nullfunction = function( msg ){
         //document.location.hash = msg;
     };
 
@@ -2688,7 +2716,7 @@ function OpenSeadragon( options ){
     };
 
 
-    var FILEFORMATS = {
+    const FILEFORMATS = {
             avif: true,
             bmp:  false,
             jpeg: true,
@@ -2697,15 +2725,15 @@ function OpenSeadragon( options ){
             tif:  false,
             wdp:  false,
             webp: true
-        },
-        URLPARAMS = {};
+        };
+    const URLPARAMS = {};
 
     (function() {
         //A small auto-executing routine to determine the browser vendor,
         //version and supporting feature sets.
-        var ver = navigator.appVersion,
-            ua  = navigator.userAgent,
-            regex;
+        const ver = navigator.appVersion;
+        const ua  = navigator.userAgent;
+        let regex;
 
         //console.error( 'appName: ' + navigator.appName );
         //console.error( 'appVersion: ' + navigator.appVersion );
@@ -2771,19 +2799,16 @@ function OpenSeadragon( options ){
         }
 
             // ignore '?' portion of query string
-        var query = window.location.search.substring( 1 ),
-            parts = query.split('&'),
-            part,
-            sep,
-            i;
+        const query = window.location.search.substring( 1 );
+        const parts = query.split('&');
 
-        for ( i = 0; i < parts.length; i++ ) {
-            part = parts[ i ];
-            sep  = part.indexOf( '=' );
+        for ( let i = 0; i < parts.length; i++ ) {
+            const part = parts[ i ];
+            const sep  = part.indexOf( '=' );
 
             if ( sep > 0 ) {
-                var key = part.substring( 0, sep ),
-                    value = part.substring( sep + 1 );
+                const key = part.substring( 0, sep );
+                const value = part.substring( sep + 1 );
                 try {
                     URLPARAMS[ key ] = decodeURIComponent( value );
                 } catch (e) {
@@ -2812,12 +2837,12 @@ function OpenSeadragon( options ){
     (function( w ) {
 
         // most browsers have an implementation
-        var requestAnimationFrame = w.requestAnimationFrame ||
+        const requestAnimationFrame = w.requestAnimationFrame ||
             w.mozRequestAnimationFrame ||
             w.webkitRequestAnimationFrame ||
             w.msRequestAnimationFrame;
 
-        var cancelAnimationFrame = w.cancelAnimationFrame ||
+        const cancelAnimationFrame = w.cancelAnimationFrame ||
             w.mozCancelAnimationFrame ||
             w.webkitCancelAnimationFrame ||
             w.msCancelAnimationFrame;
@@ -2833,25 +2858,25 @@ function OpenSeadragon( options ){
                 return cancelAnimationFrame.apply( w, arguments );
             };
         } else {
-            var aAnimQueue = [],
-                processing = [],
-                iRequestId = 0,
-                iIntervalId;
+            let aAnimQueue = [];
+            let processing = [];
+            let iIntervalId;
+            let iRequestId = 0;
 
             // create a mock requestAnimationFrame function
             $.requestAnimationFrame = function( callback ) {
                 aAnimQueue.push( [ ++iRequestId, callback ] );
 
                 if ( !iIntervalId ) {
-                    iIntervalId = setInterval( function() {
+                     iIntervalId = setInterval( function() {
                         if ( aAnimQueue.length ) {
-                            var time = $.now();
+                            const time = $.now();
                             // Process all of the currently outstanding frame
                             // requests, but none that get added during the
                             // processing.
                             // Swap the arrays so we don't have to create a new
                             // array every frame.
-                            var temp = processing;
+                            const temp = processing;
                             processing = aAnimQueue;
                             aAnimQueue = temp;
                             while ( processing.length ) {
@@ -2871,7 +2896,7 @@ function OpenSeadragon( options ){
             // create a mock cancelAnimationFrame function
             $.cancelAnimationFrame = function( requestId ) {
                 // find the request ID and remove it
-                var i, j;
+                let i, j;
                 for ( i = 0, j = aAnimQueue.length; i < j; i += 1 ) {
                     if ( aAnimQueue[ i ][ 0 ] === requestId ) {
                         aAnimQueue.splice( i, 1 );

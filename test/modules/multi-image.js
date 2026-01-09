@@ -1,7 +1,7 @@
 /* global QUnit, $,testLog */
 
 ( function() {
-    var viewer;
+    let viewer;
     const drawerTypes = ['webgl','canvas'];
     drawerTypes.forEach(runDrawerTests);
 
@@ -32,12 +32,12 @@
 
         // ----------
         QUnit.test( 'Multi-image operations', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
             assert.expect( 24 );
             viewer.addHandler( "open", function( ) {
                 assert.equal( 1, viewer.world.getItemCount( ),
                     "One item should be present after opening." );
-                var options = {
+                const options = {
                     tileSource: {
                         type: 'legacy-image-pyramid',
                         levels: [ {
@@ -50,7 +50,7 @@
                 viewer.addTiledImage( options );
                 viewer.world.addHandler( "add-item", function addFirstItemHandler( event ) {
                     viewer.world.removeHandler( "add-item", addFirstItemHandler );
-                    var item1 = event.item;
+                    const item1 = event.item;
                     assert.equal( viewer.world.getItemCount( ), 2,
                         "2 items should be present after adding a item." );
                     assert.equal( viewer.world.getIndexOfItem( item1 ), 1,
@@ -61,7 +61,7 @@
                     viewer.addTiledImage( options );
                     viewer.world.addHandler( "add-item", function addSecondItemHandler( event ) {
                         viewer.world.removeHandler( "add-item", addSecondItemHandler );
-                        var item2 = event.item;
+                        const item2 = event.item;
                         assert.equal( viewer.world.getItemCount( ), 3,
                             "3 items should be present after adding a second item." );
                         assert.equal( viewer.world.getIndexOfItem( item2 ), 2,
@@ -93,7 +93,7 @@
                         viewer.addTiledImage( options );
                         viewer.world.addHandler( "add-item", function addThirdItemHandler( event ) {
                             viewer.world.removeHandler( "add-item", addThirdItemHandler );
-                            var item3 = event.item;
+                            const item3 = event.item;
                             assert.equal( viewer.world.getItemCount( ), 4,
                                 "4 items should be present after adding a third item." );
                             assert.equal( viewer.world.getIndexOfItem( item3 ), 2,
@@ -106,7 +106,7 @@
                             viewer.addTiledImage( options );
                             viewer.world.addHandler( "add-item", function replaceAddItemHandler( event ) {
                                 viewer.world.removeHandler( "add-item", replaceAddItemHandler );
-                                var item4 = event.item;
+                                const item4 = event.item;
                                 assert.equal( viewer.world.getItemCount( ), 4,
                                     "4 items should still be present after replacing the second item." );
                                 assert.equal( viewer.world.getIndexOfItem( item4 ), 2,
@@ -140,8 +140,8 @@
 
         // ----------
         QUnit.test( 'Sequences as items', function(assert) {
-            var done = assert.async();
-            var options = {
+            const done = assert.async();
+            const options = {
                 tileSource: [{
                         type: 'legacy-image-pyramid',
                         levels: [{
@@ -177,7 +177,7 @@
 
         // ----------
         QUnit.test('items are added in order', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
             viewer.addHandler('open', function(event) {
                 assert.equal(viewer.world.getItemAt(0).getContentSize().y, 2000, 'first image is tall');
                 assert.equal(viewer.world.getItemAt(0).getBounds().width, 4, 'first image has 4 width');
@@ -198,7 +198,7 @@
         });
 
         QUnit.test('Viewer.addSimpleImage', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
             viewer.addHandler("open", function openHandler() {
                 viewer.removeHandler("open", openHandler);
                 viewer.world.addHandler('add-item', function itemAdded(event) {
@@ -217,7 +217,7 @@
         });
 
         QUnit.test('Transparent image on top of others', function(assert) {
-            var done = assert.async();
+            const done = assert.async();
             viewer.open('/test/data/testpattern.dzi');
 
             function getPixelFromViewerScreenCoords(x, y) {
@@ -232,11 +232,11 @@
             }
 
             viewer.addHandler('open', function() {
-                var firstImage = viewer.world.getItemAt(0);
+                const firstImage = viewer.world.getItemAt(0);
                 firstImage.addHandler('fully-loaded-change', function() {
                     viewer.addOnceHandler('update-viewport', function(){
                         // Pixel 250,250 will be in the hole of the A
-                        var expectedVal = getPixelFromViewerScreenCoords(250, 250);
+                        const expectedVal = getPixelFromViewerScreenCoords(250, 250);
 
                         assert.notEqual(expectedVal.r, 0, 'Red channel should not be 0');
                         assert.notEqual(expectedVal.g, 0, 'Green channel should not be 0');
@@ -246,10 +246,10 @@
                         viewer.addSimpleImage({
                             url: '/test/data/A.png',
                             success: function() {
-                                var secondImage = viewer.world.getItemAt(1);
+                                const secondImage = viewer.world.getItemAt(1);
                                 secondImage.addHandler('fully-loaded-change',  function() {
                                     viewer.addOnceHandler('update-viewport', function(){
-                                        var actualVal = getPixelFromViewerScreenCoords(250, 250);
+                                        const actualVal = getPixelFromViewerScreenCoords(250, 250);
 
                                         assert.equal(actualVal.r, expectedVal.r,
                                             'Red channel should not change in transparent part of the A');
@@ -260,7 +260,7 @@
                                         assert.equal(actualVal.a, expectedVal.a,
                                             'Alpha channel should not change in transparent part of the A');
 
-                                        var onAVal = getPixelFromViewerScreenCoords(333 , 250);
+                                        const onAVal = getPixelFromViewerScreenCoords(333 , 250);
                                         assert.equal(onAVal.r, 0, 'Red channel should be 0 on the A');
                                         assert.equal(onAVal.g, 0, 'Green channel should be 0 on the A');
                                         assert.equal(onAVal.b, 0, 'Blue channel should be 0 on the A');

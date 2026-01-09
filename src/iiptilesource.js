@@ -44,10 +44,10 @@
    * @extends OpenSeadragon.TileSource
    * @see https://iipimage.sourceforge.io
    *
-   * @param {String} iipsrv               - IIPImage host server path (ex: "https://host/fcgi-bin/iipsrv.fcgi" or "/fcgi-bin/iipsrv.fcgi")
-   * @param {String} image                - Image path and name on server (ex: "image.tif")
-   * @param {String} format    (optional) - Tile output format (default: "jpg")
-   * @param {Object} transform (optional) - Object containing image processing transforms
+   * @param {String} iipsrv      - IIPImage host server path (ex: "https://host/fcgi-bin/iipsrv.fcgi" or "/fcgi-bin/iipsrv.fcgi")
+   * @param {String} image       - Image path and name on server (ex: "image.tif")
+   * @param {String} [format]    - Tile output format (default: "jpg")
+   * @param {Object} [transform] - Object containing image processing transforms
    *                                        (supported transform: "stack","quality","contrast","color","invert",
    *                                                              "colormap," "gamma","minmax","twist","hillshade".
    *                                        See https://iipimage.sourceforge.io/documentation/protocol for how to use)
@@ -78,7 +78,7 @@
       this.ready       = false;
 
       // Query server for image metadata
-      var url = this.getMetadataUrl();
+      const url = this.getMetadataUrl();
       this.getImageInfo( url );
     }
   };
@@ -101,7 +101,7 @@
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url]
      */
     supports: function(data, url) {
       // Configuration must supply the IIP server endpoint and the image name
@@ -117,11 +117,11 @@
     parseIIP: function( data ) {
 
       // Full image size
-      var tmp = data.split( "Max-size:" );
+      let tmp = data.split( "Max-size:" );
       if(!tmp[1]){
         throw new Error( "No Max-size returned" );
       }
-      var size = tmp[1].split(" ");
+      let size = tmp[1].split(" ");
       this.width = parseInt( size[0], 10 );
       this.height = parseInt( size[1], 10 );
       this.dimensions = new $.Point( this.width, this.height );
@@ -140,7 +140,7 @@
 
       // Number of resolution levels
       tmp = data.split( "Resolution-number:" );
-      var numRes = parseInt(tmp[1], 10);
+      const numRes = parseInt(tmp[1], 10);
       this.minLevel = 0;
       this.maxLevel = numRes - 1;
       this.tileOverlap = 0;
@@ -148,12 +148,12 @@
       // Size of each resolution
       tmp = data.split( "Resolutions:" );
       size = tmp[1].split(",");
-      var len = size.length;
+      const len = size.length;
       this.levelSizes = new Array(len);
-      for( var n = 0; n < len; n++ ) {
-        var res = size[n].split(" ");
-        var w = parseInt(res[0], 10);
-        var h = parseInt(res[1], 10);
+      for( let n = 0; n < len; n++ ) {
+        const res = size[n].split(" ");
+        const w = parseInt(res[0], 10);
+        const h = parseInt(res[1], 10);
         this.levelSizes[n] = {width: w, height: h};
       }
     },
@@ -168,7 +168,7 @@
      */
     getImageInfo: function( url ) {
 
-      var _this = this;
+      const _this = this;
 
       $.makeAjaxRequest( {
         url: url,
@@ -183,12 +183,12 @@
             _this.raiseEvent( 'ready', { tileSource: _this } );
           }
           catch( e ) {
-            var msg = "IIPTileSource: Error parsing IIP metadata: " + e.message;
+            const msg = "IIPTileSource: Error parsing IIP metadata: " + e.message;
             _this.raiseEvent( 'open-failed', { message: msg, source: url } );
           }
         },
         error: function ( xhr, exc ) {
-          var msg = "IIPTileSource: Unable to get IIP metadata from " + url;
+          const msg = "IIPTileSource: Unable to get IIP metadata from " + url;
           $.console.error( msg );
           _this.raiseEvent( 'open-failed', { message: msg, source: url });
         }
@@ -219,9 +219,9 @@
      * @param {Number} level
      */
     getNumTiles: function( level ) {
-        var levelSize = this.levelSizes[level];
-        var x = Math.ceil( levelSize.width / this._tileWidth ),
-            y = Math.ceil( levelSize.height / this._tileHeight );
+        const levelSize = this.levelSizes[level];
+        let x = Math.ceil( levelSize.width / this._tileWidth );
+        let y = Math.ceil( levelSize.height / this._tileHeight );
         return new $.Point( x, y );
     },
 
@@ -237,11 +237,11 @@
     getTileUrl: function(level, x, y) {
 
       // Get the exact size of this level and calculate the number of tiles across
-      var levelSize = this.levelSizes[level];
-      var ntlx = Math.ceil( levelSize.width / this._tileWidth );
+      const levelSize = this.levelSizes[level];
+      const ntlx = Math.ceil( levelSize.width / this._tileWidth );
 
       // Set the base URL
-      var url = this.iipsrv + '?FIF=' + this.image + '&';
+      let url = this.iipsrv + '?FIF=' + this.image + '&';
 
       // Apply any image procesing transform
       if( this.transform ){
@@ -282,7 +282,7 @@
       }
 
       // Our output command depends on the requested image format
-      var format = "JTL";
+      let format = "JTL";
       if (this.format === "png") {
           format = "PTL";
       } else if (this.format === "webp" ) {
@@ -292,7 +292,7 @@
       }
 
       // Calculate the tile index for this resolution
-      var tile = (y * ntlx) + x;
+      const tile = (y * ntlx) + x;
 
       return url + format + '=' + level + ',' + tile;
     }

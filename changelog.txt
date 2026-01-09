@@ -3,7 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 6.0.0: (in progress...)
 
-* NEW BEHAVIOR: OpenSeadragon Data Pipeline Overhaul (#2407, #2643, #2718 @Aiosa)
+* NEW BEHAVIOR: OpenSeadragon Data Pipeline Overhaul (#2407, #2643, #2718, #2739, #2775, #2762, #2816 @Aiosa)
     * DEPRECATION: Properties on tile that manage drawer data, or store data to draw: Tile.[element|imgElement|style|context2D|getImage|getCanvasContext] and transitively Tile.getScaleForEdgeSmoothing
     * DEPRECATION: TileSource data lifecycle handlers: system manages these automatically: TileSource.[createTileCache|destroyTileCache|getTileCacheData|getTileCacheDataAsImage|getTileCacheDataAsContext2D]
     * Tiles data is driven by caches: tiles can have multiple caches and cache can reference multiple tiles.
@@ -24,18 +24,30 @@ OPENSEADRAGON CHANGELOG
     * New testing/demo utilities (MockSeadragon, DrawerSwitcher for switching drawers in demos, getBuiltInDrawersForTest for testing all drawers), serialization guard in tests to remove circular references.
     * New demos, demonstrating the new pipeline. New demos for older plugins to show how compatible new version is.
     * Misc: updated CSS for dev server, new dev & test commands.
+* NEW BEHAVIOR: The per-image ajaxHeaders (specified when opening) are now being merged with the viewer's ajaxHeaders (overriding as appropriate), rather than replacing them (#2757 @hrocha1)
 * New tile source: IIP (Internet Imaging Protocol) (#2719 @ruven)
+* New tile source: Iris (#2759 @nkathawa)
+* The default drawer is now 'auto' which chooses between WebGL or canvas based on the device (#2829 @iangilman)
 * New option: loadDestinationTilesOnAnimation. With it on, during animations, OSD loads tiles in the destination region, rather than the areas passed through on the way to the destination. This new feature is on by default. (#2686, #2690 @MichaelWGibson)
+* New option: DrawerBase option for offscreen drawer creation, methods for TiledImage and TileSource creation exposed (#2790, #2822 @Aiosa)
+* New data types: imageBitmap support with workers, image fetching moved from downloadTileStart to convertor (#2790 @Aiosa)
+* New API: stopPropagation property on events (#2790 @Aiosa)
 * Overlay wrapper elements now have a "openseadragon-overlay-wrapper" class. If the overlay element has an ID, the wrapper gets a variant on that ID, but if the overlay element does not have an ID, we no longer give the wrapper an ID. (#2698 @lokaesshwar)
 * The functions the viewer uses to operate the zoom in and zoom out buttons are now accessible to be called programatically (#2702 @achu1998)
 * The Viewer now has a getFullyLoaded function and a fully-loaded-change event, so you can know when all of the images in the viewer are loaded (#2707 @achu1998)
 * The Viewer and TiledImage now both have a whenFullyLoaded function that will call you back when they are fully loaded (#2707 @achu1998)
 * Improved IIIF tile requests in certain edge cases (#2710 @ruven)
 * Now only removing OSD-created elements on destroy (rather than emptying out the entire container) (#2724 @Vinith1919)
+* Now if you hold down navigation keys (pan or zoom), the movement is continuous rather than having a pause after the initial start (#2735 @achu1998)
+* Added tries and maxReached properties to tile-load-failed event (#2777 @Tobio89)
+* You can now turn off keyboard navigation (#2773 @colinrlim @yurii2007)
+* Added: WebGLDrawer option to unpack textures with premultiplied alpha (#2776 @adriandarian)
+* We are now including the TypeScript definitions directly in the project (only v5 so far, and not yet part of the npm package) (#2813 @rssaini01)
 * Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
-* Improved documentation (#2676 @bennlich, #2729 @shaswata-26)
-* Improved unit tests (#2640 @harshkg23)
+* Improved documentation and code naming (#2676 @bennlich, #2729 @shaswata-26, #2754 @ganglike248, #2826 @kaicataldo)
+* Improved unit tests (#2640 @harshkg23, #2803 @adriandarian)
+* Other internal code improvements (#2785 @suvanshenoy)
 * Fixed: Transparency detection didn't always work properly (#2636 @pcram-techcyte)
 * Fixed: MouseTracker's hasGestureHandlers and hasScrollHandler values were not getting updated upon dynamically adding/removing handlers (#2649 @Seafret)
 * Fixed: Sometimes images wouldn't update when you changed their opacity (#2652 @pearcetm)
@@ -43,6 +55,11 @@ OPENSEADRAGON CHANGELOG
 * Fixed: Relative panning sometimes used the wrong starting point, causing jumping during touch panning (#2704 @DougTCooke)
 * Fixed: World.arrange would misalign images that were rotated (#2709 @yowzadave)
 * Fixed: In some cases TiledImage would throw an exception if there were no tiles to update (#2733 @DougTCooke)
+* Fixed: TileSource API has now uniform behavior (#2790 @Aiosa)
+* Fixed: Bugfixes and documentation improvement on tile invalidation pipeline (#2790 @Aiosa)
+* Fixed: Sometimes the tile positions wouldn't update when the viewer was resized (#2798 @artokai)
+* Fixed: Sometimes other elements on the page would get disrupted by the viewer going into full page/full screen mode (#2786 @DrRataplan)
+* Fixed: In some circumstances an inline DZI tile source would get "undefined" added to the end of its URLs (#2832 @susanmonnelly)
 
 5.0.1:
 

@@ -29,9 +29,9 @@
             //TODO Fix this.  The max height should be 1/AR
             args.heightFactor = Math.min( 1, Math.max( 0, args.heightFactor ) );
 
-            var $canvas = $( args.viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
-            var offset = $canvas.offset();
-            var event = {
+            const $canvas = $( args.viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
+            const offset = $canvas.offset();
+            const event = {
                 clientX: offset.left + Math.floor( $canvas.width() * args.widthFactor ),
                 clientY: offset.top + Math.floor( $canvas.height() * args.heightFactor )
             };
@@ -39,7 +39,7 @@
             $canvas
                 .simulate( 'mouseenter', event )
                 .simulate( 'mousedown', event );
-            for ( var i = 0; i < args.dragCount; i++ ) {
+            for ( let i = 0; i < args.dragCount; i++ ) {
                 event.clientX += args.dragDx;
                 event.clientY += args.dragDy;
                 $canvas
@@ -88,9 +88,9 @@
 
         // ----------
         timeWatcher: function ( assert, time ) {
-            var done = assert.async();
+            const done = assert.async();
             time = time || 2000;
-            var finished = false;
+            let finished = false;
 
             setTimeout( function () {
                 if ( !finished ) {
@@ -112,10 +112,10 @@
 
         // ----------
         spyOnce: function(obj, functionName, callback) {
-            var original = obj[functionName];
+            const original = obj[functionName];
             obj[functionName] = function() {
                 obj[functionName] = original;
-                var result = callback.apply(this, arguments);
+                let result = callback.apply(this, arguments);
                 if (result === undefined) {
                     result = original.apply(this, arguments);
                 }
@@ -125,8 +125,8 @@
 
         // ----------
         testDeprecation: function(assert, obj0, member0, obj1, member1) {
-            var called = false;
-            var errored = false;
+            let called = false;
+            let errored = false;
 
             if (obj1 && member1) {
                 this.spyOnce(obj1, member1, function() {
@@ -164,15 +164,15 @@
     3. The captured log arrays have a custom contains() method for ease of testing
     4. testLog.reset() will clear all of the message arrays, intended for use in test setup routines
     */
-    var testConsole = window.testConsole = {},
-        testLog = window.testLog = {
+    const testConsole = window.testConsole = {};
+    const testLog = window.testLog = {
             log: [],
             debug: [],
             info: [],
             warn: [],
             error: [],
             reset: function () {
-                for ( var i in testLog ) {
+                for ( const i in testLog ) {
                     if ( testLog.hasOwnProperty( i ) && 'length' in testLog[i] && 'push' in testLog[i] ) {
                         testLog[i].length = 0;
                     }
@@ -195,18 +195,18 @@
         'WebGLDrawer': ['viewer', 'viewport'],
         'TiledImage': ['viewer', '_drawer'],
     };
-    for ( var i in testLog ) {
+    for ( const i in testLog ) {
         if ( testLog.hasOwnProperty( i ) && testLog[i].push ) {
             // Circular reference removal
             const osdCircularStructureReplacer = function (key, value) {
-                for (let ClassType in circularOSDReferences) {
+                for (const ClassType in circularOSDReferences) {
                     if (value instanceof OpenSeadragon[ClassType]) {
                         const instance = {};
                         Object.assign(instance, value);
 
                         let circProps = circularOSDReferences[ClassType];
                         if (!Array.isArray(circProps)) circProps = [circProps];
-                        for (let prop of circProps) {
+                        for (const prop of circProps) {
                             instance[prop] = '__circular_reference__';
                         }
                         return instance;
@@ -217,13 +217,13 @@
 
             testConsole[i] = ( function ( arr ) {
                 return function () {
-                    var args = Array.prototype.slice.call( arguments, 0 ); // Coerce to true Array
+                    const args = Array.prototype.slice.call( arguments, 0 ); // Coerce to true Array
                     arr.push( JSON.stringify( args, osdCircularStructureReplacer ) ); // Store as JSON to avoid tedious array-equality tests
                 };
             } )( testLog[i] );
 
             testLog[i].contains = function ( needle ) {
-                for ( var i = 0; i < this.length; i++ ) {
+                for ( let i = 0; i < this.length; i++ ) {
                     if ( this[i] == needle ) {
                         return true;
                     }
@@ -243,7 +243,7 @@
 
     OpenSeadragon.getBuiltInDrawersForTest = function() {
         const drawers = [];
-        for (let property in OpenSeadragon) {
+        for (const property in OpenSeadragon) {
             const drawer = OpenSeadragon[ property ],
                 proto = drawer.prototype;
             if( proto &&
@@ -257,7 +257,7 @@
 
     OpenSeadragon.Viewer.prototype.waitForFinishedJobsForTest = function () {
         let finish;
-        let int = setInterval(() => {
+        const int = setInterval(() => {
             if (this.imageLoader.jobsInProgress < 1) {
                 finish();
             }

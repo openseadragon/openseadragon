@@ -53,7 +53,7 @@
             this.fileFormat = options.fileFormat;
         }
 
-        var currentImageSize = {
+        const currentImageSize = {
             x: options.width,
             y: options.height
         };
@@ -92,11 +92,11 @@
 
         //private
         _calculateAbsoluteTileNumber: function(level, x, y) {
-            var num = 0;
-            var size = {};
+            let num = 0;
+            let size = {};
 
             //Sum up all tiles below the level we want the number of tiles
-            for (var z = 0; z < level; z++) {
+            for (let z = 0; z < level; z++) {
                 size = this.gridSize[z];
                 num += size.x * size.y;
             }
@@ -111,7 +111,7 @@
          * this tile source.
          * @function
          * @param {Object|Array} data
-         * @param {String} optional - url
+         * @param {String} [url]
          */
         supports: function(data, url) {
             return (data.type && "zoomifytileservice" === data.type);
@@ -138,8 +138,8 @@
          */
         getTileUrl: function(level, x, y) {
             //console.log(level);
-            var result = 0;
-            var num = this._calculateAbsoluteTileNumber(level, x, y);
+            let result = 0;
+            const num = this._calculateAbsoluteTileNumber(level, x, y);
             result = Math.floor(num / 256);
             return this.tilesUrl + 'TileGroup' + result + '/' + level + '-' + x + '-' + y + '.' + this.fileFormat;
 
@@ -149,7 +149,7 @@
          * Equality comparator
          */
         equals: function (otherSource) {
-            return this.tilesUrl === otherSource.tilesUrl;
+            return otherSource && this.tilesUrl === otherSource.tilesUrl;
         }
     });
 

@@ -81,7 +81,7 @@ $.ButtonState = {
  */
 $.Button = function( options ) {
 
-    var _this = this;
+    const _this = this;
 
     $.EventSource.call( this );
 
@@ -437,7 +437,7 @@ function scheduleFade( button ) {
 }
 
 function updateFade( button ) {
-    var currentTime,
+    let currentTime,
         deltaTime,
         opacity;
 

@@ -5,7 +5,7 @@
     window.App = {
         // ----------
         init: function() {
-            var self = this;
+            const self = this;
 
             this.maxImages = 500;
             this.mode = 'none';
@@ -21,7 +21,7 @@
 
             this.pages = this.createPages();
 
-            var tileSources = $.map(this.pages, function(v, i) {
+            const tileSources = $.map(this.pages, function(v, i) {
                 return {
                     tileSource: v.starter.tileSource,
                     clip: v.starter.clip
@@ -52,7 +52,7 @@
 
             this.viewer.addHandler('canvas-drag', function() {
                 if (self.mode === 'scroll') {
-                    var result = self.hitTest(self.viewer.viewport.getCenter());
+                    const result = self.hitTest(self.viewer.viewport.getCenter());
                     if (result) {
                         self.pageIndex = result.index;
                         self.update();
@@ -110,27 +110,27 @@
 
             this.$scrollCover = $('.scroll-cover')
                 .scroll(function(event) {
-                    var info = self.getScrollInfo();
+                    const info = self.getScrollInfo();
                     if (!info || self.ignoreScroll) {
                         return;
                     }
 
-                    var pos = new OpenSeadragon.Point(info.thumbBounds.getCenter().x,
+                    const pos = new OpenSeadragon.Point(info.thumbBounds.getCenter().x,
                         info.thumbBounds.y + (info.viewportHeight / 2) +
                         (info.viewportMax * info.scrollFactor));
 
                     self.viewer.viewport.panTo(pos, true);
                 })
                 .mousemove(function(event) {
-                    var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    const pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
                     pixel.y -= self.$scrollCover.position().top;
-                    var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
+                    const result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
                     self.updateHover(result ? result.index : -1);
                 })
                 .click(function(event) {
-                    var pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
+                    const pixel = new OpenSeadragon.Point(event.clientX, event.clientY);
                     pixel.y -= self.$scrollCover.position().top;
-                    var result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
+                    const result = self.hitTest(self.viewer.viewport.pointFromPixel(pixel));
                     if (result) {
                         self.setMode({
                             mode: 'page',
@@ -139,7 +139,7 @@
                     }
                 });
 
-            var svgNode = this.viewer.svgOverlay();
+            const svgNode = this.viewer.svgOverlay();
 
             this.highlight = d3.select(svgNode).append("rect")
                 .style('fill', 'none')
@@ -156,7 +156,7 @@
                 .attr("pointer-events", "none");
 
             $(window).resize(function() {
-                var newSize = new OpenSeadragon.Point(self.$el.width(), self.$el.height());
+                const newSize = new OpenSeadragon.Point(self.$el.width(), self.$el.height());
                 self.viewer.viewport.resize(newSize, false);
                 self.setMode({
                     mode: self.mode,
@@ -173,7 +173,7 @@
 
         // ----------
         next: function() {
-            var pageIndex = this.pageIndex + (this.mode === 'book' ? 2 : 1);
+            let pageIndex = this.pageIndex + (this.mode === 'book' ? 2 : 1);
             if (this.mode === 'book' && pageIndex % 2 === 0 && pageIndex !== 0) {
                 pageIndex --;
             }
@@ -185,7 +185,7 @@
 
         // ----------
         previous: function() {
-            var pageIndex = this.pageIndex - (this.mode === 'book' ? 2 : 1);
+            let pageIndex = this.pageIndex - (this.mode === 'book' ? 2 : 1);
             if (this.mode === 'book' && pageIndex % 2 === 0 && pageIndex !== 0) {
                 pageIndex --;
             }
@@ -211,10 +211,10 @@
 
         // ----------
         hitTest: function(pos) {
-            var count = this.pages.length;
-            var page, box;
+            const count = this.pages.length;
+            let page, box;
 
-            for (var i = 0; i < count; i++) {
+            for (let i = 0; i < count; i++) {
                 page = this.pages[i];
                 box = page.getBounds();
                 if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
@@ -234,11 +234,11 @@
                 return null;
             }
 
-            var output = {};
+            const output = {};
 
-            var viewerWidth = this.$el.width();
-            var viewerHeight = this.$el.height();
-            var scrollTop = this.$scrollCover.scrollTop();
+            const viewerWidth = this.$el.width();
+            const viewerHeight = this.$el.height();
+            const scrollTop = this.$scrollCover.scrollTop();
             output.scrollMax = this.$scrollInner.height() - this.$scrollCover.height();
             output.scrollFactor = (output.scrollMax > 0 ? scrollTop / output.scrollMax : 0);
 
@@ -250,7 +250,7 @@
 
         // ----------
         update: function() {
-            var self = this;
+            const self = this;
 
             $('.nav').toggle(this.mode === 'scroll' || this.mode === 'book' || this.mode === 'page');
             $('.previous').toggleClass('hidden', this.pageIndex <= 0);
@@ -266,7 +266,7 @@
                 this.$alternates = null;
             }
 
-            var page = this.pages[this.pageIndex];
+            const page = this.pages[this.pageIndex];
             if (page && page.alternates && page.alternates.length) {
                 this.$alternates = $('<select>')
                     .change(function() {
@@ -299,9 +299,9 @@
             }
 
             if (this.panBounds && !this.inZoomConstraints) {
-                var changed = false;
-                var viewBounds = this.viewer.viewport.getBounds();
-                var panBounds = this.panBounds.clone();
+                let changed = false;
+                const viewBounds = this.viewer.viewport.getBounds();
+                const panBounds = this.panBounds.clone();
 
                 if (viewBounds.x < panBounds.x - 0.00001) {
                     viewBounds.x = panBounds.x;
@@ -340,19 +340,19 @@
                 }
             }
 
-            var zoom = this.viewer.viewport.getZoom();
-            var maxZoom = 2;
+            const zoom = this.viewer.viewport.getZoom();
+            let maxZoom = 2;
 
-            var zoomPoint = this.viewer.viewport.zoomPoint || this.viewer.viewport.getCenter();
-            var info = this.hitTest(zoomPoint);
+            const zoomPoint = this.viewer.viewport.zoomPoint || this.viewer.viewport.getCenter();
+            const info = this.hitTest(zoomPoint);
             if (info) {
-                var page = this.pages[info.index];
-                var tiledImage = page.hitTest(zoomPoint);
+                const page = this.pages[info.index];
+                const tiledImage = page.hitTest(zoomPoint);
                 if (tiledImage) {
                     maxZoom = this.viewer.maxZoomLevel;
                     if (!maxZoom) {
-                        var imageWidth = tiledImage.getContentSize().x;
-                        var viewerWidth = this.$el.width();
+                        const imageWidth = tiledImage.getContentSize().x;
+                        const viewerWidth = this.$el.width();
                         maxZoom = imageWidth * this.viewer.maxZoomPixelRatio / viewerWidth;
                         maxZoom /= tiledImage.getBounds().width;
                     }
@@ -366,7 +366,7 @@
 
         // ----------
         setMode: function(config) {
-            var self = this;
+            const self = this;
 
             this.mode = config.mode;
 
@@ -377,17 +377,17 @@
             this.ignoreScroll = true;
             this.thumbBounds = null;
 
-            var layout = this.createLayout();
+            const layout = this.createLayout();
 
             if (this.mode === 'thumbs') {
                 this.viewer.gestureSettingsMouse.scrollToZoom = false;
                 this.viewer.zoomPerClick = 1;
                 this.viewer.panHorizontal = false;
                 this.viewer.panVertical = false;
-                var viewerWidth = this.$el.width();
-                var width = layout.bounds.width + (this.bigBuffer * 2);
-                var height = layout.bounds.height + (this.bigBuffer * 2);
-                var newHeight = viewerWidth * (height / width);
+                const viewerWidth = this.$el.width();
+                const width = layout.bounds.width + (this.bigBuffer * 2);
+                const height = layout.bounds.height + (this.bigBuffer * 2);
+                const newHeight = viewerWidth * (height / width);
                 this.$scrollCover.show();
                 this.$scrollInner
                     .css({
@@ -415,17 +415,17 @@
                 this.thumbBounds.height += (this.bigBuffer * 2);
 
                 // Scroll to the appropriate location
-                var info = this.getScrollInfo();
+                const info = this.getScrollInfo();
 
-                var viewportBounds = this.thumbBounds.clone();
+                const viewportBounds = this.thumbBounds.clone();
                 viewportBounds.y += info.viewportMax * info.scrollFactor;
                 viewportBounds.height = info.viewportHeight;
 
-                var pageBounds = this.pages[this.pageIndex].getBounds();
-                var top = pageBounds.y - this.bigBuffer;
-                var bottom = top + pageBounds.height + (this.bigBuffer * 2);
+                const pageBounds = this.pages[this.pageIndex].getBounds();
+                const top = pageBounds.y - this.bigBuffer;
+                const bottom = top + pageBounds.height + (this.bigBuffer * 2);
 
-                var normalY;
+                let normalY;
                 if (top < viewportBounds.y) {
                     normalY = top - this.thumbBounds.y;
                 } else if (bottom > viewportBounds.y + viewportBounds.height) {
@@ -433,7 +433,7 @@
                 }
 
                 if (normalY !== undefined) {
-                    var viewportFactor = normalY / info.viewportMax;
+                    const viewportFactor = normalY / info.viewportMax;
                     this.$scrollCover.scrollTop(info.scrollMax * viewportFactor);
                 }
             }
@@ -461,8 +461,8 @@
                 return;
             }
 
-            var page = this.pages[this.pageIndex];
-            var box = page.getBounds();
+            const page = this.pages[this.pageIndex];
+            const box = page.getBounds();
 
             if (this.highlight) {
                 this.highlight
@@ -491,8 +491,8 @@
                 'cursor': 'pointer'
             });
 
-            var page = this.pages[pageIndex];
-            var box = page.getBounds();
+            const page = this.pages[pageIndex];
+            const box = page.getBounds();
 
             if (this.hover) {
                 this.hover
@@ -506,22 +506,22 @@
 
         // ----------
         goToPage: function(config) {
-            var self = this;
+            const self = this;
 
-            var pageCount = this.pages.length;
+            const pageCount = this.pages.length;
             this.pageIndex = Math.max(0, Math.min(pageCount - 1, config.pageIndex));
 
-            var viewerWidth = this.$el.width();
-            var viewerHeight = this.$el.height();
-            var bounds = this.pages[this.pageIndex].getBounds();
-            var x = bounds.x;
-            var y = bounds.y;
-            var width = bounds.width;
-            var height = bounds.height;
-            var box;
+            const viewerWidth = this.$el.width();
+            const viewerHeight = this.$el.height();
+            const bounds = this.pages[this.pageIndex].getBounds();
+            let x = bounds.x;
+            let y = bounds.y;
+            let width = bounds.width;
+            let height = bounds.height;
+            let box;
 
             if (this.mode === 'book') {
-                var page;
+                let page;
                 if (this.pageIndex % 2) { // First in a pair
                     if (this.pageIndex < this.pages.length - 1) {
                         page = this.pages[this.pageIndex + 1];
@@ -557,7 +557,7 @@
             box = new OpenSeadragon.Rect(x, y, width, height);
             this.viewer.viewport.fitBounds(box, config.immediately);
 
-            var setPanBounds = function() {
+            const setPanBounds = function() {
                 if (self.mode === 'page' || self.mode === 'book') {
                     self.panBounds = box;
                 } else if (self.mode === 'scroll') {
@@ -585,9 +585,9 @@
 
         // ----------
         createLayout: function() {
-            var viewerWidth = this.$el.width();
-            var viewerHeight = this.$el.height();
-            var layoutConfig = {};
+            const viewerWidth = this.$el.width();
+            const viewerHeight = this.$el.height();
+            const layoutConfig = {};
 
             if (this.mode === 'thumbs') {
                 layoutConfig.columns = Math.floor(viewerWidth / 150);
@@ -597,24 +597,24 @@
                 layoutConfig.buffer = this.pageBuffer;
             } else if (this.mode === 'book' || this.mode === 'page') {
                 layoutConfig.book = (this.mode === 'book');
-                var height = 1 + (this.pageBuffer * 2);
+                const height = 1 + (this.pageBuffer * 2);
                 // Note that using window here is approximate, but that's close enough.
                 // We can't use viewer, because it may be stretched for the thumbs view.
                 layoutConfig.buffer = (height * ($(window).width() / $(window).height())) / 2;
             }
 
-            var layout = {
+            const layout = {
                 bounds: null,
                 specs: []
             };
 
-            var count = this.pages.length;
-            var x = 0;
-            var y = 0;
-            var offset = new OpenSeadragon.Point();
-            var rowHeight = 0;
-            var box, page;
-            for (var i = 0; i < count; i++) {
+            const count = this.pages.length;
+            let x = 0;
+            let y = 0;
+            let offset = new OpenSeadragon.Point();
+            let rowHeight = 0;
+            let box, page;
+            for (let i = 0; i < count; i++) {
                 page = this.pages[i];
                 box = page.getBounds();
 
@@ -652,7 +652,7 @@
                 }
             }
 
-            var pos, spec;
+            let pos, spec;
             for (i = 0; i < count; i++) {
                 spec = layout.specs[i];
                 pos = spec.bounds.getTopLeft().plus(offset);
@@ -671,9 +671,9 @@
 
         // ----------
         setLayout: function(config) {
-            var spec;
+            let spec;
 
-            for (var i = 0; i < config.layout.specs.length; i++) {
+            for (let i = 0; i < config.layout.specs.length; i++) {
                 spec = config.layout.specs[i];
                 spec.page.place(spec.bounds, config.immediately);
             }
@@ -681,13 +681,13 @@
 
         // ----------
         goHome: function(config) {
-            var viewerWidth = this.$el.width();
-            var viewerHeight = this.$el.height();
-            var layoutConfig = {};
+            const viewerWidth = this.$el.width();
+            const viewerHeight = this.$el.height();
+            const layoutConfig = {};
 
             if (this.mode === 'thumbs') {
-                var info = this.getScrollInfo();
-                var box = this.thumbBounds.clone();
+                const info = this.getScrollInfo();
+                const box = this.thumbBounds.clone();
                 box.height = box.width * (viewerHeight / viewerWidth);
                 box.y += info.viewportMax * info.scrollFactor;
                 this.viewer.viewport.fitBounds(box, config.immediately);
@@ -701,7 +701,7 @@
 
         // ----------
         createPages: function() {
-            var self = this;
+            const self = this;
 
             if (this.tileSources) {
                 return $.map(this.tileSources.slice(0, this.maxImages), function(v, i) {
@@ -711,7 +711,7 @@
                 });
             }
 
-            var highsmith = {
+            const highsmith = {
                 Image: {
                     xmlns: "http://schemas.microsoft.com/deepzoom/2008",
                     Url: "http://openseadragon.github.io/example-images/highsmith/highsmith_files/",
@@ -725,7 +725,7 @@
                 }
             };
 
-            var duomo = {
+            const duomo = {
                 Image: {
                     xmlns: "http://schemas.microsoft.com/deepzoom/2008",
                     Url: "http://openseadragon.github.io/example-images/duomo/duomo_files/",
@@ -739,7 +739,7 @@
                 }
             };
 
-            var tall = {
+            const tall = {
                 Image: {
                     xmlns: "http://schemas.microsoft.com/deepzoom/2008",
                     Url: "../../data/tall_files/",
@@ -753,7 +753,7 @@
                 }
             };
 
-            var wide = {
+            const wide = {
                 Image: {
                     xmlns: "http://schemas.microsoft.com/deepzoom/2008",
                     Url: "../../data/wide_files/",
@@ -767,7 +767,7 @@
                 }
             };
 
-            var testpattern = {
+            const testpattern = {
                 Image: {
                     xmlns: "http://schemas.microsoft.com/deepzoom/2008",
                     Url: "../../data/testpattern_files/",
@@ -781,7 +781,7 @@
                 }
             };
 
-            var pages = [];
+            const pages = [];
 
             pages.push(new this.Page({
                 masterWidth: 7026,
@@ -837,13 +837,13 @@
                 }
             }));
 
-            var inputs = [
+            const inputs = [
                 highsmith,
                 duomo,
                 testpattern
             ];
 
-            for (var i = 0; i < this.maxImages; i++) {
+            for (let i = 0; i < this.maxImages; i++) {
                 pages.push(new this.Page({
                     pageIndex: i,
                     tileSource: inputs[Math.floor(Math.random() * inputs.length)]

@@ -35,7 +35,7 @@
 (function ( $ ) {
 
 // dictionary from id to private properties
-var THIS = {};
+const THIS = {};
 
 /**
  *  The CollectionDrawer is a reimplementation if the Drawer API that
@@ -63,12 +63,11 @@ var THIS = {};
  */
 $.ReferenceStrip = function ( options ) {
 
-    var _this       = this,
-        viewer      = options.viewer,
-        viewerSize  = $.getElementSize( viewer.element ),
-        element,
-        style,
-        i;
+    const _this       = this;
+    const viewer      = options.viewer;
+    const viewerSize  = $.getElementSize( viewer.element );
+    let element;
+    let i;
 
     //We may need to create a new element and id if they did not
     //provide the id for the existing element
@@ -98,7 +97,7 @@ $.ReferenceStrip = function ( options ) {
 
     this.element.tabIndex = 0;
 
-    style = this.element.style;
+    const style = this.element.style;
     style.marginTop     = '0px';
     style.marginRight   = '0px';
     style.marginBottom  = '0px';
@@ -216,13 +215,13 @@ $.ReferenceStrip.prototype = {
      * @function
      */
     setFocus: function ( page ) {
-        var element      = this.element.querySelector('#' + this.element.id + '-' + page ),
-            viewerSize   = $.getElementSize( this.viewer.canvas ),
-            scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
-            scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-            offsetLeft   = -Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-            offsetTop    = -Number( this.element.style.marginTop.replace( 'px', '' ) ),
-            offset;
+        const element      = this.element.querySelector('#' + this.element.id + '-' + page );
+        const viewerSize   = $.getElementSize( this.viewer.canvas );
+        const scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) );
+        const scrollHeight = Number( this.element.style.height.replace( 'px', '' ) );
+        const offsetLeft   = -Number( this.element.style.marginLeft.replace( 'px', '' ) );
+        const offsetTop    = -Number( this.element.style.marginTop.replace( 'px', '' ) );
+        let offset;
 
         if ( this.currentSelected !== element ) {
             if ( this.currentSelected ) {
@@ -274,7 +273,7 @@ $.ReferenceStrip.prototype = {
 
     destroy: function() {
         if (this.miniViewers) {
-          for (var key in this.miniViewers) {
+          for (const key in this.miniViewers) {
             this.miniViewers[key].destroy();
           }
         }
@@ -296,7 +295,7 @@ $.ReferenceStrip.prototype = {
  */
 function onStripClick( event ) {
     if ( event.quick ) {
-        var page;
+        let page;
 
         if ( 'horizontal' === this.scroll ) {
             // +4px fix to solve problem with precision on thumbnail selection if there is a lot of them
@@ -321,11 +320,11 @@ function onStripDrag( event ) {
 
     this.dragging = true;
     if ( this.element ) {
-        var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-        offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
-        scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
-        scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-        viewerSize   = $.getElementSize( this.viewer.canvas );
+        const offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) );
+        const offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) );
+        const scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) );
+        const scrollHeight = Number( this.element.style.height.replace( 'px', '' ) );
+        const viewerSize   = $.getElementSize( this.viewer.canvas );
 
         if ( 'horizontal' === this.scroll ) {
             if ( -event.delta.x > 0 ) {
@@ -369,11 +368,11 @@ function onStripDrag( event ) {
  */
 function onStripScroll( event ) {
     if ( this.element ) {
-        var offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) ),
-        offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) ),
-        scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) ),
-        scrollHeight = Number( this.element.style.height.replace( 'px', '' ) ),
-        viewerSize   = $.getElementSize( this.viewer.canvas );
+        const offsetLeft   = Number( this.element.style.marginLeft.replace( 'px', '' ) );
+        const offsetTop    = Number( this.element.style.marginTop.replace( 'px', '' ) );
+        const scrollWidth  = Number( this.element.style.width.replace( 'px', '' ) );
+        const scrollHeight = Number( this.element.style.height.replace( 'px', '' ) );
+        const viewerSize   = $.getElementSize( this.viewer.canvas );
 
         if ( 'horizontal' === this.scroll ) {
             if ( event.scroll > 0 ) {
@@ -411,12 +410,13 @@ function onStripScroll( event ) {
 
 
 function loadPanels( strip, viewerSize, scroll ) {
-    var panelSize,
-        activePanelsStart,
-        activePanelsEnd,
-        miniViewer,
-        i,
-        element;
+    let panelSize;
+    let activePanelsStart;
+    let activePanelsEnd;
+    let miniViewer;
+    let i;
+    let element;
+
     if ( 'horizontal' === strip.scroll ) {
         panelSize = strip.panelWidth;
     } else {
@@ -430,8 +430,8 @@ function loadPanels( strip, viewerSize, scroll ) {
     for ( i = activePanelsStart; i < activePanelsEnd && i < strip.panels.length; i++ ) {
         element = strip.panels[i];
         if ( !element.activePanel ) {
-            var miniTileSource;
-            var originalTileSource = strip.viewer.tileSources[i];
+            let miniTileSource;
+            const originalTileSource = strip.viewer.tileSources[i];
             if (originalTileSource.referenceStripThumbnailUrl) {
                 miniTileSource = {
                     type: 'image',
@@ -454,6 +454,8 @@ function loadPanels( strip, viewerSize, scroll ) {
                 animationTime:          0,
                 loadTilesWithAjax:      strip.viewer.loadTilesWithAjax,
                 ajaxHeaders:            strip.viewer.ajaxHeaders,
+                viewer:                 strip.viewer,
+                // TODO: make possible for users to ensure the sub-drawer is the same type as the base parent drawer
                 drawer:                 'canvas', //always use canvas for the reference strip
             } );
             // Allow pointer events to pass through miniViewer's canvas/container
@@ -479,7 +481,7 @@ function loadPanels( strip, viewerSize, scroll ) {
  * @function
  */
 function onStripEnter( event ) {
-    var element = event.eventSource.element;
+    const element = event.eventSource.element;
 
     //$.setElementOpacity(element, 0.8);
 
@@ -506,7 +508,7 @@ function onStripEnter( event ) {
  * @function
  */
 function onStripLeave( event ) {
-    var element = event.eventSource.element;
+    const element = event.eventSource.element;
 
     if ( 'horizontal' === this.scroll ) {
 

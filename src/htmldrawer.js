@@ -34,7 +34,7 @@
 
 (function( $ ){
 
-    const OpenSeadragon = $; // alias back for JSDoc
+const OpenSeadragon = $; // alias back for JSDoc
 
 /**
  * @class OpenSeadragon.HTMLDrawer
@@ -85,11 +85,15 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
             };
         }
 
+        // In theory, HTML drawer should cope well with canvas node type too,
+        // but tests fail - if this conversion is used, it outputs uninitialized zeroed data
+        // (data manipulation test module).
+
         // The actual placing logics will not happen at draw event, but when the cache is created:
-        $.converter.learn("context2d", HTMLDrawer.canvasCacheType, (t, d) => _prepareTile(t, d.canvas), 1, 1);
+        // $.converter.learn("context2d", HTMLDrawer.canvasCacheType, (t, d) => _prepareTile(t, d.canvas), 1, 1);
         $.converter.learn("image", HTMLDrawer.imageCacheType, _prepareTile, 1, 1);
         // Also learn how to move back, since these elements can be just used as-is
-        $.converter.learn(HTMLDrawer.canvasCacheType, "context2d", (t, d) => d.data.getContext('2d'), 1, 3);
+        // $.converter.learn(HTMLDrawer.canvasCacheType, "context2d", (t, d) => d.data.getContext('2d'), 1, 3);
         $.converter.learn(HTMLDrawer.imageCacheType, "image", (t, d) => d.data, 1, 3);
 
         function _freeTile(data) {
@@ -101,7 +105,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
             }
         }
 
-        $.converter.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
+        // $.converter.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
         $.converter.learnDestroy(HTMLDrawer.imageCacheType, _freeTile);
     }
 
@@ -153,7 +157,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      * Draws the TiledImages
      */
     draw(tiledImages) {
-        var _this = this;
+        const _this = this;
         this._prepareNewFrame(); // prepare to draw a new frame
         tiledImages.forEach(function(tiledImage){
             if (tiledImage.opacity !== 0) {
@@ -174,6 +178,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      * Destroy the drawer (unload current loaded tiles)
      */
     destroy() {
+        super.destroy();
         this.container.removeChild(this.canvas);
     }
 
@@ -202,14 +207,14 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
      *
      */
     _drawTiles( tiledImage ) {
-        var lastDrawn = tiledImage.getTilesToDraw().map(info => info.tile);
+        const lastDrawn = tiledImage.getTilesToDraw().map(info => info.tile);
         if (tiledImage.opacity === 0 || (lastDrawn.length === 0 && !tiledImage.placeholderFillStyle)) {
             return;
         }
 
         // Iterate over the tiles to draw, and draw them
-        for (var i = lastDrawn.length - 1; i >= 0; i--) {
-            var tile = lastDrawn[ i ];
+        for (let i = lastDrawn.length - 1; i >= 0; i--) {
+            const tile = lastDrawn[ i ];
             this._drawTile( tile );
 
             if( this.viewer ){

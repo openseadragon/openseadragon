@@ -3,7 +3,7 @@
 
 module.exports = function(grunt) {
     /* eslint-disable no-undef */
-    var dateFormat = require('dateformat');
+    const dateFormat = require('dateformat');
 
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
@@ -16,10 +16,15 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-eslint");
     grunt.loadNpmTasks("grunt-git-describe");
     grunt.loadNpmTasks('grunt-text-replace');
-    grunt.loadNpmTasks('grunt-istanbul');
+    grunt.loadNpmTasks('grunt-shell');
+
+    // Only load grunt-istanbul when coverage task is run (avoids circular dependency warning)
+    if (grunt.cli.tasks.includes('coverage')) {
+        grunt.loadNpmTasks('grunt-istanbul');
+    }
 
     // ----------
-    var packageJson = grunt.file.readJSON("package.json"),
+    const packageJson = grunt.file.readJSON("package.json"),
         distribution = "build/openseadragon/openseadragon.js",
         minified = "build/openseadragon/openseadragon.min.js",
         packageDirName = "openseadragon-bin-" + packageJson.version,
@@ -44,6 +49,7 @@ module.exports = function(grunt) {
             "src/dzitilesource.js",
             "src/iiiftilesource.js",
             "src/iiptilesource.js",
+            "src/iristilesource.js",
             "src/osmtilesource.js",
             "src/tmstilesource.js",
             "src/zoomifytilesource.js",
@@ -71,7 +77,7 @@ module.exports = function(grunt) {
             "src/world.js",
         ];
 
-    var banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
+    const banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
                  "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
                  "//! Git commit: <%= gitInfo %>\n" +
                  "//! http://openseadragon.github.io\n" +
@@ -251,11 +257,19 @@ module.exports = function(grunt) {
               dir: coverageDir,
               print: "detail"
           }
-      }
+      },
+      shell: {
+        dts_check: {
+            command: "npx tsc --noEmit -p tsconfig.dts.json"
+        },
+        dts_smoke: {
+            command: "npx tsc --noEmit -p test-dts/tsconfig.json"
+        }
+      },
     });
 
     grunt.event.on("qunit.coverage", function(coverage) {
-        var reportPath = coverageDir + "/coverage.json";
+        const reportPath = coverageDir + "/coverage.json";
 
         // Create the coverage file
         grunt.file.write(reportPath, JSON.stringify(coverage));
@@ -275,7 +289,7 @@ module.exports = function(grunt) {
     // Creates a directory tree to be compressed into a package.
     grunt.registerTask("copy:package", function() {
         grunt.file.recurse("build/openseadragon", function(abspath, rootdir, subdir, filename) {
-            var dest = packageDir +
+            const dest = packageDir +
                 (subdir ? subdir + "/" : '/') +
                 filename;
             grunt.file.copy(abspath, dest);
@@ -293,7 +307,7 @@ module.exports = function(grunt) {
                 return;
             }
 
-            var dest = releaseRoot +
+            const dest = releaseRoot +
                 (subdir ? subdir + "/" : '/') +
                 filename;
 
@@ -305,8 +319,8 @@ module.exports = function(grunt) {
     // Bower task.
     // Generates the Bower file for site-build.
     grunt.registerTask("bower", function() {
-        var path = "../site-build/bower.json";
-        var data = grunt.file.readJSON(path);
+        const path = "../site-build/bower.json";
+        const data = grunt.file.readJSON(path);
         data.version = packageJson.version;
         grunt.file.write(path, JSON.stringify(data, null, 2) + "\n");
     });
@@ -341,7 +355,7 @@ module.exports = function(grunt) {
     // ----------
     // Test task.
     // Builds and runs unit tests.
-    grunt.registerTask("test", ["build", "connect", "qunit:normal"]);
+    grunt.registerTask("test", ["build", "connect", "qunit:normal", "dts"]);
 
     // ----------
     // Coverage task.
@@ -367,4 +381,10 @@ module.exports = function(grunt) {
     // Default task.
     // Does a normal build.
     grunt.registerTask("default", ["build"]);
+
+    // ----------
+    // DTS tasks
+    grunt.registerTask("dts:check", ["shell:dts_check"]);
+    grunt.registerTask("dts:smoke", ["shell:dts_smoke"]);
+    grunt.registerTask("dts", ["dts:check", "dts:smoke"]);
 };

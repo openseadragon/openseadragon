@@ -11,7 +11,7 @@
 
     // ----------
     QUnit.test('deprecation', function(assert) {
-        var done = assert.async();
+        const done = assert.async();
         Util.testDeprecation(assert, OpenSeadragon, 'TileSourceCollection');
         done();
     });

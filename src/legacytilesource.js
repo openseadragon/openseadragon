@@ -60,9 +60,9 @@
  */
 $.LegacyTileSource = function( levels ) {
 
-    var options,
-        width,
-        height;
+    let options;
+    let width;
+    let height;
 
     if( $.isArray( levels ) ){
         options = {
@@ -104,7 +104,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * this tile source.
      * @function
      * @param {Object|Array} data
-     * @param {String} optional - url
+     * @param {String} [url]
      */
     supports: function( data, url ){
         return (
@@ -128,7 +128,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      */
     configure: function( configuration, dataUrl, postData ){
 
-        var options;
+        let options;
 
         if( !$.isPlainObject(configuration) ){
 
@@ -148,7 +148,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * @param {Number} level
      */
     getLevelScale: function ( level ) {
-        var levelScale = NaN;
+        let levelScale = NaN;
         if ( this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel ) {
             levelScale =
                 this.levels[ level ].width /
@@ -162,7 +162,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * @param {Number} level
      */
     getNumTiles: function( level ) {
-        var scale = this.getLevelScale( level );
+        const scale = this.getLevelScale( level );
         if ( scale ){
             return new $.Point( 1, 1 );
         } else {
@@ -182,7 +182,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * @throws {Error}
      */
     getTileUrl: function ( level, x, y ) {
-        var url = null;
+        let url = null;
         if ( this.levels.length > 0 && level >= this.minLevel && level <= this.maxLevel ) {
             url = this.levels[ level ].url;
         }
@@ -193,7 +193,7 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
      * Equality comparator
      */
     equals: function (otherSource) {
-        if (!otherSource.levels || otherSource.levels.length !== this.levels.length) {
+        if (!otherSource || !otherSource.levels || otherSource.levels.length !== this.levels.length) {
             return false;
         }
         for (let i = this.minLevel; i <= this.maxLevel; i++) {
@@ -213,10 +213,10 @@ $.extend( $.LegacyTileSource.prototype, $.TileSource.prototype, /** @lends OpenS
  * @function
  */
 function filterFiles( files ){
-    var filtered = [],
-        file,
-        i;
-    for( i = 0; i < files.length; i++ ){
+    const filtered = [];
+    let file;
+
+    for( let i = 0; i < files.length; i++ ){
         file = files[ i ];
         if( file.height &&
             file.width &&
@@ -250,12 +250,11 @@ function configureFromXML( tileSource, xmlDoc ){
         throw new Error( $.getString( "Errors.Xml" ) );
     }
 
-    var root         = xmlDoc.documentElement,
-        rootName     = root.tagName,
-        conf         = null,
-        levels       = [],
-        level,
-        i;
+    const root         = xmlDoc.documentElement;
+    const rootName     = root.tagName;
+    let conf         = null;
+    let levels       = [];
+    let level;
 
     if ( rootName === "image" ) {
 
@@ -266,7 +265,7 @@ function configureFromXML( tileSource, xmlDoc ){
             };
 
             levels = root.getElementsByTagName( "level" );
-            for ( i = 0; i < levels.length; i++ ) {
+            for ( let i = 0; i < levels.length; i++ ) {
                 level = levels[ i ];
 
                 conf.levels.push({
