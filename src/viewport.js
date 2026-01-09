@@ -148,6 +148,8 @@ $.Viewport = function( options ) {
     this._oldZoom    = this.zoomSpring.current.value;
     this._oldDegrees = this.degreesSpring.current.value;
 
+    this._sizeChanged = false;
+
     this._setContentBounds(new $.Rect(0, 0, 1, 1), 1);
 
     this.goHome(true);
@@ -1067,6 +1069,7 @@ $.Viewport.prototype = {
         var oldBounds = this.getBoundsNoRotate(),
             newBounds = oldBounds,
             widthDeltaFactor;
+        this._sizeChanged = !this.containerSize.equals(newContainerSize);
 
         this.containerSize.x = newContainerSize.x;
         this.containerSize.y = newContainerSize.y;
@@ -1161,7 +1164,10 @@ $.Viewport.prototype = {
         var changed = this.centerSpringX.current.value !== this._oldCenterX ||
             this.centerSpringY.current.value !== this._oldCenterY ||
             this.zoomSpring.current.value !== this._oldZoom ||
-            this.degreesSpring.current.value !== this._oldDegrees;
+            this.degreesSpring.current.value !== this._oldDegrees ||
+            this._sizeChanged;
+
+        this._sizeChanged = false;
 
 
         this._oldCenterX = this.centerSpringX.current.value;
