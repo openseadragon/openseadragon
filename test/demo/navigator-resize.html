@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Basic Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+        #controls {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #controls label {
+            margin-right: 5px;
+        }
+        #controls select {
+            margin-right: 10px;
+            padding: 5px;
+        }
+        #controls button {
+            padding: 5px 10px;
+            margin-right: 5px;
+        }
+        #container {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        Simple demo page to show a default OpenSeadragon viewer.
+    </div>
+    <div id="controls" style="margin-bottom: 10px;">
+        <label for="drawer-select">Drawer Type: </label>
+        <select id="drawer-select" onchange="changeDrawer()">
+            <option value="canvas">Canvas</option>
+            <option value="webgl">WebGL</option>
+        </select>
+        <button onclick="setSmallNav()" style="margin-left: 20px;">Small Navigator</button>
+        <button onclick="setBigNav()">Big Navigator</button>
+    </div>
+    <div id="container">
+        <div id="openseadragon1" style="width: 800px; height: 600px;"></div>
+    </div>
+
+    <script>
+        let viewer = null;
+
+        function createViewer(drawerType) {
+            // Destroy existing viewer if it exists
+            if (viewer) {
+                viewer.destroy();
+                viewer = null;
+            }
+
+            // Create new viewer with specified drawer type
+            viewer = window.viewer = OpenSeadragon({
+                id: "openseadragon1",
+                prefixUrl: "../../build/openseadragon/images/",
+                drawer: drawerType,
+                tileSources: "../data/testpattern.dzi",
+                showNavigator: true,
+                navigatorAutoResize: true
+            });
+
+            return viewer;
+        }
+
+        function changeDrawer() {
+            const select = document.getElementById('drawer-select');
+            const drawerType = select.value;
+            createViewer(drawerType);
+        }
+
+        function setSmallNav() {
+            if (viewer && viewer.navigator) {
+                viewer.navigator.setWidth(400);
+                viewer.navigator.setHeight(300);
+            }
+        }
+
+        function setBigNav() {
+            if (viewer && viewer.navigator) {
+                viewer.navigator.setWidth(500);
+                viewer.navigator.setHeight(500);
+            }
+        }
+
+        // Initialize with default drawer (canvas)
+        createViewer('canvas');
+        // Set dropdown to match initial drawer
+        document.getElementById('drawer-select').value = 'canvas';
+    </script>
+
+</body>
+</html>
