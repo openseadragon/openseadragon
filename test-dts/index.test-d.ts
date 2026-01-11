@@ -17,12 +17,45 @@ expectType<OpenSeadragon.Rect>(viewer.viewport.getBounds());
 expectType<OpenSeadragon.Point>(viewer.viewport.getCenter());
 expectType<number>(viewer.viewport.getRotation());
 expectType<boolean>(viewer.viewport.getFlip());
-viewer.viewport.zoomTo(2.0);
+viewer.viewport.zoomTo(2);
 viewer.viewport.panTo(new OpenSeadragon.Point(0.5, 0.5));
 viewer.viewport.setRotation(45);
 viewer.viewport.setFlip(true);
 expectType<OpenSeadragon.Point>(viewer.viewport.viewportToImageCoordinates(0.5, 0.5));
 expectType<OpenSeadragon.Point>(viewer.viewport.imageToViewportCoordinates(100, 100));
+expectType<OpenSeadragon.Rect>(viewer.viewport.getHomeBounds());
+expectType<number>(viewer.viewport.getHomeZoom());
+expectType<number>(viewer.viewport.getMinZoom());
+expectType<number>(viewer.viewport.getMaxZoom());
+expectType<number>(viewer.viewport.getAspectRatio());
+expectType<OpenSeadragon.Point>(viewer.viewport.getContainerSize());
+expectType<OpenSeadragon.Rect>(viewer.viewport.getBoundsNoRotate());
+expectType<OpenSeadragon.Point>(viewer.viewport.deltaPixelsFromPoints(new OpenSeadragon.Point(1, 1)));
+expectType<OpenSeadragon.Point>(viewer.viewport.deltaPointsFromPixels(new OpenSeadragon.Point(100, 100)));
+expectType<OpenSeadragon.Point>(viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(0.5, 0.5)));
+expectType<OpenSeadragon.Point>(viewer.viewport.pointFromPixel(new OpenSeadragon.Point(100, 100)));
+expectType<OpenSeadragon.Point>(viewer.viewport.viewerElementToImageCoordinates(new OpenSeadragon.Point(100, 100)));
+expectType<OpenSeadragon.Point>(viewer.viewport.imageToViewerElementCoordinates(new OpenSeadragon.Point(100, 100)));
+expectType<OpenSeadragon.Point>(viewer.viewport.windowToImageCoordinates(new OpenSeadragon.Point(100, 100)));
+expectType<OpenSeadragon.Point>(viewer.viewport.imageToWindowCoordinates(new OpenSeadragon.Point(100, 100)));
+expectType<OpenSeadragon.Point>(viewer.viewport.viewportToViewerElementCoordinates(new OpenSeadragon.Point(0.5, 0.5)));
+expectType<OpenSeadragon.Point>(viewer.viewport.viewerElementToViewportCoordinates(new OpenSeadragon.Point(100, 100)));
+expectType<OpenSeadragon.Viewport>(viewer.viewport.applyConstraints());
+expectType<OpenSeadragon.Viewport>(viewer.viewport.ensureVisible());
+expectType<OpenSeadragon.Viewport>(viewer.viewport.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 1)));
+expectType<OpenSeadragon.Viewport>(viewer.viewport.fitBoundsWithConstraints(new OpenSeadragon.Rect(0, 0, 1, 1)));
+expectType<OpenSeadragon.Viewport>(viewer.viewport.fitVertically());
+expectType<OpenSeadragon.Viewport>(viewer.viewport.fitHorizontally());
+expectType<OpenSeadragon.Viewport>(viewer.viewport.goHome());
+expectType<OpenSeadragon.Viewport>(viewer.viewport.panBy(new OpenSeadragon.Point(0.1, 0.1)));
+expectType<OpenSeadragon.Viewport>(viewer.viewport.resize(new OpenSeadragon.Point(800, 600)));
+expectType<boolean>(viewer.viewport.update());
+expectType<OpenSeadragon.Viewport>(viewer.viewport.toggleFlip());
+expectType<OpenSeadragon.Rect>(viewer.viewport.viewportToImageRectangle(new OpenSeadragon.Rect(0, 0, 1, 1)));
+expectType<OpenSeadragon.Rect>(viewer.viewport.imageToViewportRectangle(new OpenSeadragon.Rect(0, 0, 100, 100)));
+expectType<OpenSeadragon.Rect>(viewer.viewport.viewerElementToViewportRectangle(new OpenSeadragon.Rect(0, 0, 100, 100)));
+expectType<number>(viewer.viewport.viewportToImageZoom(1));
+expectType<number>(viewer.viewport.imageToViewportZoom(1));
 
 // World
 expectType<number>(viewer.world.getItemCount());
@@ -42,6 +75,25 @@ if (item) {
     item.setOpacity(0.5);
     item.setFlip(true);
     item.setRotation(90);
+    expectType<OpenSeadragon.Point>(item.getContentSize());
+    expectType<number>(item.getRotation());
+    expectType<OpenSeadragon.Rect | null>(item.getClip());
+    expectType<OpenSeadragon.Point>(item.imageToViewportCoordinates(100, 100));
+    expectType<OpenSeadragon.Rect>(item.imageToViewportRectangle(new OpenSeadragon.Rect(0, 0, 100, 100)));
+    expectType<OpenSeadragon.Rect>(item.viewportToImageRectangle(new OpenSeadragon.Rect(0, 0, 1, 1)));
+    expectType<number>(item.imageToViewportZoom(1));
+    expectType<number>(item.viewportToImageZoom(1));
+    expectType<OpenSeadragon.Point>(item.windowToImageCoordinates(new OpenSeadragon.Point(100, 100)));
+    expectType<OpenSeadragon.Point>(item.imageToWindowCoordinates(new OpenSeadragon.Point(100, 100)));
+    expectType<OpenSeadragon.Point>(item.viewerElementToImageCoordinates(new OpenSeadragon.Point(100, 100)));
+    expectType<OpenSeadragon.Point>(item.imageToViewerElementCoordinates(new OpenSeadragon.Point(100, 100)));
+    expectType<void>(item.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 1)));
+    expectType<void>(item.setPosition(new OpenSeadragon.Point(0.5, 0.5)));
+    expectType<void>(item.setWidth(0.5));
+    expectType<void>(item.setHeight(0.5));
+    expectType<void>(item.setClip(new OpenSeadragon.Rect(0, 0, 100, 100)));
+    expectType<void>(item.resetCroppingPolygons());
+    expectType<void>(item.destroy());
 }
 
 // Events
@@ -97,10 +149,20 @@ expectType<OpenSeadragon.Point>(dziSource.dimensions);
 expectType<number>(dziSource.maxLevel);
 expectType<number>(dziSource.getTileWidth(0));
 expectType<OpenSeadragon.Rect>(dziSource.getTileBounds(0, 0, 0));
+expectAssignable<string | (() => string)>(dziSource.getTileUrl(0, 0, 0));
+expectType<boolean>(dziSource.tileExists(0, 0, 0));
+expectType<OpenSeadragon.Tile>(dziSource.getTileAtPoint(0, new OpenSeadragon.Point(0.5, 0.5)));
+expectType<number>(dziSource.getClosestLevel());
+expectType<number>(dziSource.getNumTiles(0));
+expectType<number>(dziSource.getPixelRatio(0));
 
 const iiifSource = new OpenSeadragon.IIIFTileSource({ width: 1000, height: 800, tileSize: 256 });
 const imgSource = new OpenSeadragon.ImageTileSource({ url: "image.jpg" });
 const zoomifySource = new OpenSeadragon.ZoomifyTileSource(1000, 800, 256, "/tiles/");
+
+// TmsTileSource
+const tmsSource = new OpenSeadragon.TmsTileSource({ width: 1000, height: 800, tileSize: 256, tilesUrl: "/tiles/" });
+expectType<string>(tmsSource.tilesUrl);
 
 // Overlay
 const div = document.createElement("div");
@@ -156,11 +218,14 @@ expectType<number>(tile.x);
 expectType<number>(tile.y);
 expectType<boolean>(tile.loaded);
 expectType<string>(tile.getUrl());
+expectType<OpenSeadragon.Point>(tile.getTranslationForEdgeSmoothing(1, new OpenSeadragon.Point(256, 256), new OpenSeadragon.Point(256, 256)));
+expectType<string>(tile.toString());
+expectType<void>(tile.unload());
 
 // Spring
-const spring = new OpenSeadragon.Spring({ springStiffness: 5.0, animationTime: 1.5 });
+const spring = new OpenSeadragon.Spring({ springStiffness: 5, animationTime: 1.5 });
 expectType<number>(spring.current.value);
-spring.springTo(1.0);
+spring.springTo(1);
 spring.update();
 expectType<boolean>(spring.isAtTargetValue());
 
@@ -175,6 +240,27 @@ const _enumTest1 = OpenSeadragon.ButtonState.REST;
 const _enumTest2 = OpenSeadragon.ControlAnchor.TOP_LEFT;
 const _enumTest3 = OpenSeadragon.Placement.CENTER;
 const _enumTest4 = OpenSeadragon.OverlayRotationMode.EXACT;
+
+// PriorityQueue
+const queue = new OpenSeadragon.PriorityQueue<string, number>();
+expectType<void>(queue.insert("item1", 10));
+expectType<OpenSeadragon.PriorityQueue.Node<string, number> | undefined>(queue.remove());
+expectType<number | undefined>(queue.peek());
+expectType<number>(queue.getCount());
+expectType<boolean>(queue.isEmpty());
+expectType<void>(queue.clear());
+
+// CacheRecord
+const cacheRecord = new OpenSeadragon.CacheRecord();
+expectType<boolean>(cacheRecord.loaded);
+expectType<any>(cacheRecord.data);
+expectType<string>(cacheRecord.type);
+expectType<void>(cacheRecord.destroy());
+expectType<Promise<any>>(cacheRecord.await());
+expectType<Promise<any>>(cacheRecord.setDataAs("test", "image"));
+expectType<Promise<any>>(cacheRecord.getDataAs("image"));
+expectType<any>(cacheRecord.getImage());
+expectType<any>(cacheRecord.getRenderedContext());
 
 // Utilities
 expectType<Element>(OpenSeadragon.getElement("id"));

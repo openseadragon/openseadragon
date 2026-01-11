@@ -22,8 +22,8 @@
     },
     "license": "BSD-3-Clause",
     "files": [
-        "build/openseadragon/",
-        "types/"
+        "types/",
+        "build/openseadragon/"
     ],
     "main": "build/openseadragon/openseadragon.js",
     "repository": {
