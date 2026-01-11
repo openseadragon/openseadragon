@@ -198,16 +198,18 @@ declare namespace OpenSeadragon {
 
     function stopEvent(event?: OSDEvent<any>): void;
 
-    //TODO
     interface GestureSettings {
+        dragToPan?: boolean;
         scrollToZoom?: boolean;
         clickToZoom?: boolean;
         dblClickToZoom?: boolean;
-        dragToPan?: boolean;
+        dblClickDragToZoom?: boolean;
         pinchToZoom?: boolean;
+        zoomToRefPoint?: boolean;
         flickEnabled?: boolean;
         flickMinSpeed?: number;
         flickMomentum?: number;
+        pinchRotate?: boolean;
     }
 
     interface NavImagesValues {
@@ -217,7 +219,6 @@ declare namespace OpenSeadragon {
         DOWN: string;
     }
 
-    //TODO
     interface NavImages {
         zoomIn: NavImagesValues;
         zoomOut: NavImagesValues;
@@ -230,7 +231,7 @@ declare namespace OpenSeadragon {
         next: NavImagesValues;
     }
 
-    type DrawerType = "html" | "canvas" | "webgl";
+    type DrawerType = "auto" | "html" | "canvas" | "webgl";
     type DrawerConstructor = new(options: TDrawerOptions) => DrawerBase;
     type TypeConverter<TIn = any, TOut = any> = (tile: OpenSeadragon.Tile, data: TIn) => TOut | Promise<TOut>;
     type TypeDestructor<TIn = any, TOut = any> = (data: TIn) => TOut | Promise<TOut>;
@@ -265,7 +266,7 @@ declare namespace OpenSeadragon {
         }
             | Array<string | TileSource | { type: "openstreetmaps" }>
             | (() => string)
-            | { getTileUrl: (level: number, x: number, y: number) => string }
+            | { getTileUrl: (level: number, x: number, y: number) => string };
         tabIndex?: number;
         overlays?: any[];
         toolbar?: string | Element;
@@ -495,8 +496,45 @@ declare namespace OpenSeadragon {
         destroy(): void;
     }
 
+    class InternalCacheRecord {
+        constructor(data: any | Promise<any>, type: string, onDestroy?: (data: any) => void);
+
+        tstamp: number;
+        loaded: boolean;
+        readonly data: any;
+        readonly type: string;
+
+        await(): Promise<any>;
+        withTileReference(referenceTile: Tile): InternalCacheRecord;
+        destroy(): void;
+    }
+
     class CacheRecord {
         constructor();
+
+        loaded: boolean;
+        readonly data: any;
+        readonly type: string;
+
+        await(): Promise<any>;
+        getImage(): any;
+        getRenderedContext(): any;
+        setDataAs(data: any, type: string): Promise<any>;
+        getDataAs(type?: string, copy?: boolean): Promise<any>;
+        getDataForRendering(drawer: DrawerBase, tileToDraw: Tile): CacheRecord | InternalCacheRecord | undefined;
+        isUsableForDrawer(drawer: DrawerBase): boolean;
+        prepareForRendering(drawer: DrawerBase): Promise<any>;
+        prepareInternalCacheAsync(drawer: DrawerBase): Promise<any>;
+        prepareInternalCacheSync(drawer: DrawerBase): InternalCacheRecord;
+        transformTo(type?: string | string[]): Promise<any>;
+        destroyInternalCache(drawerId?: string): void;
+        withTileReference(ref: Tile): CacheRecord;
+        toString(): string;
+        revive(): void;
+        destroy(): void;
+        addTile(tile: Tile, data?: any, type?: string): void;
+        removeTile(tile: Tile): boolean;
+        getTileCount(): number;
     }
 
     interface TControlOptions {
@@ -977,8 +1015,9 @@ declare namespace OpenSeadragon {
         toString(): string;
     }
 
-    class PriorityQueue<K = number, V = any> {
+    class PriorityQueue<K = any, V = any> {
         constructor(optHeap?: PriorityQueue<K, V>);
+
         insert(key: K, value: V): void;
         insertNode(node: PriorityQueue.Node<K, V>): void;
         insertAll(heap: PriorityQueue<K, V>): void;
@@ -997,11 +1036,13 @@ declare namespace OpenSeadragon {
     }
 
     namespace PriorityQueue {
-        class Node<K = number, V = any> {
+        class Node<K = any, V = any> {
+            constructor(key: K, value: V);
+
             key: K;
             value: V;
             index?: number;
-            constructor(key: K, value: V);
+
             clone(): PriorityQueue.Node<K, V>;
         }
     }
@@ -1066,19 +1107,16 @@ declare namespace OpenSeadragon {
     class Tile {
         ajaxHeaders: object;
         beingDrawn: boolean;
-        blendStart: number;
+        blendStart: number | null;
         bounds: Rect;
-        cacheKey: string;
+        cacheImageRecord: CacheRecord;
         context2D: CanvasRenderingContext2D;
         element: Element;
         exists: boolean;
         flipped: boolean;
         hasTransparency: boolean;
-        /**
-         * @deprecated use `getImage()` instead
-         */
         image: object;
-        imgElement: HTMLImageElement;
+        imgElement: Element;
         isBottomMost: boolean;
         isRightMost: boolean;
         lastTouchTime: number;
@@ -1086,18 +1124,16 @@ declare namespace OpenSeadragon {
         loaded: boolean;
         loading: boolean;
         loadWithAjax: boolean;
-        opacity: number;
-        position: Point;
+        opacity: number | null;
+        position: Point | null;
         positionedBounds: Rect;
         postData: string;
-        size: Point;
+        size: Point | null;
         sourceBounds: Rect;
         style: string;
-        /**
-         * @deprecated use `getUrl()` instead
-         */
+        tiledImage: TiledImage | null;
         url: string;
-        visibility: number;
+        visibility: number | null;
         x: number;
         y: number;
 
@@ -1107,28 +1143,28 @@ declare namespace OpenSeadragon {
             y: number,
             bounds: Rect,
             exists: boolean,
-            url: string,
-            context2D: CanvasRenderingContext2D,
-            loadWithAjax: boolean,
-            ajaxHeaders: object,
-            sourceBounds: Rect,
-            postData: string,
-            cacheKey: string,
+            url: string | (() => string),
+            context2D?: CanvasRenderingContext2D,
+            loadWithAjax?: boolean,
+            ajaxHeaders?: object,
+            sourceBounds?: Rect,
+            postData?: string,
+            cacheKey?: string,
         );
-        getCanvasContext(): CanvasRenderingContext2D;
-        getImage(): object;
-        drawCanvas(
-            context: CanvasRenderingContext2D,
-            drawingHandler: (context: CanvasRenderingContext2D, tile: any, rendered: any) => void,
-            scale?: number,
-            translate?: Point,
-        ): void;
-        drawHTML(container: Element): void;
-        getScaleForEdgeSmoothing(): number;
-        getTranslationForEdgeSmoothing(scale?: number): Point;
+
+        equals(tile: Tile): boolean;
+        getCacheSize(): number;
+        getTranslationForEdgeSmoothing(scale: number | undefined, canvasSize: Point, sketchCanvasSize: Point): Point;
         getUrl(): string;
         toString(): string;
-        unload(): void;
+        unload(erase?: boolean): void;
+
+        /** @deprecated */
+        getCanvasContext(): CanvasRenderingContext2D | undefined;
+        /** @deprecated */
+        getImage(): object;
+        /** @deprecated */
+        getScaleForEdgeSmoothing(): number;
     }
 
     class TileCache {
@@ -1178,12 +1214,23 @@ declare namespace OpenSeadragon {
         ajaxHeaders?: object;
     }
 
+    interface DrawTileInfo {
+        currentTime: number;
+        level: number;
+        levelOpacity: number;
+        tile: Tile;
+    }
+
+    type Issue = 'webgl';
+
     class TiledImage extends EventSource<TiledImageEventMap> {
         source: TileSource;
+        readonly lastDrawn: DrawTileInfo[];
+
         constructor(options: TiledImageInitOptions);
 
+        allowZombieCache(allow: boolean): void;
         destroy(): void;
-        draw(): void;
         fitBounds(bounds: Rect, anchor?: Placement, immediately?: boolean): void;
         getBounds(current?: boolean): Rect;
         getBoundsNoRotate(current?: boolean): Rect;
@@ -1191,15 +1238,19 @@ declare namespace OpenSeadragon {
         getClippedBounds(current?: boolean): Rect;
         getCompositeOperation(): string;
         getContentSize(): Point;
-        getDrawArea(): Rect;
-        getFullyLoaded(): boolean;
+        getDrawArea(): Rect | false;
+        getDrawer(): DrawerBase;
         getFlip(): boolean;
+        getFullyLoaded(): boolean;
+        getIssue(issueType: string): string | undefined;
+        getLoadArea(): Rect;
         getOpacity(): number;
         getPreload(): boolean;
         getRotation(current?: boolean): number;
         getSizeInWindowCoordinates(): Point;
         getTileBounds(level: number, x: number, y: number): Rect;
-        getTilesToDraw(): any[];
+        getTilesToDraw(): DrawTileInfo[];
+        hasIssue(issueType: string): boolean;
         imageToViewerElementCoordinates(pixel: Point): Point;
         imageToViewportCoordinates(position: Point, current?: boolean): Point;
         imageToViewportCoordinates(imageX: number, imageY: number, current?: boolean): Point;
@@ -1216,6 +1267,7 @@ declare namespace OpenSeadragon {
         imageToWindowCoordinates(pixel: Point): Point;
         needsDraw(): boolean;
         redraw(): void;
+        requestInvalidate(restoreTiles?: boolean, viewportOnly?: boolean, tStamp?: number): Promise<any>;
         reset(): void;
         resetCroppingPolygons(): void;
         setAjaxHeaders(ajaxHeaders: object, propagate?: boolean): void;
@@ -1243,7 +1295,10 @@ declare namespace OpenSeadragon {
             current?: boolean,
         ): Rect;
         viewportToImageZoom(viewportZoom: number): number;
+        whenFullyLoaded(callback: () => void): void;
         windowToImageCoordinates(pixel: Point): Point;
+        /** @deprecated */
+        getWorldBounds(): Rect;
     }
 
     interface ConfigureOptions {
@@ -1251,19 +1306,18 @@ declare namespace OpenSeadragon {
     }
 
     class TileSource extends EventSource<TileSourceEventMap> {
+        constructor(options: TileSourceOptions | string);
+
         aspectRatio: number;
         dimensions: Point;
         maxLevel: number;
         minLevel: number;
         ready: boolean;
         tileOverlap: number;
-        url: string;
+        url: string | null;
 
-        constructor(options: TileSourceOptions);
         configure(data: string | object | any[] | Document, url: string, postData: string): ConfigureOptions;
-        createTileCache(cacheObject: object, data: any, tile: Tile): void;
         destroy(viewer: Viewer): void;
-        destroyTileCache(cacheObject: object): void;
         downloadTileAbort(context: ImageJob): void;
         downloadTileStart(context: ImageJob): void;
         equals(otherSource: TileSource): boolean;
@@ -1275,37 +1329,39 @@ declare namespace OpenSeadragon {
         getTileAjaxHeaders(level: number, x: number, y: number): object;
         getTileAtPoint(level: number, point: Point): Tile;
         getTileBounds(level: number, x: number, y: number, isSource?: boolean): Rect;
-        getTileCacheData(cacheObject: CacheRecord): Promise<any>; // TODO: Promise to recheck/revisit
-        getTileCacheDataAsContext2D(cacheObject: CacheRecord): CanvasRenderingContext2D;
-
-        //TODO: need to revisit once d.ts is done to check deprecated.
-        /**
-         * @deprecated Use cache API of a tile instead.
-         */
-        getTileCacheDataAsImage(cacheObject: CacheRecord): HTMLImageElement;
-        getTileHashKey(level: number, x: number, y: number, url: string, ajaxHeaders: object, postData: any): void;
+        getTileHashKey(level: number, x: number, y: number, url: string, ajaxHeaders: object, postData: any): string | null;
         getTileHeight(level: number): number;
-        getTilePostData(level: number, x: number, y: number): any;
+        getTilePostData(level: number, x: number, y: number): any | null;
         getTileUrl(level: number, x: number, y: number): string | (() => string);
         getTileWidth(level: number): number;
-
-        /**
-         * Decide whether tiles have transparency: this is crucial for correct images blending.
-         * Overridden on a tile level by setting tile.hasTransparency = true;
-         * @param context2D unused, deprecated argument
-         * @param url tile.getUrl() value for given tile
-         * @param ajaxHeaders tile.ajaxHeaders value for given tile
-         * @param post tile.post value for given tile
-         * @returns {boolean} true if the image has transparency
-         */
         hasTransparency(context2D: any, url: string, ajaxHeaders: object, post: any): boolean;
         setMaxLevel(level: number): void;
-        supports(data: string | object | any[] | Document, url: string): boolean;
+        supports(data: any, url: string): boolean;
         tileExists(level: number, x: number, y: number): boolean;
+
+        /** @deprecated */
+        createTileCache(cacheObject: CacheRecord, data: any, tile: Tile): void;
+        /** @deprecated */
+        destroyTileCache(cacheObject: CacheRecord): void;
+        /** @deprecated */
+        getTileCacheData(cacheObject: CacheRecord): Promise<any>;
+        /** @deprecated */
+        getTileCacheDataAsContext2D(cacheObject: CacheRecord): CanvasRenderingContext2D;
+        /** @deprecated */
+        getTileCacheDataAsImage(cacheObject: CacheRecord): HTMLImageElement;
+        /** @deprecated */
+        getTileSize(level: number): number;
+    }
+
+    interface TmsTileSourceOptions extends TileSourceOptions {
+        tilesUrl: string;
     }
 
     class TmsTileSource extends TileSource {
-        constructor(width: number | object, height: number, tileSize: number, tileOverlap: number, tilesUrl: string);
+        constructor(width: number, height: number, tileSize: number, tileOverlap: number, tilesUrl: string);
+        constructor(options: TmsTileSourceOptions);
+
+        tilesUrl: string;
     }
 
     interface ImageOptions {
@@ -1419,31 +1475,33 @@ declare namespace OpenSeadragon {
     }
 
     interface ViewportOptions {
-        margins: object;
-        springStiffness?: number;
         animationTime?: number;
-        minZoomImageRatio?: number;
+        containerSize?: Point;
+        contentSize?: Point;
+        defaultZoomLevel?: number;
+        degrees?: number;
+        flipped?: boolean;
+        homeFillsViewer?: boolean;
+        margins?: { left?: number; top?: number; right?: number; bottom?: number };
+        maxZoomLevel?: number;
         maxZoomPixelRatio?: number;
+        minZoomImageRatio?: number;
+        minZoomLevel?: number;
+        silenceMultiImageWarnings?: boolean;
+        springStiffness?: number;
         visibilityRatio?: number;
         wrapHorizontal?: boolean;
         wrapVertical?: boolean;
-        defaultZoomLevel?: number;
-        minZoomLevel?: number;
-        maxZoomLevel?: number;
-        degrees?: number;
-        homeFillsViewer?: boolean;
-        silenceMultiImageWarnings?: boolean;
     }
 
-    // TODO
     class Viewport {
         constructor(options: ViewportOptions);
 
         applyConstraints(immediately?: boolean): Viewport;
         deltaPixelsFromPoints(deltaPoints: Point, current?: boolean): Point;
         deltaPixelsFromPointsNoRotate(deltaPoints: Point, current?: boolean): Point;
-        deltaPointsFromPixels(deltaPoints: Point, current?: boolean): Point;
-        deltaPointsFromPixelsNoRotate(deltaPoints: Point, current?: boolean): Point;
+        deltaPointsFromPixels(deltaPixels: Point, current?: boolean): Point;
+        deltaPointsFromPixelsNoRotate(deltaPixels: Point, current?: boolean): Point;
         ensureVisible(immediately?: boolean): Viewport;
         fitBounds(bounds: Rect, immediately?: boolean): Viewport;
         fitBoundsWithConstraints(bounds: Rect, immediately?: boolean): Viewport;
@@ -1461,7 +1519,7 @@ declare namespace OpenSeadragon {
         getHomeBounds(): Rect;
         getHomeBoundsNoRotate(): Rect;
         getHomeZoom(): number;
-        getMargins(): object;
+        getMargins(): { left: number; top: number; right: number; bottom: number };
         getMaxZoom(): number;
         getMaxZoomPixelRatio(): number;
         getMinZoom(): number;
@@ -1469,29 +1527,24 @@ declare namespace OpenSeadragon {
         getZoom(current?: boolean): number;
         goHome(immediately?: boolean): Viewport;
         imageToViewerElementCoordinates(pixel: Point): Point;
-        imageToViewportCoordinates(position: Point): Point;
         imageToViewportCoordinates(imageX: number, imageY: number): Point;
-        imageToViewportCoordinates(imageX: number, imageY: number, pixelWidth: number, pixelHeight: number): Point;
-        imageToViewportRectangle(
-            imageX: number | Rect,
-            imageY?: number,
-            pixelWidth?: number,
-            pixelHeight?: number,
-        ): Rect;
+        imageToViewportCoordinates(position: Point): Point;
+        imageToViewportRectangle(imageX: number, imageY?: number, pixelWidth?: number, pixelHeight?: number): Rect;
+        imageToViewportRectangle(position: Rect): Rect;
         imageToViewportZoom(imageZoom: number): number;
         imageToWindowCoordinates(pixel: Point): Point;
         panBy(delta: Point, immediately?: boolean): Viewport;
         panTo(center: Point, immediately?: boolean): Viewport;
         pixelFromPoint(point: Point, current?: boolean): Point;
         pixelFromPointNoRotate(point: Point, current?: boolean): Point;
-        pointFromPixel(point: Point, current?: boolean): Point;
-        pointFromPixelNoRotate(point: Point, current?: boolean): Point;
+        pointFromPixel(pixel: Point, current?: boolean): Point;
+        pointFromPixelNoRotate(pixel: Point, current?: boolean): Point;
         resetContentSize(contentSize: Point): Viewport;
-        resize(): Viewport;
-        rotateBy(degrees: number, pivot?: Point): Viewport;
+        resize(newContainerSize: Point, maintain?: boolean): Viewport;
+        rotateBy(degrees: number, pivot?: Point, immediately?: boolean): Viewport;
         rotateTo(degrees: number, pivot?: Point, immediately?: boolean): Viewport;
         setFlip(state: boolean): Viewport;
-        setMargins(margins: object): void;
+        setMargins(margins: { left?: number; top?: number; right?: number; bottom?: number }): void;
         setMaxZoomPixelRatio(ratio: number, applyConstraints?: boolean, immediately?: boolean): void;
         setRotation(degrees: number, immediately?: boolean): Viewport;
         setRotationWithPivot(degrees: number, pivot?: Point, immediately?: boolean): Viewport;
@@ -1500,10 +1553,10 @@ declare namespace OpenSeadragon {
         viewerElementToImageCoordinates(pixel: Point): Point;
         viewerElementToViewportCoordinates(pixel: Point): Point;
         viewerElementToViewportRectangle(rectangle: Rect): Rect;
-        viewportToImageCoordinates(position: Point): Point;
         viewportToImageCoordinates(viewerX: number, viewerY: number): Point;
-        viewportToImageRectangle(rectangle: Rect): Rect;
-        viewportToImageRectangle(viewerX: number, viewerY: number, pointWidth: number, pointHeight: number): Rect;
+        viewportToImageCoordinates(position: Point): Point;
+        viewportToImageRectangle(viewerX: number, viewerY?: number, pointWidth?: number, pointHeight?: number): Rect;
+        viewportToImageRectangle(position: Rect): Rect;
         viewportToImageZoom(viewportZoom: number): number;
         viewportToViewerElementCoordinates(point: Point): Point;
         viewportToViewerElementRectangle(rectangle: Rect): Rect;
@@ -1511,7 +1564,14 @@ declare namespace OpenSeadragon {
         windowToImageCoordinates(pixel: Point): Point;
         windowToViewportCoordinates(pixel: Point): Point;
         zoomBy(factor: number, refPoint?: Point, immediately?: boolean): Viewport;
-        zoomTo(factor: number, refPoint?: Point, immediately?: boolean): Viewport;
+        zoomTo(zoom: number, refPoint?: Point, immediately?: boolean): Viewport;
+
+        /** @deprecated */
+        get degrees(): number;
+        /** @deprecated */
+        set degrees(degrees: number);
+        /** @deprecated */
+        setHomeBounds(bounds: Rect, contentFactor: number): void;
     }
 
     class WebGLDrawer extends DrawerBase {
