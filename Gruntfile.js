@@ -16,8 +16,12 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-eslint");
     grunt.loadNpmTasks("grunt-git-describe");
     grunt.loadNpmTasks('grunt-text-replace');
-    grunt.loadNpmTasks('grunt-istanbul');
     grunt.loadNpmTasks('grunt-shell');
+
+    // Only load grunt-istanbul when coverage task is run (avoids circular dependency warning)
+    if (grunt.cli.tasks.includes('coverage')) {
+        grunt.loadNpmTasks('grunt-istanbul');
+    }
 
     // ----------
     const packageJson = grunt.file.readJSON("package.json"),
