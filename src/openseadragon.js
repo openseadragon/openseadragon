@@ -483,10 +483,6 @@
   *     Specifies the size of the navigator minimap (see navigatorPosition).
   *     If specified, navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.
   *
-  * @property {Boolean} [navigatorAutoResize=true]
-  *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
-  *     Setting to false can also improve performance when the navigator is configured to a fixed size.
-  *
   * @property {Boolean} [navigatorAutoFade=true]
   *     If the user stops interacting with the viewport, fade the navigator minimap.
   *     Setting to false will make the navigator minimap always visible.
@@ -1389,7 +1385,6 @@ function OpenSeadragon( options ){
             navigatorLeft:              null,
             navigatorHeight:            null,
             navigatorWidth:             null,
-            navigatorAutoResize:        true,
             navigatorAutoFade:          true,
             navigatorRotate:            true,
             navigatorBackground:        '#000',
