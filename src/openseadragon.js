@@ -190,8 +190,9 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
-  * @property {String|DrawerImplementation|Array} [drawer = ['webgl', 'canvas', 'html']]
-  *     Which drawer to use. Built-in valid strings are 'webgl', 'canvas', and 'html'.
+  * @property {String|DrawerImplementation|Array} [drawer = ['auto', 'webgl', 'canvas', 'html']]
+  *     Which drawer to use. Valid strings are 'auto', 'webgl', 'canvas', and 'html'.
+  *     The string 'auto' chooses between WebGL or canvas depending on the device.
   *     The 'webgl' drawer automatically uses WebGL2 when available, falling back to WebGL1.
   *     External drawer plugins can register additional drawer types as strings.
   *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
@@ -1411,7 +1412,7 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl (with WebGL2 if available), then canvas (i.e. context2d), then fallback to html
+            drawer:                            ['auto', 'webgl', 'canvas', 'html'], // prefer using auto, then webgl (with WebGL2 if available), then canvas (i.e. context2d), then fallback to html
             // DRAWER CONFIGURATIONS
             drawerOptions: {
                 // [drawer-id]: {options} map
