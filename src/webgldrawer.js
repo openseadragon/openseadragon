@@ -1301,12 +1301,37 @@
                 // Use the shared renderer's canvas and context
                 this._renderingCanvas = this._sharedRenderer.getCanvas();
                 this._gl = this._sharedRenderer.getContext();
-                this._isWebGL2 = this._sharedRenderer.isWebGL2();
-                this._extTextureFilterAnisotropic = this._sharedRenderer.getAnisotropicExtension();
-                this._maxAnisotropy = this._sharedRenderer.getMaxAnisotropy();
 
-                // Ensure shared canvas is large enough for our output
-                this._sharedRenderer.ensureSize(this._outputCanvas.width, this._outputCanvas.height);
+                if (!this._gl) {
+                    // Shared renderer failed to provide a WebGL context; fall back to
+                    // creating a non-shared context (original behavior).
+                    this._useSharedRenderer = false;
+                    this._sharedRenderer = null;
+
+                    this._renderingCanvas = document.createElement('canvas');
+                    this._renderingCanvas.width = this._outputCanvas.width;
+                    this._renderingCanvas.height = this._outputCanvas.height;
+
+                    // Try WebGL2 first, then fall back to WebGL1
+                    this._gl = this._renderingCanvas.getContext('webgl2');
+                    if (this._gl) {
+                        this._isWebGL2 = true;
+                        this._setupWebGLExtensions();
+                    } else {
+                        this._gl = this._renderingCanvas.getContext('webgl');
+                        this._isWebGL2 = false;
+                        if (this._gl) {
+                            this._setupWebGLExtensions();
+                        }
+                    }
+                } else {
+                    this._isWebGL2 = this._sharedRenderer.isWebGL2();
+                    this._extTextureFilterAnisotropic = this._sharedRenderer.getAnisotropicExtension();
+                    this._maxAnisotropy = this._sharedRenderer.getMaxAnisotropy();
+
+                    // Ensure shared canvas is large enough for our output
+                    this._sharedRenderer.ensureSize(this._outputCanvas.width, this._outputCanvas.height);
+                }
             } else {
                 // Create our own rendering canvas and context (original behavior)
                 this._renderingCanvas = document.createElement('canvas');
