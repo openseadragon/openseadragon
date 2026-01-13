@@ -190,9 +190,10 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
-  * @property {String|DrawerImplementation|Array} [drawer = ['webgl', 'canvas', 'html']]
-  *     Which drawer to use. Valid strings are 'webgl', 'canvas', and 'html'. Valid drawer
-  *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
+  * @property {String|DrawerImplementation|Array} [drawer = ['auto', 'webgl', 'canvas', 'html']]
+  *     Which drawer to use. Valid strings are 'auto', 'webgl', 'canvas', and 'html'.
+  *     The string 'auto' chooses between WebGL or canvas depending on the device.
+  *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
   *     of different implementations, which will be tried in order based on browser support.
   *
@@ -481,10 +482,6 @@
   * @property {Number|String} [navigatorWidth=null]
   *     Specifies the size of the navigator minimap (see navigatorPosition).
   *     If specified, navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.
-  *
-  * @property {Boolean} [navigatorAutoResize=true]
-  *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
-  *     Setting to false can also improve performance when the navigator is configured to a fixed size.
   *
   * @property {Boolean} [navigatorAutoFade=true]
   *     If the user stops interacting with the viewport, fade the navigator minimap.
@@ -1388,7 +1385,6 @@ function OpenSeadragon( options ){
             navigatorLeft:              null,
             navigatorHeight:            null,
             navigatorWidth:             null,
-            navigatorAutoResize:        true,
             navigatorAutoFade:          true,
             navigatorRotate:            true,
             navigatorBackground:        '#000',
@@ -1408,7 +1404,7 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
+            drawer:                            ['auto', 'webgl', 'canvas', 'html'], // prefer using auto, then webgl, then canvas (i.e. context2d), then fallback to html
             // DRAWER CONFIGURATIONS
             drawerOptions: {
                 // [drawer-id]: {options} map

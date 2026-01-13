@@ -571,6 +571,10 @@ $.Viewer = function( options ) {
 
     this._addUpdatePixelDensityRatioEvent();
 
+    if ('navigatorAutoResize' in this) {
+        $.console.warn('navigatorAutoResize is deprecated, this value will be ignored.');
+    }
+
     //Instantiate a navigator if configured
     if ( this.showNavigator){
         this.navigator = new $.Navigator({
@@ -583,7 +587,6 @@ $.Viewer = function( options ) {
             left:              this.navigatorLeft,
             width:             this.navigatorWidth,
             height:            this.navigatorHeight,
-            autoResize:        this.navigatorAutoResize,
             autoFade:          this.navigatorAutoFade,
             prefixUrl:         this.prefixUrl,
             viewer:            this,
@@ -4411,6 +4414,14 @@ function onFlip() {
  * Find drawer
  */
 $.determineDrawer = function( id ){
+    if (id === 'auto') {
+        // Our WebGL drawer is not as performant on iOS at the moment, so we use canvas there.
+        // Note that modern iPads report themselves as Mac, so we also check for coarse pointer.
+        const isPrimaryTouch = window.matchMedia('(pointer: coarse)').matches;
+        const isIOSDevice = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent) && isPrimaryTouch;
+        id = isIOSDevice ? 'canvas' : 'webgl';
+    }
+
     for (const property in OpenSeadragon) {
         const drawer = OpenSeadragon[ property ];
         const proto = drawer.prototype;
