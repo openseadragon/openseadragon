@@ -47,11 +47,11 @@
      * that uses the shared renderer will render to framebuffers and then copy the result to
      * their visible output canvas.
      *
-     * **EXPERIMENTAL**: This feature is currently disabled by default because there is a known
+     * **EXPERIMENTAL**: This feature is currently enabled by default, but there is a known
      * issue with transparency rendering when multiple images are layered. The shared canvas
      * approach requires additional work to properly handle viewport/scissor coordination when
-     * the shared canvas size differs from individual output canvas sizes. To enable, set
-     * `drawerOptions.useSharedRenderer: true` when creating a viewer.
+     * the shared canvas size differs from individual output canvas sizes. To disable it, set
+     * `drawerOptions.useSharedRenderer: false` when creating a viewer.
      *
      * @memberof OpenSeadragon
      */
