@@ -485,7 +485,6 @@
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
                 // make rendering canvas 1 x 1 px and delete reference
-                this._renderingCanvas.width = this._renderingCanvas.height = 1;
 
                 const ext = gl.getExtension('WEBGL_lose_context');
                 if(ext){
