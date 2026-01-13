@@ -415,7 +415,7 @@
                 preloadCache: false,
                 unpackWithPremultipliedAlpha: false,
                 // EXPERIMENTAL: Use shared WebGL renderer to prevent context limit issues with multiple viewers.
-                // Currently disabled by default while being tested. Set to true to enable.
+                // Currently enabled by default while being tested. Set to false to disable if you encounter issues.
                 useSharedRenderer: true,
             };
         }
