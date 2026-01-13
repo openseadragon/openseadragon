@@ -655,21 +655,22 @@
         }
 
         // private
-        _textureFilter(){
+        _getTextureFilter(){
             const gl = this._gl;
-            const filter = this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
+            return this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
+        }
 
-            // Apply anisotropic filtering when available and smoothing is enabled
-            // This improves texture quality when viewing at angles
-            if (this._imageSmoothingEnabled && this._extTextureFilterAnisotropic && this._maxAnisotropy > 0) {
-                gl.texParameterf(
-                    gl.TEXTURE_2D,
-                    this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
-                    Math.min(4, this._maxAnisotropy)
-                );
+        _applyAnisotropy(){
+            const gl = this._gl;
+            if (!this._imageSmoothingEnabled || !this._extTextureFilterAnisotropic || this._maxAnisotropy <= 0) {
+                return;
             }
 
-            return filter;
+            gl.texParameterf(
+                gl.TEXTURE_2D,
+                this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
+                Math.min(4, this._maxAnisotropy)
+            );
         }
 
         // private
@@ -688,7 +689,8 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._getTextureFilter());
+            this._applyAnisotropy();
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -881,7 +883,8 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._getTextureFilter());
+            this._applyAnisotropy();
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -1020,8 +1023,9 @@
                     // Set the parameters so we can render any size image.
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._textureFilter());
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._getTextureFilter());
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._getTextureFilter());
+                    this._applyAnisotropy();
 
                     try {
                         // This depends on gl.TEXTURE_2D being bound to the texture
