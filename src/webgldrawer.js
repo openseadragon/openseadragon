@@ -393,7 +393,7 @@
              * - Multiple render targets: Advanced compositing with multiple framebuffer attachments
              * - GLSL ES 3.0 shaders: Enhanced shader capabilities (integer ops, etc.)
              *
-             * Note: Texture arrays (2D_ARRAY) are not recommended due to HW limitations -
+             * Note: Texture arrays (2D_ARRAY) are not recommended due to hardware limitations -
              * they underperform except when tiles have more than 4 channels.
              *
              * @member {Boolean} _isWebGL2
@@ -401,7 +401,23 @@
              * @private
              */
             this._isWebGL2 = false;
-            this._extTextureFilterAnisotropic = null; // anisotropic filtering extension
+            /**
+             * WebGL anisotropic texture filtering extension instance, if supported.
+             * Used to enable higher quality texture filtering for tiles.
+             *
+             * @member {?Object} _extTextureFilterAnisotropic
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
+            this._extTextureFilterAnisotropic = null;
+            /**
+             * Maximum supported anisotropy level for the current WebGL context.
+             * A value of 0 indicates that anisotropic filtering is not available.
+             *
+             * @member {Number} _maxAnisotropy
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
             this._maxAnisotropy = 0;
             this._firstPass = null;
             this._secondPass = null;
@@ -1067,19 +1083,20 @@
          */
         _configureTextureFilter(){
             const gl = this._gl;
-            const filter = this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
+            return this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
+        }
 
-            // Apply anisotropic filtering when available and smoothing is enabled
-            // This improves texture quality when viewing at angles
-            if (this._imageSmoothingEnabled && this._extTextureFilterAnisotropic && this._maxAnisotropy > 0) {
-                gl.texParameterf(
-                    gl.TEXTURE_2D,
-                    this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
-                    Math.min(4, this._maxAnisotropy)
-                );
+        _applyAnisotropy(){
+            const gl = this._gl;
+            if (!this._imageSmoothingEnabled || !this._extTextureFilterAnisotropic || this._maxAnisotropy <= 0) {
+                return;
             }
 
-            return filter;
+            gl.texParameterf(
+                gl.TEXTURE_2D,
+                this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
+                Math.min(4, this._maxAnisotropy)
+            );
         }
 
         // private
