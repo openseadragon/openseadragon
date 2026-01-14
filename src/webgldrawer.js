@@ -44,14 +44,14 @@
      * the same page (e.g., main viewer + navigator, or scrolling pages with many viewers).
      *
      * The shared renderer maintains a single off-screen WebGL context and canvas. Each drawer
-     * that uses the shared renderer will render to framebuffers and then copy the result to
-     * their visible output canvas.
+     * that uses the shared renderer renders directly to the shared canvas (using viewport/scissor
+     * to isolate their rendering area) and then copies the result to their visible output canvas.
      *
-     * **EXPERIMENTAL**: This feature is currently enabled by default, but there is a known
-     * issue with transparency rendering when multiple images are layered. The shared canvas
-     * approach requires additional work to properly handle viewport/scissor coordination when
-     * the shared canvas size differs from individual output canvas sizes. To disable it, set
-     * `drawerOptions.useSharedRenderer: false` when creating a viewer.
+     * **EXPERIMENTAL**: This feature is disabled by default until transparency rendering issues
+     * are resolved. There is a known issue with transparency rendering when multiple images are
+     * layered. The shared canvas approach requires additional work to properly handle viewport/scissor
+     * coordination when the shared canvas size differs from individual output canvas sizes.
+     * To enable it, set `drawerOptions.useSharedRenderer: true` when creating a viewer.
      *
      * @memberof OpenSeadragon
      */
@@ -208,6 +208,14 @@
         }
 
         /**
+         * Get the number of drawers currently registered
+         * @returns {Number} The number of registered drawers
+         */
+        getDrawerCount() {
+            return this._drawers.size;
+        }
+
+        /**
          * Get the number of registered drawers
          * @returns {Number} The count of registered drawers
          */
@@ -222,6 +230,11 @@
          * @returns {Boolean} True if the canvas was resized
          */
         ensureSize(width, height) {
+            // Guard check: ensure renderer is valid before proceeding
+            if (!this._canvas || !this._gl || this._destroyed) {
+                return false;
+            }
+
             let resized = false;
 
             // Clamp to max texture size
@@ -272,8 +285,10 @@
                 }
             }
 
-            this._canvas.width = 1;
-            this._canvas.height = 1;
+            if (this._canvas) {
+                this._canvas.width = 1;
+                this._canvas.height = 1;
+            }
             this._canvas = null;
             this._gl = null;
             this._drawers.clear();
@@ -295,6 +310,17 @@
             sharedRendererInstance = new SharedWebGLRenderer(options);
         }
         return sharedRendererInstance;
+    };
+
+    /**
+     * Check if the shared WebGL renderer exists and has drawers registered
+     * @memberof OpenSeadragon
+     * @returns {Boolean} True if shared renderer exists and has drawers
+     */
+    OpenSeadragon.hasSharedWebGLRendererWithDrawers = function() {
+        return sharedRendererInstance &&
+               sharedRendererInstance.isValid() &&
+               sharedRendererInstance.getDrawerCount() > 0;
     };
 
     /**
@@ -330,7 +356,7 @@
     * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
     * @param {Element} options.element - Parent element.
     * @param {Number} [options.debugGridColor] - See debugGridColor in {@link OpenSeadragon.Options} for details.
-    * @param {Boolean} [options.unpackWithPremultipliedAlpha=false] - Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
+    * @param {Boolean} [options.unpackWithPremultipliedAlpha=true] - Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
     */
     OpenSeadragon.WebGLDrawer = class WebGLDrawer extends OpenSeadragon.DrawerBase{
         constructor(options){
@@ -353,7 +379,8 @@
             this._destroyed = false;
             this._gl = null;
             this._sharedRenderer = null; // Reference to shared renderer (if using)
-            this._useSharedRenderer = this.options.useSharedRenderer !== false; // Default to using shared renderer
+            // Use shared renderer only if explicitly enabled
+            this._useSharedRenderer = this.options.useSharedRenderer === true;
             /**
              * Flag to track if we're using WebGL2 context.
              * When true, additional WebGL2-specific optimizations can be enabled.
@@ -409,10 +436,10 @@
                 // use detached cache: our type conversion will not collide (and does not have to preserve CPU data ref)
                 usePrivateCache: true,
                 preloadCache: false,
-                unpackWithPremultipliedAlpha: false,
+                unpackWithPremultipliedAlpha: true,
                 // EXPERIMENTAL: Use shared WebGL renderer to prevent context limit issues with multiple viewers.
-                // Currently enabled by default while being tested. Set to false to disable if you encounter issues.
-                useSharedRenderer: true,
+                // Disabled by default until transparency rendering issues are resolved. Set to true to enable.
+                useSharedRenderer: false,
             };
         }
 
@@ -483,8 +510,6 @@
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
                 gl.bindRenderbuffer(gl.RENDERBUFFER, null);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-                // make rendering canvas 1 x 1 px and delete reference
 
                 const ext = gl.getExtension('WEBGL_lose_context');
                 if(ext){
@@ -1035,7 +1060,12 @@
         }
 
         // private
-        _textureFilter(){
+        /**
+         * Configure texture filter parameters and return the filter value.
+         * This method has side effects: it applies anisotropic filtering when available.
+         * @returns {Number} The texture filter value (gl.LINEAR or gl.NEAREST)
+         */
+        _configureTextureFilter(){
             const gl = this._gl;
             const filter = this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
 
@@ -1071,7 +1101,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, texWidth, texHeight, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._configureTextureFilter());
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -1274,7 +1304,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._configureTextureFilter());
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -1468,8 +1498,8 @@
                     // Set the parameters so we can render any size image.
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._textureFilter());
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._textureFilter());
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._configureTextureFilter());
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._configureTextureFilter());
 
                     try {
                         // This depends on gl.TEXTURE_2D being bound to the texture

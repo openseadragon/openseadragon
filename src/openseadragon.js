@@ -777,7 +777,7 @@
 /**
  * @typedef {OpenSeadragon.BaseDrawerOptions} OpenSeadragon.WebGLDrawerOptions
  * @memberof OpenSeadragon
- * @property {Boolean} [unpackWithPremultipliedAlpha=false]
+ * @property {Boolean} [unpackWithPremultipliedAlpha=true]
  *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
  */
 
