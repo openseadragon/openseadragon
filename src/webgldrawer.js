@@ -216,14 +216,6 @@
         }
 
         /**
-         * Get the number of registered drawers
-         * @returns {Number} The count of registered drawers
-         */
-        getDrawerCount() {
-            return this._drawers.size;
-        }
-
-        /**
          * Ensure the shared canvas is at least the given size
          * @param {Number} width - Required width
          * @param {Number} height - Required height
