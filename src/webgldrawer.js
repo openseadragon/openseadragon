@@ -1055,10 +1055,6 @@
         }
 
         // private
-<<<<<<< HEAD
-        _textureFilter(){
-            return this._imageSmoothingEnabled ? this._gl.LINEAR : this._gl.NEAREST;
-=======
         /**
          * Configure texture filter parameters and return the filter value.
          * This method has side effects: it applies anisotropic filtering when available.
@@ -1079,7 +1075,6 @@
             }
 
             return filter;
->>>>>>> ad3ff120 (Update WebGLDrawer options and documentation)
         }
 
         // private
