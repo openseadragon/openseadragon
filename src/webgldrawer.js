@@ -396,9 +396,6 @@
              * Note: Texture arrays (2D_ARRAY) are not recommended due to HW limitations -
              * they underperform except when tiles have more than 4 channels.
              *
-             * Note: Texture arrays (2D_ARRAY) are not recommended due to HW limitations -
-             * they underperform except when tiles have more than 4 channels.
-             *
              * @member {Boolean} _isWebGL2
              * @memberof OpenSeadragon.WebGLDrawer#
              * @private
@@ -580,6 +577,14 @@
          */
         getType(){
             return 'webgl';
+        }
+
+        /**
+         * Check if the drawer is using WebGL2
+         * @returns {Boolean} true if WebGL2 is being used, false if WebGL1
+         */
+        isWebGL2(){
+            return this._isWebGL2;
         }
 
         /**
@@ -1419,6 +1424,26 @@
 
             //make the additional canvas elements mirror size changes to the output canvas
             this.viewer.addHandler("resize", this._resizeHandler);
+        }
+
+        /**
+         * Set up WebGL extensions (works for both WebGL1 and WebGL2)
+         * @private
+         */
+        _setupWebGLExtensions() {
+            const gl = this._gl;
+
+            // Anisotropic filtering extension (available in both WebGL1 and WebGL2)
+            this._extTextureFilterAnisotropic =
+                gl.getExtension('EXT_texture_filter_anisotropic') ||
+                gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
+                gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
+
+            if (this._extTextureFilterAnisotropic) {
+                this._maxAnisotropy = gl.getParameter(
+                    this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
+                );
+            }
         }
 
         internalCacheCreate(cache, tile) {
