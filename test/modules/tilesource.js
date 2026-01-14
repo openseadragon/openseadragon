@@ -148,4 +148,204 @@
         assertLevelScale(3, 1 / 64);
     });
 
+
+    QUnit.test('batch loading: respects TileSource.batchEnabled()', function (assert) {
+        const done = assert.async();
+
+        const source = new CountingBatchTileSource({
+            enabled: false,  // explicitly disabled
+            timeout: 1,
+            maxJobs: 10,
+            group: 'A'
+        });
+
+        const loader = new OpenSeadragon.ImageLoader({
+            jobLimit: 0,                 // unlimited so jobs start immediately
+            timeout: 1000,
+            batchImageLoading: true,     // globally on
+            batchWaitTimeout: 999,       // should NOT matter if TileSource-driven
+            batchMaxJobs: 999
+        });
+
+        for (let i = 0; i < 3; i++) {
+            loader.addJob({
+                src: 'test://' + i,
+                source: source,
+                callback: function () {}
+            });
+        }
+
+        // Let any timers/queue settle
+        setTimeout(function () {
+            assert.equal(source.singleRequests, 3, 'disabled batch => 3 single requests');
+            assert.equal(source.batchRequests, 0, 'disabled batch => 0 batch requests');
+            done();
+        }, 25);
+    });
+
+
+    QUnit.test('batch loading: TileSource.batchTimeout() overrides ImageLoader.batchWaitTimeout', function (assert) {
+        const done = assert.async();
+
+        const source = new CountingBatchTileSource({
+            enabled: true,
+            timeout: 1,   // flush quickly
+            maxJobs: -1,  // no max-jobs flush
+            group: 'A'
+        });
+
+        const loader = new OpenSeadragon.ImageLoader({
+            jobLimit: 0,
+            timeout: 1000,
+        });
+
+        for (let i = 0; i < 3; i++) {
+            loader.addJob({
+                src: 'test://t' + i,
+                source: source,
+                callback: function () {}
+            });
+        }
+
+        setTimeout(function () {
+            assert.equal(source.singleRequests, 0, 'enabled batch => 0 single requests');
+            assert.equal(source.batchRequests, 1, 'TileSource timeout => single batch request');
+            assert.deepEqual(source.batchSizes, [3], 'all 3 tiles should be in one batch');
+            done();
+        }, 25);
+    });
+
+
+    QUnit.test('batch loading: TileSource.batchMaxJobs() overrides ImageLoader.batchMaxJobs', function (assert) {
+        const done = assert.async();
+
+        const source = new CountingBatchTileSource({
+            enabled: true,
+            timeout: 1,  // flush remainder quickly
+            maxJobs: 2,  // force split into batches of 2
+            group: 'A'
+        });
+
+        const loader = new OpenSeadragon.ImageLoader({
+            jobLimit: 0,
+            timeout: 1000,
+        });
+
+        for (let i = 0; i < 3; i++) {
+            loader.addJob({
+                src: 'test://m' + i,
+                source: source,
+                callback: function () {}
+            });
+        }
+
+        setTimeout(function () {
+            assert.equal(source.singleRequests, 0, 'enabled batch => 0 single requests');
+            assert.equal(source.batchRequests, 2, 'maxJobs=2 => two batch requests (2 + 1)');
+            assert.deepEqual(source.batchSizes, [2, 1], 'batch sizes should be [2, 1]');
+            done();
+        }, 25);
+    });
+
+
+    QUnit.test('batch loading: TileSource.batchCompatible() splits incompatible sources into separate requests', function (assert) {
+        const done = assert.async();
+
+        const sourceA = new CountingBatchTileSource({
+            enabled: true,
+            timeout: 1,
+            maxJobs: -1,
+            group: 'A'
+        });
+
+        const sourceB = new CountingBatchTileSource({
+            enabled: true,
+            timeout: 1,
+            maxJobs: -1,
+            group: 'B' // incompatible with A
+        });
+
+        const loader = new OpenSeadragon.ImageLoader({
+            jobLimit: 0,
+            timeout: 1000,
+            batchImageLoading: true,
+            batchWaitTimeout: 999,
+            batchMaxJobs: 999
+        });
+
+        loader.addJob({ src: 'test://a0', source: sourceA, callback: function () {} });
+        loader.addJob({ src: 'test://b0', source: sourceB, callback: function () {} });
+
+        setTimeout(function () {
+            const totalBatch = sourceA.batchRequests + sourceB.batchRequests;
+            assert.equal(totalBatch, 2, 'incompatible sources => two separate batch requests');
+            done();
+        }, 25);
+    });
+
+    class CountingBatchTileSource extends OpenSeadragon.TileSource{
+        constructor(cfg) {
+            super({
+                width: 1,
+                height: 1,
+                tileWidth: 1,
+                tileHeight: 1
+            });
+            this._cfg = cfg || {};
+            this.singleRequests = 0;
+            this.batchRequests = 0;
+            this.batchSizes = [];
+        }
+
+        batchEnabled() {
+            return !!this._cfg.enabled;
+        }
+
+        batchTimeout() {
+            return (typeof this._cfg.timeout === 'number') ? this._cfg.timeout : 5;
+        }
+
+        batchMaxJobs() {
+            return (typeof this._cfg.maxJobs === 'number') ? this._cfg.maxJobs : -1;
+        }
+
+        // Default behavior we want for the tests:
+        // - compatible with itself
+        // - compatible with other CountingBatchTileSource instances that share the same group id
+        batchCompatible(otherSource) {
+            if (!otherSource) {
+                return false;
+            }
+            if (otherSource === this) {
+                return true;
+            }
+            return otherSource instanceof this.constructor &&
+                this._cfg.group != null &&
+                otherSource._cfg &&
+                otherSource._cfg.group === this._cfg.group;
+        }
+
+        // Count a single "request" and immediately finish the job.
+        downloadTileStart(job) {
+            this.singleRequests++;
+            job.finish({ ok: true }, null, 'test');
+        }
+
+        downloadTileAbort() {
+        }
+
+        // Count ONE "request" for the entire batch and finish each child job.
+        downloadTileBatchStart(batchJob) {
+            this.batchRequests++;
+            this.batchSizes.push(batchJob.jobs.length);
+
+            for (let i = 0; i < batchJob.jobs.length; i++) {
+                batchJob.jobs[i].finish({ ok: true }, null, 'test');
+            }
+        }
+
+        downloadTileBatchAbort() {
+            // no-op for tests
+        }
+    }
 }());
