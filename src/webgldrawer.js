@@ -118,6 +118,14 @@
              * @private
              */
             this._maxAnisotropy = 0;
+            /**
+             * Flag to enable/disable automatic WebGL context re-initialization on context loss.
+             * When enabled, the drawer will attempt to recover from context exhaustion errors.
+             * @member {Boolean} _enableContextRecovery
+             * @memberof OpenSeadragon.WebGLDrawer#
+             * @private
+             */
+            this._enableContextRecovery = true;
             this._firstPass = null;
             this._secondPass = null;
             this._glFrameBuffer = null;
@@ -168,24 +176,42 @@
                 return;
             }
             super.destroy();
+            // Remove the resize handler to prevent memory leaks
+            if (this._resizeHandler) {
+                this.viewer.removeHandler("resize", this._resizeHandler);
+                this._resizeHandler = null;
+            }
             // clear all resources used by the renderer, geometries, textures etc
             const gl = this._gl;
 
-            // adapted from https://stackoverflow.com/a/23606581/1214731
-            const numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-            for (let unit = 0; unit < numTextureUnits; ++unit) {
-                gl.activeTexture(gl.TEXTURE0 + unit);
-                gl.bindTexture(gl.TEXTURE_2D, null);
-                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
-            }
-            gl.bindBuffer(gl.ARRAY_BUFFER, null);
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-            gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            if (gl) {
+                try {
+                    // adapted from https://stackoverflow.com/a/23606581/1214731
+                    const numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+                    if (numTextureUnits && numTextureUnits > 0) {
+                        for (let unit = 0; unit < numTextureUnits; ++unit) {
+                            gl.activeTexture(gl.TEXTURE0 + unit);
+                            gl.bindTexture(gl.TEXTURE_2D, null);
+                            gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+                        }
+                    }
+                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+                    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-            // Delete all our created resources
-            gl.deleteBuffer(this._secondPass.bufferOutputPosition);
-            gl.deleteFramebuffer(this._glFrameBuffer);
+                    // Delete all our created resources
+                    if (this._secondPass && this._secondPass.bufferOutputPosition) {
+                        gl.deleteBuffer(this._secondPass.bufferOutputPosition);
+                    }
+                    if (this._glFrameBuffer) {
+                        gl.deleteFramebuffer(this._glFrameBuffer);
+                    }
+                } catch (e) {
+                    // Context may already be lost, continue with cleanup
+                    $.console.warn('Error during WebGL cleanup in destroy():', e);
+                }
+            }
 
             // make canvases 1 x 1 px and delete references
             this._renderingCanvas.width = this._renderingCanvas.height = 1;
@@ -260,6 +286,24 @@
         }
 
         /**
+         * Enable or disable automatic WebGL context re-initialization on context loss.
+         * When enabled, the drawer will attempt to recover from context exhaustion errors
+         * by re-initializing the WebGL context.
+         * @param {Boolean} enabled - true to enable recovery, false to disable
+         */
+        setContextRecoveryEnabled(enabled) {
+            this._enableContextRecovery = !!enabled;
+        }
+
+        /**
+         * Check if context recovery is enabled
+         * @returns {Boolean} true if recovery is enabled, false otherwise
+         */
+        isContextRecoveryEnabled() {
+            return this._enableContextRecovery;
+        }
+
+        /**
          * @param {TiledImage} tiledImage the tiled image that is calling the function
          * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
          * @private
@@ -299,11 +343,14 @@
             return this._backupCanvasDrawer;
         }
 
+        //
         /**
-        *
-        * @param {Array} tiledImages Array of TiledImage objects to draw
-        */
-        draw(tiledImages){
+         * Internal draw method, wrapped in a try/catch within draw()
+         * @param {Array} tiledImages Array of TiledImage objects to draw
+         * @param {Boolean} [isRetry=false] Internal flag to prevent infinite retry loops
+         * @private
+         */
+        _draw(tiledImages, isRetry = false){
             const gl = this._gl;
             const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
             const view = {
@@ -331,199 +378,273 @@
             //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
             tiledImages.forEach( (tiledImage, tiledImageIndex) => {
 
-                if(tiledImage.getIssue('webgl')){
-                    // first, draw any data left in the rendering buffer onto the output canvas
+            if(tiledImage.getIssue('webgl')){
+                // first, draw any data left in the rendering buffer onto the output canvas
+                if(renderingBufferHasImageData){
+                    this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                    // clear the buffer
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+                    renderingBufferHasImageData = false;
+                }
+
+                // next, use the backup canvas drawer to draw this tainted image
+                const canvasDrawer = this._getBackupCanvasDrawer();
+                canvasDrawer.draw([tiledImage]);
+                this._outputContext.drawImage(canvasDrawer.canvas, 0, 0);
+
+            } else {
+                const tilesToDraw = tiledImage.getTilesToDraw();
+
+                if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
+                    this._drawPlaceholder(tiledImage);
+                }
+
+                if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
+                    return;
+                }
+                const firstTile = tilesToDraw[0];
+
+                const useContext2dPipeline = ( tiledImage.compositeOperation ||
+                    this.viewer.compositeOperation ||
+                    tiledImage._clip ||
+                    tiledImage._croppingPolygons ||
+                    tiledImage.debugMode
+                );
+
+                const useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
+
+                // using the context2d pipeline requires a clean rendering (back) buffer to start
+                if(useContext2dPipeline){
+                    // if the rendering buffer has image data currently, write it to the output canvas now and clear it
+
                     if(renderingBufferHasImageData){
                         this._outputContext.drawImage(this._renderingCanvas, 0, 0);
-                        // clear the buffer
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
-                        renderingBufferHasImageData = false;
                     }
 
-                    // next, use the backup canvas drawer to draw this tainted image
-                    const canvasDrawer = this._getBackupCanvasDrawer();
-                    canvasDrawer.draw([tiledImage]);
-                    this._outputContext.drawImage(canvasDrawer.canvas, 0, 0);
+                    // clear the buffer
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+                }
 
+                // First rendering pass: compose tiles that make up this tiledImage
+                gl.useProgram(this._firstPass.shaderProgram);
+
+                // bind to the framebuffer for render-to-texture if using two-pass rendering, otherwise back buffer (null)
+                if(useTwoPassRendering){
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
+                    // clear the buffer to draw a new image
+                    gl.clear(gl.COLOR_BUFFER_BIT);
                 } else {
-                    const tilesToDraw = tiledImage.getTilesToDraw();
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    // no need to clear, just draw on top of the existing pixels
+                }
 
-                    if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
-                        this._drawPlaceholder(tiledImage);
+                let overallMatrix = viewMatrix;
+
+                const imageRotation = tiledImage.getRotation(true);
+                // if needed, handle the tiledImage being rotated
+                if( imageRotation % 360 !== 0){
+                    const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
+                    const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
+                    const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
+                    const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
+
+                    // update the view matrix to account for this image's rotation
+                    const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
+                    overallMatrix = viewMatrix.multiply(localMatrix);
+                }
+
+                // Check MAX_TEXTURE_IMAGE_UNITS - throw error if invalid (will be caught by outer try-catch)
+                const maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+                if(maxTextures <= 0 || maxTextures === null || maxTextures === undefined){
+                    // This can apparently happen on some systems if too many WebGL contexts have been created
+                    // in which case maxTextures can be null, leading to out of bounds errors with the array.
+                    // For example, when viewers were created and not destroyed in the test suite, this error
+                    // occurred in the TravisCI tests, though it did not happen when testing locally either in
+                    // a browser or on the command line via grunt test.
+
+                    throw new Error(`WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
+                    if too many contexts have been created and not released, or there is another problem with the graphics card.`);
+                }
+
+                const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
+                const textureDataArray = new Array(maxTextures);
+                const matrixArray = new Array(maxTextures);
+                const opacityArray = new Array(maxTextures);
+
+                // iterate over tiles and add data for each one to the buffers
+                for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
+                    const tile = tilesToDraw[tileIndex].tile;
+                    const indexInDrawArray = tileIndex % maxTextures;
+                    const numTilesToDraw =  indexInDrawArray + 1;
+                    const textureInfo = this.getDataToDraw(tile);
+
+                    if (textureInfo && textureInfo.texture) {
+                        this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
                     }
+                    // else {
+                    //   If the texture info is not available, we cannot draw this tile. This is either because
+                    //   the tile data is still being processed, or the data was not correct - in that case,
+                    //   internalCacheCreate(..) already logged an error.
+                    // }
 
-                    if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
-                        return;
-                    }
-                    const firstTile = tilesToDraw[0];
+                    if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
+                        // We've filled up the buffers: time to draw this set of tiles
 
-                    const useContext2dPipeline = ( tiledImage.compositeOperation ||
-                        this.viewer.compositeOperation ||
-                        tiledImage._clip ||
-                        tiledImage._croppingPolygons ||
-                        tiledImage.debugMode
-                    );
-
-                    const useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
-
-                    // using the context2d pipeline requires a clean rendering (back) buffer to start
-                    if(useContext2dPipeline){
-                        // if the rendering buffer has image data currently, write it to the output canvas now and clear it
-
-                        if(renderingBufferHasImageData){
-                            this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                        // bind each tile's texture to the appropriate gl.TEXTURE#
+                        for(let i = 0; i <= numTilesToDraw; i++){
+                            gl.activeTexture(gl.TEXTURE0 + i);
+                            gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
                         }
 
-                        // clear the buffer
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
-                    }
+                        // set the buffer data for the texture coordinates to use for each tile
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+                        gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
 
-                    // First rendering pass: compose tiles that make up this tiledImage
-                    gl.useProgram(this._firstPass.shaderProgram);
+                        // set the transform matrix uniform for each tile
+                        matrixArray.forEach( (matrix, index) => {
+                            gl.uniformMatrix3fv(this._firstPass.uTransformMatrices[index], false, matrix);
+                        });
+                        // set the opacity uniform for each tile
+                        gl.uniform1fv(this._firstPass.uOpacities, new Float32Array(opacityArray));
 
-                    // bind to the framebuffer for render-to-texture if using two-pass rendering, otherwise back buffer (null)
-                    if(useTwoPassRendering){
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
-                        // clear the buffer to draw a new image
-                        gl.clear(gl.COLOR_BUFFER_BIT);
-                    } else {
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        // no need to clear, just draw on top of the existing pixels
-                    }
+                        // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
+                        gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
 
-                    let overallMatrix = viewMatrix;
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+                        gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
 
-                    const imageRotation = tiledImage.getRotation(true);
-                    // if needed, handle the tiledImage being rotated
-                    if( imageRotation % 360 !== 0){
-                        const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
-                        const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
-                        const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
-                        const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
+                        gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
 
-                        // update the view matrix to account for this image's rotation
-                        const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
-                        overallMatrix = viewMatrix.multiply(localMatrix);
-                    }
-
-                    const maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
-                    if(maxTextures <= 0){
-                        // This can apparently happen on some systems if too many WebGL contexts have been created
-                        // in which case maxTextures can be null, leading to out of bounds errors with the array.
-                        // For example, when viewers were created and not destroyed in the test suite, this error
-                        // occurred in the TravisCI tests, though it did not happen when testing locally either in
-                        // a browser or on the command line via grunt test.
-
-                        throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
-                        if too many contexts have been created and not released, or there is another problem with the graphics card.`));
-                    }
-
-                    const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
-                    const textureDataArray = new Array(maxTextures);
-                    const matrixArray = new Array(maxTextures);
-                    const opacityArray = new Array(maxTextures);
-
-                    // iterate over tiles and add data for each one to the buffers
-                    for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
-                        const tile = tilesToDraw[tileIndex].tile;
-                        const indexInDrawArray = tileIndex % maxTextures;
-                        const numTilesToDraw =  indexInDrawArray + 1;
-                        const textureInfo = this.getDataToDraw(tile);
-
-                        if (textureInfo && textureInfo.texture) {
-                            this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
-                        }
-                        // else {
-                        //   If the texture info is not available, we cannot draw this tile. This is either because
-                        //   the tile data is still being processed, or the data was not correct - in that case,
-                        //   internalCacheCreate(..) already logged an error.
-                        // }
-
-                        if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
-                            // We've filled up the buffers: time to draw this set of tiles
-
-                            // bind each tile's texture to the appropriate gl.TEXTURE#
-                            for(let i = 0; i <= numTilesToDraw; i++){
-                                gl.activeTexture(gl.TEXTURE0 + i);
-                                gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
-                            }
-
-                            // set the buffer data for the texture coordinates to use for each tile
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
-                            gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
-
-                            // set the transform matrix uniform for each tile
-                            matrixArray.forEach( (matrix, index) => {
-                                gl.uniformMatrix3fv(this._firstPass.uTransformMatrices[index], false, matrix);
-                            });
-                            // set the opacity uniform for each tile
-                            gl.uniform1fv(this._firstPass.uOpacities, new Float32Array(opacityArray));
-
-                            // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
-                            gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
-
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
-                            gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
-                            gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
-
-                            // Draw! 6 vertices per tile (2 triangles per rectangle)
-                            gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
-                        }
-                    }
-
-                    if(useTwoPassRendering){
-                        // Second rendering pass: Render the tiled image from the framebuffer into the back buffer
-                        gl.useProgram(this._secondPass.shaderProgram);
-
-                        // set the rendering target to the back buffer (null)
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-                        // bind the rendered texture from the first pass to use during this second pass
-                        gl.activeTexture(gl.TEXTURE0);
-                        gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
-
-                        // set opacity to the value for the current tiledImage
-                        this._gl.uniform1f(this._secondPass.uOpacityMultiplier, tiledImage.opacity);
-
-                        // bind buffers and set attributes before calling gl.drawArrays
-                        gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
-                        gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
-                        gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
-
-                        // Draw the quad (two triangles)
-                        gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-                    }
-
-                    renderingBufferHasImageData = true;
-
-                    if(useContext2dPipeline){
-                        // draw from the rendering canvas onto the output canvas, clipping/cropping if needed.
-                        this._applyContext2dPipeline(tiledImage, tilesToDraw, tiledImageIndex);
-                        renderingBufferHasImageData = false;
-                        // clear the buffer
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
-                    }
-
-                    // after drawing the first TiledImage, fire the tiled-image-drawn event (for testing)
-                    if(tiledImageIndex === 0){
-                        this._raiseTiledImageDrawnEvent(tiledImage, tilesToDraw.map(info=>info.tile));
+                        // Draw! 6 vertices per tile (2 triangles per rectangle)
+                        gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
                     }
                 }
+
+                if(useTwoPassRendering){
+                    // Second rendering pass: Render the tiled image from the framebuffer into the back buffer
+                    gl.useProgram(this._secondPass.shaderProgram);
+
+                    // set the rendering target to the back buffer (null)
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+                    // bind the rendered texture from the first pass to use during this second pass
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
+
+                    // set opacity to the value for the current tiledImage
+                    this._gl.uniform1f(this._secondPass.uOpacityMultiplier, tiledImage.opacity);
+
+                    // bind buffers and set attributes before calling gl.drawArrays
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
+                    gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
+                    gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+                    // Draw the quad (two triangles)
+                    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                }
+
+                renderingBufferHasImageData = true;
+
+                if(useContext2dPipeline){
+                    // draw from the rendering canvas onto the output canvas, clipping/cropping if needed.
+                    this._applyContext2dPipeline(tiledImage, tilesToDraw, tiledImageIndex);
+                    renderingBufferHasImageData = false;
+                    // clear the buffer
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+                }
+
+                // after drawing the first TiledImage, fire the tiled-image-drawn event (for testing)
+                if(tiledImageIndex === 0){
+                    this._raiseTiledImageDrawnEvent(tiledImage, tilesToDraw.map(info=>info.tile));
+                }
+            }
 
             });
 
             if(renderingBufferHasImageData){
                 this._outputContext.drawImage(this._renderingCanvas, 0, 0);
             }
+        }
+        /**
+        *
+        * @param {Array} tiledImages Array of TiledImage objects to draw
+        * @param {Boolean} [isRetry=false] Internal flag to prevent infinite retry loops
+        */
+        draw(tiledImages, isRetry = false){
+            try {
+                this._draw(tiledImages, isRetry);
+            } catch (error) {
+                // Handle WebGL context errors that occur at any point during the draw operation
+                if (this._isWebGLContextError(error)) {
+                    // Try recovery if enabled and not a retry
+                    if (this._enableContextRecovery && !isRetry) {
+                        $.console.warn('WebGL context error detected during draw operation, attempting to recreate drawer...', error);
+                        const newDrawer = this._recreateDrawer();
+                        if (newDrawer) {
+                            $.console.info('WebGL drawer recreated successfully, retrying draw operation');
+                            // Raise event for successful recovery
+                            if (this.viewer) {
+                                /**
+                                 * Raised when the WebGL drawer successfully recovers from a context loss.
+                                 *
+                                 * @event webgl-context-recovered
+                                 * @memberof OpenSeadragon.Viewer
+                                 * @type {object}
+                                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                                 * @property {OpenSeadragon.WebGLDrawer} oldDrawer - The drawer instance that was destroyed.
+                                 * @property {OpenSeadragon.WebGLDrawer} newDrawer - The new drawer instance that was created.
+                                 * @property {Error} error - The original error that triggered the recovery.
+                                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                                 */
+                                this.viewer.raiseEvent('webgl-context-recovered', {
+                                    oldDrawer: this,
+                                    newDrawer: newDrawer,
+                                    error: error
+                                });
+                            }
+                            // Call draw on the new drawer instance
+                            newDrawer.draw(tiledImages, true);
+                            // Return early from the old drawer (which will be destroyed by requestDrawer)
+                        } else {
+                            $.console.error('Failed to recreate WebGL drawer, switching to canvas drawer');
+                            // Switch viewer to canvas drawer permanently
+                            const oldWebGLDrawer = this; // Store reference before it's destroyed
+                            const canvasDrawer = this.viewer.requestDrawer('canvas', {
+                                mainDrawer: true,
+                                redrawImmediately: false
+                            });
 
+                            if (canvasDrawer) {
+                                // Raise event with both old WebGL drawer and new canvas drawer
+                                oldWebGLDrawer._raiseContextRecoveryFailedEvent(error, canvasDrawer);
+                                // Draw current frame with canvas drawer
+                                canvasDrawer.draw(tiledImages);
+                                // Return early - old drawer is destroyed, future draws will use canvas drawer
+                            } else {
+                                // Canvas drawer creation also failed - this is very unlikely
+                                $.console.error('Failed to create canvas drawer as fallback');
+                                oldWebGLDrawer._raiseContextRecoveryFailedEvent(error, null);
+                                throw error;
+                            }
+                        }
+                    } else {
+                        // Recovery disabled or retry - fire webgl-context-recovery-failed event
+                        this._raiseContextRecoveryFailedEvent(error, null);
+                        // Re-throw the error since recovery was not attempted or is disabled
+                        throw error;
+                    }
+                } else {
+                    // Not a WebGL context error - re-throw
+                    throw error;
+                }
+            }
         }
 
         // Public API required by all Drawer implementations
@@ -969,6 +1090,108 @@
                     this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
                 );
             }
+        }
+
+        /**
+         * Check if an error is related to WebGL context issues.
+         * @param {Error} error - The error to check
+         * @returns {Boolean} true if the error is a WebGL context error, false otherwise
+         * @private
+         */
+        _isWebGLContextError(error) {
+            if (!error || !error.message) {
+                return false;
+            }
+            const message = error.message.toLowerCase();
+            return message.includes('max_texture_image_units') ||
+                   (message.includes('webgl') && ((message.includes('context') || message.includes('lost') || message.includes('invalid'))));
+        }
+
+        /**
+         * Recreate the drawer when the WebGL context has been lost or exhausted.
+         * This method uses viewer.requestDrawer() to recreate the drawer, which
+         * automatically handles all initialization and cleanup.
+         * @returns {OpenSeadragon.WebGLDrawer|null} The new drawer instance if successful, null otherwise
+         * @private
+         */
+        _recreateDrawer() {
+            if (this._destroyed) {
+                return null;
+            }
+
+            try {
+                // Preserve drawer options and recovery state
+                const drawerOptions = this.options;
+                const recoveryEnabled = this._enableContextRecovery;
+
+                // Recreate the drawer using the existing infrastructure
+                const newDrawer = this.viewer.requestDrawer('webgl', {
+                    drawerOptions: drawerOptions,
+                    redrawImmediately: false
+                });
+
+                if (!newDrawer) {
+                    $.console.error('Failed to recreate WebGL drawer: requestDrawer returned false');
+                    return null;
+                }
+
+                // Set the recovery enabled state on the new drawer
+                if (newDrawer.setContextRecoveryEnabled) {
+                    newDrawer.setContextRecoveryEnabled(recoveryEnabled);
+                }
+
+                // Verify the new drawer's context is valid
+                if (!newDrawer._gl) {
+                    $.console.error('Failed to recreate WebGL drawer: new drawer has no GL context');
+                    return null;
+                }
+
+                // Check if the new context has valid MAX_TEXTURE_IMAGE_UNITS
+                try {
+                    const maxTextures = newDrawer._gl.getParameter(newDrawer._gl.MAX_TEXTURE_IMAGE_UNITS);
+                    if (!maxTextures || maxTextures <= 0) {
+                        $.console.error('Failed to recreate WebGL drawer: new context has invalid MAX_TEXTURE_IMAGE_UNITS');
+                        return null;
+                    }
+                } catch (e) {
+                    $.console.error('Failed to verify new WebGL drawer context:', e);
+                    return null;
+                }
+
+                return newDrawer;
+            } catch (e) {
+                $.console.error('Failed to recreate WebGL drawer:', e);
+                return null;
+            }
+        }
+
+        /**
+         * Raise the webgl-context-recovery-failed event.
+         * @param {Error} error - The error that triggered the recovery failure
+         * @param {OpenSeadragon.CanvasDrawer} [canvasDrawer=null] - The canvas drawer that was created as a fallback, or null if creation failed
+         * @private
+         */
+        _raiseContextRecoveryFailedEvent(error, canvasDrawer = null) {
+            if (!this.viewer) {
+                return;
+            }
+            /**
+             * Raised when the WebGL drawer fails to recover from a context loss and falls back to canvas drawer.
+             *
+             * @event webgl-context-recovery-failed
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {OpenSeadragon.WebGLDrawer} drawer - The WebGL drawer instance that failed to recover (may be destroyed).
+             * @property {OpenSeadragon.CanvasDrawer} canvasDrawer - The canvas drawer that was created as a fallback, or null if creation failed.
+             * @property {Error} error - The original error that triggered the recovery attempt.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.viewer.raiseEvent('webgl-context-recovery-failed', {
+                drawer: this,
+                canvasDrawer: canvasDrawer,
+                error: error
+            });
         }
 
         internalCacheCreate(cache, tile) {
