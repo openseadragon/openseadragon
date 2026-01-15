@@ -74,6 +74,7 @@ $.DziTileSource = function( width, height, tileSize, tileOverlap, tilesUrl, file
     this.tilesUrl     = options.tilesUrl;
     this.fileFormat   = options.fileFormat;
     this.displayRects = options.displayRects;
+    this.queryParams  = options.queryParams || "";
 
     if ( this.displayRects ) {
         for ( let i = this.displayRects.length - 1; i >= 0; i-- ) {

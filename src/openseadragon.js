@@ -190,9 +190,12 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
-  * @property {String|DrawerImplementation|Array} [drawer = ['webgl', 'canvas', 'html']]
-  *     Which drawer to use. Valid strings are 'webgl', 'canvas', and 'html'. Valid drawer
-  *     implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
+  * @property {String|DrawerImplementation|Array} [drawer = ['auto', 'webgl', 'canvas', 'html']]
+  *     Which drawer to use. Valid strings are 'auto', 'webgl', 'canvas', and 'html'.
+  *     The string 'auto' chooses between WebGL or canvas depending on the device.
+  *     The 'webgl' drawer automatically uses WebGL2 when available, falling back to WebGL1.
+  *     External drawer plugins can register additional drawer types as strings.
+  *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
   *     of different implementations, which will be tried in order based on browser support.
   *
@@ -214,8 +217,9 @@
   *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
-  *     Image smoothing for rendering (only if the canvas or webgl drawer is used). Note: Ignored
-  *     by some (especially older) browsers which do not support this canvas property.
+  *     Image smoothing for rendering. Supported by the canvas and webgl drawers,
+  *     and may also be supported by external drawer plugins. Note: Ignored by some
+  *     (especially older) browsers which do not support this canvas property.
   *     This property can be changed in {@link Viewer.DrawerBase.setImageSmoothingEnabled}.
   *
   * @property {String|CanvasGradient|CanvasPattern|Function} [placeholderFillStyle=null]
@@ -481,10 +485,6 @@
   * @property {Number|String} [navigatorWidth=null]
   *     Specifies the size of the navigator minimap (see navigatorPosition).
   *     If specified, navigatorSizeRatio and navigatorMaintainSizeRatio are ignored.
-  *
-  * @property {Boolean} [navigatorAutoResize=true]
-  *     Set to false to prevent polling for navigator size changes. Useful for providing custom resize behavior.
-  *     Setting to false can also improve performance when the navigator is configured to a fixed size.
   *
   * @property {Boolean} [navigatorAutoFade=true]
   *     If the user stops interacting with the viewport, fade the navigator minimap.
@@ -1388,7 +1388,6 @@ function OpenSeadragon( options ){
             navigatorLeft:              null,
             navigatorHeight:            null,
             navigatorWidth:             null,
-            navigatorAutoResize:        true,
             navigatorAutoFade:          true,
             navigatorRotate:            true,
             navigatorBackground:        '#000',
@@ -1408,7 +1407,7 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['webgl', 'canvas', 'html'], // prefer using webgl, then canvas (i.e. context2d), then fallback to html
+            drawer:                            ['auto', 'webgl', 'canvas', 'html'], // prefer using auto, then webgl (with WebGL2 if available), then canvas (i.e. context2d), then fallback to html
             // DRAWER CONFIGURATIONS
             drawerOptions: {
                 // [drawer-id]: {options} map

@@ -155,7 +155,14 @@ $.Viewer = function( options ) {
         overlaysContainer:  null,
 
         //private state properties
-        previousBody:   [],
+
+        // When we go full-screen we insert ourselves into the body and make
+        // everything else hidden. This is basically the same as
+        // `requestFullScreen` but works in all browsers: iPhone is known to not
+        // allow full-screen with the requestFullScreen API.  This holds the
+        // children of the body and their display values, so we can undo our
+        // changes when we go out of full-screen
+        previousDisplayValuesOfBodyChildren:   [],
 
         //This was originally initialized in the constructor and so could never
         //have anything in it.  now it can because we allow it to be specified
@@ -564,6 +571,10 @@ $.Viewer = function( options ) {
 
     this._addUpdatePixelDensityRatioEvent();
 
+    if ('navigatorAutoResize' in this) {
+        $.console.warn('navigatorAutoResize is deprecated, this value will be ignored.');
+    }
+
     //Instantiate a navigator if configured
     if ( this.showNavigator){
         this.navigator = new $.Navigator({
@@ -576,7 +587,6 @@ $.Viewer = function( options ) {
             left:              this.navigatorLeft,
             width:             this.navigatorWidth,
             height:            this.navigatorHeight,
-            autoResize:        this.navigatorAutoResize,
             autoFade:          this.navigatorAutoFade,
             prefixUrl:         this.prefixUrl,
             viewer:            this,
@@ -1410,20 +1420,29 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             this.bodyDisplay = bodyStyle.display;
             bodyStyle.display = "block";
 
-            //when entering full screen on the ipad it wasn't sufficient to leave
-            //the body intact as only only the top half of the screen would
-            //respond to touch events on the canvas, while the bottom half treated
-            //them as touch events on the document body.  Thus we remove and store
-            //the bodies elements and replace them when we leave full screen.
-            this.previousBody = [];
+            //when entering full screen on the ipad it wasn't sufficient to
+            //leave the body intact as only only the top half of the screen
+            //would respond to touch events on the canvas, while the bottom half
+            //treated them as touch events on the document body.  Thus we make
+            //them invisible (display: none) and apply the older values when we
+            //go out of full screen.
+            this.previousDisplayValuesOfBodyChildren = [];
             THIS[ this.hash ].prevElementParent = this.element.parentNode;
             THIS[ this.hash ].prevNextSibling = this.element.nextSibling;
             THIS[ this.hash ].prevElementWidth = this.element.style.width;
             THIS[ this.hash ].prevElementHeight = this.element.style.height;
-            nodes = body.childNodes.length;
+            nodes = body.children.length;
             for ( let i = 0; i < nodes; i++ ) {
-                this.previousBody.push( body.childNodes[ 0 ] );
-                body.removeChild( body.childNodes[ 0 ] );
+                const element = body.children[i];
+                if (element === this.element) {
+                    // Do not hide ourselves...
+                    continue;
+                }
+                this.previousDisplayValuesOfBodyChildren.push({
+                    element,
+                    display: element.style.display
+                });
+                element.style.display = 'none';
             }
 
             //If we've got a toolbar, we need to enable the user to use css to
@@ -1477,9 +1496,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             bodyStyle.display = this.bodyDisplay;
 
             body.removeChild( this.element );
-            nodes = this.previousBody.length;
+            nodes = this.previousDisplayValuesOfBodyChildren.length;
             for ( let i = 0; i < nodes; i++ ) {
-                body.appendChild( this.previousBody.shift() );
+                const { element, display } = this.previousDisplayValuesOfBodyChildren[i];
+                element.style.display = display;
             }
 
             $.removeClass( this.element, 'fullpage' );
@@ -4394,6 +4414,14 @@ function onFlip() {
  * Find drawer
  */
 $.determineDrawer = function( id ){
+    if (id === 'auto') {
+        // Our WebGL drawer is not as performant on iOS at the moment, so we use canvas there.
+        // Note that modern iPads report themselves as Mac, so we also check for coarse pointer.
+        const isPrimaryTouch = window.matchMedia('(pointer: coarse)').matches;
+        const isIOSDevice = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent) && isPrimaryTouch;
+        id = isIOSDevice ? 'canvas' : 'webgl';
+    }
+
     for (const property in OpenSeadragon) {
         const drawer = OpenSeadragon[ property ];
         const proto = drawer.prototype;
