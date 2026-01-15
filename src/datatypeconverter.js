@@ -34,6 +34,8 @@
 
 (function($){
 
+const OpenSeadragon = $; // alias for JSDoc
+
 /**
  * modified from https://gist.github.com/Prottoy2938/66849e04b0bac459606059f5f9f3aa1a
  * @private
@@ -326,10 +328,10 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
  *  If some plugin required context2d type, the pipeline would deliver this type and used
  *  it also for WebGL, as texture loading function accepts canvas object as well as image.
  *
- * @class DataTypeConverter
+ * @class OpenSeadragon.DataTypeConverter
  * @memberOf OpenSeadragon
  */
-$.DataTypeConverter = class {
+OpenSeadragon.DataTypeConverter = class DataTypeConverter {
 
     constructor() {
         this.graph = new WeightedGraph();

@@ -10,11 +10,13 @@
 
 (function($) {
 
+const OpenSeadragon = $; // alias for JSDoc
+
 /**
- * @class PriorityQueue
+ * @class OpenSeadragon.PriorityQueue
  * @classdesc Fast priority queue. Implemented as a Heap.
  */
-$.PriorityQueue = class {
+OpenSeadragon.PriorityQueue = class PriorityQueue {
 
     /**
      * @param {?OpenSeadragon.PriorityQueue} optHeap Optional Heap or
@@ -257,13 +259,7 @@ $.PriorityQueue = class {
      * @return {!Array<*>} The values in the heap.
      */
     getValues() {
-        const nodes = this.nodes_;
-        const rv = [];
-        const l = nodes.length;
-        for (let i = 0; i < l; i++) {
-            rv.push(nodes[i].value);
-        }
-        return rv;
+        return this.nodes_.map(n => n.value);
     }
 
     /**
@@ -271,13 +267,7 @@ $.PriorityQueue = class {
      * @return {!Array<string>} The keys in the heap.
      */
     getKeys() {
-        const nodes = this.nodes_;
-        const rv = [];
-        const l = nodes.length;
-        for (let i = 0; i < l; i++) {
-            rv.push(nodes[i].key);
-        }
-        return rv;
+        return this.nodes_.map(n => n.key);
     }
 
     /**
@@ -330,7 +320,10 @@ $.PriorityQueue = class {
     }
 };
 
-$.PriorityQueue.Node = class {
+/**
+ * @private
+ */
+OpenSeadragon.PriorityQueue.Node = class Node {
     constructor(key, value) {
         /**
          * The key.
