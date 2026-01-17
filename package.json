@@ -22,6 +22,7 @@
     },
     "license": "BSD-3-Clause",
     "files": [
+        "types/",
         "build/openseadragon/"
     ],
     "main": "build/openseadragon/openseadragon.js",
@@ -45,6 +46,7 @@
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
         "qunit": "^2.24.1",
+        "tsd": "^0.33.0",
         "typescript": "^5.9.3"
     },
     "scripts": {
@@ -52,5 +54,9 @@
         "prepare": "grunt build",
         "build": "grunt build",
         "dev": "grunt dev"
+    },
+    "types": "types/index.d.ts",
+    "tsd": {
+        "directory": "test-dts"
     }
 }

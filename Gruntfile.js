@@ -263,7 +263,7 @@ module.exports = function(grunt) {
             command: "npx tsc --noEmit -p tsconfig.dts.json"
         },
         dts_smoke: {
-            command: "npx tsc --noEmit -p test-dts/tsconfig.json"
+            command: "npx tsd"
         }
       },
     });
