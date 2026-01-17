@@ -121,7 +121,7 @@ expectType<number>(pt.x);
 expectType<number>(pt.y);
 expectType<OpenSeadragon.Point>(pt.plus(new OpenSeadragon.Point(1, 1)));
 expectType<OpenSeadragon.Point>(pt.minus(new OpenSeadragon.Point(1, 1)));
-expectType<OpenSeadragon.Rect>(pt.times(2));
+expectType<OpenSeadragon.Point>(pt.times(2));
 expectType<OpenSeadragon.Point>(pt.divide(2));
 expectType<number>(pt.distanceTo(new OpenSeadragon.Point(0, 0)));
 expectType<boolean>(pt.equals(new OpenSeadragon.Point(5, 6)));
@@ -158,7 +158,12 @@ expectType<number>(dziSource.getPixelRatio(0));
 
 const iiifSource = new OpenSeadragon.IIIFTileSource({ width: 1000, height: 800, tileSize: 256 });
 const imgSource = new OpenSeadragon.ImageTileSource({ url: "image.jpg" });
-const zoomifySource = new OpenSeadragon.ZoomifyTileSource(1000, 800, 256, "/tiles/");
+const zoomifySource = new OpenSeadragon.ZoomifyTileSource({
+    width: 1000,
+    height: 800,
+    tileSize: 256,
+    tilesUrl: "/tiles/",
+});
 
 // TmsTileSource
 const tmsSource = new OpenSeadragon.TmsTileSource({ width: 1000, height: 800, tileSize: 256, tilesUrl: "/tiles/" });
