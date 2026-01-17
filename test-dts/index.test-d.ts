@@ -153,7 +153,7 @@ expectAssignable<string | (() => string)>(dziSource.getTileUrl(0, 0, 0));
 expectType<boolean>(dziSource.tileExists(0, 0, 0));
 expectType<OpenSeadragon.Tile>(dziSource.getTileAtPoint(0, new OpenSeadragon.Point(0.5, 0.5)));
 expectType<number>(dziSource.getClosestLevel());
-expectType<number>(dziSource.getNumTiles(0));
+expectType<OpenSeadragon.Point>(dziSource.getNumTiles(0));
 expectType<number>(dziSource.getPixelRatio(0));
 
 const iiifSource = new OpenSeadragon.IIIFTileSource({ width: 1000, height: 800, tileSize: 256 });

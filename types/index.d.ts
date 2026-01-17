@@ -721,15 +721,15 @@ declare namespace OpenSeadragon {
     }
 
     class IrisTileSource extends TileSource {
-        serverUrl: string;
-        slideId: string;
+        levelScales: number[];
         levelSizes: Array<{
-            width: number;
             height: number;
+            width: number;
             xTiles: number;
             yTiles: number;
         }>;
-        levelScales: number[];
+        serverUrl: string;
+        slideId: string;
 
         constructor(options: IrisTileSourceOptions);
         getMetadataUrl(): string;
@@ -746,24 +746,65 @@ declare namespace OpenSeadragon {
         crossOriginPolicy?: string;
         postData?: string | null;
         userData?: any;
-        abort?(): void;
-        callback?(): void;
+        abort?: () => void;
+        callback?: () => void;
         timeout?: number;
         tries?: number;
     }
 
     class ImageJob {
+        ajaxHeaders: object;
+        ajaxWithCredentials: boolean;
+        crossOriginPolicy: string;
         data: any;
+        loadWithAjax: boolean;
+        postData: string | object;
+        source: TileSource;
+        src: string;
+        tile: Tile;
         userData: any;
+
         constructor(options: TImageJobOptions);
-        finish(data: any, request: XMLHttpRequest, errorMessage: string): void;
+        abort(): void;
+        fail(errorMessage: string, request: XMLHttpRequest | null): void;
+        finish(data: any, request: XMLHttpRequest | null, dataType?: string): void;
+    }
+
+    interface BatchImageJobOptions {
+        source: TileSource;
+        jobs: ImageJob[];
+        callback?: (job: BatchImageJob) => void;
+        abort?: () => void;
+        timeout?: number;
+    }
+
+    class BatchImageJob {
+        data: any;
+        dataType: string | null;
+        errorMsg: string | null;
+        jobId: number | null;
+        jobs: ImageJob[];
+        request: XMLHttpRequest | null;
+        source: TileSource;
+        timeout: number;
+
+        constructor(options: BatchImageJobOptions);
+        abort(): void;
+        fail(errorMessage: string, request: XMLHttpRequest | null): void;
+        finish(data: any, request: XMLHttpRequest | null, dataType?: string): void;
         start(): void;
     }
 
-    class ImageLoader {
-        constructor(options: { jobLimit?: number; timeout?: number });
+    interface ImageLoaderOptions {
+        jobLimit?: number;
+        timeout?: number;
+    }
 
-        addJob(options: TImageJobOptions): void;
+    class ImageLoader {
+        constructor(options: ImageLoaderOptions);
+
+        addJob(options: TImageJobOptions): boolean;
+        canAcceptNewJob(): boolean;
         clear(): void;
     }
 
@@ -774,9 +815,6 @@ declare namespace OpenSeadragon {
             crossOriginPolicy?: string | boolean;
             ajaxWithCredentials?: string | boolean;
         });
-        _freeupCanvasMemory(): void;
-        destroy(viewer: Viewer): void;
-        getContext2D(level: number, x: number, y: number): CanvasRenderingContext2D | null;
     }
 
     class LegacyTileSource extends TileSource {
@@ -1315,7 +1353,7 @@ declare namespace OpenSeadragon {
         tileOverlap: number;
         url: string | null;
 
-        configure(data: string | object | any[] | Document, url: string, postData: string): ConfigureOptions;
+        configure(data: string | object | any[] | Document, url?: string, postData?: string): ConfigureOptions;
         destroy(viewer: Viewer): void;
         downloadTileAbort(context: ImageJob): void;
         downloadTileStart(context: ImageJob): void;
@@ -1323,7 +1361,7 @@ declare namespace OpenSeadragon {
         getClosestLevel(): number;
         getImageInfo(url: string): void;
         getLevelScale(level: number): number;
-        getNumTiles(level: number): number;
+        getNumTiles(level: number): Point;
         getPixelRatio(level: number): number;
         getTileAjaxHeaders(level: number, x: number, y: number): object;
         getTileAtPoint(level: number, point: Point): Tile;
@@ -1335,7 +1373,7 @@ declare namespace OpenSeadragon {
         getTileWidth(level: number): number;
         hasTransparency(context2D: any, url: string, ajaxHeaders: object, post: any): boolean;
         setMaxLevel(level: number): void;
-        supports(data: any, url: string): boolean;
+        supports(data: any, url?: string): boolean;
         tileExists(level: number, x: number, y: number): boolean;
 
         /** @deprecated */
