@@ -571,6 +571,10 @@ $.Viewer = function( options ) {
 
     this._addUpdatePixelDensityRatioEvent();
 
+    if ('navigatorAutoResize' in this) {
+        $.console.warn('navigatorAutoResize is deprecated, this value will be ignored.');
+    }
+
     //Instantiate a navigator if configured
     if ( this.showNavigator){
         this.navigator = new $.Navigator({
@@ -583,7 +587,6 @@ $.Viewer = function( options ) {
             left:              this.navigatorLeft,
             width:             this.navigatorWidth,
             height:            this.navigatorHeight,
-            autoResize:        this.navigatorAutoResize,
             autoFade:          this.navigatorAutoFade,
             prefixUrl:         this.prefixUrl,
             viewer:            this,

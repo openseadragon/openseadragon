@@ -37,7 +37,36 @@
             const done = assert.async();
             createViewer();
             assert.ok(viewer.drawer, 'Drawer exists');
-            assert.equal(viewer.drawer.canRotate(), ['webgl','canvas'].includes(drawerType), 'we can rotate if we have canvas');
+            assert.equal(viewer.drawer.canRotate(), ['webgl','canvas'].includes(drawerType), 'we can rotate if we have canvas or webgl');
+            done();
+        });
+
+        // ----------
+        QUnit.test('isWebGL2', function(assert) {
+            const done = assert.async();
+            createViewer();
+
+            if (viewer.drawer.getType() !== 'webgl') {
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            const probeCanvas = document.createElement('canvas');
+            const webgl2Context = probeCanvas.getContext('webgl2');
+            const webgl2Supported = !!webgl2Context;
+            if (webgl2Context && webgl2Context.getExtension) {
+                const ext = webgl2Context.getExtension('WEBGL_lose_context');
+                if (ext) {
+                    ext.loseContext();
+                }
+            }
+
+            assert.equal(
+                viewer.drawer.isWebGL2(),
+                webgl2Supported,
+                'isWebGL2 matches WebGL2 context availability'
+            );
             done();
         });
 

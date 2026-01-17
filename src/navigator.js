@@ -291,8 +291,7 @@ $.Navigator = function( options ){
 $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /** @lends OpenSeadragon.Navigator.prototype */{
 
     /**
-     * Used to notify the navigator when its size has changed.
-     * Especially useful when {@link OpenSeadragon.Options}.navigatorAutoResize is set to false and the navigator is resizable.
+     * Used to notify the navigator when its size has changed. Especially useful when the navigator is resizable.
      * @function
      */
     updateSize: function () {

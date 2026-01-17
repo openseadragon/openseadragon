@@ -365,7 +365,6 @@ declare namespace OpenSeadragon {
         navigatorLeft?: number | string;
         navigatorHeight?: number | string;
         navigatorWidth?: number | string;
-        navigatorAutoResize?: boolean;
         navigatorAutoFade?: boolean;
         navigatorRotate?: boolean;
         navigatorBackground?: string;
