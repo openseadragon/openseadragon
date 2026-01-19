@@ -129,6 +129,13 @@
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
 
+            // Multiple Render Targets (MRT) for advanced compositing (WebGL2 only)
+            // Allows writing to multiple textures in a single render pass
+            this._mrtFramebuffer = null;
+            this._mrtTextures = null;      // Array of render target textures
+            this._mrtProgram = null;       // MRT shader program
+            this._mrtMaxTargets = 0;       // Maximum supported render targets
+
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
 
@@ -182,6 +189,11 @@
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
             gl.bindRenderbuffer(gl.RENDERBUFFER, null);
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            // Clean up Multiple Render Targets resources (WebGL2 only)
+            if (this._isWebGL2) {
+                this._cleanupMRT();
+            }
 
             // Delete all our created resources
             gl.deleteBuffer(this._secondPass.bufferOutputPosition);
@@ -708,6 +720,454 @@
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
+            // Set up Multiple Render Targets for WebGL2
+            if (this._isWebGL2) {
+                this._setupMultipleRenderTargets();
+            }
+        }
+
+        // private
+        // Set up Multiple Render Targets (MRT) for advanced compositing (WebGL2 only)
+        // MRT allows a single fragment shader to write to multiple textures simultaneously,
+        // useful for deferred rendering, G-buffer creation, or capturing multiple data outputs
+        _setupMultipleRenderTargets() {
+            const gl = this._gl;
+
+            // Query max color attachments supported
+            this._mrtMaxTargets = gl.getParameter(gl.MAX_COLOR_ATTACHMENTS);
+            const maxDrawBuffers = gl.getParameter(gl.MAX_DRAW_BUFFERS);
+            this._mrtMaxTargets = Math.min(this._mrtMaxTargets, maxDrawBuffers);
+
+            if (this._mrtMaxTargets < 2) {
+                $.console.warn('Multiple Render Targets: insufficient support (need at least 2 attachments)');
+                return;
+            }
+
+            // Create MRT framebuffer
+            this._mrtFramebuffer = gl.createFramebuffer();
+
+            // Create render target textures (we'll use 4 targets for demonstration):
+            // 0: Color output (RGBA)
+            // 1: Position/depth information (for potential depth-based effects)
+            // 2: Normal/metadata (for advanced compositing)
+            // 3: Tile info (tile index, opacity, etc.)
+            const numTargets = Math.min(4, this._mrtMaxTargets);
+            this._mrtTextures = [];
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._mrtFramebuffer);
+
+            for (let i = 0; i < numTargets; i++) {
+                const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+
+                // Use appropriate format for each target
+                // Target 0: Standard RGBA8 for color
+                // Targets 1-3: RGBA16F for higher precision data (positions, normals, etc.)
+                if (i === 0) {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                } else {
+                    // Use RGBA16F for auxiliary buffers (requires WebGL2)
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.FLOAT, null);
+                }
+
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+                // Attach texture to framebuffer
+                gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0 + i, gl.TEXTURE_2D, texture, 0);
+
+                this._mrtTextures.push(texture);
+            }
+
+            // Check framebuffer completeness
+            const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            if (status !== gl.FRAMEBUFFER_COMPLETE) {
+                $.console.error('MRT Framebuffer incomplete:', status);
+                this._cleanupMRT();
+                return;
+            }
+
+            // Create MRT shader program
+            this._makeMRTShaderProgram(numTargets);
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+
+            $.console.log(`Multiple Render Targets initialized with ${numTargets} targets`);
+        }
+
+        // private
+        // Create shader program for Multiple Render Targets
+        _makeMRTShaderProgram(numTargets) {
+            const gl = this._gl;
+            const numTextures = this._glNumTextures;
+
+            const makeMatrixUniforms = () => {
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+            };
+            const makeConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(a_index == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+            };
+
+            // GLSL ES 3.0 vertex shader
+            const vertexShader = `#version 300 es
+            precision highp float;
+
+            in vec2 a_output_position;
+            in vec2 a_texture_position;
+            in int a_index;
+
+            ${makeMatrixUniforms()}
+
+            out vec2 v_texture_position;
+            flat out int v_image_index;
+            out vec4 v_clip_position;
+
+            void main() {
+                mat3 transform_matrix;
+                ${makeConditionals()}
+
+                vec3 transformed = transform_matrix * vec3(a_output_position, 1.0);
+                gl_Position = vec4(transformed.xy, 0.0, 1.0);
+
+                v_texture_position = a_texture_position;
+                v_image_index = a_index;
+                v_clip_position = gl_Position;
+            }
+            `;
+
+            // Generate output declarations for each render target
+            const makeOutputDeclarations = () => {
+                const outputs = ['layout(location = 0) out vec4 fragColor;'];
+                if (numTargets > 1) {
+                    outputs.push('layout(location = 1) out vec4 fragPosition;');
+                }
+                if (numTargets > 2) {
+                    outputs.push('layout(location = 2) out vec4 fragMetadata;');
+                }
+                if (numTargets > 3) {
+                    outputs.push('layout(location = 3) out vec4 fragTileInfo;');
+                }
+                return outputs.join('\n');
+            };
+
+            // Generate output assignments
+            const makeOutputAssignments = () => {
+                const assignments = ['fragColor = texColor * u_opacities[v_image_index];'];
+                if (numTargets > 1) {
+                    // Position output: normalized clip position + depth
+                    assignments.push('fragPosition = vec4(v_clip_position.xy * 0.5 + 0.5, v_clip_position.z, 1.0);');
+                }
+                if (numTargets > 2) {
+                    // Metadata output: texture coordinates + some metadata
+                    assignments.push('fragMetadata = vec4(v_texture_position, texColor.a, 1.0);');
+                }
+                if (numTargets > 3) {
+                    // Tile info output: tile index, opacity, texture coords
+                    assignments.push('fragTileInfo = vec4(float(v_image_index) / 255.0, u_opacities[v_image_index], v_texture_position);');
+                }
+                return assignments.join('\n                ');
+            };
+
+            // GLSL ES 3.0 fragment shader with multiple outputs
+            const fragmentShader = `#version 300 es
+            precision mediump float;
+
+            uniform sampler2D u_images[${numTextures}];
+            uniform float u_opacities[${numTextures}];
+
+            in vec2 v_texture_position;
+            flat in int v_image_index;
+            in vec4 v_clip_position;
+
+            ${makeOutputDeclarations()}
+
+            void main() {
+                vec4 texColor = vec4(0.0);
+
+                // Sample the correct texture based on tile index
+                for (int i = 0; i < ${numTextures}; ++i) {
+                    if (i == v_image_index) {
+                        texColor = texture(u_images[i], v_texture_position);
+                        break;
+                    }
+                }
+
+                ${makeOutputAssignments()}
+            }
+            `;
+
+            // Compile vertex shader
+            const vertShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertShader, vertexShader);
+            gl.compileShader(vertShader);
+
+            if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+                $.console.error('MRT vertex shader compilation failed:', gl.getShaderInfoLog(vertShader));
+                gl.deleteShader(vertShader);
+                return;
+            }
+
+            // Compile fragment shader
+            const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragShader, fragmentShader);
+            gl.compileShader(fragShader);
+
+            if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+                $.console.error('MRT fragment shader compilation failed:', gl.getShaderInfoLog(fragShader));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                return;
+            }
+
+            // Link program
+            const program = gl.createProgram();
+            gl.attachShader(program, vertShader);
+            gl.attachShader(program, fragShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                $.console.error('MRT program linking failed:', gl.getProgramInfoLog(program));
+                gl.deleteShader(vertShader);
+                gl.deleteShader(fragShader);
+                gl.deleteProgram(program);
+                return;
+            }
+
+            gl.deleteShader(vertShader);
+            gl.deleteShader(fragShader);
+
+            // Get attribute and uniform locations
+            this._mrtProgram = {
+                program: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                aIndex: gl.getAttribLocation(program, 'a_index'),
+                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u_matrix_${i}`)),
+                uImages: gl.getUniformLocation(program, 'u_images'),
+                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+                bufferIndex: gl.createBuffer(),
+                numTargets: numTargets
+            };
+
+            // Set up image sampler uniforms
+            gl.useProgram(program);
+            gl.uniform1iv(this._mrtProgram.uImages, [...Array(numTextures).keys()]);
+
+            // Set up static output position data
+            const outputQuads = new Float32Array(numTextures * 12);
+            for (let i = 0; i < numTextures; ++i) {
+                outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._mrtProgram.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW);
+        }
+
+        // private
+        _cleanupMRT() {
+            const gl = this._gl;
+            if (this._mrtTextures) {
+                this._mrtTextures.forEach(tex => gl.deleteTexture(tex));
+                this._mrtTextures = null;
+            }
+            if (this._mrtFramebuffer) {
+                gl.deleteFramebuffer(this._mrtFramebuffer);
+                this._mrtFramebuffer = null;
+            }
+            if (this._mrtProgram) {
+                gl.deleteBuffer(this._mrtProgram.bufferOutputPosition);
+                gl.deleteBuffer(this._mrtProgram.bufferTexturePosition);
+                gl.deleteBuffer(this._mrtProgram.bufferIndex);
+                gl.deleteProgram(this._mrtProgram.program);
+                this._mrtProgram = null;
+            }
+        }
+
+        /**
+         * Check if Multiple Render Targets is supported and initialized
+         * @returns {Boolean} True if MRT is available
+         */
+        hasMultipleRenderTargets() {
+            return this._isWebGL2 && this._mrtFramebuffer !== null && this._mrtProgram !== null;
+        }
+
+        /**
+         * Get the number of available render targets
+         * @returns {Number} Number of render targets (0 if MRT not available)
+         */
+        getNumRenderTargets() {
+            return this._mrtProgram ? this._mrtProgram.numTargets : 0;
+        }
+
+        /**
+         * Render tiles to multiple render targets in a single pass.
+         * This writes color, position, metadata, and tile info to separate textures.
+         *
+         * @param {Array} textureDataArray - Array of WebGL textures for tiles
+         * @param {Float32Array} texturePositionArray - Texture coordinates
+         * @param {Array} matrixArray - Transform matrices for each tile
+         * @param {Array} opacityArray - Opacity values for each tile
+         * @param {Number} numTilesToDraw - Number of tiles to render
+         * @returns {Boolean} True if rendering succeeded
+         */
+        renderToMultipleTargets(textureDataArray, texturePositionArray, matrixArray, opacityArray, numTilesToDraw) {
+            if (!this.hasMultipleRenderTargets()) {
+                return false;
+            }
+
+            const gl = this._gl;
+            const program = this._mrtProgram;
+
+            // Bind MRT framebuffer
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._mrtFramebuffer);
+
+            // Specify which color attachments to draw to
+            const drawBuffers = [];
+            for (let i = 0; i < program.numTargets; i++) {
+                drawBuffers.push(gl.COLOR_ATTACHMENT0 + i);
+            }
+            gl.drawBuffers(drawBuffers);
+
+            // Clear all render targets
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            // Use MRT shader program
+            gl.useProgram(program.program);
+
+            // Bind tile textures
+            for (let i = 0; i < numTilesToDraw; i++) {
+                gl.activeTexture(gl.TEXTURE0 + i);
+                gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
+            }
+
+            // Set texture position data
+            gl.bindBuffer(gl.ARRAY_BUFFER, program.bufferTexturePosition);
+            gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(program.aTexturePosition);
+            gl.vertexAttribPointer(program.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+
+            // Set output position data
+            gl.bindBuffer(gl.ARRAY_BUFFER, program.bufferOutputPosition);
+            gl.enableVertexAttribArray(program.aOutputPosition);
+            gl.vertexAttribPointer(program.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+            // Set index data
+            const indexArray = new Int32Array(numTilesToDraw * 6);
+            for (let i = 0; i < numTilesToDraw; ++i) {
+                const offset = i * 6;
+                for (let j = 0; j < 6; ++j) {
+                    indexArray[offset + j] = i;
+                }
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, program.bufferIndex);
+            gl.bufferData(gl.ARRAY_BUFFER, indexArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(program.aIndex);
+            gl.vertexAttribIPointer(program.aIndex, 1, gl.INT, 0, 0);
+
+            // Set transform matrices
+            for (let i = 0; i < numTilesToDraw; i++) {
+                gl.uniformMatrix3fv(program.uTransformMatrices[i], false, matrixArray[i]);
+            }
+
+            // Set opacities
+            gl.uniform1fv(program.uOpacities, new Float32Array(opacityArray));
+
+            // Draw tiles
+            gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw);
+
+            // Unbind framebuffer
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            return true;
+        }
+
+        /**
+         * Get one of the MRT render target textures.
+         * Can be used for advanced compositing or post-processing effects.
+         *
+         * Target indices:
+         * - 0: Color output (RGBA)
+         * - 1: Position data (clip position, useful for depth effects)
+         * - 2: Metadata (texture coordinates, alpha)
+         * - 3: Tile info (tile index, opacity)
+         *
+         * @param {Number} targetIndex - Index of the render target (0-3)
+         * @returns {WebGLTexture|null} The render target texture, or null if not available
+         */
+        getMRTTexture(targetIndex) {
+            if (!this.hasMultipleRenderTargets() || targetIndex < 0 || targetIndex >= this._mrtTextures.length) {
+                return null;
+            }
+            return this._mrtTextures[targetIndex];
+        }
+
+        /**
+         * Read pixel data from a specific MRT render target.
+         * Useful for debugging or GPU-to-CPU data transfer.
+         *
+         * @param {Number} targetIndex - Index of the render target to read
+         * @param {Number} x - X coordinate to start reading from
+         * @param {Number} y - Y coordinate to start reading from
+         * @param {Number} width - Width of the region to read
+         * @param {Number} height - Height of the region to read
+         * @returns {Float32Array|Uint8Array|null} Pixel data, or null if failed
+         */
+        readMRTPixels(targetIndex, x, y, width, height) {
+            if (!this.hasMultipleRenderTargets() || targetIndex < 0 || targetIndex >= this._mrtTextures.length) {
+                return null;
+            }
+
+            const gl = this._gl;
+
+            // Bind MRT framebuffer
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._mrtFramebuffer);
+
+            // Set read buffer to the target we want to read
+            gl.readBuffer(gl.COLOR_ATTACHMENT0 + targetIndex);
+
+            // Read pixels (use Float32Array for RGBA16F targets, Uint8Array for RGBA8)
+            let pixels;
+            if (targetIndex === 0) {
+                pixels = new Uint8Array(width * height * 4);
+                gl.readPixels(x, y, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+            } else {
+                pixels = new Float32Array(width * height * 4);
+                gl.readPixels(x, y, width, height, gl.RGBA, gl.FLOAT, pixels);
+            }
+
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+            return pixels;
+        }
+
+        /**
+         * Resize MRT textures when canvas size changes.
+         * Should be called when the viewer is resized.
+         */
+        resizeMRTTextures() {
+            if (!this.hasMultipleRenderTargets()) {
+                return;
+            }
+
+            const gl = this._gl;
+            const width = this._renderingCanvas.width;
+            const height = this._renderingCanvas.height;
+
+            for (let i = 0; i < this._mrtTextures.length; i++) {
+                gl.bindTexture(gl.TEXTURE_2D, this._mrtTextures[i]);
+                if (i === 0) {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+                } else {
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, width, height, 0, gl.RGBA, gl.FLOAT, null);
+                }
+            }
+
+            gl.bindTexture(gl.TEXTURE_2D, null);
         }
 
         //private
