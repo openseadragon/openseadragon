@@ -390,18 +390,14 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
 
         // rasterBlob -> imageBitmap (preferred fast path)
         this.learn("rasterBlob", "imageBitmap", (tile, blob) => new $.Promise((resolve, reject) => {
-            try {
-                if (!$.supportsAsync) {
-                    reject("Not supported in sync mode!");
-                }
-                if (_imageConversionWorker) {
-                    postWorker('decodeFromBlob', {blob}).then(resolve);
-                } else {
-                    // Fallback main thread
-                    createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(resolve);
-                }
-            } catch (e) {
-                reject(e);
+            if (!$.supportsAsync) {
+                reject("Not supported in sync mode!");
+            }
+            if (_imageConversionWorker) {
+                postWorker('decodeFromBlob', {blob}).then(resolve).catch(reject);
+            } else {
+                // Fallback main thread
+                createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(resolve).catch(reject);
             }
         }), 1, 1);
 
@@ -428,41 +424,39 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         }, 1, 2);
 
         this.learn("imageUrl", "imageBitmap", (tile, url) => new $.Promise((resolve, reject) => {
-            try {
-                if (!$.supportsAsync) {
-                    reject("Not supported in sync mode!");
-                }
-                let setup;
-                if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
-                    const policy = tile.tiledImage.crossOriginPolicy;
-                    if (policy === 'anonymous') {
-                        setup = {
-                            mode: 'cors',
-                            credentials: 'omit',
-                        };
-                    } else if (policy === 'use-credentials') {
-                        setup = {
-                            mode: 'cors',
-                            credentials: 'include',
-                        };
-                    } else {
-                        reject(new Error(`Unsupported crossOriginPolicy ${policy}`));
-                    }
-                }
-                if (_imageConversionWorker) {
-                    postWorker('fetchDecode', { url, setup }).then(resolve);
+            if (!$.supportsAsync) {
+                reject("Not supported in sync mode!");
+            }
+            let setup;
+            if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
+                const policy = tile.tiledImage.crossOriginPolicy;
+                if (policy === 'anonymous') {
+                    setup = {
+                        mode: 'cors',
+                        credentials: 'omit',
+                    };
+                } else if (policy === 'use-credentials') {
+                    setup = {
+                        mode: 'cors',
+                        credentials: 'include',
+                    };
                 } else {
-                    // Fallback to the main thread
-                    // eslint-disable-next-line compat/compat
-                    fetch(url, setup).then(res => {
-                        if (!res.ok) {
-                            throw new Error(`HTTP ${res.status} loading ${url}`);
-                        }
-                        return res.blob();
-                    }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
-                    ).then(resolve);
+                    reject(new Error(`Unsupported crossOriginPolicy ${policy}`));
                 }
-            } catch (e) { reject(e); }
+            }
+            if (_imageConversionWorker) {
+                postWorker('fetchDecode', { url, setup }).then(resolve).catch(reject);
+            } else {
+                // Fallback to the main thread
+                // eslint-disable-next-line compat/compat
+                fetch(url, setup).then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status} loading ${url}`);
+                    }
+                    return res.blob();
+                }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
+                ).then(resolve).catch(reject);
+            }
         }), 1, 1);
 
         this.learn("context2d", "imageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
@@ -647,7 +641,10 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             return result.then(res => step(res, i + 1));
         };
         //destroy only mid-results, but not the original value
-        return step(data, 0, false);
+        return step(data, 0, false).catch(e => {
+            $.console.error(`[OpenSeadragon.converter.convert] Conversion error {e}`, e);
+            return undefined;
+        });
     }
 
     /**
