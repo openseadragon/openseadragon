@@ -493,7 +493,7 @@
                         // We've filled up the buffers: time to draw this set of tiles
 
                         // bind each tile's texture to the appropriate gl.TEXTURE#
-                        for(let i = 0; i <= numTilesToDraw; i++){
+                        for(let i = 0; i < numTilesToDraw; i++){
                             gl.activeTexture(gl.TEXTURE0 + i);
                             gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
                         }
