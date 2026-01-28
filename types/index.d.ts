@@ -1388,6 +1388,8 @@ declare namespace OpenSeadragon {
         constructor(options: TDrawerOptions);
 
         draw(tiledImages: any[]): void;
+        setContextRecoveryEnabled(enabled: boolean): void;
+        isContextRecoveryEnabled(): boolean;
     }
 
     class World extends EventSource<WorldEventMap> {
@@ -1515,6 +1517,8 @@ declare namespace OpenSeadragon {
         "update-viewport": ViewerEvent;
         "viewport-change": ViewerEvent;
         "visible": VisibleEvent;
+        "webgl-context-recovered": WebGLContextRecoveredEvent;
+        "webgl-context-recovery-failed": WebGLContextRecoveryFailedEvent;
         "zoom": ZoomEvent;
     }
 
@@ -1852,6 +1856,18 @@ declare namespace OpenSeadragon {
         zoom: number;
         refPoint: Point;
         immediately: boolean;
+    }
+
+    interface WebGLContextRecoveredEvent extends ViewerEvent {
+        oldDrawer: WebGLDrawer;
+        newDrawer: WebGLDrawer;
+        error: Error;
+    }
+
+    interface WebGLContextRecoveryFailedEvent extends ViewerEvent {
+        drawer: WebGLDrawer;
+        canvasDrawer: CanvasDrawer | null;
+        error: Error;
     }
 
     // -- WORLD EVENTS --
