@@ -1291,7 +1291,7 @@
                 return el.times(windowBoundary);
             },
             getExpected: function(orig, viewport) {
-                const posPoint = OpenSeadragon.getElementOffset(viewer.element);
+                const posPoint = OpenSeadragon.getElementOffset(viewer.container);
                 return orig.minus(posPoint).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
             },
             method: 'windowToViewportCoordinates'
@@ -1305,7 +1305,7 @@
                 return el.times(viewer.source.dimensions.x);
             },
             getExpected: function(orig, viewport) {
-                const posPoint = OpenSeadragon.getElementOffset(viewer.element);
+                const posPoint = OpenSeadragon.getElementOffset(viewer.container);
                 return orig.plus(posPoint).minus(VIEWER_PADDING.times(viewport.getContainerSize().x * ZOOM_FACTOR));
             },
             method: 'imageToWindowCoordinates'
@@ -1320,7 +1320,7 @@
                 return el.times(windowBoundary);
             },
             getExpected: function(orig, viewport) {
-                const posPoint = OpenSeadragon.getElementOffset(viewer.element);
+                const posPoint = OpenSeadragon.getElementOffset(viewer.container);
                 return orig.minus(posPoint).divide(viewport.getContainerSize().x * ZOOM_FACTOR).plus(VIEWER_PADDING);
             },
             method: 'windowToViewportCoordinates'
@@ -1334,7 +1334,7 @@
                 return el.times(viewer.source.dimensions.x);
             },
             getExpected: function(orig, viewport) {
-                const posPoint = OpenSeadragon.getElementOffset(viewer.element);
+                const posPoint = OpenSeadragon.getElementOffset(viewer.container);
                 return orig.minus(VIEWER_PADDING).times(viewport.getContainerSize().x * ZOOM_FACTOR).plus(posPoint);
             },
             method: 'viewportToWindowCoordinates'
