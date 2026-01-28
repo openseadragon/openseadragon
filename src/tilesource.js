@@ -801,7 +801,11 @@ $.TileSource.prototype = {
      * @returns {boolean} true if the image has transparency
      */
     hasTransparency: function(context2D, url, ajaxHeaders, post) {
-        return url.match('.png');
+        try{    // need try...catch when url is a Promise ( asynchronous getTileUrl(...) )
+            return url.match('.png');
+        }catch(e){
+            return false;
+        }
     },
 
     /**
@@ -812,6 +816,16 @@ $.TileSource.prototype = {
      * @param {OpenSeadragon.ImageJob} context job context that you have to call finish(...) on.
      */
     downloadTileStart: function (context) {
+        // wrapper for asynchronous getTileUrl() support
+        $.Promise.resolve(context.src)
+        .catch(e=>{
+            console.error(e); // then, context.src becomes undefined, so Viewer 'tile-load-failed' will be fired.
+        })
+        .then((src)=>{
+            context.src = src;
+            return context;
+        })
+        .then((context)=>{
         // Load the tile with an AJAX request if the loadWithAjax option is
         // set. Otherwise load the image by setting the source property of the image object.
         if (context.loadWithAjax) {
@@ -866,6 +880,7 @@ $.TileSource.prototype = {
         } else {
             context.finish(context.src, null, "imageUrl");
         }
+        }); // end of promise wrap
     },
 
     /**
