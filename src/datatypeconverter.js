@@ -628,11 +628,20 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 return $.Promise.resolve(x);
             }
             const edge = conversionPath[i];
-            const y = edge.transform(tile, x);
+            let y;
+            try {
+                y = edge.transform(tile, x);
+            } catch (err) {
+                if (destroy) {
+                    _this.destroy(x, edge.origin.value);
+                }
+                return $.Promise.reject(`[OpenSeadragon.converter.convert] sync failure (while converting using  ${edge.target.value}, ${edge.origin.value}})`);
+            }
             if (y === undefined) {
-                const msg = `[OpenSeadragon.converter.convert] data mid result undefined value (while converting using ${edge.origin.value} -> ${edge.target.value})`;
-                $.console.error(msg);
-                throw new Error(msg);
+                if (destroy) {
+                    _this.destroy(x, edge.origin.value);
+                }
+                return $.Promise.reject(`[OpenSeadragon.converter.convert] data mid result undefined value (while converting using ${edge.origin.value} -> ${edge.target.value})`);
             }
             //node.value holds the type string
             if (destroy) {

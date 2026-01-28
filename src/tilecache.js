@@ -156,6 +156,9 @@
                         return undefined;
                     }
                     return finalData;
+                }).catch(e => {
+                    this._handleConversionError(e);
+                    return undefined;
                 });
             }
             return false; // no conversion needed, parent function returns item as-is
@@ -181,7 +184,17 @@
          */
         getDataForRendering(drawer, tileToDraw) {
             // Test cache state
+            if (this._destroyed) {
+                $.console.error(`Attempt to draw tile with destroyed main cache ${this}!`);
+                tileToDraw._unload();
+                return undefined;
+            }
             if (!this.loaded) {
+                // If a conversion/load is in progress, it is normal that the cache is temporarily not loaded.
+                // Avoid spamming errors; just skip drawing this tile this frame.
+                if (this._promise) {
+                    return undefined;
+                }
                 $.console.error(`Attempt to draw cache ${this} when not loaded!`);
                 return undefined;
             }
@@ -548,10 +561,21 @@
                 } else {
                     // If we receive async callback, we consume the async state
                     if (data instanceof $.Promise) {
-                        this._promise = data.then(d => {
-                            this._data = d;
+                        this._promise = data.then(data => {
+                            if (this._destroyed) {
+                                try {
+                                    $.converter.destroy(data, this._type);
+                                } catch (e) {
+                                    // no-op
+                                }
+                                return undefined;
+                            }
                             this.loaded = true;
-                            return d;
+                            this._data = data;
+                            return data;
+                        }).catch(e => {
+                            this._handleConversionError(e);
+                            return undefined;
                         });
                         this._data = null;
                     } else {
@@ -714,20 +738,16 @@
                     y = edge.transform(_this._tRef, x);
                 } catch (err) {
                     converter.destroy(x, edge.origin.value); // prevent leak
-                    throw err;
+                    return $.Promise.reject(`[CacheRecord._convert] sync failure (while converting using ${edge.target.value}, ${edge.origin.value}})`);
                 }
                 if (y === undefined) {
                     _this.loaded = false;
                     converter.destroy(x, edge.origin.value); // prevent leak
-                    throw `[CacheRecord._convert] data mid result undefined value (while converting using ${edge}})`;
+                    return $.Promise.reject(`[CacheRecord._convert] data mid result undefined value (while converting using  ${edge.target.value}, ${edge.origin.value}})`);
                 }
                 converter.destroy(x, edge.origin.value);
                 const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
-                return result.then(res => convert(res, i + 1)).catch(err => {
-                    // If the async transform fails, make sure the intermediate is released.
-                    // (The input 'x' was already destroyed above as ownership transferred to the transform.)
-                    throw err;
-                });
+                return result.then(res => convert(res, i + 1));
             };
 
             this.loaded = false;
@@ -751,24 +771,20 @@
         _handleConversionError(e) {
             $.console.error("[CacheRecord] Conversion/preparation error:", e);
 
-            // Mark unusable immediately.
             this._destroyed = true;
             this.loaded = false;
             this._data = null;
 
-            // If we are a WORKING cache (not registered in TileCache), do not touch the tile state.
-            // The invalidation pipeline will get a null/undefined and can decide (destroy working cache,
-            // keep original, etc.).
-            if (!this._ownerTileCache) {
-                // Best-effort: release tile references so the record is collectible.
+            // WORKING CACHE: do not escalate to TileCache, do not unload tiles.
+            // A working cache is not registered (no cacheKey and/or no owner).
+            if (!this.cacheKey || !this._ownerTileCache) {
+                this._promise = $.Promise.resolve(undefined);
                 this._tiles = [];
                 this._tRef = null;
-                // Ensure await/transform callers do not get a rejected promise.
-                this._promise = $.Promise.resolve(undefined);
                 return;
             }
 
-            // Registered cache: notify owning TileCache so it can remove the record from its maps.
+            // MANAGED CACHE: notify TileCache to remove record and possibly mark tile missing.
             this._ownerTileCache._handleBrokenCacheRecord(this);
         }
     };
