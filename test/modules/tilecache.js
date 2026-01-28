@@ -1,6 +1,6 @@
 /* global QUnit, testLog */
 
-(function() {
+(function () {
     const Converter = OpenSeadragon.converter,
         T_A = "__TEST__typeA", T_B = "__TEST__typeB", T_C = "__TEST__typeC", T_D = "__TEST__typeD", T_E = "__TEST__typeE";
 
@@ -25,48 +25,48 @@
     //set all same costs to get easy testing, know which path will be taken
     Converter.learn(T_A, T_B, (tile, x) => {
         typeAtoB++;
-        return x+1;
+        return x + 1;
     });
     // Costly conversion to C simulation
     Converter.learn(T_B, T_C, async (tile, x) => {
         typeBtoC++;
         await sleep(5);
-        return x+1;
+        return x + 1;
     });
     Converter.learn(T_C, T_A, (tile, x) => {
         typeCtoA++;
-        return x+1;
+        return x + 1;
     });
     Converter.learn(T_D, T_A, (tile, x) => {
         typeDtoA++;
-        return x+1;
+        return x + 1;
     });
     Converter.learn(T_C, T_E, (tile, x) => {
         typeCtoE++;
-        return x+1;
+        return x + 1;
     });
     //'Copy constructors'
     let copyA = 0, copyB = 0, copyC = 0, copyD = 0, copyE = 0;
     //also learn destructors
-    Converter.learn(T_A, T_A,(tile, x) => {
+    Converter.learn(T_A, T_A, (tile, x) => {
         copyA++;
-        return x+1;
+        return x + 1;
     });
-    Converter.learn(T_B, T_B,(tile, x) => {
+    Converter.learn(T_B, T_B, (tile, x) => {
         copyB++;
-        return x+1;
+        return x + 1;
     });
-    Converter.learn(T_C, T_C,(tile, x) => {
+    Converter.learn(T_C, T_C, (tile, x) => {
         copyC++;
-        return x-1;
+        return x - 1;
     });
-    Converter.learn(T_D, T_D,(tile, x) => {
+    Converter.learn(T_D, T_D, (tile, x) => {
         copyD++;
-        return x+1;
+        return x + 1;
     });
-    Converter.learn(T_E, T_E,(tile, x) => {
+    Converter.learn(T_E, T_E, (tile, x) => {
         copyE++;
-        return x+1;
+        return x + 1;
     });
     let destroyA = 0, destroyB = 0, destroyC = 0, destroyD = 0, destroyE = 0;
     //also learn destructors
@@ -86,7 +86,7 @@
         destroyE++;
     });
 
-    const awaitDataGetForRendering = async function(cache, drawer, tile) {
+    const awaitDataGetForRendering = async function (cache, drawer, tile) {
         let result = cache.getDataForRendering(drawer, tile);
         while (!result) {
             await sleep(10);
@@ -147,7 +147,7 @@
                     this.destroyInternalCache();
                 }
 
-                setImageSmoothingEnabled(imageSmoothingEnabled){
+                setImageSmoothingEnabled(imageSmoothingEnabled) {
                     //noop
                 }
 
@@ -155,7 +155,7 @@
                     //noop
                 }
 
-                clear(){
+                clear() {
                     //noop
                 }
             }
@@ -216,11 +216,11 @@
 
             OpenSeadragon.EmptyTestT_ATileSource = class extends OpenSeadragon.TileSource {
 
-                supports( data, url ){
+                supports(data, url) {
                     return data && data.isTestSource;
                 }
 
-                configure( data, url, postData ){
+                configure(data, url, postData) {
                     return {
                         width: 512, /* width *required */
                         height: 512, /* height *required */
@@ -265,7 +265,7 @@
     });
 
     // ----------
-    QUnit.test('basics', function(assert) {
+    QUnit.test('basics', function (assert) {
         const done = assert.async();
         const fakeViewer = MockSeadragon.getViewer(
             MockSeadragon.getDrawer({
@@ -315,7 +315,7 @@
     });
 
     // ----------
-    QUnit.test('maxImageCacheCount', function(assert) {
+    QUnit.test('maxImageCacheCount', function (assert) {
         const done = assert.async();
         const fakeViewer = MockSeadragon.getViewer(
             MockSeadragon.getDrawer({
@@ -370,7 +370,7 @@
     });
 
     // Tile API and cache interaction
-    QUnit.test('Tile: basic rendering & test setup (sync drawer)', function(test) {
+    QUnit.test('Tile: basic rendering & test setup (sync drawer)', function (test) {
         const done = test.async();
 
         viewer = OpenSeadragon({
@@ -428,12 +428,12 @@
             done();
         });
         viewer.open([
-            {isTestSource: true},
-            {isTestSource: true},
+            { isTestSource: true },
+            { isTestSource: true },
         ]);
     });
 
-    QUnit.test('Tile & Invalidation API: basic conversion & preprocessing', function(test) {
+    QUnit.test('Tile & Invalidation API: basic conversion & preprocessing', function (test) {
         const done = test.async();
 
         viewer = OpenSeadragon({
@@ -601,13 +601,13 @@
             done();
         });
         viewer.open([
-            {isTestSource: true},
-            {isTestSource: true},
+            { isTestSource: true },
+            { isTestSource: true },
         ]);
     });
 
     //Tile API and cache interaction
-    QUnit.test('Tile API Cache Interaction', function(test) {
+    QUnit.test('Tile API Cache Interaction', function (test) {
         const done = test.async();
         const fakeViewer = MockSeadragon.getViewer(
             MockSeadragon.getDrawer({
@@ -634,7 +634,7 @@
         tile12.addCache(tile12.cacheKey, 0, T_A, false, false);
 
         //test set/get data in async env
-        (async function() {
+        (async function () {
             test.equal(tileCache.numTilesLoaded(), 5, "We loaded 5 tiles");
             test.equal(tileCache.numCachesLoaded(), 3, "We loaded 3 cache objects - three different urls");
 
@@ -726,7 +726,7 @@
         })();
     });
 
-    QUnit.test('Zombie Cache', function(test) {
+    QUnit.test('Zombie Cache', function (test) {
         const done = test.async();
 
         viewer = OpenSeadragon({
@@ -750,9 +750,9 @@
         };
 
         let tilesFinished = 0;
-        const tileCounter = function (event) {tilesFinished++;}
+        const tileCounter = function (event) { tilesFinished++; }
 
-        const openHandler = function(event) {
+        const openHandler = function (event) {
             event.item.allowZombieCache(true);
 
             viewer.world.removeHandler('add-item', openHandler);
@@ -813,7 +813,7 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
-    QUnit.test('Zombie Cache Replace Item', function(test) {
+    QUnit.test('Zombie Cache Replace Item', function (test) {
         const done = test.async();
 
         viewer = OpenSeadragon({
@@ -839,9 +839,9 @@
         };
 
         let tilesFinished = 0;
-        const tileCounter = function (event) {tilesFinished++;}
+        const tileCounter = function (event) { tilesFinished++; }
 
-        const openHandler = function(event) {
+        const openHandler = function (event) {
             event.item.allowZombieCache(true);
             viewer.world.removeHandler('add-item', openHandler);
             viewer.world.addHandler('add-item', reopenHandler);

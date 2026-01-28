@@ -89,7 +89,7 @@ class WeightedGraph {
     dijkstra(start, finish) {
         const path = []; //to return at end
         if (start === finish) {
-            return {path: path, cost: 0};
+            return { path: path, cost: 0 };
         }
         const nodes = new OpenSeadragon.PriorityQueue();
         let smallestNode;
@@ -356,7 +356,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             canvas.width = imageData.width;
             canvas.height = imageData.height;
             const context = canvas.getContext('2d', { willReadFrequently: true });
-            context.drawImage( imageData, 0, 0 );
+            context.drawImage(imageData, 0, 0);
             return context;
         };
 
@@ -394,7 +394,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 reject("Not supported in sync mode!");
             }
             if (_imageConversionWorker) {
-                postWorker('decodeFromBlob', {blob}).then(resolve).catch(reject);
+                postWorker('decodeFromBlob', { blob }).then(resolve).catch(reject);
             } else {
                 // Fallback main thread
                 createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(resolve).catch(reject);
@@ -469,7 +469,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         this.learn("imageUrl", "imageUrl", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
         this.learn("context2d", "context2d", (tile, ctx) => canvasContextCreator(tile, ctx.canvas));
         this.learn("rasterBlob", "rasterBlob", (tile, blob) => blob, 0, 1); //blobs are immutable, no need to copy
-        this.learn("imageBitmap", "imageBitmap", (tile, bmp) => new $.Promise( (resolve, reject) => {
+        this.learn("imageBitmap", "imageBitmap", (tile, bmp) => new $.Promise((resolve, reject) => {
             try {
                 if (!$.supportsAsync) {
                     return reject("Not supported in sync mode!");
@@ -524,7 +524,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
      *  - otherwise, toString.call(x) is applied to get the parameter description
      * @return {string} unique variable descriptor
      */
-    guessType( x ) {
+    guessType(x) {
         if (Array.isArray(x)) {
             const types = [];
             for (const item of x) {
@@ -630,8 +630,9 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             const edge = conversionPath[i];
             const y = edge.transform(tile, x);
             if (y === undefined) {
-                $.console.error(`[OpenSeadragon.converter.convert] data mid result undefined value (while converting using %s)`, edge);
-                return $.Promise.resolve();
+                const msg = `[OpenSeadragon.converter.convert] data mid result undefined value (while converting using ${edge.origin.value} -> ${edge.target.value})`;
+                $.console.error(msg);
+                throw new Error(msg);
             }
             //node.value holds the type string
             if (destroy) {
@@ -641,10 +642,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             return result.then(res => step(res, i + 1));
         };
         //destroy only mid-results, but not the original value
-        return step(data, 0, false).catch(e => {
-            $.console.error(`[OpenSeadragon.converter.convert] Conversion error {e}`, e);
-            return undefined;
-        });
+        return step(data, 0, false);
     }
 
     /**

@@ -268,11 +268,16 @@
                 selfPromise = this.await();
             }
 
+            const swallow = (p) => p.catch(e => {
+                this._handleConversionError(e);
+                return null;
+            });
+
             // If internal cache wanted and preloading enabled, convert now
             if (drawer.options.usePrivateCache && drawer.options.preloadCache) {
-                return selfPromise.then(_ => this.prepareInternalCacheAsync(drawer));
+                return swallow(selfPromise.then(_ => this.prepareInternalCacheAsync(drawer)));
             }
-            return selfPromise;
+            return swallow(selfPromise);
         }
 
         /**
@@ -470,6 +475,11 @@
             this.loaded = false;
             this._promise = null;
             this._destroyed = false;
+
+            // Optional ownership metadata (set by TileCache for managed records).
+            // Working caches created during invalidation are intentionally left without an owner.
+            this._ownerTileCache = null;
+            this.cacheKey = null;
         }
 
         /**
@@ -692,28 +702,74 @@
             const stepCount = conversionPath.length;
             const _this = this;
             const convert = (x, i) => {
-                    if (i >= stepCount) {
-                        _this._data = x;
-                        _this.loaded = true;
-                        _this._checkAwaitsConvert();
-                        return $.Promise.resolve(x);
-                    }
-                    const edge = conversionPath[i];
-                    const y = edge.transform(_this._tRef, x);
-                    if (y === undefined) {
-                        _this.loaded = false;
-                        throw `[CacheRecord._convert] data mid result undefined value (while converting using ${edge}})`;
-                    }
-                    converter.destroy(x, edge.origin.value);
-                    const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
-                    return result.then(res => convert(res, i + 1));
-                };
+                if (i >= stepCount) {
+                    _this._data = x;
+                    _this.loaded = true;
+                    _this._checkAwaitsConvert();
+                    return $.Promise.resolve(x);
+                }
+                const edge = conversionPath[i];
+                let y;
+                try {
+                    y = edge.transform(_this._tRef, x);
+                } catch (err) {
+                    converter.destroy(x, edge.origin.value); // prevent leak
+                    throw err;
+                }
+                if (y === undefined) {
+                    _this.loaded = false;
+                    converter.destroy(x, edge.origin.value); // prevent leak
+                    throw `[CacheRecord._convert] data mid result undefined value (while converting using ${edge}})`;
+                }
+                converter.destroy(x, edge.origin.value);
+                const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
+                return result.then(res => convert(res, i + 1)).catch(err => {
+                    // If the async transform fails, make sure the intermediate is released.
+                    // (The input 'x' was already destroyed above as ownership transferred to the transform.)
+                    throw err;
+                });
+            };
 
             this.loaded = false;
             this._data = undefined;
             // Read target type from the conversion path: [edge.target] = Vertex, its value=type
             this._type = conversionPath[stepCount - 1].target.value;
-            this._promise = convert(originalData, 0);
+
+            // IMPORTANT: conversion failures must not poison the cache record with a permanently
+            // rejected promise (methods rely on being able to await() without throwing).
+            this._promise = convert(originalData, 0).catch(e => {
+                this._handleConversionError(e);
+                return undefined;
+            });
+        }
+
+        /**
+         * Handle conversion error by cleaning up and unloading affected tiles
+         * @param {Error} e
+         * @private
+         */
+        _handleConversionError(e) {
+            $.console.error("[CacheRecord] Conversion/preparation error:", e);
+
+            // Mark unusable immediately.
+            this._destroyed = true;
+            this.loaded = false;
+            this._data = null;
+
+            // If we are a WORKING cache (not registered in TileCache), do not touch the tile state.
+            // The invalidation pipeline will get a null/undefined and can decide (destroy working cache,
+            // keep original, etc.).
+            if (!this._ownerTileCache) {
+                // Best-effort: release tile references so the record is collectible.
+                this._tiles = [];
+                this._tRef = null;
+                // Ensure await/transform callers do not get a rejected promise.
+                this._promise = $.Promise.resolve(undefined);
+                return;
+            }
+
+            // Registered cache: notify owning TileCache so it can remove the record from its maps.
+            this._ownerTileCache._handleBrokenCacheRecord(this);
         }
     };
 
@@ -811,7 +867,7 @@
      * {@link OpenSeadragon.Options} for details.
      */
     $.TileCache = class {
-        constructor( options ) {
+        constructor(options) {
             options = options || {};
 
             this._maxCacheItemCount = options.maxImageCacheCount || $.DEFAULT_SETTINGS.maxImageCacheCount;
@@ -860,14 +916,14 @@
          *   tiles will not be released.
          * @returns {OpenSeadragon.CacheRecord} - The cache record the tile was attached to.
          */
-        cacheTile( options ) {
-            $.console.assert( options, "[TileCache.cacheTile] options is required" );
+        cacheTile(options) {
+            $.console.assert(options, "[TileCache.cacheTile] options is required");
             const theTile = options.tile;
-            $.console.assert( theTile, "[TileCache.cacheTile] options.tile is required" );
-            $.console.assert( theTile.cacheKey, "[TileCache.cacheTile] options.tile.cacheKey is required" );
+            $.console.assert(theTile, "[TileCache.cacheTile] options.tile is required");
+            $.console.assert(theTile.cacheKey, "[TileCache.cacheTile] options.tile.cacheKey is required");
 
             if (options.image instanceof Image) {
-                $.console.warn("[TileCache.cacheTile] options.image is deprecated!" );
+                $.console.warn("[TileCache.cacheTile] options.image is deprecated!");
                 options.data = options.image;
                 options.dataType = "image";
             }
@@ -903,7 +959,7 @@
                 } else {
                     //allow anything but undefined, null, false (other values mean the data was set, for example '0')
                     const validData = options.data !== undefined && options.data !== null && options.data !== false;
-                    $.console.assert( validData, "[TileCache.cacheTile] options.data is required to create an CacheRecord" );
+                    $.console.assert(validData, "[TileCache.cacheTile] options.data is required to create an CacheRecord");
                     cacheRecord = this._cachesLoaded[cacheKey] = new $.CacheRecord();
                     this._cachesLoadedCount++;
                 }
@@ -921,6 +977,8 @@
                 options.dataType = $.converter.guessType(options.data);
             }
 
+            cacheRecord._ownerTileCache = this;
+            cacheRecord.cacheKey = cacheKey;
             cacheRecord.addTile(theTile, options.data, options.dataType);
             this._freeOldRecordRoutine(theTile, options.cutoff || 0);
             return cacheRecord;
@@ -934,14 +992,14 @@
          * @param {String} options.newCacheKey - New key to set
          * @return {OpenSeadragon.CacheRecord | null}
          */
-        renameCache( options ) {
+        renameCache(options) {
             const newKey = options.newCacheKey,
                 oldKey = options.oldCacheKey;
             let originalCache = this._cachesLoaded[oldKey];
 
             if (!originalCache) {
                 originalCache = this._zombiesLoaded[oldKey];
-                $.console.assert( originalCache, "[TileCache.renameCache] oldCacheKey must reference existing cache!" );
+                $.console.assert(originalCache, "[TileCache.renameCache] oldCacheKey must reference existing cache!");
                 if (this._zombiesLoaded[newKey]) {
                     $.console.error("Cannot rename zombie cache %s to %s: the target cache is occupied!",
                         oldKey, newKey);
@@ -958,6 +1016,8 @@
                 delete this._cachesLoaded[oldKey];
             }
 
+            originalCache._ownerTileCache = this;
+            originalCache.cacheKey = newKey;
             for (const tile of originalCache._tiles) {
                 tile.reflectCacheRenamed(oldKey, newKey);
             }
@@ -1032,6 +1092,8 @@
 
             const cache = options.cache;
             this._cachesLoaded[targetKey] = cache;
+            cache._ownerTileCache = this;
+            cache.cacheKey = targetKey;
 
             // Update cache: add the new cache, we must add since we removed above with unloadCacheForTile()
             for (const t of tile.getCache(tile.originalCacheKey)._tiles) {  // grab all cache-equal tiles
@@ -1113,7 +1175,7 @@
 
             // Note that just because we're unloading a tile doesn't necessarily mean
             // we're unloading its cache records. With repeated calls it should sort itself out, though.
-            if ( this._cachesLoadedCount + this._zombiesLoadedCount > this._maxCacheItemCount ) {
+            if (this._cachesLoadedCount + this._zombiesLoadedCount > this._maxCacheItemCount) {
                 //prefer zombie deletion, faster, better
                 if (this._zombiesLoadedCount > 0) {
                     for (const zombie in this._zombiesLoaded) {
@@ -1126,34 +1188,34 @@
                     let worstTile = null;
                     let prevTile, worstTime, worstLevel, prevTime, prevLevel;
 
-                    for ( let i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
-                        prevTile = this._tilesLoaded[ i ];
+                    for (let i = this._tilesLoaded.length - 1; i >= 0; i--) {
+                        prevTile = this._tilesLoaded[i];
 
-                        if ( prevTile.level <= cutoff ||
+                        if (prevTile.level <= cutoff ||
                             prevTile.beingDrawn ||
                             prevTile.loading ||
-                            prevTile.processing ) {
+                            prevTile.processing) {
                             continue;
                         }
-                        if ( !worstTile ) {
-                            worstTile       = prevTile;
-                            worstTileIndex  = i;
+                        if (!worstTile) {
+                            worstTile = prevTile;
+                            worstTileIndex = i;
                             continue;
                         }
 
-                        prevTime    = prevTile.lastTouchTime;
-                        worstTime   = worstTile.lastTouchTime;
-                        prevLevel   = prevTile.level;
-                        worstLevel  = worstTile.level;
+                        prevTime = prevTile.lastTouchTime;
+                        worstTime = worstTile.lastTouchTime;
+                        prevLevel = prevTile.level;
+                        worstLevel = worstTile.level;
 
-                        if ( prevTime < worstTime ||
-                            ( prevTime === worstTime && prevLevel > worstLevel )) {
-                            worstTile       = prevTile;
-                            worstTileIndex  = i;
+                        if (prevTime < worstTime ||
+                            (prevTime === worstTime && prevLevel > worstLevel)) {
+                            worstTile = prevTile;
+                            worstTileIndex = i;
                         }
                     }
 
-                    if ( worstTile && worstTileIndex >= 0 ) {
+                    if (worstTile && worstTileIndex >= 0) {
                         this._unloadTile(worstTile, true);
                         insertionIndex = worstTileIndex;
                     }
@@ -1161,18 +1223,56 @@
             }
 
             if (theTile.getCacheSize() === 0) {
-                this._tilesLoaded[ insertionIndex ] = theTile;
+                this._tilesLoaded[insertionIndex] = theTile;
             } else if (worstTileIndex >= 0) {
                 //tile is already recorded, do not add tile, but remove the tile at insertion index
                 this._tilesLoaded.splice(insertionIndex, 1);
             }
         }
 
+        _handleBrokenCacheRecord(cache) {
+            if (!cache) {
+                return;
+            }
+
+            const key = cache.cacheKey;
+
+            if (key && this._cachesLoaded[key] === cache) {
+                delete this._cachesLoaded[key];
+                this._cachesLoadedCount--;
+            }
+            if (key && this._zombiesLoaded[key] === cache) {
+                delete this._zombiesLoaded[key];
+                this._zombiesLoadedCount--;
+            }
+
+            const tiles = cache._tiles ? [...cache._tiles] : [];
+            for (const tile of tiles) {
+                const isMainCache = tile.getCache && tile.getCache() === cache;
+                const isOriginalCache = key && tile.originalCacheKey === key;
+
+                if (isMainCache || isOriginalCache) {
+                    tile.exists = false; // prevents the tile from loading (TODO: consider ability to revive!)
+                    tile.unload(true);
+                } else {
+                    if (tile.removeCache && key) {
+                        tile.removeCache(key);
+                    }
+                    cache.removeTile(tile);
+                }
+            }
+
+            cache._promise = $.Promise.resolve(undefined);
+            cache._tiles = [];
+            cache._tRef = null;
+            cache._ownerTileCache = null;
+        }
+
         /**
          * Clears all tiles associated with the specified tiledImage.
          * @param {OpenSeadragon.TiledImage} tiledImage
          */
-        clearTilesFor( tiledImage ) {
+        clearTilesFor(tiledImage) {
             $.console.assert(tiledImage, '[TileCache.clearTilesFor] tiledImage is required');
             let tile;
 
@@ -1186,14 +1286,14 @@
                 this._zombiesLoadedCount = 0;
                 cacheOverflows = this._cachesLoadedCount > this._maxCacheItemCount;
             }
-            for ( let i = this._tilesLoaded.length - 1; i >= 0; i-- ) {
-                tile = this._tilesLoaded[ i ];
+            for (let i = this._tilesLoaded.length - 1; i >= 0; i--) {
+                tile = this._tilesLoaded[i];
 
                 if (tile.tiledImage === tiledImage) {
                     if (!tile.loaded) {
                         //iterates from the array end, safe to remove
-                        this._tilesLoaded.splice( i, 1 );
-                    } else if ( tile.tiledImage === tiledImage ) {
+                        this._tilesLoaded.splice(i, 1);
+                    } else if (tile.tiledImage === tiledImage) {
                         this._unloadTile(tile, !tiledImage._zombieCache || cacheOverflows, i);
                     }
                 }
@@ -1209,7 +1309,7 @@
                 this._zombiesLoaded[zombie].destroy();
             }
             for (const tile in this._tilesLoaded) {
-                this._unloadTile(tile, true, undefined);
+                this._unloadTile(tile, true);
             }
             this._tilesLoaded = [];
             this._zombiesLoaded = [];
@@ -1264,18 +1364,18 @@
          * @param {OpenSeadragon.CacheRecord} cache
          */
         safeUnloadCache(cache) {
-           if (cache && !cache._destroyed && cache.getTileCount() < 1) {
-               for (const i in this._zombiesLoaded) {
-                   const c = this._zombiesLoaded[i];
-                   if (c === cache) {
-                       delete this._zombiesLoaded[i];
-                       c.destroy();
-                       return;
-                   }
-               }
-               $.console.error("Attempt to delete an orphan cache that is not in zombie list: this could be a bug!", cache);
-               cache.destroy();
-           }
+            if (cache && !cache._destroyed && cache.getTileCount() < 1) {
+                for (const i in this._zombiesLoaded) {
+                    const c = this._zombiesLoaded[i];
+                    if (c === cache) {
+                        delete this._zombiesLoaded[i];
+                        c.destroy();
+                        return;
+                    }
+                }
+                $.console.error("Attempt to delete an orphan cache that is not in zombie list: this could be a bug!", cache);
+                cache.destroy();
+            }
         }
 
         /**
@@ -1333,10 +1433,10 @@
         /**
          * @param {OpenSeadragon.Tile} tile tile to unload
          * @param {boolean} destroy destroy tile cache if the cache tile counts falls to zero
-         * @param {Number} deleteAtIndex index to remove the tile record at, will not remove from _tilesLoaded if not set
+         * @param {Number} [deleteAtIndex=undefined] index to remove the tile record at, will not remove from _tilesLoaded if not set
          * @private
          */
-        _unloadTile(tile, destroy, deleteAtIndex) {
+        _unloadTile(tile, destroy, deleteAtIndex = undefined) {
             $.console.assert(tile, '[TileCache._unloadTile] tile is required');
 
             for (const key in tile._caches) {
@@ -1346,7 +1446,7 @@
             }
             //delete also the tile record
             if (deleteAtIndex !== undefined) {
-                this._tilesLoaded.splice( deleteAtIndex, 1 );
+                this._tilesLoaded.splice(deleteAtIndex, 1);
             }
 
             // Possible error: it can happen that unloaded tile gets to this stage. Should it even be allowed to happen?
@@ -1373,4 +1473,4 @@
         }
     };
 
-}( OpenSeadragon ));
+}(OpenSeadragon));
