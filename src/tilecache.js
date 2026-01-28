@@ -34,10 +34,12 @@
 
 (function( $ ){
 
+    const OpenSeadragon = $; // alias for JSDoc
+
     const DRAWER_INTERNAL_CACHE = Symbol("DRAWER_INTERNAL_CACHE");
 
     /**
-     * @class CacheRecord
+     * @class OpenSeadragon.CacheRecord
      * @memberof OpenSeadragon
      * @classdesc Cached Data Record, the cache object. Keeps only latest object type required.
      *
@@ -48,7 +50,7 @@
      * Furthermore, it has a 'getData' function that returns a promise resolving
      * with the value on the desired type passed to the function.
      */
-    $.CacheRecord = class {
+    OpenSeadragon.CacheRecord = class CacheRecord {
         constructor() {
             this.revive();
         }
@@ -790,7 +792,7 @@
     };
 
     /**
-     * @class InternalCacheRecord
+     * @class OpenSeadragon.InternalCacheRecord
      * @memberof OpenSeadragon
      * @classdesc Simple cache record without robust support for async access. Meant for internal use only.
      *
@@ -802,7 +804,7 @@
      * It also does not record tiles nor allows cache/tile sharing.
      * @private
      */
-    $.InternalCacheRecord = class {
+    OpenSeadragon.InternalCacheRecord = class InternalCacheRecord {
         constructor(data, type, onDestroy) {
             this.tstamp = $.now();
             this._ondestroy = onDestroy;
@@ -873,8 +875,9 @@
         }
     };
 
+
     /**
-     * @class TileCache
+     * @class OpenSeadragon.TileCache
      * @memberof OpenSeadragon
      * @classdesc Stores all the tiles displayed in a {@link OpenSeadragon.Viewer}.
      * You generally won't have to interact with the TileCache directly.
@@ -882,8 +885,9 @@
      * @param {Number} [options.maxImageCacheCount] - See maxImageCacheCount in
      * {@link OpenSeadragon.Options} for details.
      */
-    $.TileCache = class {
-        constructor(options) {
+    OpenSeadragon.TileCache = class TileCache {
+        constructor( options ) {
+
             options = options || {};
 
             this._maxCacheItemCount = options.maxImageCacheCount || $.DEFAULT_SETTINGS.maxImageCacheCount;
