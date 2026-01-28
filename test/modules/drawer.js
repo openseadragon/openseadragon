@@ -178,6 +178,203 @@
             });
         });
 
+        if (drawerType === 'webgl') {
+            // ----------
+            QUnit.test('Webgl context recovery: enabled. Recreates webgl drawer and fires webgl-context-recovered', function(assert) {
+                const done = assert.async();
+                const timeout = Util.timeWatcher(assert, 5000);
+
+                // Create viewer without tileSources so we can setup testing before we open and draw an image
+                createViewer();
+
+                if (viewer.drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                viewer.drawer.setContextRecoveryEnabled(true);
+
+                // Patch before opening an image
+                const oldDrawer = viewer.drawer;
+                const gl = oldDrawer._gl;
+                const originalGetParameter = gl.getParameter;
+
+                gl.getParameter = function(param) {
+                    if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
+                        return 0;
+                    }
+                    return originalGetParameter.call(this, param);
+                };
+
+                // Set up event handler before opening an image
+                viewer.addOnceHandler('webgl-context-recovered', function(event) {
+                    gl.getParameter = originalGetParameter;
+                    timeout.done();
+
+                    assert.strictEqual(event.oldDrawer, oldDrawer, 'event.oldDrawer is the failing drawer');
+                    assert.ok(event.newDrawer, 'event.newDrawer is present');
+                    assert.notStrictEqual(event.newDrawer, oldDrawer, 'newDrawer is a different instance');
+                    assert.strictEqual(viewer.drawer, event.newDrawer, 'viewer.drawer is replaced with newDrawer');
+                    assert.equal(viewer.drawer.getType(), 'webgl', 'viewer.drawer remains WebGL after recovery');
+                    done();
+                });
+
+                // open the image - this will trigger draw cycle with patched code and event handlers in place
+                viewer.open('/test/data/testpattern.dzi');
+            });
+
+            // ----------
+            QUnit.test('Webgl context recovery: disabled. Fires webgl-context-recovery-failed and rethrows', function(assert) {
+                const done = assert.async();
+                const timeout = Util.timeWatcher(assert, 5000);
+
+                // Create viewer without tileSources so we can setup testing before we open and draw an image
+                createViewer();
+
+                if (viewer.drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                viewer.drawer.setContextRecoveryEnabled(false);
+
+                // Patch before opening an image
+                const oldDrawer = viewer.drawer;
+                const gl = oldDrawer._gl;
+                const originalGetParameter = gl.getParameter;
+
+                gl.getParameter = function(param) {
+                    if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
+                        return 0;
+                    }
+                    return originalGetParameter.call(this, param);
+                };
+
+                let eventFired = false;
+                let errorSuppressed = false;
+
+                // Helper function to complete the test when both event fired and error suppressed
+                const completeTest = function() {
+                    if (eventFired && errorSuppressed) {
+                        gl.getParameter = originalGetParameter;
+                        window.onerror = originalErrorHandler;
+                        timeout.done();
+                        done();
+                    }
+                };
+
+                // Set up event handler before opening an image
+                viewer.addOnceHandler('webgl-context-recovery-failed', function(event) {
+                    eventFired = true;
+
+                    assert.ok(event, 'webgl-context-recovery-failed event fired');
+                    assert.strictEqual(event.drawer, oldDrawer, 'event.drawer is the failing drawer');
+                    assert.strictEqual(event.canvasDrawer, null, 'event.canvasDrawer is null when recovery not attempted');
+                    assert.strictEqual(viewer.drawer, oldDrawer, 'viewer.drawer is unchanged');
+                    assert.equal(viewer.drawer.getType(), 'webgl', 'viewer.drawer remains WebGL when recovery is disabled');
+
+                    // Check if we can complete the test (error may have already been suppressed)
+                    completeTest();
+                });
+
+                // Set up minimal error handler to suppress the expected re-thrown error
+                // This error is expected behavior when recovery is disabled
+                const originalErrorHandler = window.onerror;
+                window.onerror = function(message) {
+                    // Only suppress the specific error we expect, and only after the event has fired
+                    if (/max_texture_image_units/i.test(message) && eventFired) {
+                        errorSuppressed = true;
+                        // Check if we can complete the test now
+                        completeTest();
+                        return true; // Suppress the error
+                    }
+                    // Let other errors propagate
+                    if (originalErrorHandler) {
+                        return originalErrorHandler.apply(this, arguments);
+                    }
+                    return false;
+                };
+
+                // open an image - this will trigger draw cycle with patched code
+                // The error will be thrown, event will fire, then error will be re-thrown (expected behavior)
+                viewer.open('/test/data/testpattern.dzi');
+
+                // Fallback timeout in case error doesn't get thrown (shouldn't happen, but safe)
+                setTimeout(function() {
+                    if (!eventFired) {
+                        gl.getParameter = originalGetParameter;
+                        window.onerror = originalErrorHandler;
+                        timeout.done();
+                        assert.ok(false, 'Expected webgl-context-recovery-failed event but it did not fire');
+                        done();
+                    } else if (!errorSuppressed) {
+                        // Event fired but error wasn't suppressed - this shouldn't happen but handle it
+                        gl.getParameter = originalGetParameter;
+                        window.onerror = originalErrorHandler;
+                        timeout.done();
+                        assert.ok(false, 'Event fired but expected error was not thrown/suppressed');
+                        done();
+                    }
+                }, 3000);
+            });
+
+            // ----------
+            QUnit.test('Webgl context recovery: enabled. Falls back to canvas when recreation fails', function(assert) {
+                const done = assert.async();
+                const timeout = Util.timeWatcher(assert, 5000);
+
+                // Create viewer without tileSources so we can setup testing before we open and draw an image
+                createViewer();
+
+                if (viewer.drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                viewer.drawer.setContextRecoveryEnabled(true);
+
+                // Patch before opening an image
+                const oldDrawer = viewer.drawer;
+                const gl = oldDrawer._gl;
+                const originalGetParameter = gl.getParameter;
+                const originalRequestDrawer = viewer.requestDrawer;
+
+                gl.getParameter = function(param) {
+                    if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
+                        return 0;
+                    }
+                    return originalGetParameter.call(this, param);
+                };
+
+                // Patch requestDrawer to fail WebGL recreation
+                viewer.requestDrawer = function(drawerCandidate, options) {
+                    if (drawerCandidate === 'webgl') {
+                        return false;
+                    }
+                    return originalRequestDrawer.call(this, drawerCandidate, options);
+                };
+
+                // Set up event handler before opening an image
+                viewer.addOnceHandler('webgl-context-recovery-failed', function(event) {
+                    viewer.requestDrawer = originalRequestDrawer;
+                    gl.getParameter = originalGetParameter;
+                    timeout.done();
+
+                    assert.strictEqual(event.drawer, oldDrawer, 'event.drawer is the failing WebGL drawer');
+                    assert.ok(event.canvasDrawer, 'event.canvasDrawer is provided');
+                    assert.strictEqual(viewer.drawer, event.canvasDrawer, 'viewer.drawer is replaced with canvasDrawer');
+                    assert.equal(viewer.drawer.getType(), 'canvas', 'viewer.drawer switches to CanvasDrawer on failed recovery');
+                    done();
+                });
+
+                // open the image - this will trigger draw cycle with patched code and event handlers in place
+                viewer.open('/test/data/testpattern.dzi');
+            });
+        }
+
     }
 
 })();
