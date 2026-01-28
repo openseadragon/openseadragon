@@ -341,7 +341,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         // Teaching OpenSeadragon built-in conversions:
         const imageCreator = (tile, url) => new $.Promise((resolve, reject) => {
             if (!$.supportsAsync) {
-                throw "Not supported in sync mode!";
+                return reject("Not supported in sync mode!");
             }
             const img = new Image();
             img.onerror = img.onabort = e => reject(`Failed to load image: ${url}`);
@@ -350,6 +350,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 img.crossOrigin = tile.tiledImage.crossOriginPolicy;
             }
             img.src = url;
+            return undefined;
         });
         const canvasContextCreator = (tile, imageData) => {
             const canvas = document.createElement('canvas');
@@ -379,6 +380,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             };
             img.decoding = 'async';
             img.src = url;
+            return undefined;
         }), 1, 2);
 
         this.learn("context2d", "rasterBlob", (tile, ctx) => new $.Promise((resolve, reject) => {
@@ -386,6 +388,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 return reject("Not supported in sync mode!");
             }
             ctx.canvas.toBlob(resolve);
+            return undefined;
         }), 1, 2);
 
         // rasterBlob -> imageBitmap (preferred fast path)
@@ -399,6 +402,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 // Fallback main thread
                 createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(resolve).catch(reject);
             }
+            return undefined;
         }), 1, 1);
 
         this.learn("imageBitmap", "context2d", (tile, bmp) => {
@@ -457,6 +461,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
                 ).then(resolve).catch(reject);
             }
+            return undefined;
         }), 1, 1);
 
         this.learn("context2d", "imageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
