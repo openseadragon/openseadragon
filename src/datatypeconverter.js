@@ -364,7 +364,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             // eslint-disable-next-line compat/compat
             const url = (window.URL || window.webkitURL).createObjectURL(blob);
             if (!$.supportsAsync) {
-                reject("Not supported in sync mode!");
+                return reject("Not supported in sync mode!");
             }
             const img = new Image();
             img.onerror = img.onabort = e => {
@@ -383,7 +383,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
 
         this.learn("context2d", "rasterBlob", (tile, ctx) => new $.Promise((resolve, reject) => {
             if (!$.supportsAsync) {
-                reject("Not supported in sync mode!");
+                return reject("Not supported in sync mode!");
             }
             ctx.canvas.toBlob(resolve);
         }), 1, 2);
@@ -391,7 +391,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         // rasterBlob -> imageBitmap (preferred fast path)
         this.learn("rasterBlob", "imageBitmap", (tile, blob) => new $.Promise((resolve, reject) => {
             if (!$.supportsAsync) {
-                reject("Not supported in sync mode!");
+                return reject("Not supported in sync mode!");
             }
             if (_imageConversionWorker) {
                 postWorker('decodeFromBlob', { blob }).then(resolve).catch(reject);
@@ -425,7 +425,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
 
         this.learn("imageUrl", "imageBitmap", (tile, url) => new $.Promise((resolve, reject) => {
             if (!$.supportsAsync) {
-                reject("Not supported in sync mode!");
+                return reject("Not supported in sync mode!");
             }
             let setup;
             if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
@@ -441,7 +441,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                         credentials: 'include',
                     };
                 } else {
-                    reject(new Error(`Unsupported crossOriginPolicy ${policy}`));
+                    return reject(new Error(`Unsupported crossOriginPolicy ${policy}`));
                 }
             }
             if (_imageConversionWorker) {
