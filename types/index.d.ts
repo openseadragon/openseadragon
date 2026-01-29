@@ -1859,8 +1859,7 @@ declare namespace OpenSeadragon {
     }
 
     interface WebGLContextRecoveredEvent extends ViewerEvent {
-        oldDrawer: WebGLDrawer;
-        newDrawer: WebGLDrawer;
+        drawer: WebGLDrawer; // Same instance, context recreated
         error: Error;
     }
 
