@@ -190,10 +190,8 @@
   *     Zoom level to use when image is first opened or the home button is clicked.
   *     If 0, adjusts to fit viewer.
   *
-  * @property {String|DrawerImplementation|Array} [drawer = ['auto', 'webgl', 'canvas', 'html']]
-  *     Which drawer to use. Valid strings are 'auto', 'webgl', 'canvas', and 'html'.
-  *     The string 'auto' chooses between WebGL or canvas depending on the device.
-  *     The 'webgl' drawer automatically uses WebGL2 when available, falling back to WebGL1.
+  * @property {String|DrawerImplementation|Array} [drawer = ['webgl2', 'webgl', 'canvas', 'html']]
+  *     Which drawer to use. Built-in valid strings are 'webgl2', 'webgl', 'canvas', and 'html'.
   *     External drawer plugins can register additional drawer types as strings.
   *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
@@ -217,7 +215,7 @@
   *     For complete list of modes, please @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation/ globalCompositeOperation}
   *
   * @property {Boolean} [imageSmoothingEnabled=true]
-  *     Image smoothing for rendering. Supported by the canvas and webgl drawers,
+  *     Image smoothing for rendering. Supported by the canvas, webgl, and webgl2 drawers,
   *     and may also be supported by external drawer plugins. Note: Ignored by some
   *     (especially older) browsers which do not support this canvas property.
   *     This property can be changed in {@link Viewer.DrawerBase.setImageSmoothingEnabled}.
@@ -774,7 +772,7 @@
 /**
  * @typedef {OpenSeadragon.BaseDrawerOptions} OpenSeadragon.WebGLDrawerOptions
  * @memberof OpenSeadragon
- * @property {Boolean} [unpackWithPremultipliedAlpha=false]
+ * @property {Boolean} [unpackWithPremultipliedAlpha=true]
  *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
  */
 
@@ -1407,7 +1405,7 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['auto', 'webgl', 'canvas', 'html'], // prefer using auto, then webgl (with WebGL2 if available), then canvas (i.e. context2d), then fallback to html
+            drawer:                            ['webgl2', 'webgl', 'canvas', 'html'], // prefer using webgl2, then webgl, then canvas (i.e. context2d), then fallback to html
             // DRAWER CONFIGURATIONS
             drawerOptions: {
                 // [drawer-id]: {options} map
