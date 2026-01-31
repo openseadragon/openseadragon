@@ -190,7 +190,7 @@ const button = new OpenSeadragon.Button({
     onClick: (ev) => expectType<OpenSeadragon.Button>(ev.eventSource)
 });
 expectType<OpenSeadragon.ButtonState>(button.currentState);
-expectType<Element>(button.element);
+expectType<HTMLElement>(button.element);
 button.enable();
 button.disable();
 button.destroy();

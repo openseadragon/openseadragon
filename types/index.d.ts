@@ -63,7 +63,7 @@ declare namespace OpenSeadragon {
         BOUNDING_BOX,
     }
 
-    let pixelDensityRatio: number;
+    const pixelDensityRatio: number;
 
     enum Placement {
         CENTER,
@@ -77,9 +77,21 @@ declare namespace OpenSeadragon {
         LEFT,
     }
 
-    let supportsCanvas: boolean;
+    class SUBPIXEL_ROUNDING_OCCURRENCES {
+        static NEVER: number;
+        static ALWAYS: number;
+        static ONLY_AT_REST: number;
+    }
 
-    let version: {
+    const supportsAddEventListener: boolean;
+
+    const supportsCanvas: boolean;
+
+    const supportsEventListenerOptions: boolean;
+
+    const supportsRemoveEventListener: boolean;
+
+    const version: {
         versionStr: string;
         major: number;
         minor: number;
@@ -108,6 +120,8 @@ declare namespace OpenSeadragon {
     function extend(): any;
 
     function getCssPropertyWithVendorPrefix(property: string): string;
+
+    function getCurrentPixelDensityRatio(): number;
 
     function getElement(element: string | Element): Element;
 
@@ -143,6 +157,7 @@ declare namespace OpenSeadragon {
         error: (obj: object) => void;
         headers: object;
         responseType: string;
+        postData: string;
         withCredentials?: boolean;
     }): XMLHttpRequest;
 
@@ -268,7 +283,7 @@ declare namespace OpenSeadragon {
             | { getTileUrl: (level: number, x: number, y: number) => string };
         tabIndex?: number;
         overlays?: any[];
-        toolbar?: string | Element;
+        toolbar?: string | HTMLElement;
         xmlPath?: string;
         prefixUrl?: string;
         navImages?: NavImages;
@@ -355,7 +370,7 @@ declare namespace OpenSeadragon {
         zoomPerDblClickDrag?: number;
         zoomPerSecond?: number;
         showNavigator?: boolean;
-        navigatorElement?: Element;
+        navigatorElement?: HTMLElement;
         navigatorId?: string;
         navigatorPosition?: "TOP_LEFT" | "TOP_RIGHT" | "BOTTOM_LEFT" | "BOTTOM_RIGHT" | "ABSOLUTE";
         navigatorSizeRatio?: number;
@@ -450,7 +465,7 @@ declare namespace OpenSeadragon {
 
     interface ButtonOptions {
         userData?: object;
-        element?: Element;
+        element?: HTMLElement;
         tooltip?: string;
         srcRest?: string;
         srcGroup?: string;
@@ -471,7 +486,7 @@ declare namespace OpenSeadragon {
         clickDistThreshold: number;
         clickTimeThreshold: number;
         currentState: ButtonState;
-        element: Element;
+        element: HTMLElement;
         fadeDelay: number;
         fadeLength: number;
         srcDown: string | null;
@@ -494,7 +509,7 @@ declare namespace OpenSeadragon {
         buttons: Button[];
         clickDistThreshold: number;
         clickTimeThreshold: number;
-        element: Element;
+        element: HTMLElement;
         tracker: MouseTracker;
 
         constructor(options: { buttons: Button[]; element?: Element });
@@ -553,9 +568,9 @@ declare namespace OpenSeadragon {
     class Control {
         anchor: ControlAnchor;
         autoFade: boolean;
-        container: Element;
-        element: Element;
-        wrapper: Element;
+        container: HTMLElement;
+        element: HTMLElement;
+        wrapper: HTMLElement;
 
         constructor(element: Element, options: TControlOptions, container: Element);
 
@@ -566,7 +581,7 @@ declare namespace OpenSeadragon {
     }
 
     class ControlDock {
-        container: Element;
+        container: HTMLElement;
         controls: any[];
 
         constructor(options: object);
@@ -610,10 +625,10 @@ declare namespace OpenSeadragon {
     }
 
     interface BaseDrawerOptions {
-        usePrivateCache: boolean;
-        preloadCache: boolean;
-        offScreen: boolean;
-        broadCastTileInvalidation: boolean;
+        usePrivateCache?: boolean;
+        preloadCache?: boolean;
+        offScreen?: boolean;
+        broadCastTileInvalidation?: boolean;
     }
 
     interface WebGLDrawerOptions extends BaseDrawerOptions {
@@ -629,7 +644,7 @@ declare namespace OpenSeadragon {
     }
 
     class DrawerBase {
-        container: Element;
+        container: HTMLElement;
         debugGridColor: string[];
         options: BaseDrawerOptions;
         viewer: Viewer;
@@ -638,7 +653,7 @@ declare namespace OpenSeadragon {
         constructor(options: { viewer: Viewer; viewport: Viewport; element: HTMLElement });
         static isSupported(): boolean;
         get defaultOptions(): BaseDrawerOptions;
-        get canvas(): Element;
+        get canvas(): HTMLCanvasElement;
         canRotate(): boolean;
         destroy(): void;
         destroyInternalCache(): void;
@@ -660,16 +675,16 @@ declare namespace OpenSeadragon {
     interface TDrawerOptions {
         viewer: Viewer;
         viewport: Viewport;
-        element: Element;
+        element: HTMLElement;
         debugGridColor?: string | string[];
     }
 
     class CanvasDrawer extends DrawerBase {
-        container: Element;
+        container: HTMLElement;
 
         constructor(options: TDrawerOptions);
 
-        get canvas(): Element;
+        get canvas(): HTMLCanvasElement;
         blendSketch(options: {
             opacity: number;
             scale: number;
@@ -734,9 +749,9 @@ declare namespace OpenSeadragon {
     }
 
     class HTMLDrawer extends DrawerBase {
-        container: Element;
+        container: HTMLElement;
         constructor(options: TDrawerOptions);
-        get canvas(): Element;
+        get canvas(): HTMLCanvasElement;
     }
 
     class IIIFTileSource extends TileSource {
@@ -1244,7 +1259,7 @@ declare namespace OpenSeadragon {
     }
 
     class ReferenceStrip {
-        element: Element;
+        element: HTMLElement;
         viewer: Viewer;
 
         constructor(options: object);
@@ -1286,7 +1301,7 @@ declare namespace OpenSeadragon {
         cacheImageRecord: CacheRecord;
         cacheKey: string;
         context2D: CanvasRenderingContext2D;
-        element: Element;
+        element: HTMLElement;
         exists: boolean;
         flipped: boolean;
         hasTransparency: boolean;
@@ -1591,10 +1606,10 @@ declare namespace OpenSeadragon {
     }
 
     class Viewer {
-        canvas: Element;
-        container: Element;
+        canvas: HTMLCanvasElement;
+        container: HTMLElement;
         drawer: DrawerBase;
-        element: Element;
+        element: HTMLElement;
         initialPage: number;
         navigator: Navigator;
         viewport: Viewport;
@@ -1772,8 +1787,8 @@ declare namespace OpenSeadragon {
     }
 
     class WebGLDrawer extends DrawerBase {
-        get canvas(): Element;
-        container: Element;
+        get canvas(): HTMLCanvasElement;
+        container: HTMLElement;
         context: CanvasRenderingContext2D;
 
         constructor(options: TDrawerOptions);
@@ -1915,7 +1930,7 @@ declare namespace OpenSeadragon {
         "tile-invalidated": TileInvalidatedEvent;
         "tile-load-failed": TileLoadFailedEvent;
         "tile-loaded": TileLoadedEvent;
-        "tile-unloaded": TileEvent;
+        "tile-unloaded": TileUnloadedEvent;
         "update-level": UpdateLevelEvent;
         "update-overlay": UpdateOverlayEvent;
         "update-tile": TileEvent;
@@ -1935,6 +1950,7 @@ declare namespace OpenSeadragon {
     interface OSDEvent<T> {
         eventSource: T;
         userData: unknown;
+        stopPropagation?: boolean | (() => boolean);
     }
 
     interface ButtonEvent extends OSDEvent<Button> {
@@ -1981,7 +1997,7 @@ declare namespace OpenSeadragon {
     }
 
     interface AddOverlayEvent extends ViewerEvent {
-        element: Element;
+        element: HTMLElement;
         location: Point | Rect;
         placement: Placement;
     }
@@ -2006,7 +2022,7 @@ declare namespace OpenSeadragon {
     interface CanvasClickEvent extends CanvasEvent {
         quick: boolean;
         shift: boolean;
-        originalTarget: Element;
+        originalTarget: HTMLElement;
         preventDefaultAction: boolean;
     }
 
@@ -2206,7 +2222,7 @@ declare namespace OpenSeadragon {
     }
 
     interface RemoveOverlayEvent extends ViewerEvent {
-        element: Element;
+        element: HTMLElement;
     }
 
     interface ResetSizeEvent extends ViewerEvent {
@@ -2254,6 +2270,10 @@ declare namespace OpenSeadragon {
         getCompletionCallback: () => () => void;
     }
 
+    interface TileUnloadedEvent extends TileEvent {
+        destroyed: boolean;
+    }
+
     interface UpdateLevelEvent extends ViewerEvent {
         tiledImage: TiledImage;
         havedrawn: object;
@@ -2274,7 +2294,7 @@ declare namespace OpenSeadragon {
     }
 
     interface UpdateOverlayEvent extends ViewerEvent {
-        element: Element;
+        element: HTMLElement;
         location: Point | Rect;
         placement: Placement;
     }
