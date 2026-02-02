@@ -864,7 +864,30 @@ $.TileSource.prototype = {
                 }
             });
         } else {
-            context.finish(context.src, null, "imageUrl");
+            // While we could just do this one-liner, we found out that downloading the data _before_ a cache is initialized
+            // works better in general cases. Network access is the most error-prone part, and this scenario better supports
+            // all default use-cases, including the fact that retry logics works only at this stage, not on the cache level.
+            //  context.finish(context.src, null, "imageUrl");
+
+            const image = new Image();
+            const finalize = function(error) {
+                if (error || !image) {
+                    context.fail(error || "[downloadTileStart] Image load failed: undefined Image instance.", null);
+                    return;
+                }
+                image.onload = image.onerror = image.onabort = null;
+                context.finish(image, undefined, "image");
+            };
+            image.onload = function () {
+                finalize();
+            };
+            image.onabort = image.onerror = function() {
+                finalize("[downloadTileStart] Image load aborted.");
+            };
+            if (context.crossOriginPolicy !== false) {
+                image.crossOrigin = context.crossOriginPolicy;
+            }
+            image.src = context.src;
         }
     },
 
