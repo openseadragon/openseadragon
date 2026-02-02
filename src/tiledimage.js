@@ -2314,7 +2314,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
              * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
              * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
-             *  NOTE: do no await the promise in the handler: you will create a deadlock!
+             *   NOTE: DO NOT await the promise in the handler: you will create a deadlock!
              * @property {function} getCompletionCallback - deprecated
              */
             _this.viewer.raiseEventAwaiting("tile-loaded", {
