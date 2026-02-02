@@ -2230,6 +2230,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 const desiredType = $.converter.getConversionPathFinalType(conversion);
                 $.converter.convert(tile, data, dataType, desiredType).then(newData => {
                     this._setTileLoaded(tile, newData, null, tileRequest, desiredType);
+                }).catch(e => {
+                    $.console.warn("Failed to satisfy original type [%s] %s from %s: %s", desiredType, tile, dataType, e);
+                    this._setTileLoaded(tile, data, null, tileRequest, dataType);
                 });
             } else {
                 $.console.warn( "Ignoring default base tile data type %s: no conversion possible from %s", this.originalDataType, dataType);
@@ -2311,7 +2314,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
              * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
              * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
-             *  NOTE: do no await the promise in the handler: you will create a deadlock!
+             *   NOTE: DO NOT await the promise in the handler: you will create a deadlock!
              * @property {function} getCompletionCallback - deprecated
              */
             _this.viewer.raiseEventAwaiting("tile-loaded", {
