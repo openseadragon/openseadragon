@@ -32,6 +32,7 @@ OPENSEADRAGON CHANGELOG
 * New option: DrawerBase option for offscreen drawer creation, methods for TiledImage and TileSource creation exposed (#2790, #2822 @Aiosa)
 * New data types: imageBitmap support with workers, image fetching moved from downloadTileStart to convertor (#2790 @Aiosa)
 * New API: stopPropagation property on events (#2790 @Aiosa)
+* Viewer element coordinate transformations are now based on the actual OSD element, rather than the element given to it by the user code, so it's more reliable (#2855 @dao251)
 * Overlay wrapper elements now have a "openseadragon-overlay-wrapper" class. If the overlay element has an ID, the wrapper gets a variant on that ID, but if the overlay element does not have an ID, we no longer give the wrapper an ID. (#2698 @lokaesshwar)
 * The functions the viewer uses to operate the zoom in and zoom out buttons are now accessible to be called programatically (#2702 @achu1998)
 * The Viewer now has a getFullyLoaded function and a fully-loaded-change event, so you can know when all of the images in the viewer are loaded (#2707 @achu1998)
