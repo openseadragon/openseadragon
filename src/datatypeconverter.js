@@ -454,13 +454,16 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 } else {
                     // Fallback to the main thread
                     // eslint-disable-next-line compat/compat
-                    fetch(url, setup).then(res => {
+                    fetch(url, setup)
+                    .then(res => {
                         if (!res.ok) {
                             throw new Error(`HTTP ${res.status} loading ${url}`);
                         }
                         return res.blob();
-                    }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
-                    ).then(resolve);
+                    })
+                    .then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' }))
+                    .then(resolve)
+                    .catch((e)=>console.error(e.message));
                 }
             } catch (e) { reject(e); }
         }), 1, 1);
