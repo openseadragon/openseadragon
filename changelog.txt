@@ -44,7 +44,7 @@ OPENSEADRAGON CHANGELOG
 * Added: WebGLDrawer option to unpack textures with premultiplied alpha (#2776 @adriandarian)
 * The WebGLDrawer now explicitly supports WebGL2. It's engaged automatically where available, with improvements to render quality (#2804 @adriandarian)
 * Added optional support for tile load batching (#2834 @Aiosa)
-* We are now including the TypeScript definitions directly in the project (only v5 so far, and not yet part of the npm package) (#2813 @rssaini01)
+* We are now including the TypeScript definitions directly in the project (#2813, #2823 @rssaini01)
 * Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved OSM compatibility (#2854 @JohanVisser97)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
