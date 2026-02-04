@@ -44,6 +44,7 @@ OPENSEADRAGON CHANGELOG
 * You can now turn off keyboard navigation (#2773 @colinrlim @yurii2007)
 * Added: WebGLDrawer option to unpack textures with premultiplied alpha (#2776 @adriandarian)
 * The WebGLDrawer now explicitly supports WebGL2. It's engaged automatically where available, with improvements to render quality (#2804 @adriandarian)
+* If the WebGLDrawer loses its context (e.g. because too many WebGL surfaces in the browser) it now tries to recover, and switches to the canvas drawer if it can't (#2853 @pearcetm)
 * Added optional support for tile load batching (#2834 @Aiosa)
 * We are now including the TypeScript definitions directly in the project (#2813, #2823 @rssaini01)
 * Better error handling in DataTypeConverter (#2860 @dao251)
