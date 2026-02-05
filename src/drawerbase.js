@@ -294,44 +294,6 @@ OpenSeadragon.DrawerBase = class DrawerBase {
         $.console.warn('[drawer].drawDebuggingRect is not implemented by this drawer');
     }
 
-    /**
-     * Run a rendering capability test. Subclasses may override to perform a real test
-     * (e.g. draw a known image and verify pixels). Resolution true = capable, false = not capable;
-     * the viewer may replace the drawer with the next candidate unless a listener sets
-     * preventDefaultAction on the drawer-rendering-failed event.
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @returns {OpenSeadragon.Promise<boolean>} Resolves with true if the drawer is capable of rendering, false otherwise.
-     */
-    runRenderingTest() {
-        return $.Promise.resolve(true);
-    }
-
-    /**
-     * Raise the drawer-rendering-failed event on the viewer. Part of the standard contract;
-     * the viewer calls this when runRenderingTest() resolves with false. Listeners may set
-     * eventArgs.preventDefaultAction = true to prevent the viewer from replacing the drawer.
-     *
-     * @event drawer-rendering-failed
-     * @memberof OpenSeadragon.Viewer
-     * @type {object}
-     * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-     * @property {OpenSeadragon.DrawerBase} drawer - The drawer whose rendering test failed.
-     * @property {Boolean} preventDefaultAction - Set to true to prevent the viewer from replacing the drawer with the next candidate. Default: false.
-     * @property {?Object} userData - Arbitrary subscriber-defined object.
-     *
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @private
-     * @returns {Object} The event args object (so the viewer can check preventDefaultAction).
-     */
-    _raiseDrawerRenderingFailedEvent() {
-        const eventArgs = {
-            drawer: this,
-            preventDefaultAction: false
-        };
-        this.viewer.raiseEvent('drawer-rendering-failed', eventArgs);
-        return eventArgs;
-    }
-
     // Deprecated functions
     clear(){
         $.console.warn('[drawer].clear() is deprecated. The drawer is responsible for clearing itself as needed before drawing tiles.');
