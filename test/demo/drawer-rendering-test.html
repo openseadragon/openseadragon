@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Drawer Rendering Test Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+        }
+        .controls {
+            margin-bottom: 12px;
+        }
+        .controls label, .controls select, .controls button {
+            margin-right: 8px;
+        }
+        .scenario-description {
+            margin-bottom: 12px;
+            padding: 12px;
+            background-color: #f8f8f8;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status {
+            margin-top: 8px;
+            padding: 8px;
+            background-color: #e8f4f8;
+            border: 1px solid #b3d9e6;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .status.failed {
+            background-color: #ffe8e8;
+            border-color: #ffb3b3;
+        }
+        .status.success {
+            background-color: #e8f8e8;
+            border-color: #b3e6b3;
+        }
+        button {
+            margin-top: 8px;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <p>
+        <strong>Drawer rendering test demo.</strong> Scenario 1 is normal viewer creation; scenarios 2–5 simulate WebGL functional test failure.
+        Inspect <code>window.viewer</code> in the console (e.g. <code>window.viewer.drawer.getType()</code>).
+    </p>
+
+    <div class="controls">
+        <label for="scenarioSelect">Scenario:</label>
+        <select id="scenarioSelect">
+            <option value="1">Scenario 1: Normal viewer creation</option>
+            <option value="2">Scenario 2: Old behavior (no functional test) with simulated webgl failure</option>
+            <option value="3">Scenario 3: Bad shader (simulated) with fallback</option>
+            <option value="4">Scenario 4: Black pixels (simulated) with fallback</option>
+            <option value="5">Scenario 5: Bad shader (simulated) with no fallback drawer</option>
+        </select>
+        <button id="runScenario">Run scenario</button>
+    </div>
+    <div id="scenarioDescription" class="scenario-description"></div>
+    <div id="status" class="status">Not run.</div>
+
+    <div id="contentDiv" class="openseadragon1"></div>
+
+    <script type="text/javascript">
+        (function() {
+            const originalInitShaderProgram = OpenSeadragon.WebGLDrawer.initShaderProgram;
+            const originalGetContext = HTMLCanvasElement.prototype.getContext;
+            const originalIsSupported = OpenSeadragon.WebGLDrawer.isSupported;
+            const originalDraw = OpenSeadragon.WebGLDrawer.prototype._draw;
+            let initShaderCallCount = 0;
+
+            const scenarioDescriptions = {
+                '1': 'No patches. Create the viewer with <code>drawer: [\'webgl\', \'canvas\']</code>. Uses WebGL if the browser supports it (functional test passes); otherwise falls back to Canvas. Fails only if the browser gives a real error.',
+                '2': 'Patch <code>isSupported()</code> to use old simple check (no functional test), and patch <code>_draw</code> to skip all tile drawing and only copy the cleared WebGL buffer to the 2D output. Simulates the real bug: output canvas gets pixel data from a WebGL canvas that never had anything drawn to it, so the output is not drawn.',
+                '3': 'Patch <code>initShaderProgram</code> so <code>gl.attachShader(program, null)</code> is used for the first attach; program fails to link. Viewer uses <code>drawer: [\'webgl\', \'canvas\']</code> and falls back to Canvas.',
+                '4': 'Patch <code>getContext</code> so <code>readPixels</code> zero-fills the buffer; functional test sees no non-zero pixels. Viewer uses <code>drawer: [\'webgl\', \'canvas\']</code> and falls back to Canvas.',
+                '5': 'Same bad-shader patch as scenario 3, but <code>drawer: \'webgl\'</code> only (no fallback drawer). Viewer creation throws; error is shown.',
+            };
+
+            function restoreAllPatches() {
+                OpenSeadragon.WebGLDrawer.initShaderProgram = originalInitShaderProgram;
+                HTMLCanvasElement.prototype.getContext = originalGetContext;
+                OpenSeadragon.WebGLDrawer.isSupported = originalIsSupported;
+                OpenSeadragon.WebGLDrawer.prototype._draw = originalDraw;
+            }
+
+            function patchBadShader() {
+                initShaderCallCount = 0;
+                OpenSeadragon.WebGLDrawer.initShaderProgram = function(gl, vsSource, fsSource) {
+                    initShaderCallCount++;
+                    const originalAttach = gl.attachShader.bind(gl);
+                    let attachCount = 0;
+                    gl.attachShader = function(program, shader) {
+                        attachCount++;
+                        if (initShaderCallCount === 1 && attachCount === 1) {
+                            shader = null;
+                        }
+                        return originalAttach(program, shader);
+                    };
+                    try {
+                        return originalInitShaderProgram(gl, vsSource, fsSource);
+                    } finally {
+                        gl.attachShader = originalAttach;
+                    }
+                };
+            }
+
+            function patchBlackPixels() {
+                HTMLCanvasElement.prototype.getContext = function(type) {
+                    const gl = originalGetContext.apply(this, arguments);
+                    if (gl && (type === 'webgl2' || type === 'webgl')) {
+                        const originalReadPixels = gl.readPixels.bind(gl);
+                        gl.readPixels = function(x, y, width, height, format, pixelType, pixels) {
+                            originalReadPixels(x, y, width, height, format, pixelType, pixels);
+                            if (pixels && pixels.length) {
+                                for (let i = 0; i < pixels.length; i++) {
+                                    pixels[i] = 0;
+                                }
+                            }
+                        };
+                    }
+                    return gl;
+                };
+            }
+
+            function setStatus(text, success) {
+                const el = document.getElementById('status');
+                el.textContent = text;
+                el.className = 'status' + (success === true ? ' success' : success === false ? ' failed' : '');
+            }
+
+            function updateDescription() {
+                const value = document.getElementById('scenarioSelect').value;
+                document.getElementById('scenarioDescription').innerHTML = scenarioDescriptions[value] || '';
+            }
+
+            function clearViewer() {
+                if (window.viewer) {
+                    window.viewer.destroy();
+                    window.viewer = null;
+                } else {
+                    // Clear contentDiv when we have no reference (e.g. scenario 5 threw before returning a viewer)
+                    const contentDiv = document.getElementById('contentDiv');
+                    if (contentDiv) {
+                        contentDiv.innerHTML = '';
+                    }
+                }
+            }
+
+            function onScenarioChange() {
+                clearViewer();
+                restoreAllPatches();
+                updateDescription();
+                setStatus('Not run.', null);
+            }
+
+            function runScenario() {
+                const scenario = document.getElementById('scenarioSelect').value;
+                clearViewer();
+                restoreAllPatches();
+
+                if (scenario === '1') {
+                    try {
+                        const viewer = OpenSeadragon({
+                            id: "contentDiv",
+                            prefixUrl: "../../build/openseadragon/images/",
+                            tileSources: "../data/testpattern.dzi",
+                            showNavigator: false,
+                            drawer: ['webgl', 'canvas']
+                        });
+                        window.viewer = viewer;
+                        const drawerType = viewer.drawer ? viewer.drawer.getType() : 'none';
+                        setStatus('Drawer: ' + drawerType + '.', true);
+                    } catch (e) {
+                        window.viewer = null;
+                        setStatus('Error: ' + (e && e.message ? e.message : e), false);
+                    }
+                } else if (scenario === '2') {
+                    // Scenario 2: Simulate "nothing drawn" by only clearing and copying the WebGL buffer.
+                    // We never set gl.clearColor, so WebGL uses its default clear color (0,0,0,0) per spec —
+                    // hence we see TRANSPARENT output here. Users in the wild often report "black" instead
+                    // of transparent; see analysis in comments below (and in repo/docs if added).
+                    // Old isSupported (no functional test) so WebGL drawer is chosen
+                    OpenSeadragon.WebGLDrawer.isSupported = function() {
+                        const canvasElement = document.createElement('canvas');
+                        const webglContext = typeof canvasElement.getContext === 'function' &&
+                                    canvasElement.getContext('webgl');
+                        const ext = webglContext && webglContext.getExtension('WEBGL_lose_context');
+                        if (ext) {
+                            ext.loseContext();
+                        }
+                        return !!webglContext;
+                    };
+                    // Simulate "nothing drawn to WebGL canvas": skip all tile drawing and only copy
+                    // the cleared WebGL buffer to the 2D output, as in the real bug.
+                    OpenSeadragon.WebGLDrawer.prototype._draw = function(tiledImages, isRetry) {
+                        const gl = this._glContext ? this._glContext.getContext() : null;
+                        if (!gl) return;
+                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                        gl.clear(gl.COLOR_BUFFER_BIT);
+                        this._outputContext.clearRect(0, 0, this._outputCanvas.width, this._outputCanvas.height);
+                        this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                    };
+                    try {
+                        const viewer = OpenSeadragon({
+                            id: "contentDiv",
+                            prefixUrl: "../../build/openseadragon/images/",
+                            tileSources: "../data/testpattern.dzi",
+                            showNavigator: false,
+                            drawer: 'webgl'
+                        });
+                        window.viewer = viewer;
+                        const drawerType = viewer.drawer ? viewer.drawer.getType() : 'none';
+                        setTimeout(function() {
+                            const outputCanvas = viewer.drawer ? viewer.drawer.canvas : null;
+                            if (outputCanvas) {
+                                const ctx = outputCanvas.getContext('2d');
+                                const w = Math.min(100, outputCanvas.width);
+                                const h = Math.min(100, outputCanvas.height);
+                                const imageData = ctx.getImageData(0, 0, w, h);
+                                const d = imageData.data;
+                                // TEMP logging: sample first pixel and min/max R,G,B,A
+                                let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0, minA = 255, maxA = 0;
+                                for (let i = 0; i < d.length; i += 4) {
+                                    minR = Math.min(minR, d[i]); maxR = Math.max(maxR, d[i]);
+                                    minG = Math.min(minG, d[i+1]); maxG = Math.max(maxG, d[i+1]);
+                                    minB = Math.min(minB, d[i+2]); maxB = Math.max(maxB, d[i+2]);
+                                    minA = Math.min(minA, d[i+3]); maxA = Math.max(maxA, d[i+3]);
+                                }
+                                const allBlackOrTransparent = d.every((v, i) => i % 4 === 3 || v === 0);
+                                const allTransparent = (minA === 0 && maxA === 0);
+                                const allOpaqueBlack = allBlackOrTransparent && minA === 255 && maxA === 255;
+                                const outputDesc = allTransparent ? 'not drawn (nothing drawn to WebGL buffer)' : (allOpaqueBlack ? 'not drawn (nothing drawn to WebGL buffer)' : (allBlackOrTransparent ? 'not drawn' : 'drawn (unexpected)'));
+                                setStatus('Drawer: ' + drawerType + '. Output is ' + outputDesc + '.', allBlackOrTransparent);
+                            } else {
+                                setStatus('Drawer: ' + drawerType + ' (no canvas to check).', drawerType === 'webgl');
+                            }
+                        }, 500);
+                    } catch (e) {
+                        window.viewer = null;
+                        setStatus('Unexpected error: ' + (e && e.message ? e.message : e), false);
+                    }
+                } else if (scenario === '3') {
+                    patchBadShader();
+                    const viewer = OpenSeadragon({
+                        id: "contentDiv",
+                        prefixUrl: "../../build/openseadragon/images/",
+                        tileSources: "../data/testpattern.dzi",
+                        showNavigator: false,
+                        drawer: ['webgl', 'canvas']
+                    });
+                    window.viewer = viewer;
+                    const drawerType = viewer.drawer ? viewer.drawer.getType() : 'none';
+                    setStatus('Drawer: ' + drawerType + '.', drawerType === 'canvas');
+                } else if (scenario === '4') {
+                    patchBlackPixels();
+                    const viewer = OpenSeadragon({
+                        id: "contentDiv",
+                        prefixUrl: "../../build/openseadragon/images/",
+                        tileSources: "../data/testpattern.dzi",
+                        showNavigator: false,
+                        drawer: ['webgl', 'canvas']
+                    });
+                    window.viewer = viewer;
+                    const drawerType = viewer.drawer ? viewer.drawer.getType() : 'none';
+                    setStatus('Drawer: ' + drawerType + '.', drawerType === 'canvas');
+                } else if (scenario === '5') {
+                    patchBadShader();
+                    try {
+                        const viewer = OpenSeadragon({
+                            id: "contentDiv",
+                            prefixUrl: "../../build/openseadragon/images/",
+                            tileSources: "../data/testpattern.dzi",
+                            showNavigator: false,
+                            drawer: 'webgl'
+                        });
+                        window.viewer = viewer;
+                        setStatus('Unexpected: viewer was created.', false);
+                    } catch (e) {
+                        window.viewer = null;
+                        setStatus('Error (no fallback): ' + (e && e.message ? e.message : e), true);
+                    }
+                }
+            }
+
+            document.getElementById('scenarioSelect').addEventListener('change', onScenarioChange);
+            document.getElementById('runScenario').addEventListener('click', runScenario);
+
+            updateDescription();
+            window._drawerRenderingTestRestore = restoreAllPatches;
+        })();
+    </script>
+</body>
+</html>

@@ -390,7 +390,99 @@
                 viewer.open('/test/data/testpattern.dzi');
             });
         }
-
     }
+
+    // ----------
+    // Demo scenario 3: Bad shader (simulated) with fallback. Simulate WebGL failure via initShaderProgram patch
+    // so the functional test rejects WebGL; viewer falls back to canvas.
+    QUnit.module('Drawer: fallback to canvas when WebGL fails', {
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
+            testLog.reset();
+            this._originalInitShaderProgram = OpenSeadragon.WebGLDrawer.initShaderProgram;
+            this._initShaderCallCount = 0;
+            const self = this;
+            OpenSeadragon.WebGLDrawer.initShaderProgram = function(gl, vsSource, fsSource) {
+                self._initShaderCallCount++;
+                const originalAttach = gl.attachShader.bind(gl);
+                let attachCount = 0;
+                gl.attachShader = function(program, shader) {
+                    attachCount++;
+                    if (self._initShaderCallCount === 1 && attachCount === 1) {
+                        shader = null;
+                    }
+                    return originalAttach(program, shader);
+                };
+                try {
+                    return self._originalInitShaderProgram(gl, vsSource, fsSource);
+                } finally {
+                    gl.attachShader = originalAttach;
+                }
+            };
+            viewer = OpenSeadragon(OpenSeadragon.extend({
+                id: 'example',
+                prefixUrl: '/build/openseadragon/images/',
+                springStiffness: 100,
+                drawer: ['webgl', 'canvas']
+            }));
+        },
+        afterEach: function () {
+            OpenSeadragon.WebGLDrawer.initShaderProgram = this._originalInitShaderProgram;
+            if (viewer) {
+                viewer.destroy();
+            }
+            viewer = null;
+        }
+    });
+
+    QUnit.test('Uses canvas when WebGL is rejected (demo scenario 3: bad shader)', function(assert) {
+        assert.ok(viewer.drawer, 'viewer has a drawer');
+        assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when WebGL shader fails');
+    });
+
+    // ----------
+    // Demo scenario 4: Black pixels (simulated) with fallback. Simulate WebGL failure via readPixels returning
+    // all zeros so the functional test rejects WebGL; viewer falls back to canvas.
+    QUnit.module('Drawer: fallback to canvas when WebGL fails (demo scenario 4, black pixels)', {
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo("#qunit-fixture");
+            testLog.reset();
+            this._originalGetContext = HTMLCanvasElement.prototype.getContext;
+            const self = this;
+            HTMLCanvasElement.prototype.getContext = function(type) {
+                const gl = self._originalGetContext.apply(this, arguments);
+                if (gl && (type === 'webgl2' || type === 'webgl')) {
+                    const originalReadPixels = gl.readPixels.bind(gl);
+                    gl.readPixels = function(x, y, width, height, format, pixelType, pixels) {
+                        originalReadPixels(x, y, width, height, format, pixelType, pixels);
+                        if (pixels && pixels.length) {
+                            for (let i = 0; i < pixels.length; i++) {
+                                pixels[i] = 0;
+                            }
+                        }
+                    };
+                }
+                return gl;
+            };
+            viewer = OpenSeadragon(OpenSeadragon.extend({
+                id: 'example',
+                prefixUrl: '/build/openseadragon/images/',
+                springStiffness: 100,
+                drawer: ['webgl', 'canvas']
+            }));
+        },
+        afterEach: function () {
+            HTMLCanvasElement.prototype.getContext = this._originalGetContext;
+            if (viewer) {
+                viewer.destroy();
+            }
+            viewer = null;
+        }
+    });
+
+    QUnit.test('Uses canvas when WebGL is rejected (demo scenario 4: black pixels)', function(assert) {
+        assert.ok(viewer.drawer, 'viewer has a drawer');
+        assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when WebGL readback fails');
+    });
 
 })();
