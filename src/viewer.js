@@ -1128,9 +1128,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             $.console.warn('Unsupported drawer %s! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.', drawerCandidate);
         }
 
-        // if the drawer is supported, create it and return true
-        if (Drawer && Drawer.isSupported()) {
-
+        // Guard isSupported() in try/catch so a buggy or throwing plugin drawer cannot crash the whole viewer
+        let supported = false;
+        if (Drawer) {
+            try {
+                supported = Drawer.isSupported();
+            } catch (e) {
+                $.console.warn('Error in %s isSupported(); treating this drawer as unsupported:', drawerCandidate, e && e.message ? e.message : e);
+            }
+        }
+        if (supported) {
+            // if the drawer is supported, create it and return true
             // first destroy the previous drawer
             if(oldDrawer && mainDrawer){
                 oldDrawer.destroy();

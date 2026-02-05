@@ -744,21 +744,21 @@
          * @returns {Boolean} true if WebGL is supported and the pipeline renders successfully
          */
         static isSupported(){
-            const size = 4;
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            if (!$.isFunction(canvas.getContext)) {
-                return false;
-            }
-            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-            if (!gl) {
-                return false;
-            }
-
             let contextManager = null;
             let testTexture = null;
+            let gl = null;
             try {
+                const size = 4;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                if (!$.isFunction(canvas.getContext)) {
+                    return false;
+                }
+                gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+                if (!gl) {
+                    return false;
+                }
                 contextManager = new WebglContextManager({
                     renderingCanvas: canvas,
                     unpackWithPremultipliedAlpha: false,
