@@ -866,25 +866,20 @@ $.TileSource.prototype = {
         } else {
             // While we could just do this one-liner, we found out that downloading the data _before_ a cache is initialized
             // works better in general cases. Network access is the most error-prone part, and this scenario better supports
-            // all default use-cases, including the fact that retry logics works only at this stage, not on the cache level.
+            // all default use-cases, including the fact that retry logic works only at this stage, not on the cache level.
             //  context.finish(context.src, null, "imageUrl");
 
             const image = new Image();
-            const finalize = function(error) {
-                if (error || !image) {
-                    context.fail(error || "[downloadTileStart] Image load failed: undefined Image instance.", null);
-                    return;
-                }
-                image.onload = image.onerror = image.onabort = null;
-                context.finish(image, undefined, "image");
-            };
+            context.userData.imageRequest = image;
             image.onload = function () {
-                finalize();
+                image.onload = image.onerror = image.onabort = null;
+                context.finish(image, null, "image");
             };
             image.onabort = image.onerror = function() {
-                finalize("[downloadTileStart] Image load aborted.");
+                image.onload = image.onerror = image.onabort = null;
+                context.fail("[downloadTileStart] Image load aborted or errored out.", null);
             };
-            if (context.crossOriginPolicy !== false) {
+            if (typeof context.crossOriginPolicy === "string") {
                 image.crossOrigin = context.crossOriginPolicy;
             }
             image.src = context.src;
@@ -902,6 +897,11 @@ $.TileSource.prototype = {
     downloadTileAbort: function (context) {
         if (context.userData.request) {
             context.userData.request.abort();
+        }
+        if (context.userData.imageRequest) {
+            const image = context.userData.imageRequest;
+            image.onload = image.onerror = image.onabort = null;
+            image.src = "";
         }
     },
 
