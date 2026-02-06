@@ -192,12 +192,21 @@
   *
   * @property {String|DrawerImplementation|Array} [drawer = ['auto', 'webgl', 'canvas', 'html']]
   *     Which drawer to use. Valid strings are 'auto', 'webgl', 'canvas', and 'html'.
-  *     The string 'auto' chooses between WebGL or canvas depending on the device.
+  *     The string 'auto' is converted to one or more drawer type strings depending
+  *     on the platform. On iOS-like devices it becomse 'canvas' due to performance
+  *     limitations with the webgl drawer. On all other platforms it becomes ['webgl', 'canvas']
+  *     meaning that webgl is tried first, and canvas is available as a fallback if webgl is not supported.
+  *
   *     The 'webgl' drawer automatically uses WebGL2 when available, falling back to WebGL1.
+  *
   *     External drawer plugins can register additional drawer types as strings.
   *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
   *     An array of strings and/or constructors can be used to indicate the priority
   *     of different implementations, which will be tried in order based on browser support.
+  *     The 'webgl' drawer can automatically fall back to canvas as needed, for example to draw
+  *     images that do not have CORS headers set which makes them tainted and unavailable to webgl.
+  *     This behavior depends on 'canvas' being included in the list of drawer candidates. If
+  *     webgl is needed and canvas fallback is not desired, use 'webg' without including 'canvas' in the list.
   *
   * @property {Object} drawerOptions
   *     Options to pass to the selected drawer implementation. For details

@@ -184,6 +184,17 @@ $.Viewer = function( options ) {
          */
         drawer:             null,
         /**
+         * Resolved list of drawer candidates (after expanding 'auto' in a platform-dependent way and
+         * de-duplicating; first occurrence kept). Entries are drawer type strings ('webgl', 'canvas',
+         * 'html') or custom drawer constructors. Used to decide allowed fallbacks: WebGL drawer only
+         * falls back to canvas when the string 'canvas' is in this list (see per-tile and context-loss
+         * fallback). For per-tile fallback, WebGL drawer uses CanvasDrawer when 'canvas' is in this list,
+         * regardless of list order (e.g. even if 'html' has higher priority).
+         * @member {Array<string|Function>} drawerCandidates
+         * @memberof OpenSeadragon.Viewer#
+         */
+        drawerCandidates:   null,
+        /**
          * Keeps track of all of the tiled images in the scene.
          * @member {OpenSeadragon.World} world
          * @memberof OpenSeadragon.Viewer#
@@ -533,6 +544,12 @@ $.Viewer = function( options ) {
         $.console.warn('No valid drawers were selected. Using the default value.');
     }
 
+    // 'auto' is expanded in the candidate list in a platform-dependent way: on iOS-like devices
+    // to ['canvas'] only, on other platforms to ['webgl', 'canvas'] so that if WebGL fails at
+    // creation, canvas is tried next. Same detection as getAutoDrawerCandidates() / determineDrawer('auto').
+    drawerCandidates = drawerCandidates.flatMap(function(c) { return c === 'auto' ? getAutoDrawerCandidates() : [c]; });
+    drawerCandidates = drawerCandidates.filter(function(c, i, arr) { return arr.indexOf(c) === i; });
+    this.drawerCandidates = drawerCandidates;
 
     this.drawer = null;
     for (const drawerCandidate of drawerCandidates){
@@ -4408,6 +4425,19 @@ function onRotateRight() {
  */
 function onFlip() {
    this.viewport.toggleFlip();
+}
+
+/**
+ * Return the list of drawer type strings that 'auto' expands to (platform-dependent).
+ * Uses the same detection as determineDrawer('auto'): on iOS-like devices, ['canvas'] only;
+ * on all other platforms, ['webgl', 'canvas'] so webgl is tried first and canvas next if WebGL fails.
+ * @private
+ * @returns {string[]}
+ */
+function getAutoDrawerCandidates() {
+    const isPrimaryTouch = window.matchMedia('(pointer: coarse)').matches;
+    const isIOSDevice = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent) && isPrimaryTouch;
+    return isIOSDevice ? ['canvas'] : ['webgl', 'canvas'];
 }
 
 /**

@@ -645,6 +645,7 @@
             this._clippingContext = null;
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
+            this._canvasFallbackAllowed = this.viewer.drawerCandidates && this.viewer.drawerCandidates.includes('canvas');
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
@@ -877,10 +878,12 @@
                     renderingBufferHasImageData = false;
                 }
 
-                // next, use the backup canvas drawer to draw this tainted image
-                const canvasDrawer = this._getBackupCanvasDrawer();
-                canvasDrawer.draw([tiledImage]);
-                this._outputContext.drawImage(canvasDrawer.canvas, 0, 0);
+                // next, use the backup canvas drawer to draw the tiled image (if allowed)
+                if(this._canvasFallbackAllowed){
+                    const canvasDrawer = this._getBackupCanvasDrawer();
+                    canvasDrawer.draw([tiledImage]);
+                    this._outputContext.drawImage(canvasDrawer.canvas, 0, 0);
+                }
 
             } else {
                 const tilesToDraw = tiledImage.getTilesToDraw();
@@ -1099,13 +1102,13 @@
                             // Retry draw on same instance
                             this.draw(tiledImages, true);
                         } else {
-                            // Recovery attempted but failed - fall back to canvas drawer
+                            // Recovery attempted but failed - fall back to canvas drawer (if allowed)
                             this._fallbackToCanvasDrawer(error, tiledImages);
                         }
                     } else {
                         // Recovery disabled or retry - fall back only when recovery was enabled (retry case)
                         if (this._enableContextRecovery) {
-                            this._fallbackToCanvasDrawer(error, tiledImages);
+                            this._fallbackToCanvasDrawer(error, tiledImages); // will only happen if canvas fallback is allowed
                         } else {
                             throw error;
                         }
@@ -1417,15 +1420,22 @@
         }
 
         /**
-         * Fall back to canvas drawer when WebGL fails. Switches the viewer to canvas drawer,
-         * raises the webgl-context-recovery-failed event, and draws the current frame.
+         * Fall back to canvas drawer when WebGL fails (requires viewer.drawerCandidates to include 'canvas').
+         * If allowed, switches the viewer to use the canvas drawer, raises the webgl-context-recovery-failed event
+         * with the canvas drawer, and draws the current frame.
+         * Otherwise, raise the event with canvasDrawer: null and rethrow the error.
+         *
          * @param {Error} error - The error that triggered the fallback
          * @param {Array} tiledImages - Array of TiledImage objects to draw with the new drawer
-         * @throws {Error} Re-throws the error if canvas drawer creation fails
+         * @throws {Error} Re-throws the error if canvas is not an allowed fallback or if canvas drawer creation fails
          * @private
          */
         _fallbackToCanvasDrawer(error, tiledImages) {
             const oldWebGLDrawer = this;
+            if (!this._canvasFallbackAllowed) {
+                oldWebGLDrawer._raiseContextRecoveryFailedEvent(error, null);
+                throw error;
+            }
             const canvasDrawer = this.viewer.requestDrawer('canvas', {
                 mainDrawer: true,
                 redrawImmediately: false
@@ -1445,7 +1455,7 @@
         /**
          * Raise the webgl-context-recovery-failed event.
          * @param {Error} error - The error that triggered the recovery failure
-         * @param {OpenSeadragon.CanvasDrawer} [canvasDrawer=null] - The canvas drawer that was created as a fallback, or null if creation failed
+         * @param {OpenSeadragon.CanvasDrawer} [canvasDrawer=null] - The canvas drawer that was created as a fallback, or null if canvas was not an allowed fallback or creation failed
          * @private
          */
         _raiseContextRecoveryFailedEvent(error, canvasDrawer = null) {
@@ -1453,14 +1463,15 @@
                 return;
             }
             /**
-             * Raised when the WebGL drawer fails to recover from a context loss and falls back to canvas drawer.
+             * Raised when the WebGL drawer fails to recover from a context loss. The drawer may fall back to
+             * canvas drawer only when canvas is in the viewer's drawer list; otherwise canvasDrawer is null and no switch occurs.
              *
              * @event webgl-context-recovery-failed
              * @memberof OpenSeadragon.Viewer
              * @type {object}
              * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
              * @property {OpenSeadragon.WebGLDrawer} drawer - The WebGL drawer instance that failed to recover (may be destroyed).
-             * @property {OpenSeadragon.CanvasDrawer} canvasDrawer - The canvas drawer that was created as a fallback, or null if creation failed.
+             * @property {OpenSeadragon.CanvasDrawer} canvasDrawer - The canvas drawer that was created as a fallback, or null if canvas was not an allowed fallback or creation failed.
              * @property {Error} error - The original error that triggered the recovery attempt.
              * @property {?Object} userData - Arbitrary subscriber-defined object.
              */
@@ -1491,7 +1502,9 @@
             if (!tiledImage.getIssue('webgl')) {
                 if (isCanvas && $.isCanvasTainted(data)){
                     tiledImage.setIssue('webgl', 'WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
-                    this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
+                    this._raiseDrawerErrorEvent(tiledImage, this._canvasFallbackAllowed
+                        ? 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.'
+                        : 'Tainted data cannot be used by the WebGLDrawer, and canvas fallback is not enabled.');
                     this.setInternalCacheNeedsRefresh();
                 } else {
                     let sourceWidthFraction, sourceHeightFraction;
@@ -1527,7 +1540,10 @@
 
                     if (!texture) {
                         tiledImage.setIssue('webgl', 'Error creating texture in WebGL.');
-                        this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when creating texture. Falling back to CanvasDrawer for this TiledImage.');
+                        const canvasAllowed = this._canvasFallbackAllowed;
+                        this._raiseDrawerErrorEvent(tiledImage, canvasAllowed
+                            ? 'Unknown error when creating texture. Falling back to CanvasDrawer for this TiledImage.'
+                            : 'Cannot use WebGL for this TiledImage; canvas fallback is not enabled.');
                         this.setInternalCacheNeedsRefresh();
                     } else {
                         // TextureInfo stored in the cache
