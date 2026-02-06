@@ -220,10 +220,12 @@ $.TileSource = function( options ) {
         this.minLevel    = 0;
         this.maxLevel    = 0;
         this.ready       = false;
+        this._uniqueIdentifier = this.url;
         //configuration via url implies the extending class
         //implements and 'configure'
         setTimeout(() => this.getImageInfo(this.url)); //needs async in case someone exits immediately
     } else {
+        this._uniqueIdentifier = Math.floor(Math.random()*1e10).toString(36);
         // by default it used to fire immediately, so make the ready default
         if (this.ready || this.ready === undefined) {
             this.raiseEvent('ready', { tileSource: this });
@@ -770,7 +772,7 @@ $.TileSource.prototype = {
         }
 
         if (typeof url !== "string") {
-            return withHeaders(level + "/" + x + "_" + y);
+            return withHeaders(this._uniqueIdentifier + ":" + level + "/" + x + "_" + y);
         }
         return withHeaders(url);
     },
