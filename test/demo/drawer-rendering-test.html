@@ -34,6 +34,7 @@
             border: 1px solid #b3d9e6;
             border-radius: 4px;
             font-size: 14px;
+            white-space: pre-wrap;
         }
         .status.failed {
             background-color: #ffe8e8;
@@ -52,7 +53,7 @@
 </head>
 <body>
     <p>
-        <strong>Drawer rendering test demo.</strong> Scenario 1 is normal viewer creation; scenarios 2–5 simulate WebGL functional test failure.
+        <strong>Drawer rendering test demo.</strong> Scenario 1 is normal viewer creation; scenarios 2–5 simulate WebGL functional test failure; scenario 6 benchmarks WebGL support check speed.
         Inspect <code>window.viewer</code> in the console (e.g. <code>window.viewer.drawer.getType()</code>).
     </p>
 
@@ -64,13 +65,20 @@
             <option value="3">Scenario 3: Bad shader (simulated) with fallback</option>
             <option value="4">Scenario 4: Black pixels (simulated) with fallback</option>
             <option value="5">Scenario 5: Bad shader (simulated) with no fallback drawer</option>
+            <option value="6">Scenario 6: WebGL support check speed</option>
         </select>
         <button id="runScenario">Run scenario</button>
+        <span id="benchIterationsWrap" style="display: none;">
+            <label for="benchIterations">Iterations:</label>
+            <input id="benchIterations" type="number" value="100" min="1" step="1">
+        </span>
     </div>
     <div id="scenarioDescription" class="scenario-description"></div>
     <div id="status" class="status">Not run.</div>
 
     <div id="contentDiv" class="openseadragon1"></div>
+
+    <div id="benchmarkContainer" style="position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden;"></div>
 
     <script type="text/javascript">
         (function() {
@@ -86,6 +94,7 @@
                 '3': 'Patch <code>initShaderProgram</code> so <code>gl.attachShader(program, null)</code> is used for the first attach; program fails to link. Viewer uses <code>drawer: [\'webgl\', \'canvas\']</code> and falls back to Canvas.',
                 '4': 'Patch <code>getContext</code> so <code>readPixels</code> zero-fills the buffer; functional test sees no non-zero pixels. Viewer uses <code>drawer: [\'webgl\', \'canvas\']</code> and falls back to Canvas.',
                 '5': 'Same bad-shader patch as scenario 3, but <code>drawer: \'webgl\'</code> only (no fallback drawer). Viewer creation throws; error is shown.',
+                '6': 'Create/destroy viewers in a loop with and without the WebGL functional test; report timing difference. Iterations (above) default to 100.',
             };
 
             function restoreAllPatches() {
@@ -93,6 +102,20 @@
                 HTMLCanvasElement.prototype.getContext = originalGetContext;
                 OpenSeadragon.WebGLDrawer.isSupported = originalIsSupported;
                 OpenSeadragon.WebGLDrawer.prototype._draw = originalDraw;
+            }
+
+            /** Old behavior: context-only check (no functional test). Matches production getContext order. */
+            function contextOnlyIsSupported() {
+                const canvasElement = document.createElement('canvas');
+                if (typeof canvasElement.getContext !== 'function') {
+                    return false;
+                }
+                const webglContext = canvasElement.getContext('webgl2') || canvasElement.getContext('webgl');
+                const ext = webglContext && webglContext.getExtension && webglContext.getExtension('WEBGL_lose_context');
+                if (ext) {
+                    ext.loseContext();
+                }
+                return !!webglContext;
             }
 
             function patchBadShader() {
@@ -143,6 +166,8 @@
             function updateDescription() {
                 const value = document.getElementById('scenarioSelect').value;
                 document.getElementById('scenarioDescription').innerHTML = scenarioDescriptions[value] || '';
+                const iterationsWrap = document.getElementById('benchIterationsWrap');
+                iterationsWrap.style.display = value === '6' ? '' : 'none';
             }
 
             function clearViewer() {
@@ -192,16 +217,7 @@
                     // hence we see TRANSPARENT output here. Users in the wild often report "black" instead
                     // of transparent; see analysis in comments below (and in repo/docs if added).
                     // Old isSupported (no functional test) so WebGL drawer is chosen
-                    OpenSeadragon.WebGLDrawer.isSupported = function() {
-                        const canvasElement = document.createElement('canvas');
-                        const webglContext = typeof canvasElement.getContext === 'function' &&
-                                    canvasElement.getContext('webgl');
-                        const ext = webglContext && webglContext.getExtension('WEBGL_lose_context');
-                        if (ext) {
-                            ext.loseContext();
-                        }
-                        return !!webglContext;
-                    };
+                    OpenSeadragon.WebGLDrawer.isSupported = contextOnlyIsSupported;
                     // Simulate "nothing drawn to WebGL canvas": skip all tile drawing and only copy
                     // the cleared WebGL buffer to the 2D output, as in the real bug.
                     OpenSeadragon.WebGLDrawer.prototype._draw = function(tiledImages, isRetry) {
@@ -291,6 +307,46 @@
                         window.viewer = null;
                         setStatus('Error (no fallback): ' + (e && e.message ? e.message : e), true);
                     }
+                } else if (scenario === '6') {
+                    const container = document.getElementById('benchmarkContainer');
+                    const N = Math.max(1, Math.floor(Number(document.getElementById('benchIterations').value) || 100));
+                    const prefixUrl = "../../build/openseadragon/images/";
+
+                    function createAndDestroyLoop() {
+                        for (let i = 0; i < N; i++) {
+                            container.innerHTML = '';
+                            const div = document.createElement('div');
+                            div.id = 'bench-viewer-' + i;
+                            container.appendChild(div);
+                            const viewer = OpenSeadragon({
+                                id: div.id,
+                                prefixUrl: prefixUrl,
+                                showNavigator: false,
+                                drawer: ['webgl', 'canvas']
+                            });
+                            viewer.destroy();
+                        }
+                    }
+
+                    setStatus('Running benchmark...', null);
+                    const t0 = performance.now();
+                    restoreAllPatches();
+                    createAndDestroyLoop();
+                    const tWithFunctional = performance.now() - t0;
+
+                    OpenSeadragon.WebGLDrawer.isSupported = contextOnlyIsSupported;
+                    const t1 = performance.now();
+                    createAndDestroyLoop();
+                    const tWithoutFunctional = performance.now() - t1;
+                    restoreAllPatches();
+
+                    const diffTotal = tWithFunctional - tWithoutFunctional;
+                    const diffPerViewer = N > 0 ? diffTotal / N : 0;
+                    setStatus([
+                        'With functional test: ' + Math.round(tWithFunctional * 100) / 100 + ' ms total (' + Math.round(tWithFunctional / N * 100) / 100 + ' ms per viewer, ' + N + ' viewers)',
+                        'Without functional test: ' + Math.round(tWithoutFunctional * 100) / 100 + ' ms total (' + Math.round(tWithoutFunctional / N * 100) / 100 + ' ms per viewer, ' + N + ' viewers)',
+                        'Difference: ' + Math.round(diffTotal * 100) / 100 + ' ms total (' + Math.round(diffPerViewer * 100) / 100 + ' ms per viewer)'
+                    ].join('\n'), null);
                 }
             }
 
