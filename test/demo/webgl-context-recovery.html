@@ -276,7 +276,7 @@
                     const viewer = OpenSeadragon({
                         id: `openseadragon-${viewerNumber}`,
                         prefixUrl: "../../build/openseadragon/images/",
-                        drawer: 'webgl',
+                        drawer: ['webgl', 'canvas'],
                         tileSources: "../data/testpattern.dzi",
                         showNavigator: false,
                     });
