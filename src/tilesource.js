@@ -801,7 +801,24 @@ $.TileSource.prototype = {
      * @returns {boolean} true if the image has transparency
      */
     hasTransparency: function(context2D, url, ajaxHeaders, post) {
-        return url.match('.png');
+        try{    // need try...catch when url is a Promise ( asynchronous getTileUrl(...) )
+            return url.match('.png');
+        }catch(e){
+            return false;
+        }
+    },
+
+    _downloadTileStart: function (context) {                // internal method, to be called by ImageLoader
+        // wrapper needed for asynchronous getTileUrl() support
+        $.Promise.resolve(context.src)
+        .catch(e=>{
+            console.error(e); // then, context.src becomes undefined, so Viewer 'tile-load-failed' will be fired.
+        })
+        .then((src)=>{
+            context.src = src;
+            return context;
+        })
+        .then(context=>this.downloadTileStart(context));
     },
 
     /**
@@ -896,7 +913,7 @@ $.TileSource.prototype = {
         // Fallback default implementation: process individually.
         // Real implementations (e.g. for sprite sheets) should override this and use true batched approach.
         for (let i = 0; i < batchJob.jobs.length; i++) {
-            this.downloadTileStart(batchJob.jobs[i]);
+            this._downloadTileStart(batchJob.jobs[i]); // call internal (private) method providing safe override of (public) downloadTileStart
         }
     },
 

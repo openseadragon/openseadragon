@@ -191,7 +191,7 @@ $.ImageJob.prototype = {
             self.fail("Image load aborted.", null);
         };
 
-        this.source.downloadTileStart(this);
+        this.source._downloadTileStart(this); // call internal (private) method providing safe override of (public) downloadTileStart
     },
 
     /**
