@@ -6,6 +6,7 @@
 
     function runDrawerTests(drawerType){
         let getContextPrototypeRestore = null;
+        let initShaderProgramRestore = null;
 
         QUnit.module('Drawer-'+drawerType, {
             beforeEach: function () {
@@ -14,8 +15,13 @@
                 testLog.reset();
             },
             afterEach: function () {
+                if (initShaderProgramRestore) {
+                    initShaderProgramRestore();
+                    initShaderProgramRestore = null;
+                }
                 if (getContextPrototypeRestore) {
                     getContextPrototypeRestore();
+                    getContextPrototypeRestore = null;
                 }
                 if (viewer){
                     viewer.destroy();
@@ -389,8 +395,68 @@
 
                 viewer.open('/test/data/testpattern.dzi');
             });
-        }
 
+            // ----------
+            // Bad shader (simulated) with fallback. isSupported() functional test rejects WebGL; viewer falls back to canvas. Mirrors demo scenario 3.
+            QUnit.test('Falls back to canvas when WebGL error is detected because of a shader error', function(assert) {
+                const done = assert.async();
+                const originalInitShaderProgram = OpenSeadragon.WebGLDrawer.initShaderProgram;
+                let initShaderCallCount = 0;
+                OpenSeadragon.WebGLDrawer.initShaderProgram = function(gl, vsSource, fsSource) {
+                    initShaderCallCount++;
+                    const originalAttach = gl.attachShader.bind(gl);
+                    let attachCount = 0;
+                    gl.attachShader = function(program, shader) {
+                        attachCount++;
+                        if (initShaderCallCount === 1 && attachCount === 1) {
+                            shader = null;
+                        }
+                        return originalAttach(program, shader);
+                    };
+                    try {
+                        return originalInitShaderProgram(gl, vsSource, fsSource);
+                    } finally {
+                        gl.attachShader = originalAttach;
+                    }
+                };
+                initShaderProgramRestore = function() {
+                    OpenSeadragon.WebGLDrawer.initShaderProgram = originalInitShaderProgram;
+                };
+                createViewer({ drawer: ['webgl', 'canvas'] });
+                assert.ok(viewer.drawer, 'viewer has a drawer');
+                assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when WebGL shader fails');
+                done();
+            });
+
+            // ----------
+            // Simulates failure to draw correctly. isSupported() functional test rejects WebGL; viewer falls back to canvas. Mirrors demo scenario 4.
+            QUnit.test('Falls back to canvas when WebGL fails to correctly draw test pixels', function(assert) {
+                const done = assert.async();
+                const originalGetContext = HTMLCanvasElement.prototype.getContext;
+                getContextPrototypeRestore = function() {
+                    HTMLCanvasElement.prototype.getContext = originalGetContext;
+                };
+                HTMLCanvasElement.prototype.getContext = function(type) {
+                    const gl = originalGetContext.apply(this, arguments);
+                    if (gl && (type === 'webgl2' || type === 'webgl')) {
+                        const originalReadPixels = gl.readPixels.bind(gl);
+                        gl.readPixels = function(x, y, width, height, format, pixelType, pixels) {
+                            originalReadPixels(x, y, width, height, format, pixelType, pixels);
+                            if (pixels && pixels.length) {
+                                for (let i = 0; i < pixels.length; i++) {
+                                    pixels[i] = 0;
+                                }
+                            }
+                        };
+                    }
+                    return gl;
+                };
+                createViewer({ drawer: ['webgl', 'canvas'] });
+                assert.ok(viewer.drawer, 'viewer has a drawer');
+                assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when WebGL readback fails');
+                done();
+            });
+        }
     }
 
 })();

@@ -738,17 +738,111 @@
 
         // Public API required by all Drawer implementations
         /**
-        * @returns {Boolean} true if canvas and webgl are supported
-        */
+         * Functional test: true if WebGL is supported and the real first-pass shader pipeline
+         * can render (same shaders/context path used at runtime). Uses a temp context and
+         * WebglContextManager, draws known non-black pixels to an FBO, then readPixels.
+         * @returns {Boolean} true if WebGL is supported and the pipeline renders successfully
+         */
         static isSupported(){
-            const canvasElement = document.createElement( 'canvas' );
-            const webglContext = $.isFunction( canvasElement.getContext ) &&
-                        canvasElement.getContext( 'webgl' );
-            const ext = webglContext && webglContext.getExtension('WEBGL_lose_context');
-            if(ext){
-                ext.loseContext();
+            let contextManager = null;
+            let testTexture = null;
+            let gl = null;
+            try {
+                const size = 4;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                if (!$.isFunction(canvas.getContext)) {
+                    return false;
+                }
+                gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+                if (!gl) {
+                    return false;
+                }
+                contextManager = new WebglContextManager({
+                    renderingCanvas: canvas,
+                    unpackWithPremultipliedAlpha: false,
+                    imageSmoothingEnabled: true,
+                    initShaderProgram: WebGLDrawer.initShaderProgram
+                });
+                if (!contextManager.getContext()) {
+                    return false;
+                }
+                contextManager.setupRenderer(size, size);
+
+                const firstPass = contextManager.getFirstPass();
+                const glFrameBuffer = contextManager.getFrameBuffer();
+                if (!firstPass || !glFrameBuffer) {
+                    return false;
+                }
+
+                const maxTextures = contextManager.getMaxTextures();
+                if (!maxTextures || maxTextures <= 0) {
+                    return false;
+                }
+
+                const imageData = new ImageData(size, size);
+                imageData.data[0] = 255;
+                imageData.data[1] = 0;
+                imageData.data[2] = 0;
+                imageData.data[3] = 255;
+                testTexture = contextManager.createTexture(imageData);
+                if (!testTexture) {
+                    return false;
+                }
+
+                const unitQuad = contextManager.makeQuadVertexBuffer(0, 1, 0, 1);
+                gl.viewport(0, 0, size, size);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.useProgram(firstPass.shaderProgram);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, testTexture);
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                gl.bufferData(gl.ARRAY_BUFFER, unitQuad, gl.DYNAMIC_DRAW);
+                const ndcMatrix = new Float32Array([2, 0, 0, 0, 2, 0, -1, -1, 1]);
+                gl.uniformMatrix3fv(firstPass.uTransformMatrices[0], false, ndcMatrix);
+                gl.uniform1fv(firstPass.uOpacities, new Float32Array([1]));
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
+                gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
+                gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                const pixels = new Uint8Array(size * size * 4);
+                gl.readPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+                const hasNonZero = pixels.some(v => v !== 0);
+                if (!hasNonZero) {
+                    $.console.warn('[WebGLDrawer.isSupported] Functional test failed: no non-zero pixels read back.');
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                $.console.warn('[WebGLDrawer.isSupported] Functional test failed:', e && e.message ? e.message : e);
+                return false;
+            } finally {
+                try {
+                    if (testTexture && contextManager) {
+                        contextManager.deleteTexture(testTexture);
+                    }
+                    if (contextManager) {
+                        contextManager.destroy();
+                    } else if (gl) {
+                        const ext = gl.getExtension('WEBGL_lose_context');
+                        if (ext) {
+                            ext.loseContext();
+                        }
+                    }
+                } catch (cleanupErr) {
+                    // ignore cleanup errors so we preserve the test result
+                }
             }
-            return !!( webglContext );
         }
 
         /**
