@@ -1502,9 +1502,9 @@
             if (!tiledImage.getIssue('webgl')) {
                 if (isCanvas && $.isCanvasTainted(data)){
                     tiledImage.setIssue('webgl', 'WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
-                    this._raiseDrawerErrorEvent(tiledImage, this._canvasFallbackAllowed
-                        ? 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.'
-                        : 'Tainted data cannot be used by the WebGLDrawer, and canvas fallback is not enabled.');
+                    this._raiseDrawerErrorEvent(tiledImage, this._canvasFallbackAllowed ?
+                        'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.' :
+                        'Tainted data cannot be used by the WebGLDrawer, and canvas fallback is not enabled.');
                     this.setInternalCacheNeedsRefresh();
                 } else {
                     let sourceWidthFraction, sourceHeightFraction;
@@ -1541,9 +1541,9 @@
                     if (!texture) {
                         tiledImage.setIssue('webgl', 'Error creating texture in WebGL.');
                         const canvasAllowed = this._canvasFallbackAllowed;
-                        this._raiseDrawerErrorEvent(tiledImage, canvasAllowed
-                            ? 'Unknown error when creating texture. Falling back to CanvasDrawer for this TiledImage.'
-                            : 'Cannot use WebGL for this TiledImage; canvas fallback is not enabled.');
+                        this._raiseDrawerErrorEvent(tiledImage, canvasAllowed ?
+                            'Unknown error when creating texture. Falling back to CanvasDrawer for this TiledImage.' :
+                            'Cannot use WebGL for this TiledImage; canvas fallback is not enabled.');
                         this.setInternalCacheNeedsRefresh();
                     } else {
                         // TextureInfo stored in the cache

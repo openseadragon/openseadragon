@@ -547,8 +547,16 @@ $.Viewer = function( options ) {
     // 'auto' is expanded in the candidate list in a platform-dependent way: on iOS-like devices
     // to ['canvas'] only, on other platforms to ['webgl', 'canvas'] so that if WebGL fails at
     // creation, canvas is tried next. Same detection as getAutoDrawerCandidates() / determineDrawer('auto').
-    drawerCandidates = drawerCandidates.flatMap(function(c) { return c === 'auto' ? getAutoDrawerCandidates() : [c]; });
-    drawerCandidates = drawerCandidates.filter(function(c, i, arr) { return arr.indexOf(c) === i; });
+    drawerCandidates = drawerCandidates.flatMap(
+        function(c) {
+            return c === 'auto' ? getAutoDrawerCandidates() : [c];
+        }
+    );
+    drawerCandidates = drawerCandidates.filter(
+        function(c, i, arr) {
+            return arr.indexOf(c) === i;
+        }
+    );
     this.drawerCandidates = drawerCandidates;
 
     this.drawer = null;
