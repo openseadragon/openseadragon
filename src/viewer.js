@@ -1138,7 +1138,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             }
         }
         if (supported) {
-            // if the drawer is supported, create it and return true
+            // if the drawer is supported, create it and return it.
             // first destroy the previous drawer
             if(oldDrawer && mainDrawer){
                 oldDrawer.destroy();

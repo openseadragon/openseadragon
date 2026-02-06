@@ -435,7 +435,6 @@
                 const originalGetContext = HTMLCanvasElement.prototype.getContext;
                 getContextPrototypeRestore = function() {
                     HTMLCanvasElement.prototype.getContext = originalGetContext;
-                    getContextPrototypeRestore = null;
                 };
                 HTMLCanvasElement.prototype.getContext = function(type) {
                     const gl = originalGetContext.apply(this, arguments);
