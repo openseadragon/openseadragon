@@ -193,7 +193,7 @@
   * @property {String|DrawerImplementation|Array} [drawer = ['auto', 'webgl', 'canvas', 'html']]
   *     Which drawer to use. Valid strings are 'auto', 'webgl', 'canvas', and 'html'.
   *     The string 'auto' is converted to one or more drawer type strings depending
-  *     on the platform. On iOS-like devices it becomse 'canvas' due to performance
+  *     on the platform. On iOS-like devices it becomes 'canvas' due to performance
   *     limitations with the webgl drawer. On all other platforms it becomes ['webgl', 'canvas']
   *     meaning that webgl is tried first, and canvas is available as a fallback if webgl is not supported.
   *
@@ -206,7 +206,7 @@
   *     The 'webgl' drawer can automatically fall back to canvas as needed, for example to draw
   *     images that do not have CORS headers set which makes them tainted and unavailable to webgl.
   *     This behavior depends on 'canvas' being included in the list of drawer candidates. If
-  *     webgl is needed and canvas fallback is not desired, use 'webg' without including 'canvas' in the list.
+  *     webgl is needed and canvas fallback is not desired, use 'webgl' without including 'canvas' in the list.
   *
   * @property {Object} drawerOptions
   *     Options to pass to the selected drawer implementation. For details

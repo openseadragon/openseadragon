@@ -184,13 +184,12 @@ $.Viewer = function( options ) {
          */
         drawer:             null,
         /**
-         * Resolved list of drawer candidates (after expanding 'auto' in a platform-dependent way and
-         * de-duplicating; first occurrence kept). Entries are drawer type strings ('webgl', 'canvas',
-         * 'html') or custom drawer constructors. Used to decide allowed fallbacks: WebGL drawer only
-         * falls back to canvas when the string 'canvas' is in this list (see per-tile and context-loss
-         * fallback). For per-tile fallback, WebGL drawer uses CanvasDrawer when 'canvas' is in this list,
-         * regardless of list order (e.g. even if 'html' has higher priority).
-         * @member {Array<string|Function>} drawerCandidates
+         * Resolved list of drawer type strings (after expanding 'auto', de-duplicating, and
+         * normalizing: constructors are replaced by their getType() result). Used to decide
+         * allowed fallbacks: WebGL drawer only falls back to canvas when the string 'canvas' is
+         * in this list (see per-tile and context-loss fallback). Normalized so includes('canvas')
+         * is reliable even when custom drawer constructors were passed in options.
+         * @member {string[]} drawerCandidates
          * @memberof OpenSeadragon.Viewer#
          */
         drawerCandidates:   null,
@@ -557,7 +556,7 @@ $.Viewer = function( options ) {
             return arr.indexOf(c) === i;
         }
     );
-    this.drawerCandidates = drawerCandidates;
+    this.drawerCandidates = drawerCandidates.map(getDrawerTypeString).filter(Boolean);
 
     this.drawer = null;
     for (const drawerCandidate of drawerCandidates){
@@ -4436,6 +4435,24 @@ function onFlip() {
 }
 
 /**
+ * Return the drawer type string for a candidate (string or DrawerBase constructor).
+ * Used to normalize drawerCandidates to strings so includes('canvas') is reliable.
+ * @private
+ * @param {string|Function} candidate - Drawer type string or constructor
+ * @returns {string|undefined} Type string, or undefined if not resolvable
+ */
+function getDrawerTypeString(candidate) {
+    if (typeof candidate === 'string') {
+        return candidate;
+    }
+    const proto = candidate && candidate.prototype;
+    if (proto && proto instanceof OpenSeadragon.DrawerBase && $.isFunction(proto.getType)) {
+        return proto.getType.call(candidate);
+    }
+    return undefined;
+}
+
+/**
  * Return the list of drawer type strings that 'auto' expands to (platform-dependent).
  * Uses the same detection as determineDrawer('auto'): on iOS-like devices, ['canvas'] only;
  * on all other platforms, ['webgl', 'canvas'] so webgl is tried first and canvas next if WebGL fails.
@@ -4443,6 +4460,8 @@ function onFlip() {
  * @returns {string[]}
  */
 function getAutoDrawerCandidates() {
+    // Our WebGL drawer is not as performant on iOS at the moment, so we use canvas there.
+    // Note that modern iPads report themselves as Mac, so we also check for coarse pointer.
     const isPrimaryTouch = window.matchMedia('(pointer: coarse)').matches;
     const isIOSDevice = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent) && isPrimaryTouch;
     return isIOSDevice ? ['canvas'] : ['webgl', 'canvas'];
@@ -4453,11 +4472,8 @@ function getAutoDrawerCandidates() {
  */
 $.determineDrawer = function( id ){
     if (id === 'auto') {
-        // Our WebGL drawer is not as performant on iOS at the moment, so we use canvas there.
-        // Note that modern iPads report themselves as Mac, so we also check for coarse pointer.
-        const isPrimaryTouch = window.matchMedia('(pointer: coarse)').matches;
-        const isIOSDevice = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent) && isPrimaryTouch;
-        id = isIOSDevice ? 'canvas' : 'webgl';
+        // Same platform detection as getAutoDrawerCandidates(); first entry is the preferred drawer type.
+        id = getAutoDrawerCandidates()[0];
     }
 
     for (const property in OpenSeadragon) {
