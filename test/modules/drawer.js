@@ -291,8 +291,8 @@
                 const done = assert.async();
                 const timeout = Util.timeWatcher(assert, 5000);
 
-                // Create viewer without tileSources so we can setup testing before we open and draw an image
-                createViewer();
+                // Create viewer with webgl and canvas so canvas fallback is allowed when recovery fails
+                createViewer({ drawer: ['webgl', 'canvas'] });
 
                 if (viewer.drawer.getType() !== 'webgl') {
                     assert.expect(0);
