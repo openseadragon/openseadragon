@@ -220,10 +220,12 @@ $.TileSource = function( options ) {
         this.minLevel    = 0;
         this.maxLevel    = 0;
         this.ready       = false;
+        this._uniqueIdentifier = this.url;
         //configuration via url implies the extending class
         //implements and 'configure'
         setTimeout(() => this.getImageInfo(this.url)); //needs async in case someone exits immediately
     } else {
+        this._uniqueIdentifier = Math.floor(Math.random() * 1e10).toString(36);
         // by default it used to fire immediately, so make the ready default
         if (this.ready || this.ready === undefined) {
             this.raiseEvent('ready', { tileSource: this });
@@ -770,7 +772,7 @@ $.TileSource.prototype = {
         }
 
         if (typeof url !== "string") {
-            return withHeaders(level + "/" + x + "_" + y);
+            return withHeaders(this._uniqueIdentifier + ":" + level + "/" + x + "_" + y);
         }
         return withHeaders(url);
     },
@@ -864,7 +866,25 @@ $.TileSource.prototype = {
                 }
             });
         } else {
-            context.finish(context.src, null, "imageUrl");
+            // While we could just do this one-liner, we found out that downloading the data _before_ a cache is initialized
+            // works better in general cases. Network access is the most error-prone part, and this scenario better supports
+            // all default use-cases, including the fact that retry logic works only at this stage, not on the cache level.
+            //  context.finish(context.src, null, "imageUrl");
+
+            const image = new Image();
+            context.userData.imageRequest = image;
+            image.onload = function () {
+                image.onload = image.onerror = image.onabort = null;
+                context.finish(image, null, "image");
+            };
+            image.onabort = image.onerror = function() {
+                image.onload = image.onerror = image.onabort = null;
+                context.fail("[downloadTileStart] Image load aborted or errored out.", null);
+            };
+            if (typeof context.crossOriginPolicy === "string") {
+                image.crossOrigin = context.crossOriginPolicy;
+            }
+            image.src = context.src;
         }
     },
 
@@ -879,6 +899,11 @@ $.TileSource.prototype = {
     downloadTileAbort: function (context) {
         if (context.userData.request) {
             context.userData.request.abort();
+        }
+        if (context.userData.imageRequest) {
+            const image = context.userData.imageRequest;
+            image.onload = image.onerror = image.onabort = null;
+            image.src = "";
         }
     },
 
