@@ -49,6 +49,7 @@ OPENSEADRAGON CHANGELOG
 * We are now including the TypeScript definitions directly in the project (#2813, #2823 @rssaini01)
 * Better error handling in DataTypeConverter (#2860 @dao251)
 * Improved detection for proper WebGL support before using the WebGLDrawer (#2865 @pearcetm)
+* Improved drawer selection process; now if a drawer isn't included in the list of options, we won't use it (#2868 @pearcetm)
 * Improved performance on mobile (#2732 @Sumaiya2505)
 * Improved OSM compatibility (#2854 @JohanVisser97)
 * Improved how OpenSeadragon is imported in various environments (#2644 @Aiosa)
