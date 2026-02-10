@@ -37,6 +37,553 @@
 
     const OpenSeadragon = $; // alias for JSDoc
 
+    /**
+     * @class WebglContextManager
+     * @classdesc Handles the webgl context, isolating it from the rest of the DrawerBase API.
+     * Manages WebGL context lifecycle, shaders, textures, framebuffers, and other WebGL resources.
+     * @param {Object} options - Options for the context manager
+     * @param {HTMLCanvasElement} options.renderingCanvas - The canvas element to use for WebGL context
+     * @param {Boolean} [options.unpackWithPremultipliedAlpha=false] - Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL
+     * @param {Boolean} [options.imageSmoothingEnabled=true] - Whether image smoothing is enabled
+     */
+    class WebglContextManager {
+        constructor(options) {
+            this._renderingCanvas = options.renderingCanvas;
+            this._unpackWithPremultipliedAlpha = !!options.unpackWithPremultipliedAlpha;
+            this._imageSmoothingEnabled = options.imageSmoothingEnabled !== undefined ? options.imageSmoothingEnabled : true;
+            this._initShaderProgram = options.initShaderProgram;
+
+            this._gl = null;
+            this._isWebGL2 = false;
+            this._extTextureFilterAnisotropic = null;
+            this._maxAnisotropy = 0;
+
+            this._firstPass = null;
+            this._secondPass = null;
+            this._glFrameBuffer = null;
+            this._renderToTexture = null;
+            this._glNumTextures = 0;
+            this._unitQuad = null;
+
+            this._destroyed = false;
+
+            // Create WebGL context
+            this._gl = this._renderingCanvas.getContext('webgl2');
+            if (this._gl) {
+                this._isWebGL2 = true;
+                this._setupWebGLExtensions();
+            } else {
+                this._gl = this._renderingCanvas.getContext('webgl');
+                this._isWebGL2 = false;
+                if (this._gl) {
+                    this._setupWebGLExtensions();
+                }
+            }
+
+            if (this._gl) {
+                this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            }
+        }
+
+        /**
+         * Get the WebGL context
+         * @returns {WebGLRenderingContext|WebGL2RenderingContext|null} The WebGL context
+         */
+        getContext() {
+            return this._gl;
+        }
+
+        /**
+         * Check if using WebGL2
+         * @returns {Boolean} true if WebGL2, false if WebGL1
+         */
+        isWebGL2() {
+            return this._isWebGL2;
+        }
+
+        /**
+         * Get the maximum number of texture units
+         * @returns {Number} MAX_TEXTURE_IMAGE_UNITS value
+         */
+        getMaxTextures() {
+            if (!this._gl) {
+                return 0;
+            }
+            return this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+        }
+
+        /**
+         * Get the rendering canvas element
+         * @returns {HTMLCanvasElement} The canvas element
+         */
+        getRenderingCanvas() {
+            return this._renderingCanvas;
+        }
+
+        /**
+         * Get the first pass shader program and resources
+         * @returns {Object|null} The first pass object with shader program, buffers, and uniforms
+         */
+        getFirstPass() {
+            return this._firstPass;
+        }
+
+        /**
+         * Get the second pass shader program and resources
+         * @returns {Object|null} The second pass object with shader program, buffers, and uniforms
+         */
+        getSecondPass() {
+            return this._secondPass;
+        }
+
+        /**
+         * Get the render-to-texture framebuffer
+         * @returns {WebGLFramebuffer|null} The framebuffer
+         */
+        getFrameBuffer() {
+            return this._glFrameBuffer;
+        }
+
+        /**
+         * Get the render-to-texture texture
+         * @returns {WebGLTexture|null} The texture
+         */
+        getRenderToTexture() {
+            return this._renderToTexture;
+        }
+
+        /**
+         * Get the unit quad vertex buffer
+         * @returns {Float32Array} The unit quad buffer
+         */
+        getUnitQuad() {
+            return this._unitQuad;
+        }
+
+        /**
+         * Set up WebGL extensions (works for both WebGL1 and WebGL2)
+         * @private
+         */
+        _setupWebGLExtensions() {
+            const gl = this._gl;
+
+            // Anisotropic filtering extension (available in both WebGL1 and WebGL2)
+            this._extTextureFilterAnisotropic =
+                gl.getExtension('EXT_texture_filter_anisotropic') ||
+                gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
+                gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
+
+            if (this._extTextureFilterAnisotropic) {
+                this._maxAnisotropy = gl.getParameter(
+                    this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
+                );
+            }
+        }
+
+        /**
+         * Get the texture filter constant (LINEAR or NEAREST)
+         * @returns {Number} gl.LINEAR or gl.NEAREST
+         */
+        getTextureFilter() {
+            const gl = this._gl;
+            return this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
+        }
+
+        /**
+         * Apply anisotropic filtering to the currently bound texture if available
+         * @private
+         */
+        _applyAnisotropy() {
+            if (!this._imageSmoothingEnabled || !this._extTextureFilterAnisotropic || this._maxAnisotropy <= 0) {
+                return;
+            }
+            const gl = this._gl;
+            gl.texParameterf(
+                gl.TEXTURE_2D,
+                this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
+                Math.min(4, this._maxAnisotropy)
+            );
+        }
+
+        /**
+         * Set up the renderer: create shaders, textures, and framebuffers
+         * @param {Number} width - Canvas width
+         * @param {Number} height - Canvas height
+         */
+        setupRenderer(width, height) {
+            const gl = this._gl;
+            if (!gl) {
+                $.console.error('WebGL context not available for setupRenderer');
+                return;
+            }
+
+            // Create unit quad once
+            this._unitQuad = this.makeQuadVertexBuffer(0, 1, 0, 1);
+
+            this._makeFirstPassShaderProgram();
+            this._makeSecondPassShaderProgram();
+
+            // set up the texture to render to in the first pass, and which will be used for rendering the second pass
+            this._renderToTexture = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.getTextureFilter());
+            this._applyAnisotropy();
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+            // set up the framebuffer for render-to-texture
+            this._glFrameBuffer = gl.createFramebuffer();
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
+            gl.framebufferTexture2D(
+                gl.FRAMEBUFFER,
+                gl.COLOR_ATTACHMENT0,
+                gl.TEXTURE_2D,
+                this._renderToTexture,
+                0
+            );
+
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        }
+
+        /**
+         * Resize the render-to-texture when canvas size changes
+         * @param {Number} width - New canvas width
+         * @param {Number} height - New canvas height
+         */
+        resizeRenderer(width, height) {
+            const gl = this._gl;
+            if (!gl) {
+                return;
+            }
+            gl.viewport(0, 0, width, height);
+
+            //release the old texture
+            gl.deleteTexture(this._renderToTexture);
+            //create a new texture and set it up
+            this._renderToTexture = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.getTextureFilter());
+            this._applyAnisotropy();
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+            //bind the frame buffer to the new texture
+            gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
+            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._renderToTexture, 0);
+        }
+
+        /**
+         * Create and upload a texture for a tile
+         * @param {HTMLImageElement|HTMLCanvasElement|ImageData} data - Image data to upload
+         * @param {Object} options - Texture options
+         * @param {Boolean} [options.unpackWithPremultipliedAlpha] - Override default unpack setting
+         * @returns {WebGLTexture|null} The created texture, or null on error
+         */
+        createTexture(data, options = {}) {
+            const gl = this._gl;
+            if (!gl) {
+                return null;
+            }
+
+            const texture = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.getTextureFilter());
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.getTextureFilter());
+            this._applyAnisotropy();
+
+            try {
+                const unpackPremultipliedAlpha = options.unpackWithPremultipliedAlpha !== undefined ?
+                    options.unpackWithPremultipliedAlpha :
+                    this._unpackWithPremultipliedAlpha;
+                gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, unpackPremultipliedAlpha);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
+                return texture;
+            } catch (e) {
+                gl.deleteTexture(texture);
+                return null;
+            }
+        }
+
+        /**
+         * Delete a texture
+         * @param {WebGLTexture} texture - The texture to delete
+         */
+        deleteTexture(texture) {
+            if (this._gl && texture) {
+                this._gl.deleteTexture(texture);
+            }
+        }
+
+        /**
+         * Set image smoothing enabled state
+         * @param {Boolean} enabled - Whether image smoothing is enabled
+         */
+        setImageSmoothingEnabled(enabled) {
+            this._imageSmoothingEnabled = !!enabled;
+        }
+
+        /**
+         * Set unpack with premultiplied alpha state
+         * @param {Boolean} enabled - Whether to use premultiplied alpha
+         */
+        setUnpackWithPremultipliedAlpha(enabled) {
+            this._unpackWithPremultipliedAlpha = !!enabled;
+            if (this._gl) {
+                this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+            }
+        }
+
+        /**
+         * Make a quad vertex buffer
+         * @param {Number} left - Left coordinate
+         * @param {Number} right - Right coordinate
+         * @param {Number} top - Top coordinate
+         * @param {Number} bottom - Bottom coordinate
+         * @returns {Float32Array} Vertex buffer
+         */
+        makeQuadVertexBuffer(left, right, top, bottom) {
+            return new Float32Array([
+                left, bottom,
+                right, bottom,
+                left, top,
+                left, top,
+                right, bottom,
+                right, top]);
+        }
+
+        /**
+         * Create the first pass shader program
+         * @private
+         */
+        _makeFirstPassShaderProgram() {
+            const numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+            const makeMatrixUniforms = () => {
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+            };
+            const makeConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(int(a_index) == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+            };
+
+            const vertexShaderProgram = `
+            attribute vec2 a_output_position;
+            attribute vec2 a_texture_position;
+            attribute float a_index;
+
+            ${makeMatrixUniforms()} // create a uniform mat3 for each potential tile to draw
+
+            varying vec2 v_texture_position;
+            varying float v_image_index;
+
+            void main() {
+
+                mat3 transform_matrix; // value will be set by the if/elses in makeConditional()
+
+                ${makeConditionals()}
+
+                gl_Position = vec4(transform_matrix * vec3(a_output_position, 1), 1);
+
+                v_texture_position = a_texture_position;
+                v_image_index = a_index;
+            }
+            `;
+
+            const fragmentShaderProgram = `
+            precision mediump float;
+
+            // our textures
+            uniform sampler2D u_images[${numTextures}];
+            // our opacities
+            uniform float u_opacities[${numTextures}];
+
+            // the varyings passed in from the vertex shader.
+            varying vec2 v_texture_position;
+            varying float v_image_index;
+
+            void main() {
+                // can't index directly with a variable, need to use a loop iterator hack
+                for(int i = 0; i < ${numTextures}; ++i){
+                    if(i == int(v_image_index)){
+                        gl_FragColor = texture2D(u_images[i], v_texture_position) * u_opacities[i];
+                    }
+                }
+            }
+            `;
+
+            const gl = this._gl;
+
+            const program = this._initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            gl.useProgram(program);
+
+            // get locations of attributes and uniforms, and create buffers for each attribute
+            this._firstPass = {
+                shaderProgram: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                aIndex: gl.getAttribLocation(program, 'a_index'),
+                uTransformMatrices: [...Array(this._glNumTextures).keys()].map(i=>gl.getUniformLocation(program, `u_matrix_${i}`)),
+                uImages: gl.getUniformLocation(program, 'u_images'),
+                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+                bufferIndex: gl.createBuffer(),
+            };
+
+            gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
+
+            // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
+            const outputQuads = new Float32Array(numTextures * 12);
+            for(let i = 0; i < numTextures; ++i){
+                outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
+            }
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            gl.enableVertexAttribArray(this._firstPass.aOutputPosition);
+
+            // provide texture coordinates for the rectangle in image (texture) space. Data will be set later.
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+            gl.enableVertexAttribArray(this._firstPass.aTexturePosition);
+
+            // for each vertex, provide an index into the array of textures/matrices to use for the correct tile
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
+            const indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat(); // repeat each index 6 times, for the 6 vertices per tile (2 triangles)
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW); // bind data statically here, since it's unchanging
+            gl.enableVertexAttribArray(this._firstPass.aIndex);
+        }
+
+        /**
+         * Create the second pass shader program
+         * @private
+         */
+        _makeSecondPassShaderProgram() {
+            const vertexShaderProgram = `
+            attribute vec2 a_output_position;
+            attribute vec2 a_texture_position;
+
+            varying vec2 v_texture_position;
+
+            void main() {
+                // Transform to clip space (0:1 --> -1:1)
+                gl_Position = vec4(vec3(a_output_position * 2.0 - 1.0, 1), 1);
+
+                v_texture_position = a_texture_position;
+            }
+            `;
+
+            const fragmentShaderProgram = `
+            precision mediump float;
+
+            // our texture
+            uniform sampler2D u_image;
+
+            // the texCoords passed in from the vertex shader.
+            varying vec2 v_texture_position;
+
+            // the opacity multiplier for the image
+            uniform float u_opacity_multiplier;
+
+            void main() {
+                gl_FragColor = texture2D(u_image, v_texture_position);
+                gl_FragColor *= u_opacity_multiplier;
+            }
+            `;
+
+            const gl = this._gl;
+
+            const program = this._initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            gl.useProgram(program);
+
+            // get locations of attributes and uniforms, and create buffers for each attribute
+            this._secondPass = {
+                shaderProgram: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
+                uImage: gl.getUniformLocation(program, 'u_image'),
+                uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
+                bufferOutputPosition: gl.createBuffer(),
+                bufferTexturePosition: gl.createBuffer(),
+            };
+
+            // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.STATIC_DRAW); // bind data statically here since it's unchanging
+            gl.enableVertexAttribArray(this._secondPass.aOutputPosition);
+
+            // provide texture coordinates for the rectangle in image (texture) space.
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
+            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
+            gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
+        }
+
+        /**
+         * Destroy the WebGL context and all resources
+         */
+        destroy() {
+            if (this._destroyed) {
+                return;
+            }
+            this._destroyed = true;
+
+            const gl = this._gl;
+            if (gl) {
+                try {
+                    // adapted from https://stackoverflow.com/a/23606581/1214731
+                    const numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+                    if (numTextureUnits && numTextureUnits > 0) {
+                        for (let unit = 0; unit < numTextureUnits; ++unit) {
+                            gl.activeTexture(gl.TEXTURE0 + unit);
+                            gl.bindTexture(gl.TEXTURE_2D, null);
+                            gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+                        }
+                    }
+                    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+                    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+                    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+                    // Delete all our created resources
+                    if (this._secondPass && this._secondPass.bufferOutputPosition) {
+                        gl.deleteBuffer(this._secondPass.bufferOutputPosition);
+                    }
+                    if (this._glFrameBuffer) {
+                        gl.deleteFramebuffer(this._glFrameBuffer);
+                    }
+                } catch (e) {
+                    // Context may already be lost, continue with cleanup
+                    $.console.warn('Error during WebGL cleanup in WebglContextManager.destroy():', e);
+                }
+
+                const ext = gl.getExtension('WEBGL_lose_context');
+                if (ext) {
+                    ext.loseContext();
+                }
+            }
+
+            // Clean up references
+            this._gl = null;
+            this._firstPass = null;
+            this._secondPass = null;
+            this._glFrameBuffer = null;
+            this._renderToTexture = null;
+            this._unitQuad = null;
+        }
+
+        /**
+         * Check if this context manager has been destroyed
+         * @returns {Boolean} true if destroyed, false otherwise
+         */
+        isDestroyed() {
+            return this._destroyed;
+        }
+    }
+
    /**
     * @class OpenSeadragon.WebGLDrawer
     * @classdesc Default implementation of WebGLDrawer for an {@link OpenSeadragon.Viewer}. The WebGLDrawer
@@ -77,57 +624,28 @@
 
             // private members
             this._destroyed = false;
-            this._gl = null;
             /**
-             * Flag to track if we're using WebGL2 context.
-             * When true, additional WebGL2-specific optimizations can be enabled.
-             *
-             * TODO: Future WebGL2 enhancements to implement:
-             * - Shared off-screen renderer: Share renderer between multiple drawers to prevent
-             *   context limit crashes (e.g., scroll page with multiple viewers + navigators)
-             * - Vertex Array Objects (VAOs): Built-in state management for vertex attributes
-             * - Instanced rendering: Draw multiple tiles in a single draw call
-             * - Uniform Buffer Objects (UBOs): More efficient uniform updates for batched rendering
-             * - Transform feedback: GPU-based computations for tile processing
-             * - Multiple render targets: Advanced compositing with multiple framebuffer attachments
-             * - GLSL ES 3.0 shaders: Enhanced shader capabilities (integer ops, etc.)
-             *
-             * Note: Texture arrays (2D_ARRAY) are not recommended due to hardware limitations -
-             * they underperform except when tiles have more than 4 channels.
-             *
-             * @member {Boolean} _isWebGL2
+             * WebGL context manager instance
+             * @member {WebglContextManager} _glContext
              * @memberof OpenSeadragon.WebGLDrawer#
              * @private
              */
-            this._isWebGL2 = false;
+            this._glContext = null;
             /**
-             * WebGL anisotropic texture filtering extension instance, if supported.
-             * Used to enable higher quality texture filtering for tiles.
-             *
-             * @member {?Object} _extTextureFilterAnisotropic
+             * Flag to enable/disable automatic WebGL context re-initialization on context loss.
+             * When enabled, the drawer will attempt to recover from context exhaustion errors.
+             * @member {Boolean} _enableContextRecovery
              * @memberof OpenSeadragon.WebGLDrawer#
              * @private
              */
-            this._extTextureFilterAnisotropic = null;
-            /**
-             * Maximum supported anisotropy level for the current WebGL context.
-             * A value of 0 indicates that anisotropic filtering is not available.
-             *
-             * @member {Number} _maxAnisotropy
-             * @memberof OpenSeadragon.WebGLDrawer#
-             * @private
-             */
-            this._maxAnisotropy = 0;
-            this._firstPass = null;
-            this._secondPass = null;
-            this._glFrameBuffer = null;
-            this._renderToTexture = null;
+            this._enableContextRecovery = true;
             this._outputCanvas = null;
             this._outputContext = null;
             this._clippingCanvas = null;
             this._clippingContext = null;
             this._renderingCanvas = null;
             this._backupCanvasDrawer = null;
+            this._canvasFallbackAllowed = this.viewer.drawerCandidates && this.viewer.drawerCandidates.includes('canvas');
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
@@ -168,40 +686,31 @@
                 return;
             }
             super.destroy();
-            // clear all resources used by the renderer, geometries, textures etc
-            const gl = this._gl;
-
-            // adapted from https://stackoverflow.com/a/23606581/1214731
-            const numTextureUnits = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
-            for (let unit = 0; unit < numTextureUnits; ++unit) {
-                gl.activeTexture(gl.TEXTURE0 + unit);
-                gl.bindTexture(gl.TEXTURE_2D, null);
-                gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+            // Remove the resize handler to prevent memory leaks
+            if (this._resizeHandler) {
+                this.viewer.removeHandler("resize", this._resizeHandler);
+                this._resizeHandler = null;
             }
-            gl.bindBuffer(gl.ARRAY_BUFFER, null);
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-            gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-            // Delete all our created resources
-            gl.deleteBuffer(this._secondPass.bufferOutputPosition);
-            gl.deleteFramebuffer(this._glFrameBuffer);
+            // Destroy WebGL context manager
+            if (this._glContext) {
+                this._glContext.destroy();
+                this._glContext = null;
+            }
 
             // make canvases 1 x 1 px and delete references
-            this._renderingCanvas.width = this._renderingCanvas.height = 1;
-            this._clippingCanvas.width = this._clippingCanvas.height = 1;
-            this._outputCanvas.width = this._outputCanvas.height = 1;
+            if (this._renderingCanvas) {
+                this._renderingCanvas.width = this._renderingCanvas.height = 1;
+            }
+            if (this._clippingCanvas) {
+                this._clippingCanvas.width = this._clippingCanvas.height = 1;
+            }
+            if (this._outputCanvas) {
+                this._outputCanvas.width = this._outputCanvas.height = 1;
+            }
             this._renderingCanvas = null;
             this._clippingCanvas = this._clippingContext = null;
             this._outputCanvas = this._outputContext = null;
-
-            const ext = gl.getExtension('WEBGL_lose_context');
-            if(ext){
-                ext.loseContext();
-            }
-
-            // set our webgl context reference to null to enable garbage collection
-            this._gl = null;
 
             if(this._backupCanvasDrawer){
                 this._backupCanvasDrawer.destroy();
@@ -230,17 +739,111 @@
 
         // Public API required by all Drawer implementations
         /**
-        * @returns {Boolean} true if canvas and webgl are supported
-        */
+         * Functional test: true if WebGL is supported and the real first-pass shader pipeline
+         * can render (same shaders/context path used at runtime). Uses a temp context and
+         * WebglContextManager, draws known non-black pixels to an FBO, then readPixels.
+         * @returns {Boolean} true if WebGL is supported and the pipeline renders successfully
+         */
         static isSupported(){
-            const canvasElement = document.createElement( 'canvas' );
-            const webglContext = $.isFunction( canvasElement.getContext ) &&
-                        canvasElement.getContext( 'webgl' );
-            const ext = webglContext && webglContext.getExtension('WEBGL_lose_context');
-            if(ext){
-                ext.loseContext();
+            let contextManager = null;
+            let testTexture = null;
+            let gl = null;
+            try {
+                const size = 4;
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                if (!$.isFunction(canvas.getContext)) {
+                    return false;
+                }
+                gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+                if (!gl) {
+                    return false;
+                }
+                contextManager = new WebglContextManager({
+                    renderingCanvas: canvas,
+                    unpackWithPremultipliedAlpha: false,
+                    imageSmoothingEnabled: true,
+                    initShaderProgram: WebGLDrawer.initShaderProgram
+                });
+                if (!contextManager.getContext()) {
+                    return false;
+                }
+                contextManager.setupRenderer(size, size);
+
+                const firstPass = contextManager.getFirstPass();
+                const glFrameBuffer = contextManager.getFrameBuffer();
+                if (!firstPass || !glFrameBuffer) {
+                    return false;
+                }
+
+                const maxTextures = contextManager.getMaxTextures();
+                if (!maxTextures || maxTextures <= 0) {
+                    return false;
+                }
+
+                const imageData = new ImageData(size, size);
+                imageData.data[0] = 255;
+                imageData.data[1] = 0;
+                imageData.data[2] = 0;
+                imageData.data[3] = 255;
+                testTexture = contextManager.createTexture(imageData);
+                if (!testTexture) {
+                    return false;
+                }
+
+                const unitQuad = contextManager.makeQuadVertexBuffer(0, 1, 0, 1);
+                gl.viewport(0, 0, size, size);
+                gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.useProgram(firstPass.shaderProgram);
+
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, testTexture);
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                gl.bufferData(gl.ARRAY_BUFFER, unitQuad, gl.DYNAMIC_DRAW);
+                const ndcMatrix = new Float32Array([2, 0, 0, 0, 2, 0, -1, -1, 1]);
+                gl.uniformMatrix3fv(firstPass.uTransformMatrices[0], false, ndcMatrix);
+                gl.uniform1fv(firstPass.uOpacities, new Float32Array([1]));
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
+                gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
+                gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                const pixels = new Uint8Array(size * size * 4);
+                gl.readPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+                const hasNonZero = pixels.some(v => v !== 0);
+                if (!hasNonZero) {
+                    $.console.warn('[WebGLDrawer.isSupported] Functional test failed: no non-zero pixels read back.');
+                    return false;
+                }
+                return true;
+            } catch (e) {
+                $.console.warn('[WebGLDrawer.isSupported] Functional test failed:', e && e.message ? e.message : e);
+                return false;
+            } finally {
+                try {
+                    if (testTexture && contextManager) {
+                        contextManager.deleteTexture(testTexture);
+                    }
+                    if (contextManager) {
+                        contextManager.destroy();
+                    } else if (gl) {
+                        const ext = gl.getExtension('WEBGL_lose_context');
+                        if (ext) {
+                            ext.loseContext();
+                        }
+                    }
+                } catch (cleanupErr) {
+                    // ignore cleanup errors so we preserve the test result
+                }
             }
-            return !!( webglContext );
         }
 
         /**
@@ -256,7 +859,25 @@
          * @returns {Boolean} true if WebGL2 is being used, false if WebGL1
          */
         isWebGL2(){
-            return this._isWebGL2;
+            return this._glContext ? this._glContext.isWebGL2() : false;
+        }
+
+        /**
+         * Enable or disable automatic WebGL context re-initialization on context loss.
+         * When enabled, the drawer will attempt to recover from context exhaustion errors
+         * by re-initializing the WebGL context.
+         * @param {Boolean} enabled - true to enable recovery, false to disable
+         */
+        setContextRecoveryEnabled(enabled) {
+            this._enableContextRecovery = !!enabled;
+        }
+
+        /**
+         * Check if context recovery is enabled
+         * @returns {Boolean} true if recovery is enabled, false otherwise
+         */
+        isContextRecoveryEnabled() {
+            return this._enableContextRecovery;
         }
 
         /**
@@ -299,12 +920,22 @@
             return this._backupCanvasDrawer;
         }
 
+        //
         /**
-        *
-        * @param {Array} tiledImages Array of TiledImage objects to draw
-        */
-        draw(tiledImages){
-            const gl = this._gl;
+         * Internal draw method, wrapped in a try/catch within draw()
+         * @param {Array} tiledImages Array of TiledImage objects to draw
+         * @param {Boolean} [isRetry=false] Internal flag to prevent infinite retry loops
+         * @private
+         */
+        _draw(tiledImages, isRetry = false){
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            if (!gl) {
+                return;
+            }
+            const firstPass = this._glContext.getFirstPass();
+            const secondPass = this._glContext.getSecondPass();
+            const glFrameBuffer = this._glContext.getFrameBuffer();
+            const renderToTexture = this._glContext.getRenderToTexture();
             const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
             const view = {
                 bounds: bounds,
@@ -331,199 +962,256 @@
             //iterate over tiled images and draw each one using a two-pass rendering pipeline if needed
             tiledImages.forEach( (tiledImage, tiledImageIndex) => {
 
-                if(tiledImage.getIssue('webgl')){
-                    // first, draw any data left in the rendering buffer onto the output canvas
-                    if(renderingBufferHasImageData){
-                        this._outputContext.drawImage(this._renderingCanvas, 0, 0);
-                        // clear the buffer
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
-                        renderingBufferHasImageData = false;
-                    }
+            if(tiledImage.getIssue('webgl')){
+                // first, draw any data left in the rendering buffer onto the output canvas
+                if(renderingBufferHasImageData){
+                    this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                    // clear the buffer
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+                    renderingBufferHasImageData = false;
+                }
 
-                    // next, use the backup canvas drawer to draw this tainted image
+                // next, use the backup canvas drawer to draw the tiled image (if allowed)
+                if(this._canvasFallbackAllowed){
                     const canvasDrawer = this._getBackupCanvasDrawer();
                     canvasDrawer.draw([tiledImage]);
                     this._outputContext.drawImage(canvasDrawer.canvas, 0, 0);
+                }
 
+            } else {
+                const tilesToDraw = tiledImage.getTilesToDraw();
+
+                if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
+                    this._drawPlaceholder(tiledImage);
+                }
+
+                if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
+                    return;
+                }
+                const firstTile = tilesToDraw[0];
+
+                const useContext2dPipeline = ( tiledImage.compositeOperation ||
+                    this.viewer.compositeOperation ||
+                    tiledImage._clip ||
+                    tiledImage._croppingPolygons ||
+                    tiledImage.debugMode
+                );
+
+                const useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
+
+                // using the context2d pipeline requires a clean rendering (back) buffer to start
+                if(useContext2dPipeline){
+                    // if the rendering buffer has image data currently, write it to the output canvas now and clear it
+
+                    if(renderingBufferHasImageData){
+                        this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                    }
+
+                    // clear the buffer
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+                }
+
+                // First rendering pass: compose tiles that make up this tiledImage
+                gl.useProgram(firstPass.shaderProgram);
+
+                // bind to the framebuffer for render-to-texture if using two-pass rendering, otherwise back buffer (null)
+                if(useTwoPassRendering){
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
+                    // clear the buffer to draw a new image
+                    gl.clear(gl.COLOR_BUFFER_BIT);
                 } else {
-                    const tilesToDraw = tiledImage.getTilesToDraw();
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    // no need to clear, just draw on top of the existing pixels
+                }
 
-                    if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
-                        this._drawPlaceholder(tiledImage);
+                let overallMatrix = viewMatrix;
+
+                const imageRotation = tiledImage.getRotation(true);
+                // if needed, handle the tiledImage being rotated
+                if( imageRotation % 360 !== 0){
+                    const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
+                    const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
+                    const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
+                    const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
+
+                    // update the view matrix to account for this image's rotation
+                    const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
+                    overallMatrix = viewMatrix.multiply(localMatrix);
+                }
+
+                // Check MAX_TEXTURE_IMAGE_UNITS - throw error if invalid (will be caught by outer try-catch)
+                const maxTextures = this._glContext.getMaxTextures();
+                if(maxTextures <= 0 || maxTextures === null || maxTextures === undefined){
+                    // This can apparently happen on some systems if too many WebGL contexts have been created
+                    // in which case maxTextures can be null, leading to out of bounds errors with the array.
+                    // For example, when viewers were created and not destroyed in the test suite, this error
+                    // occurred in the TravisCI tests, though it did not happen when testing locally either in
+                    // a browser or on the command line via grunt test.
+
+                    throw new Error(`WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
+                    if too many contexts have been created and not released, or there is another problem with the graphics card.`);
+                }
+
+                const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
+                const textureDataArray = new Array(maxTextures);
+                const matrixArray = new Array(maxTextures);
+                const opacityArray = new Array(maxTextures);
+
+                // iterate over tiles and add data for each one to the buffers
+                for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
+                    const tile = tilesToDraw[tileIndex].tile;
+                    const indexInDrawArray = tileIndex % maxTextures;
+                    const numTilesToDraw =  indexInDrawArray + 1;
+                    const textureInfo = this.getDataToDraw(tile);
+
+                    if (textureInfo && textureInfo.texture) {
+                        this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
                     }
+                    // else {
+                    //   If the texture info is not available, we cannot draw this tile. This is either because
+                    //   the tile data is still being processed, or the data was not correct - in that case,
+                    //   internalCacheCreate(..) already logged an error.
+                    // }
 
-                    if(tilesToDraw.length === 0 || tiledImage.getOpacity() === 0){
-                        return;
-                    }
-                    const firstTile = tilesToDraw[0];
+                    if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
+                        // We've filled up the buffers: time to draw this set of tiles
 
-                    const useContext2dPipeline = ( tiledImage.compositeOperation ||
-                        this.viewer.compositeOperation ||
-                        tiledImage._clip ||
-                        tiledImage._croppingPolygons ||
-                        tiledImage.debugMode
-                    );
-
-                    const useTwoPassRendering = useContext2dPipeline || (tiledImage.opacity < 1) || firstTile.tile.hasTransparency;
-
-                    // using the context2d pipeline requires a clean rendering (back) buffer to start
-                    if(useContext2dPipeline){
-                        // if the rendering buffer has image data currently, write it to the output canvas now and clear it
-
-                        if(renderingBufferHasImageData){
-                            this._outputContext.drawImage(this._renderingCanvas, 0, 0);
+                        // bind each tile's texture to the appropriate gl.TEXTURE#
+                        for(let i = 0; i < numTilesToDraw; i++){
+                            gl.activeTexture(gl.TEXTURE0 + i);
+                            gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
                         }
 
-                        // clear the buffer
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
-                    }
+                        // set the buffer data for the texture coordinates to use for each tile
+                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                        gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
 
-                    // First rendering pass: compose tiles that make up this tiledImage
-                    gl.useProgram(this._firstPass.shaderProgram);
+                        // set the transform matrix uniform for each tile
+                        matrixArray.forEach( (matrix, index) => {
+                            gl.uniformMatrix3fv(firstPass.uTransformMatrices[index], false, matrix);
+                        });
+                        // set the opacity uniform for each tile
+                        gl.uniform1fv(firstPass.uOpacities, new Float32Array(opacityArray));
 
-                    // bind to the framebuffer for render-to-texture if using two-pass rendering, otherwise back buffer (null)
-                    if(useTwoPassRendering){
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
-                        // clear the buffer to draw a new image
-                        gl.clear(gl.COLOR_BUFFER_BIT);
-                    } else {
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        // no need to clear, just draw on top of the existing pixels
-                    }
+                        // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
+                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
+                        gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
 
-                    let overallMatrix = viewMatrix;
+                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                        gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
 
-                    const imageRotation = tiledImage.getRotation(true);
-                    // if needed, handle the tiledImage being rotated
-                    if( imageRotation % 360 !== 0){
-                        const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
-                        const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
-                        const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
-                        const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
+                        gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
 
-                        // update the view matrix to account for this image's rotation
-                        const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
-                        overallMatrix = viewMatrix.multiply(localMatrix);
-                    }
-
-                    const maxTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
-                    if(maxTextures <= 0){
-                        // This can apparently happen on some systems if too many WebGL contexts have been created
-                        // in which case maxTextures can be null, leading to out of bounds errors with the array.
-                        // For example, when viewers were created and not destroyed in the test suite, this error
-                        // occurred in the TravisCI tests, though it did not happen when testing locally either in
-                        // a browser or on the command line via grunt test.
-
-                        throw(new Error(`WegGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS (${maxTextures}). This could happen
-                        if too many contexts have been created and not released, or there is another problem with the graphics card.`));
-                    }
-
-                    const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
-                    const textureDataArray = new Array(maxTextures);
-                    const matrixArray = new Array(maxTextures);
-                    const opacityArray = new Array(maxTextures);
-
-                    // iterate over tiles and add data for each one to the buffers
-                    for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
-                        const tile = tilesToDraw[tileIndex].tile;
-                        const indexInDrawArray = tileIndex % maxTextures;
-                        const numTilesToDraw =  indexInDrawArray + 1;
-                        const textureInfo = this.getDataToDraw(tile);
-
-                        if (textureInfo && textureInfo.texture) {
-                            this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
-                        }
-                        // else {
-                        //   If the texture info is not available, we cannot draw this tile. This is either because
-                        //   the tile data is still being processed, or the data was not correct - in that case,
-                        //   internalCacheCreate(..) already logged an error.
-                        // }
-
-                        if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
-                            // We've filled up the buffers: time to draw this set of tiles
-
-                            // bind each tile's texture to the appropriate gl.TEXTURE#
-                            for(let i = 0; i <= numTilesToDraw; i++){
-                                gl.activeTexture(gl.TEXTURE0 + i);
-                                gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
-                            }
-
-                            // set the buffer data for the texture coordinates to use for each tile
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
-                            gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
-
-                            // set the transform matrix uniform for each tile
-                            matrixArray.forEach( (matrix, index) => {
-                                gl.uniformMatrix3fv(this._firstPass.uTransformMatrices[index], false, matrix);
-                            });
-                            // set the opacity uniform for each tile
-                            gl.uniform1fv(this._firstPass.uOpacities, new Float32Array(opacityArray));
-
-                            // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
-                            gl.vertexAttribPointer(this._firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
-
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
-                            gl.vertexAttribPointer(this._firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-
-                            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
-                            gl.vertexAttribPointer(this._firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
-
-                            // Draw! 6 vertices per tile (2 triangles per rectangle)
-                            gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
-                        }
-                    }
-
-                    if(useTwoPassRendering){
-                        // Second rendering pass: Render the tiled image from the framebuffer into the back buffer
-                        gl.useProgram(this._secondPass.shaderProgram);
-
-                        // set the rendering target to the back buffer (null)
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-                        // bind the rendered texture from the first pass to use during this second pass
-                        gl.activeTexture(gl.TEXTURE0);
-                        gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
-
-                        // set opacity to the value for the current tiledImage
-                        this._gl.uniform1f(this._secondPass.uOpacityMultiplier, tiledImage.opacity);
-
-                        // bind buffers and set attributes before calling gl.drawArrays
-                        gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
-                        gl.vertexAttribPointer(this._secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-                        gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
-                        gl.vertexAttribPointer(this._secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
-
-                        // Draw the quad (two triangles)
-                        gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-                    }
-
-                    renderingBufferHasImageData = true;
-
-                    if(useContext2dPipeline){
-                        // draw from the rendering canvas onto the output canvas, clipping/cropping if needed.
-                        this._applyContext2dPipeline(tiledImage, tilesToDraw, tiledImageIndex);
-                        renderingBufferHasImageData = false;
-                        // clear the buffer
-                        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-                        gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
-                    }
-
-                    // after drawing the first TiledImage, fire the tiled-image-drawn event (for testing)
-                    if(tiledImageIndex === 0){
-                        this._raiseTiledImageDrawnEvent(tiledImage, tilesToDraw.map(info=>info.tile));
+                        // Draw! 6 vertices per tile (2 triangles per rectangle)
+                        gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
                     }
                 }
+
+                if(useTwoPassRendering){
+                    // Second rendering pass: Render the tiled image from the framebuffer into the back buffer
+                    gl.useProgram(secondPass.shaderProgram);
+
+                    // set the rendering target to the back buffer (null)
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+                    // bind the rendered texture from the first pass to use during this second pass
+                    gl.activeTexture(gl.TEXTURE0);
+                    gl.bindTexture(gl.TEXTURE_2D, renderToTexture);
+
+                    // set opacity to the value for the current tiledImage
+                    gl.uniform1f(secondPass.uOpacityMultiplier, tiledImage.opacity);
+
+                    // bind buffers and set attributes before calling gl.drawArrays
+                    gl.bindBuffer(gl.ARRAY_BUFFER, secondPass.bufferTexturePosition);
+                    gl.vertexAttribPointer(secondPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, secondPass.bufferOutputPosition);
+                    gl.vertexAttribPointer(secondPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+                    // Draw the quad (two triangles)
+                    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                }
+
+                renderingBufferHasImageData = true;
+
+                if(useContext2dPipeline){
+                    // draw from the rendering canvas onto the output canvas, clipping/cropping if needed.
+                    this._applyContext2dPipeline(tiledImage, tilesToDraw, tiledImageIndex);
+                    renderingBufferHasImageData = false;
+                    // clear the buffer
+                    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+                    gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
+                }
+
+                // after drawing the first TiledImage, fire the tiled-image-drawn event (for testing)
+                if(tiledImageIndex === 0){
+                    this._raiseTiledImageDrawnEvent(tiledImage, tilesToDraw.map(info=>info.tile));
+                }
+            }
 
             });
 
             if(renderingBufferHasImageData){
                 this._outputContext.drawImage(this._renderingCanvas, 0, 0);
             }
-
+        }
+        /**
+        *
+        * @param {Array} tiledImages Array of TiledImage objects to draw
+        * @param {Boolean} [isRetry=false] Internal flag to prevent infinite retry loops
+        */
+        draw(tiledImages, isRetry = false){
+            try {
+                this._draw(tiledImages, isRetry);
+            } catch (error) {
+                // Handle WebGL context errors that occur at any point during the draw operation
+                if (this._isWebGLContextError(error)) {
+                    // Try recovery if enabled and not a retry
+                    if (this._enableContextRecovery && !isRetry) {
+                        $.console.warn('WebGL context error detected during draw operation, attempting to recreate context...', error);
+                        const recreatedDrawer = this._recreateContext();
+                        if (recreatedDrawer) {
+                            $.console.info('WebGL context recreated successfully, retrying draw operation');
+                            // Raise event for successful recovery
+                            if (this.viewer) {
+                                /**
+                                 * Raised when the WebGL drawer successfully recovers from a context loss.
+                                 *
+                                 * @event webgl-context-recovered
+                                 * @memberof OpenSeadragon.Viewer
+                                 * @type {object}
+                                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                                 * @property {OpenSeadragon.WebGLDrawer} drawer - The drawer instance (same instance, context recreated).
+                                 * @property {Error} error - The original error that triggered the recovery.
+                                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                                 */
+                                this.viewer.raiseEvent('webgl-context-recovered', {
+                                    drawer: this,
+                                    error: error
+                                });
+                            }
+                            // Retry draw on same instance
+                            this.draw(tiledImages, true);
+                        } else {
+                            // Recovery attempted but failed - fall back to canvas drawer (if allowed)
+                            this._fallbackToCanvasDrawer(error, tiledImages);
+                        }
+                    } else {
+                        // Recovery disabled or retry - fall back only when recovery was enabled (retry case)
+                        if (this._enableContextRecovery) {
+                            this._fallbackToCanvasDrawer(error, tiledImages); // will only happen if canvas fallback is allowed
+                        } else {
+                            throw error;
+                        }
+                    }
+                } else {
+                    // Not a WebGL context error - re-throw
+                    throw error;
+                }
+            }
         }
 
         // Public API required by all Drawer implementations
@@ -534,6 +1222,9 @@
         setImageSmoothingEnabled(enabled){
             if( this._imageSmoothingEnabled !== enabled ){
                 this._imageSmoothingEnabled = enabled;
+                if (this._glContext) {
+                    this._glContext.setImageSmoothingEnabled(enabled);
+                }
                 this.setInternalCacheNeedsRefresh();
                 this.viewer.forceRedraw();
             }
@@ -546,8 +1237,8 @@
         setUnpackWithPremultipliedAlpha(enabled){
             if (this._unpackWithPremultipliedAlpha !== enabled){
                 this._unpackWithPremultipliedAlpha = enabled;
-                if (this._gl){
-                    this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, enabled);
+                if (this._glContext) {
+                    this._glContext.setUnpackWithPremultipliedAlpha(enabled);
                 }
                 this.setInternalCacheNeedsRefresh();
                 this.viewer.forceRedraw();
@@ -654,243 +1345,23 @@
             matrixArray[index] = model.values;
         }
 
-        // private
-        _getTextureFilter(){
-            const gl = this._gl;
-            return this._imageSmoothingEnabled ? gl.LINEAR : gl.NEAREST;
-        }
-
-        _applyAnisotropy(){
-            const gl = this._gl;
-            if (!this._imageSmoothingEnabled || !this._extTextureFilterAnisotropic || this._maxAnisotropy <= 0) {
-                return;
-            }
-
-            gl.texParameterf(
-                gl.TEXTURE_2D,
-                this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
-                Math.min(4, this._maxAnisotropy)
-            );
-        }
 
         // private
         _setupRenderer(){
-            const gl = this._gl;
-            if(!gl){
+            if(!this._glContext || !this._glContext.getContext()){
                 $.console.error('_setupCanvases must be called before _setupRenderer');
+                return;
             }
-            this._unitQuad = this._makeQuadVertexBuffer(0, 1, 0, 1); // used a few places; create once and store the result
-
-            this._makeFirstPassShaderProgram();
-            this._makeSecondPassShaderProgram();
-
-            // set up the texture to render to in the first pass, and which will be used for rendering the second pass
-            this._renderToTexture = gl.createTexture();
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._renderingCanvas.width, this._renderingCanvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._getTextureFilter());
-            this._applyAnisotropy();
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-            // set up the framebuffer for render-to-texture
-            this._glFrameBuffer = gl.createFramebuffer();
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
-            gl.framebufferTexture2D(
-                gl.FRAMEBUFFER,
-                gl.COLOR_ATTACHMENT0,       // attach texture as COLOR_ATTACHMENT0
-                gl.TEXTURE_2D,              // attach a 2D texture
-                this._renderToTexture,  // the texture to attach
-                0
-            );
-
-            gl.enable(gl.BLEND);
-            gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
+            this._glContext.setupRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
         }
 
-        //private
-        _makeFirstPassShaderProgram(){
-            const numTextures = this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
-            const makeMatrixUniforms = () => {
-                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
-            };
-            const makeConditionals = () => {
-                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(int(a_index) == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
-            };
-
-            const vertexShaderProgram = `
-            attribute vec2 a_output_position;
-            attribute vec2 a_texture_position;
-            attribute float a_index;
-
-            ${makeMatrixUniforms()} // create a uniform mat3 for each potential tile to draw
-
-            varying vec2 v_texture_position;
-            varying float v_image_index;
-
-            void main() {
-
-                mat3 transform_matrix; // value will be set by the if/elses in makeConditional()
-
-                ${makeConditionals()}
-
-                gl_Position = vec4(transform_matrix * vec3(a_output_position, 1), 1);
-
-                v_texture_position = a_texture_position;
-                v_image_index = a_index;
-            }
-            `;
-
-            const fragmentShaderProgram = `
-            precision mediump float;
-
-            // our textures
-            uniform sampler2D u_images[${numTextures}];
-            // our opacities
-            uniform float u_opacities[${numTextures}];
-
-            // the varyings passed in from the vertex shader.
-            varying vec2 v_texture_position;
-            varying float v_image_index;
-
-            void main() {
-                // can't index directly with a variable, need to use a loop iterator hack
-                for(int i = 0; i < ${numTextures}; ++i){
-                    if(i == int(v_image_index)){
-                        gl_FragColor = texture2D(u_images[i], v_texture_position) * u_opacities[i];
-                    }
-                }
-            }
-            `;
-
-            const gl = this._gl;
-
-            const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
-            gl.useProgram(program);
-
-            // get locations of attributes and uniforms, and create buffers for each attribute
-            this._firstPass = {
-                shaderProgram: program,
-                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
-                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
-                aIndex: gl.getAttribLocation(program, 'a_index'),
-                uTransformMatrices: [...Array(this._glNumTextures).keys()].map(i=>gl.getUniformLocation(program, `u_matrix_${i}`)),
-                uImages: gl.getUniformLocation(program, 'u_images'),
-                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
-                bufferOutputPosition: gl.createBuffer(),
-                bufferTexturePosition: gl.createBuffer(),
-                bufferIndex: gl.createBuffer(),
-            };
-
-            gl.uniform1iv(this._firstPass.uImages, [...Array(numTextures).keys()]);
-
-            // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
-            const outputQuads = new Float32Array(numTextures * 12);
-            for(let i = 0; i < numTextures; ++i){
-                outputQuads.set(Float32Array.from(this._unitQuad), i * 12);
-            }
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
-            gl.bufferData(gl.ARRAY_BUFFER, outputQuads, gl.STATIC_DRAW); // bind data statically here, since it's unchanging
-            gl.enableVertexAttribArray(this._firstPass.aOutputPosition);
-
-            // provide texture coordinates for the rectangle in image (texture) space. Data will be set later.
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
-            gl.enableVertexAttribArray(this._firstPass.aTexturePosition);
-
-            // for each vertex, provide an index into the array of textures/matrices to use for the correct tile
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
-            const indices = [...Array(this._glNumTextures).keys()].map(i => Array(6).fill(i)).flat(); // repeat each index 6 times, for the 6 vertices per tile (2 triangles)
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(indices), gl.STATIC_DRAW); // bind data statically here, since it's unchanging
-            gl.enableVertexAttribArray(this._firstPass.aIndex);
-
-        }
-
-        // private
-        _makeSecondPassShaderProgram(){
-            const vertexShaderProgram = `
-            attribute vec2 a_output_position;
-            attribute vec2 a_texture_position;
-
-            varying vec2 v_texture_position;
-
-            void main() {
-                // Transform to clip space (0:1 --> -1:1)
-                gl_Position = vec4(vec3(a_output_position * 2.0 - 1.0, 1), 1);
-
-                v_texture_position = a_texture_position;
-            }
-            `;
-
-            const fragmentShaderProgram = `
-            precision mediump float;
-
-            // our texture
-            uniform sampler2D u_image;
-
-            // the texCoords passed in from the vertex shader.
-            varying vec2 v_texture_position;
-
-            // the opacity multiplier for the image
-            uniform float u_opacity_multiplier;
-
-            void main() {
-                gl_FragColor = texture2D(u_image, v_texture_position);
-                gl_FragColor *= u_opacity_multiplier;
-            }
-            `;
-
-            const gl = this._gl;
-
-            const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
-            gl.useProgram(program);
-
-            // get locations of attributes and uniforms, and create buffers for each attribute
-            this._secondPass = {
-                shaderProgram: program,
-                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
-                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
-                uImage: gl.getUniformLocation(program, 'u_image'),
-                uOpacityMultiplier: gl.getUniformLocation(program, 'u_opacity_multiplier'),
-                bufferOutputPosition: gl.createBuffer(),
-                bufferTexturePosition: gl.createBuffer(),
-            };
-
-
-            // provide coordinates for the rectangle in output space, i.e. a unit quad for each one.
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferOutputPosition);
-            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.STATIC_DRAW); // bind data statically here since it's unchanging
-            gl.enableVertexAttribArray(this._secondPass.aOutputPosition);
-
-            // provide texture coordinates for the rectangle in image (texture) space.
-            gl.bindBuffer(gl.ARRAY_BUFFER, this._secondPass.bufferTexturePosition);
-            gl.bufferData(gl.ARRAY_BUFFER, this._unitQuad, gl.DYNAMIC_DRAW); // bind data statically here since it's unchanging
-            gl.enableVertexAttribArray(this._secondPass.aTexturePosition);
-        }
 
         // private
         _resizeRenderer(){
-            const gl = this._gl;
-            const w = this._renderingCanvas.width;
-            const h = this._renderingCanvas.height;
-            gl.viewport(0, 0, w, h);
-
-            //release the old texture
-            gl.deleteTexture(this._renderToTexture);
-            //create a new texture and set it up
-            this._renderToTexture = gl.createTexture();
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._getTextureFilter());
-            this._applyAnisotropy();
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-            //bind the frame buffer to the new texture
-            gl.bindFramebuffer(gl.FRAMEBUFFER, this._glFrameBuffer);
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._renderToTexture, 0);
+            if(!this._glContext){
+                return;
+            }
+            this._glContext.resizeRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
         }
 
         // private
@@ -907,22 +1378,13 @@
             this._renderingCanvas.width = this._clippingCanvas.width = this._outputCanvas.width;
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
 
-            // Try WebGL2 first, then fall back to WebGL1
-            this._gl = this._renderingCanvas.getContext('webgl2');
-            if (this._gl) {
-                this._isWebGL2 = true;
-                this._setupWebGLExtensions();
-            } else {
-                this._gl = this._renderingCanvas.getContext('webgl');
-                this._isWebGL2 = false;
-                if (this._gl) {
-                    this._setupWebGLExtensions();
-                }
-            }
-
-            if (this._gl) {
-                this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
-            }
+            // Create WebGL context manager
+            this._glContext = new WebglContextManager({
+                renderingCanvas: this._renderingCanvas,
+                unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha,
+                imageSmoothingEnabled: this._imageSmoothingEnabled,
+                initShaderProgram: this.constructor.initShaderProgram
+            });
 
             this._resizeHandler = function(){
 
@@ -951,29 +1413,176 @@
             this.viewer.addHandler("resize", this._resizeHandler);
         }
 
+
         /**
-         * Set up WebGL extensions (works for both WebGL1 and WebGL2)
+         * Check if an error is related to WebGL context issues.
+         * @param {Error} error - The error to check
+         * @returns {Boolean} true if the error is a WebGL context error, false otherwise
          * @private
          */
-        _setupWebGLExtensions() {
-            const gl = this._gl;
-
-            // Anisotropic filtering extension (available in both WebGL1 and WebGL2)
-            this._extTextureFilterAnisotropic =
-                gl.getExtension('EXT_texture_filter_anisotropic') ||
-                gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
-                gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
-
-            if (this._extTextureFilterAnisotropic) {
-                this._maxAnisotropy = gl.getParameter(
-                    this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
-                );
+        _isWebGLContextError(error) {
+            if (!error || !error.message) {
+                return false;
             }
+            const message = error.message.toLowerCase();
+            return message.includes('max_texture_image_units') ||
+                   (message.includes('webgl') && ((message.includes('context') || message.includes('lost') || message.includes('invalid'))));
+        }
+
+        /**
+         * Recreate the WebGL context when it has been lost or exhausted.
+         * This method recreates only the WebglContextManager, preserving the drawer instance
+         * and all drawer state (canvases, options, cache, etc.).
+         * @returns {OpenSeadragon.WebGLDrawer|null} The same drawer instance if successful, null otherwise
+         * @private
+         */
+        _recreateContext() {
+            if (this._destroyed) {
+                return null;
+            }
+
+            try {
+                // Store old canvas properties
+                const oldCanvas = this._renderingCanvas;
+                const oldWidth = oldCanvas.width;
+                const oldHeight = oldCanvas.height;
+                const oldStyleWidth = oldCanvas.style.width;
+                const oldStyleHeight = oldCanvas.style.height;
+
+                // Destroy internal cache FIRST (while old context still exists)
+                // This ensures textures are freed using the old context before it's destroyed
+                this.destroyInternalCache();
+
+                // Destroy old context manager
+                if (this._glContext) {
+                    this._glContext.destroy();
+                    this._glContext = null;
+                }
+
+                // Note: destroyInternalCache() above already properly cleaned up all texture
+                // and glContext references via internalCacheFree() callbacks
+
+                // Create new rendering canvas element
+                this._renderingCanvas = document.createElement('canvas');
+                this._renderingCanvas.width = oldWidth;
+                this._renderingCanvas.height = oldHeight;
+                if (oldStyleWidth) {
+                    this._renderingCanvas.style.width = oldStyleWidth;
+                }
+                if (oldStyleHeight) {
+                    this._renderingCanvas.style.height = oldStyleHeight;
+                }
+
+                // Create new context manager with new canvas
+                this._glContext = new WebglContextManager({
+                    renderingCanvas: this._renderingCanvas,
+                    unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha,
+                    imageSmoothingEnabled: this._imageSmoothingEnabled,
+                    initShaderProgram: this.constructor.initShaderProgram
+                });
+
+                // Verify context is valid
+                if (!this._glContext.getContext()) {
+                    $.console.error('Failed to recreate WebGL context: no GL context');
+                    return null;
+                }
+
+                // Check if the new context has valid MAX_TEXTURE_IMAGE_UNITS
+                try {
+                    const maxTextures = this._glContext.getMaxTextures();
+                    if (!maxTextures || maxTextures <= 0) {
+                        $.console.error('Failed to recreate WebGL context: invalid MAX_TEXTURE_IMAGE_UNITS');
+                        return null;
+                    }
+                } catch (e) {
+                    $.console.error('Failed to verify new WebGL context:', e);
+                    return null;
+                }
+
+                // Reinitialize renderer (shaders, framebuffers)
+                this._setupRenderer();
+
+                // Mark cache as needing refresh for future entries
+                // (Old entries were already freed above)
+                this.setInternalCacheNeedsRefresh();
+
+                return this; // Return same drawer instance
+            } catch (e) {
+                $.console.error('Failed to recreate WebGL context:', e);
+                return null;
+            }
+        }
+
+        /**
+         * Fall back to canvas drawer when WebGL fails (requires viewer.drawerCandidates to include 'canvas').
+         * If allowed, switches the viewer to use the canvas drawer, raises the webgl-context-recovery-failed event
+         * with the canvas drawer, and draws the current frame.
+         * Otherwise, raise the event with canvasDrawer: null and rethrow the error.
+         *
+         * @param {Error} error - The error that triggered the fallback
+         * @param {Array} tiledImages - Array of TiledImage objects to draw with the new drawer
+         * @throws {Error} Re-throws the error if canvas is not an allowed fallback or if canvas drawer creation fails
+         * @private
+         */
+        _fallbackToCanvasDrawer(error, tiledImages) {
+            const oldWebGLDrawer = this;
+            if (!this._canvasFallbackAllowed) {
+                oldWebGLDrawer._raiseContextRecoveryFailedEvent(error, null);
+                throw error;
+            }
+            const canvasDrawer = this.viewer.requestDrawer('canvas', {
+                mainDrawer: true,
+                redrawImmediately: false
+            });
+
+            if (canvasDrawer) {
+                $.console.error('Failed to recreate WebGL context, switching to canvas drawer');
+                oldWebGLDrawer._raiseContextRecoveryFailedEvent(error, canvasDrawer);
+                this.viewer.world.requestInvalidate(true);
+            } else {
+                $.console.error('Failed to create canvas drawer as fallback');
+                oldWebGLDrawer._raiseContextRecoveryFailedEvent(error, null);
+                throw error;
+            }
+        }
+
+        /**
+         * Raise the webgl-context-recovery-failed event.
+         * @param {Error} error - The error that triggered the recovery failure
+         * @param {OpenSeadragon.CanvasDrawer} [canvasDrawer=null] - The canvas drawer that was created as a fallback, or null if canvas was not an allowed fallback or creation failed
+         * @private
+         */
+        _raiseContextRecoveryFailedEvent(error, canvasDrawer = null) {
+            if (!this.viewer) {
+                return;
+            }
+            /**
+             * Raised when the WebGL drawer fails to recover from a context loss. The drawer may fall back to
+             * canvas drawer only when canvas is in the viewer's drawer list; otherwise canvasDrawer is null and no switch occurs.
+             *
+             * @event webgl-context-recovery-failed
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {OpenSeadragon.WebGLDrawer} drawer - The WebGL drawer instance that failed to recover (may be destroyed).
+             * @property {OpenSeadragon.CanvasDrawer} canvasDrawer - The canvas drawer that was created as a fallback, or null if canvas was not an allowed fallback or creation failed.
+             * @property {Error} error - The original error that triggered the recovery attempt.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             */
+            this.viewer.raiseEvent('webgl-context-recovery-failed', {
+                drawer: this,
+                canvasDrawer: canvasDrawer,
+                error: error
+            });
         }
 
         internalCacheCreate(cache, tile) {
             const tiledImage = tile.tiledImage;
-            const gl = this._gl;
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            if (!gl) {
+                $.console.error('WebGL context not available in internalCacheCreate');
+                return {};
+            }
             let texture;
             let position;
 
@@ -987,7 +1596,9 @@
             if (!tiledImage.getIssue('webgl')) {
                 if (isCanvas && $.isCanvasTainted(data)){
                     tiledImage.setIssue('webgl', 'WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
-                    this._raiseDrawerErrorEvent(tiledImage, 'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.');
+                    this._raiseDrawerErrorEvent(tiledImage, this._canvasFallbackAllowed ?
+                        'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.' :
+                        'Tainted data cannot be used by the WebGLDrawer, and canvas fallback is not enabled.');
                     this.setInternalCacheNeedsRefresh();
                 } else {
                     let sourceWidthFraction, sourceHeightFraction;
@@ -999,8 +1610,6 @@
                         sourceHeightFraction = 1;
                     }
 
-                    // create a gl Texture for this tile and bind the canvas with the image data
-                    texture = gl.createTexture();
                     const overlap = tiledImage.source.tileOverlap;
                     const overlapFraction = this._calculateOverlapFraction(tile, tiledImage);
                     if( overlap > 0){
@@ -1010,38 +1619,35 @@
                         const top = (tile.y === 0 ? 0 : overlapFraction.y) * sourceHeightFraction;
                         const right = (tile.isRightMost ? 1 : 1 - overlapFraction.x) * sourceWidthFraction;
                         const bottom = (tile.isBottomMost ? 1 : 1 - overlapFraction.y) * sourceHeightFraction;
-                        position = this._makeQuadVertexBuffer(left, right, top, bottom);
+                        position = this._glContext.makeQuadVertexBuffer(left, right, top, bottom);
                     } else if (sourceWidthFraction === 1 && sourceHeightFraction === 1) {
                         // no overlap and no padding: this texture can use the unit quad as its position data
-                        position = this._unitQuad;
+                        position = this._glContext.getUnitQuad();
                     } else {
-                        position = this._makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
+                        position = this._glContext.makeQuadVertexBuffer(0, sourceWidthFraction, 0, sourceHeightFraction);
                     }
 
-                    gl.activeTexture(gl.TEXTURE0);
-                    gl.bindTexture(gl.TEXTURE_2D, texture);
-                    // Set the parameters so we can render any size image.
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this._getTextureFilter());
-                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this._getTextureFilter());
-                    this._applyAnisotropy();
+                    // create a gl Texture for this tile using the manager
+                    texture = this._glContext.createTexture(data, {
+                        unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha
+                    });
 
-                    try {
-                        // This depends on gl.TEXTURE_2D being bound to the texture
-                        // associated with this canvas before calling this function
-                        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
-                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, data);
+                    if (!texture) {
+                        tiledImage.setIssue('webgl', 'Error creating texture in WebGL.');
+                        const canvasAllowed = this._canvasFallbackAllowed;
+                        this._raiseDrawerErrorEvent(tiledImage, canvasAllowed ?
+                            'Unknown error when creating texture. Falling back to CanvasDrawer for this TiledImage.' :
+                            'Cannot use WebGL for this TiledImage; canvas fallback is not enabled.');
+                        this.setInternalCacheNeedsRefresh();
+                    } else {
                         // TextureInfo stored in the cache
+                        // Store reference to the context that created this texture
                         return {
                             texture: texture,
                             position: position,
-                            overlapFraction: overlapFraction
+                            overlapFraction: overlapFraction,
+                            glContext: this._glContext  // Store context reference for safe deletion
                         };
-                    } catch (e){
-                        tiledImage.setIssue('webgl', 'Error uploading image data to WebGL.', e);
-                        this._raiseDrawerErrorEvent(tiledImage, 'Unknown error when uploading texture. Falling back to CanvasDrawer for this TiledImage.');
-                        this.setInternalCacheNeedsRefresh();
                     }
                 }
             }
@@ -1062,21 +1668,23 @@
 
         internalCacheFree(data) {
             if (data && data.texture) {
-                this._gl.deleteTexture(data.texture);
+                // Use the stored context reference if available, otherwise fall back to current context
+                const glContext = data.glContext || this._glContext;
+
+                if (glContext && !glContext.isDestroyed()) {
+                    try {
+                        glContext.deleteTexture(data.texture);
+                    } catch (e) {
+                        // Context may have been destroyed between check and deletion - safe to ignore
+                    }
+                }
+
+                // Always nullify references
                 data.texture = null;
+                data.glContext = null;
             }
         }
 
-        // private
-        _makeQuadVertexBuffer(left, right, top, bottom){
-            return new Float32Array([
-                left, bottom,
-                right, bottom,
-                left, top,
-                left, top,
-                right, bottom,
-                right, top]);
-        }
 
         // private
         _calculateOverlapFraction(tile, tiledImage){

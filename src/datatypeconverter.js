@@ -444,8 +444,8 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                         mode: 'cors',
                         credentials: 'include',
                     };
-                } else {
-                    return reject(new Error(`Unsupported crossOriginPolicy ${policy}`));
+                } else if (policy) {
+                    $.console.error(`Unsupported crossOriginPolicy ${policy}. Ignoring the property.`);
                 }
             }
             if (_imageConversionWorker) {

@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon WebGL Context Recovery Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #controls {
+            padding: 15px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        #controls label {
+            margin-right: 10px;
+        }
+        #controls input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        #controls button {
+            padding: 5px 15px;
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+        #controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        #status {
+            padding: 10px;
+            background-color: #e8f4f8;
+            border: 1px solid #b3d9e6;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        #status.error {
+            background-color: #ffe8e8;
+            border-color: #ffb3b3;
+        }
+        #status.success {
+            background-color: #e8f8e8;
+            border-color: #b3e6b3;
+        }
+        #viewers-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .viewer-wrapper {
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #fafafa;
+            position: relative;
+        }
+        .viewer-wrapper h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .viewer-wrapper .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            padding: 3px 8px;
+            font-size: 12px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .viewer-wrapper .remove-btn:hover {
+            background-color: #ff5252;
+        }
+        .viewer-wrapper .lose-context-btn {
+            position: absolute;
+            top: 5px;
+            right: 35px;
+            padding: 3px 8px;
+            font-size: 12px;
+            background-color: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .viewer-wrapper .lose-context-btn:hover {
+            background-color: #f57c00;
+        }
+        .viewer-container {
+            width: 400px;
+            height: 300px;
+        }
+        .info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+        }
+        .viewer-message {
+            position: absolute;
+            top: 30px;
+            left: 10px;
+            right: 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .viewer-message.success {
+            background-color: #4caf50;
+            color: white;
+            display: block;
+        }
+        .viewer-message.error {
+            background-color: #f44336;
+            color: white;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebGL Context Recovery Demo</h1>
+    <div class="info">
+        <p>This demo tests WebGL context recovery and canvas fallback.</p>
+        <p><strong>Instructions:</strong></p>
+        <ul>
+            <li>Add one or more viewers (they are created with recovery and fallback enabled by default).</li>
+            <li>On the viewer you want to test, click <strong>Lose context</strong>.</li>
+            <li>Check <strong>Simulate Recovery Failure</strong> so that the next recovery attempt will fail; then pan or zoom to see fallback to the canvas drawer.</li>
+            <li>Check <strong>Disable recovery and fallback (old behavior)</strong> before adding viewers to see the pre-recovery behavior: new viewers will not attempt recovery or canvas fallback when WebGL context is lost. Use "Lose context" on such a viewer to see the broken state with no automatic recovery or fallback.</li>
+        </ul>
+    </div>
+
+    <div id="controls">
+        <label for="num-viewers">Add Viewers:</label>
+        <input type="number" id="num-viewers" value="1" min="1" max="20">
+        <button onclick="addViewers()">Add Viewers</button>
+
+        <label style="margin-left: 20px;" title="When checked, the next recovery attempt will fail and the viewer will fall back to canvas.">
+            <input type="checkbox" id="simulate-failure" onchange="updateSimulateFailureStatus()">
+            Simulate Recovery Failure
+        </label>
+
+        <label style="margin-left: 20px;" title="When checked, all viewers will not attempt recovery or canvas fallback when WebGL context is lost (old behavior).">
+            <input type="checkbox" id="old-behavior" onchange="updateAllViewersRecoverySetting()">
+            Disable recovery and fallback (old behavior)
+        </label>
+
+        <button onclick="removeAllViewers()" style="margin-left: 20px; background-color: #ff6b6b; color: white;">Remove All</button>
+    </div>
+
+    <div id="status">
+        <strong>Status:</strong> <span id="status-text">Ready</span><br>
+        <strong>Active Viewers:</strong> <span id="viewer-count">0</span>
+    </div>
+
+    <div id="viewers-container"></div>
+
+    <script>
+        let viewers = [];
+        let viewerCounter = 0;
+
+        function updateStatus(message, type = '') {
+            const statusDiv = document.getElementById('status');
+            const statusText = document.getElementById('status-text');
+            statusText.textContent = message;
+            statusDiv.className = type ? `status ${type}` : 'status';
+        }
+
+        function updateViewerCount() {
+            document.getElementById('viewer-count').textContent = viewers.length;
+        }
+
+        function updateAllViewersRecoverySetting() {
+            const useOldBehavior = document.getElementById('old-behavior').checked;
+            for (const v of viewers) {
+                if (v.viewer && v.viewer.drawer && v.viewer.drawer.setContextRecoveryEnabled) {
+                    v.viewer.drawer.setContextRecoveryEnabled(!useOldBehavior);
+                }
+            }
+        }
+
+        let simulateFailurePrototypePatched = false;
+        let originalGetContextProto = null;
+
+        function updateSimulateFailureStatus() {
+            const checked = document.getElementById('simulate-failure').checked;
+            if (checked && !simulateFailurePrototypePatched) {
+                originalGetContextProto = HTMLCanvasElement.prototype.getContext;
+                HTMLCanvasElement.prototype.getContext = function(contextType) {
+                    const ctx = originalGetContextProto.apply(this, arguments);
+                    if (ctx && typeof ctx.getParameter === 'function' && ctx.MAX_TEXTURE_IMAGE_UNITS !== undefined) {
+                        const orig = ctx.getParameter.bind(ctx);
+                        ctx.getParameter = function(p) {
+                            if (p === ctx.MAX_TEXTURE_IMAGE_UNITS) {
+                                return 0;
+                            }
+                            return orig(p);
+                        };
+                    }
+                    return ctx;
+                };
+                simulateFailurePrototypePatched = true;
+            } else if (!checked && simulateFailurePrototypePatched && originalGetContextProto) {
+                HTMLCanvasElement.prototype.getContext = originalGetContextProto;
+                simulateFailurePrototypePatched = false;
+                originalGetContextProto = null;
+            }
+            updateStatus(checked ? 'Simulate Recovery Failure is ON – next recovery attempt will fail and fall back to canvas' : 'Simulate Recovery Failure is OFF', checked ? 'success' : '');
+        }
+
+        function createViewer(viewerNumber) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'viewer-wrapper';
+            wrapper.id = `viewer-wrapper-${viewerNumber}`;
+
+            const title = document.createElement('h3');
+            title.textContent = `Viewer ${viewerNumber}`;
+            wrapper.appendChild(title);
+
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.textContent = '×';
+            removeBtn.onclick = () => removeViewer(viewerNumber);
+            wrapper.appendChild(removeBtn);
+
+            const loseContextBtn = document.createElement('button');
+            loseContextBtn.className = 'lose-context-btn';
+            loseContextBtn.textContent = 'Lose context';
+            loseContextBtn.title = 'Lose WebGL context for this viewer. Then check Simulate Recovery Failure and pan/zoom to see fallback to canvas.';
+            wrapper.appendChild(loseContextBtn);
+
+            // Add message display element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'viewer-message';
+            messageDiv.id = `viewer-message-${viewerNumber}`;
+            wrapper.appendChild(messageDiv);
+
+            const container = document.createElement('div');
+            container.className = 'viewer-container';
+            container.id = `openseadragon-${viewerNumber}`;
+            wrapper.appendChild(container);
+
+            // Append to DOM first to ensure element exists
+            const viewersContainer = document.getElementById('viewers-container');
+            if (!viewersContainer) {
+                updateStatus('Error: viewers-container not found', 'error');
+                return null;
+            }
+            viewersContainer.appendChild(wrapper);
+
+            // Use requestAnimationFrame to ensure DOM is ready before creating viewer
+            requestAnimationFrame(() => {
+                // Verify the container element exists in the DOM
+                const containerElement = document.getElementById(`openseadragon-${viewerNumber}`);
+                if (!containerElement) {
+                    updateStatus(`Error: Container element not found for Viewer ${viewerNumber}`, 'error');
+                    wrapper.remove();
+                    return;
+                }
+
+                try {
+                    const useOldBehavior = document.getElementById('old-behavior').checked;
+                    const viewer = OpenSeadragon({
+                        id: `openseadragon-${viewerNumber}`,
+                        prefixUrl: "../../build/openseadragon/images/",
+                        drawer: ['webgl', 'canvas'],
+                        tileSources: "../data/testpattern.dzi",
+                        showNavigator: false,
+                    });
+
+                    if (viewer.drawer && viewer.drawer.setContextRecoveryEnabled) {
+                        viewer.drawer.setContextRecoveryEnabled(!useOldBehavior);
+                    }
+
+                    // Track errors
+                    viewer.addHandler('tile-load-failed', function(event) {
+                        updateStatus(`Viewer ${viewerNumber}: Tile load failed`, 'error');
+                    });
+
+                    // Listen for WebGL context recovery events
+                    viewer.addHandler('webgl-context-recovered', function(event) {
+                        const messageEl = document.getElementById(`viewer-message-${viewerNumber}`);
+                        if (messageEl) {
+                            messageEl.textContent = '✓ WebGL context recovered successfully!';
+                            messageEl.className = 'viewer-message success';
+                            // Auto-hide after 5 seconds
+                            setTimeout(() => {
+                                messageEl.className = 'viewer-message';
+                            }, 5000);
+                        }
+                        updateStatus(`Viewer ${viewerNumber}: WebGL context recovered successfully`, 'success');
+                    });
+
+                    viewer.addHandler('webgl-context-recovery-failed', function(event) {
+                        const messageEl = document.getElementById(`viewer-message-${viewerNumber}`);
+                        if (messageEl) {
+                            if (event.canvasDrawer) {
+                                messageEl.textContent = '✗ WebGL context recovery failed – using canvas drawer';
+                                console.log(`Viewer ${viewerNumber}: Fallback to canvas. viewer.drawer.getType() =`, viewer.drawer && viewer.drawer.getType ? viewer.drawer.getType() : 'N/A');
+                            } else {
+                                messageEl.textContent = '✗ WebGL context recovery failed (no canvas fallback)';
+                            }
+                            messageEl.className = 'viewer-message error';
+                        }
+                        updateStatus(`Viewer ${viewerNumber}: WebGL context recovery failed` + (event.canvasDrawer ? ' – using canvas drawer' : ''), 'error');
+                    });
+
+                    loseContextBtn.onclick = function() {
+                        if (viewer.drawer.getType() === 'webgl' && viewer.drawer._glContext) {
+                            const gl = viewer.drawer._glContext.getContext();
+                            if (gl) {
+                                const ext = gl.getExtension('WEBGL_lose_context');
+                                if (ext) {
+                                    ext.loseContext();
+                                    const messageEl = document.getElementById(`viewer-message-${viewerNumber}`);
+                                    const isOldBehavior = viewer.drawer && !viewer.drawer.isContextRecoveryEnabled();
+                                    if (messageEl) {
+                                        messageEl.textContent = isOldBehavior
+                                            ? 'Context lost. No recovery or fallback (old behavior).'
+                                            : 'Context lost. Check "Simulate Recovery Failure" then pan/zoom to see fallback to canvas.';
+                                        messageEl.className = 'viewer-message error';
+                                    }
+                                    updateStatus(`Viewer ${viewerNumber}: Context lost.` + (isOldBehavior ? ' No recovery or fallback.' : ' Check Simulate Recovery Failure and pan/zoom.'), 'success');
+                                } else {
+                                    updateStatus(`Viewer ${viewerNumber}: WEBGL_lose_context not available`, 'error');
+                                }
+                            }
+                        } else {
+                            updateStatus(`Viewer ${viewerNumber}: Not a WebGL drawer or no context`, 'error');
+                        }
+                    };
+
+                    viewers.push({ number: viewerNumber, viewer: viewer, wrapper: wrapper });
+                    updateViewerCount();
+                    updateStatus(`Viewer ${viewerNumber} created successfully`, 'success');
+                } catch (error) {
+                    updateStatus(`Error creating Viewer ${viewerNumber}: ${error.message}`, 'error');
+                    console.error('Error creating viewer:', error);
+                    wrapper.remove();
+                }
+            });
+        }
+
+        function removeViewer(viewerNumber) {
+            const index = viewers.findIndex(v => v.number === viewerNumber);
+            if (index !== -1) {
+                const viewerData = viewers[index];
+                try {
+                    if (viewerData.viewer) {
+                        viewerData.viewer.destroy();
+                    }
+                } catch (e) {
+                    console.warn('Error destroying viewer:', e);
+                }
+                viewerData.wrapper.remove();
+                viewers.splice(index, 1);
+                updateViewerCount();
+                updateStatus(`Viewer ${viewerNumber} removed`, 'success');
+            }
+        }
+
+        function removeAllViewers() {
+            while (viewers.length > 0) {
+                removeViewer(viewers[0].number);
+            }
+            viewerCounter = 0; // Reset counter so new viewers start at 1
+            updateStatus('All viewers removed', 'success');
+        }
+
+        function addViewers() {
+            const numToAdd = parseInt(document.getElementById('num-viewers').value, 10);
+            if (isNaN(numToAdd) || numToAdd < 1) {
+                updateStatus('Please enter a valid number of viewers to add', 'error');
+                return;
+            }
+
+            updateStatus(`Creating ${numToAdd} viewer(s)...`, '');
+
+            // Calculate starting viewer number before the loop to avoid race conditions
+            const startNumber = viewerCounter + 1;
+            for (let i = 0; i < numToAdd; i++) {
+                const viewerNumber = startNumber + i;
+                viewerCounter = viewerNumber; // Update counter to track the highest number used
+                setTimeout(() => {
+                    createViewer(viewerNumber);
+                }, i * 100); // Stagger creation slightly
+            }
+        }
+
+        // Initialize with one viewer
+        window.addEventListener('load', function() {
+            viewerCounter = 1;
+            createViewer(1);
+        });
+
+        // Catch global errors
+        window.addEventListener('error', function(event) {
+            if (event.message && event.message.includes('MAX_TEXTURE_IMAGE_UNITS')) {
+                updateStatus('WebGL context error detected. Recovery is enabled and should fall back to canvas.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>

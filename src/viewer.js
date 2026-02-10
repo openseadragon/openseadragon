@@ -184,6 +184,16 @@ $.Viewer = function( options ) {
          */
         drawer:             null,
         /**
+         * Resolved list of drawer type strings (after expanding 'auto', de-duplicating, and
+         * normalizing: constructors are replaced by their getType() result). Used to decide
+         * allowed fallbacks: WebGL drawer only falls back to canvas when the string 'canvas' is
+         * in this list (see per-tile and context-loss fallback). Normalized so includes('canvas')
+         * is reliable even when custom drawer constructors were passed in options.
+         * @member {string[]} drawerCandidates
+         * @memberof OpenSeadragon.Viewer#
+         */
+        drawerCandidates:   null,
+        /**
          * Keeps track of all of the tiled images in the scene.
          * @member {OpenSeadragon.World} world
          * @memberof OpenSeadragon.Viewer#
@@ -533,6 +543,20 @@ $.Viewer = function( options ) {
         $.console.warn('No valid drawers were selected. Using the default value.');
     }
 
+    // 'auto' is expanded in the candidate list in a platform-dependent way: on iOS-like devices
+    // to ['canvas'] only, on other platforms to ['webgl', 'canvas'] so that if WebGL fails at
+    // creation, canvas is tried next. Same detection as getAutoDrawerCandidates() / determineDrawer('auto').
+    drawerCandidates = drawerCandidates.flatMap(
+        function(c) {
+            return c === 'auto' ? getAutoDrawerCandidates() : [c];
+        }
+    );
+    drawerCandidates = drawerCandidates.filter(
+        function(c, i, arr) {
+            return arr.indexOf(c) === i;
+        }
+    );
+    this.drawerCandidates = drawerCandidates.map(getDrawerTypeString).filter(Boolean);
 
     this.drawer = null;
     for (const drawerCandidate of drawerCandidates){
@@ -1128,9 +1152,17 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             $.console.warn('Unsupported drawer %s! Drawer must be an existing string type, or a class that extends OpenSeadragon.DrawerBase.', drawerCandidate);
         }
 
-        // if the drawer is supported, create it and return true
-        if (Drawer && Drawer.isSupported()) {
-
+        // Guard isSupported() in try/catch so a buggy or throwing plugin drawer cannot crash the whole viewer
+        let supported = false;
+        if (Drawer) {
+            try {
+                supported = Drawer.isSupported();
+            } catch (e) {
+                $.console.warn('Error in %s isSupported(); treating this drawer as unsupported:', drawerCandidate, e && e.message ? e.message : e);
+            }
+        }
+        if (supported) {
+            // if the drawer is supported, create it and return it.
             // first destroy the previous drawer
             if(oldDrawer && mainDrawer){
                 oldDrawer.destroy();
@@ -4411,15 +4443,45 @@ function onFlip() {
 }
 
 /**
+ * Return the drawer type string for a candidate (string or DrawerBase constructor).
+ * Used to normalize drawerCandidates to strings so includes('canvas') is reliable.
+ * @private
+ * @param {string|Function} candidate - Drawer type string or constructor
+ * @returns {string|undefined} Type string, or undefined if not resolvable
+ */
+function getDrawerTypeString(candidate) {
+    if (typeof candidate === 'string') {
+        return candidate;
+    }
+    const proto = candidate && candidate.prototype;
+    if (proto && proto instanceof OpenSeadragon.DrawerBase && $.isFunction(proto.getType)) {
+        return proto.getType.call(candidate);
+    }
+    return undefined;
+}
+
+/**
+ * Return the list of drawer type strings that 'auto' expands to (platform-dependent).
+ * Uses the same detection as determineDrawer('auto'): on iOS-like devices, ['canvas'] only;
+ * on all other platforms, ['webgl', 'canvas'] so webgl is tried first and canvas next if WebGL fails.
+ * @private
+ * @returns {string[]}
+ */
+function getAutoDrawerCandidates() {
+    // Our WebGL drawer is not as performant on iOS at the moment, so we use canvas there.
+    // Note that modern iPads report themselves as Mac, so we also check for coarse pointer.
+    const isPrimaryTouch = window.matchMedia('(pointer: coarse)').matches;
+    const isIOSDevice = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent) && isPrimaryTouch;
+    return isIOSDevice ? ['canvas'] : ['webgl', 'canvas'];
+}
+
+/**
  * Find drawer
  */
 $.determineDrawer = function( id ){
     if (id === 'auto') {
-        // Our WebGL drawer is not as performant on iOS at the moment, so we use canvas there.
-        // Note that modern iPads report themselves as Mac, so we also check for coarse pointer.
-        const isPrimaryTouch = window.matchMedia('(pointer: coarse)').matches;
-        const isIOSDevice = /iPad|iPhone|iPod|Mac/.test(navigator.userAgent) && isPrimaryTouch;
-        id = isIOSDevice ? 'canvas' : 'webgl';
+        // Same platform detection as getAutoDrawerCandidates(); first entry is the preferred drawer type.
+        id = getAutoDrawerCandidates()[0];
     }
 
     for (const property in OpenSeadragon) {

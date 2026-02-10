@@ -415,7 +415,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @private
      */
     setIssue(issueType, description = undefined, error = undefined){
-        this._issues[issueType] = (description || `TiledImage is ${issueType}}`) + (error.message || error);
+        const errorText = error ? (error.message || error) : '';
+        this._issues[issueType] = (description || `TiledImage is ${issueType}}`) + errorText;
         $.console.warn(this._issues[issueType], error);
     },
 
