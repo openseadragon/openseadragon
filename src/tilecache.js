@@ -740,12 +740,12 @@
                     y = edge.transform(_this._tRef, x);
                 } catch (err) {
                     converter.destroy(x, edge.origin.value); // prevent leak
-                    return $.Promise.reject(`[CacheRecord._convert] sync failure (while converting using ${edge.target.value}, ${edge.origin.value}})`);
+                    return $.Promise.reject(`[CacheRecord._convert] sync failure (while converting using ${edge.target.value}, ${edge.origin.value})`);
                 }
                 if (y === undefined) {
                     _this.loaded = false;
                     converter.destroy(x, edge.origin.value); // prevent leak
-                    return $.Promise.reject(`[CacheRecord._convert] data mid result undefined value (while converting using  ${edge.target.value}, ${edge.origin.value}})`);
+                    return $.Promise.reject(`[CacheRecord._convert] data mid result undefined value (while converting using ${edge.target.value}, ${edge.origin.value})`);
                 }
                 converter.destroy(x, edge.origin.value);
                 const result = $.type(y) === "promise" ? y : $.Promise.resolve(y);
