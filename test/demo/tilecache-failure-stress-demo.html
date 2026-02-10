@@ -231,7 +231,7 @@ window.orderPluginA = 0;
         wrapped.transform = function(tile, data) {
           // Inject BEFORE real transform
           if (Faults.enabledConverter && shouldFault(Faults.converterProb)) {
-            log(`FAULT: converter ${edge.origin.value} -> ${edge.target.value}`);
+            log(`ARTIFICIAL FAULT: converter ${edge.origin.value} -> ${edge.target.value}`);
             const r = fault(Faults.converterMode, `${edge.origin.value}->${edge.target.value}`);
             return r; // for reject/undefined paths
           }
@@ -285,7 +285,7 @@ window.orderPluginA = 0;
       if (!shouldFault(Faults.pluginProb)) return;
 
       const msg = `Injected plugin fault at ${where} z${tile.level} (${tile.x},${tile.y})`;
-      log(`FAULT: ${msg}`);
+      log(`ARTIFICIAL FAULT: ${msg}`);
       throw new Error(msg);
     }
 

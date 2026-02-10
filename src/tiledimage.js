@@ -331,6 +331,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      * @param {boolean} [viewportOnly=false] optionally invalidate only viewport-visible tiles if true
      * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+     * @return {OpenSeadragon.Promise}
      */
     requestInvalidate: function (restoreTiles = true, viewportOnly = false, tStamp = $.now()) {
         const tiles = viewportOnly ? this._lastDrawn.map(x => x.tile) : this._tileCache.getLoadedTilesFor(this);
@@ -2346,7 +2347,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (tileCacheCreated) {
             // setting invalidation tstamp to 1 makes sure any update gets applied later on
-            this.viewer.world.requestTileInvalidateEvent([tile], undefined, false, true, true).then(markTileAsReady);
+            this.viewer.world.requestTileInvalidateEvent([tile], undefined, false, true, true).then(markTileAsReady).catch(markTileAsReady);
         } else {
             const origCache = tile.getCache(tile.originalCacheKey);
             // First, ensure we really are ready to draw the tile

@@ -244,7 +244,12 @@ $.EventSource.prototype = {
                     }
                     args.eventSource = source;
                     args.userData = events[ index ].userData;
-                    let result = events[ index ].handler( args );
+                    let result;
+                    try {
+                        result = events[ index ].handler( args );
+                    } catch (e) {
+                        return reject(e);
+                    }
                     result = (!result || $.type(result) !== "promise") ? $.Promise.resolve() : result;
                     return result.then(() => {
                         if (!args.stopPropagation || (typeof args.stopPropagation === "function" && args.stopPropagation() === false)) {
