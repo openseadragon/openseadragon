@@ -1,13 +1,9 @@
-/* global QUnit, testLog */
-
 /*
  * TileCache failure-regression tests
  *
  * Purpose: Ensure the system continues rendering even when:
  *  1) a tile-invalidated plugin throws
  *  2) a conversion step throws during invalidation working-cache conversion
- *
- * Drop this file alongside existing QUnit tests and include it in the test runner.
  */
 
 (function () {
@@ -54,7 +50,6 @@
         function onError(ev) {
             state.errors += 1;
             state.lastError = ev && (ev.error || ev.message || ev);
-            // Prevent propagation
             if (ev && typeof ev.preventDefault === "function") {
                 ev.preventDefault();
             }
