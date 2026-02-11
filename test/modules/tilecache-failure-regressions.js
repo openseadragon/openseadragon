@@ -138,7 +138,11 @@
 
     // Empty test source that returns constant data (0) as T_A
     OpenSeadragon.__FailTestTileSource = class extends OpenSeadragon.TileSource {
-        supports(data) { this.source = data.isFailTestSource; return data && data.isFailTestSource; }
+        supports(data) {
+            const isSupported = !!(data && data.isFailTestSource);
+            if (isSupported) this.source = data.isFailTestSource;
+            return isSupported;
+        }
         configure() {
             return {
                 width: 512,
@@ -236,10 +240,7 @@
             }).then(({state}) => {
                 assert.equal(state.unhandledRejections, 0, 'No unhandled promise rejections');
                 assert.equal(state.errors, 0, 'No uncaught errors');
-            }).then(() => {
-                done();
-            });
-
+            }).finally(done);
         });
 
         v.open([{ isFailTestSource: true }, { isFailTestSource: "1" }]);
@@ -263,7 +264,7 @@
                         failOnce = false;
                         throw new Error("Injected converter failure A->B");
                     }
-                    return x + 1;;
+                    return x + 1;
                 });
 
                 const handler = async (e) => {
@@ -291,10 +292,7 @@
             }).then(({state}) => {
                 assert.equal(state.unhandledRejections, 0, 'No unhandled promise rejections');
                 assert.equal(state.errors, 0, 'No uncaught errors');
-            }).then(() => {
-                done();
-            });
-
+            }).finally(done);
         });
 
         v.open([{ isFailTestSource: "1" }, { isFailTestSource: "2" }]);
