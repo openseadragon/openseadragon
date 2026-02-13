@@ -769,5 +769,5 @@ $.converter.learn("__private__imageUrl", "image", (tile, url) => new $.Promise((
     }
     return undefined;
 }), 1, 1);
-$.converter.learn("__private__imageUrl", "__private__imageUrl",  (tile, url) => url, 0, 1); //strings are immutable, no need to copy
+$.converter.learn("__private__imageUrl", "__private__imageUrl", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
 }(OpenSeadragon));
