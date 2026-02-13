@@ -733,7 +733,7 @@ $.converter = new $.DataTypeConverter();
 
 // Image URL -> image private conversion, used in tests (was public originally, but made private to
 // discourage bad practices by forcing conversion API to deal with URLs that download data
-$.converter.learn("__private__imageUrl", "image", (tile, url) => new $.Promise((resolve, reject) => {
+$.converter.learn("__private__imageUrl", "imageBitmap", (tile, url) => new $.Promise((resolve, reject) => {
     if (!$.supportsAsync) {
         return reject("Not supported in sync mode!");
     }
@@ -755,19 +755,17 @@ $.converter.learn("__private__imageUrl", "image", (tile, url) => new $.Promise((
         }
     }
     if (_imageConversionWorker) {
-        postWorker('fetchDecode', { url, setup }).then(resolve).catch(reject);
-    } else {
-        // Fallback to the main thread
-        // eslint-disable-next-line compat/compat
-        fetch(url, setup).then(res => {
-            if (!res.ok) {
-                throw new Error(`HTTP ${res.status} loading ${url}`);
-            }
-            return res.blob();
-        }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
-        ).then(resolve).catch(reject);
+        return postWorker('fetchDecode', { url, setup }).then(resolve).catch(reject);
     }
-    return undefined;
+    // Fallback to the main thread
+    // eslint-disable-next-line compat/compat
+    return fetch(url, setup).then(res => {
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status} loading ${url}`);
+        }
+        return res.blob();
+    }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
+    ).then(resolve).catch(reject);
 }), 1, 1);
 $.converter.learn("__private__imageUrl", "__private__imageUrl", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
 }(OpenSeadragon));
