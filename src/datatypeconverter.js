@@ -315,16 +315,17 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
  * OpenSeadragon core are:
  * - "image" - HTMLImageElement, an <image> object
  * - "context2d" - HtmlRenderingContext2D, a 2D canvas context
- * - "imageUrl" - string, a URL to a resource carrying image data
  * - "rasterBlob" - Blob, a binary file-like object carrying image data
+ * - "imageBitmap" - an ImageBitmap object
  *
  * The system uses these to deliver desired data from TileSource (which implements fetching logics)
  * through plugins to the renderer with preserving data type compatibility. Typical example is:
- *  TiledImage downloads without ajax a data present at url 'myUrl'. It submits
- *  to the system object of data type 'imageUrl'. The system runs this object through
+ *  TiledImage downloads and creates Image object with type 'image'. It submits
+ *  to the system object of data type 'image'. The system runs this object through
  *  possible plugins integrated into the invalidation routine (by default none),
  *  and finishes by conversion for the WebGL renderer, which would most likely be "image"
- *  object, because the conversion is the cheapest starting from "imageUrl" type.
+ *  object, because the conversion in this case is not even necessary, as the drawer publishes
+ *  the image type as one of its supported ones.
  *  If some plugin required context2d type, the pipeline would deliver this type and used
  *  it also for WebGL, as texture loading function accepts canvas object as well as image.
  *
@@ -414,64 +415,13 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             return ctx;
         }, 1, 2);
 
-        this.learn("imageBitmap", "imageUrl", (tile, bmp) => {
-            const canvas = document.createElement('canvas');
-            canvas.width = bmp.width;
-            canvas.height = bmp.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(bmp, 0, 0);
-            return canvas.toDataURL("image/png");
-        }, 1, 2);
-
         this.learn("image", "imageBitmap", (tile, img) => {
             return createImageBitmap(img, { colorSpaceConversion: 'none' });
         }, 1, 2);
-
-        this.learn("imageUrl", "imageBitmap", (tile, url) => new $.Promise((resolve, reject) => {
-            if (!$.supportsAsync) {
-                return reject("Not supported in sync mode!");
-            }
-            let setup;
-            if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
-                const policy = tile.tiledImage.crossOriginPolicy;
-                if (policy === 'anonymous') {
-                    setup = {
-                        mode: 'cors',
-                        credentials: 'omit',
-                    };
-                } else if (policy === 'use-credentials') {
-                    setup = {
-                        mode: 'cors',
-                        credentials: 'include',
-                    };
-                } else if (policy) {
-                    $.console.error(`Unsupported crossOriginPolicy ${policy}. Ignoring the property.`);
-                }
-            }
-            if (_imageConversionWorker) {
-                postWorker('fetchDecode', { url, setup }).then(resolve).catch(reject);
-            } else {
-                // Fallback to the main thread
-                // eslint-disable-next-line compat/compat
-                fetch(url, setup).then(res => {
-                    if (!res.ok) {
-                        throw new Error(`HTTP ${res.status} loading ${url}`);
-                    }
-                    return res.blob();
-                }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
-                ).then(resolve).catch(reject);
-            }
-            return undefined;
-        }), 1, 1);
-
-        this.learn("context2d", "imageUrl", (tile, ctx) => ctx.canvas.toDataURL(), 1, 2);
-        this.learn("image", "imageUrl", (tile, image) => image.url, 0, 1);
         this.learn("image", "context2d", canvasContextCreator, 1, 2);
-        this.learn("imageUrl", "image", imageCreator, 1, 2);
 
         //Copies
         this.learn("image", "image", (tile, image) => imageCreator(tile, image.src), 1, 1);
-        this.learn("imageUrl", "imageUrl", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
         this.learn("context2d", "context2d", (tile, ctx) => canvasContextCreator(tile, ctx.canvas));
         this.learn("rasterBlob", "rasterBlob", (tile, blob) => blob, 0, 1); //blobs are immutable, no need to copy
         this.learn("imageBitmap", "imageBitmap", (tile, bmp) => new $.Promise((resolve, reject) => {
@@ -781,4 +731,43 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
  */
 $.converter = new $.DataTypeConverter();
 
+// Image URL -> image private conversion, used in tests (was public originally, but made private to
+// discourage bad practices by forcing conversion API to deal with URLs that download data
+$.converter.learn("__private__imageUrl", "image", (tile, url) => new $.Promise((resolve, reject) => {
+    if (!$.supportsAsync) {
+        return reject("Not supported in sync mode!");
+    }
+    let setup;
+    if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
+        const policy = tile.tiledImage.crossOriginPolicy;
+        if (policy === 'anonymous') {
+            setup = {
+                mode: 'cors',
+                credentials: 'omit',
+            };
+        } else if (policy === 'use-credentials') {
+            setup = {
+                mode: 'cors',
+                credentials: 'include',
+            };
+        } else if (policy) {
+            $.console.error(`Unsupported crossOriginPolicy ${policy}. Ignoring the property.`);
+        }
+    }
+    if (_imageConversionWorker) {
+        postWorker('fetchDecode', { url, setup }).then(resolve).catch(reject);
+    } else {
+        // Fallback to the main thread
+        // eslint-disable-next-line compat/compat
+        fetch(url, setup).then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status} loading ${url}`);
+            }
+            return res.blob();
+        }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
+        ).then(resolve).catch(reject);
+    }
+    return undefined;
+}), 1, 1);
+$.converter.learn("__private__imageUrl", "__private__imageUrl",  (tile, url) => url, 0, 1); //strings are immutable, no need to copy
 }(OpenSeadragon));

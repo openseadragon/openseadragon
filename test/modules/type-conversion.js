@@ -116,10 +116,10 @@
 
         test.ok(Converter.getConversionPath("__TEST__url", "__TEST__image"),
             "Type conversion ok between TEST types.");
-        test.ok(Converter.getConversionPath("imageUrl", "context2d"),
+        test.ok(Converter.getConversionPath("image", "context2d"),
             "Type conversion ok between real types.");
 
-        test.equal(Converter.getConversionPath("imageUrl", "__TEST__image"), undefined,
+        test.equal(Converter.getConversionPath("image", "__TEST__image"), undefined,
             "Type conversion not possible between TEST and real types.");
         test.equal(Converter.getConversionPath("__TEST__canvas", "context2d"), undefined,
             "Type conversion not possible between TEST and real types.");
@@ -144,13 +144,6 @@
             canvas.height = image.height;
             const context = canvas.getContext('2d');
             context.drawImage( image, 0, 0 );
-
-            //copy URL
-            const URL2 = await Converter.copy({}, URL, "imageUrl");
-            //we cannot check if they are not the same object, strings are immutable (and we don't copy anyway :D )
-            test.equal(URL, URL2, "String copy is equal in data.");
-            test.equal(typeof URL, typeof URL2, "Type of copies equals.");
-            test.equal(URL.length, URL2.length, "Data length is also equal.");
 
             //copy context
             const context2 = await Converter.copy({}, context, "context2d");
@@ -391,13 +384,14 @@
         const done = test.async();
 
         const imageUrl = "data/A.png";
-        const image1 = await OpenSeadragon.converter.convert({}, imageUrl, "imageUrl", "image");
+        // note: __private__imageUrl is used internally
+        const image1 = await OpenSeadragon.converter.convert({}, imageUrl, "__private__imageUrl", "image");
 
-        const blob = await OpenSeadragon.converter.convert({}, imageUrl, "imageUrl", "rasterBlob");
+        const blob = await OpenSeadragon.converter.convert({}, imageUrl, "__private__imageUrl", "rasterBlob");
         const bitmap = await OpenSeadragon.converter.convert({}, blob, "rasterBlob", "imageBitmap");
         const image2 =  await OpenSeadragon.converter.convert({}, bitmap, "imageBitmap", "image");
 
-        const bitmap2 = await OpenSeadragon.converter.convert({}, imageUrl, "imageUrl", "imageBitmap");
+        const bitmap2 = await OpenSeadragon.converter.convert({}, imageUrl, "__private__imageUrl", "imageBitmap");
         const image3 = await OpenSeadragon.converter.convert({}, bitmap2, "imageBitmap", "image");
 
         const test1 = await compareImages(image1, image2);
