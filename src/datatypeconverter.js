@@ -567,7 +567,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
      * @param {any} data data item to convert
      * @param {string} from data item type
      * @param {string} to desired type(s)
-     * @return {OpenSeadragon.Promise<?>} promise resolution with type 'to' or undefined if the conversion failed
+     * @return {OpenSeadragon.Promise<?>} promise resolution with type 'to', or rejection if conversion failed.
      */
     convert(tile, data, from, ...to) {
         const conversionPath = this.getConversionPath(from, to);
@@ -590,7 +590,7 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 if (destroy) {
                     _this.destroy(x, edge.origin.value);
                 }
-                return $.Promise.reject(`[OpenSeadragon.converter.convert] sync failure (while converting using  ${edge.target.value}, ${edge.origin.value}})`);
+                return $.Promise.reject(`[OpenSeadragon.converter.convert] sync failure (while converting using ${edge.origin.value} -> ${edge.target.value})`);
             }
             if (y === undefined) {
                 if (destroy) {
