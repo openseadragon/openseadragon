@@ -493,7 +493,9 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 return null;
             }).then(_ => {
                 if (this.viewer.isDestroyed()) {
-                    originalCache.__finishProcessing(true);
+                    if (originalCache.__finishProcessing) {
+                        originalCache.__finishProcessing(true);
+                    }
                     return null;
                 }
 
