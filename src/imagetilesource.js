@@ -105,9 +105,6 @@ $.ImageTileSource = class extends $.TileSource {
         if (this.crossOriginPolicy) {
             image.crossOrigin = this.crossOriginPolicy;
         }
-        if (this.ajaxWithCredentials) {
-            image.useCredentials = this.ajaxWithCredentials;
-        }
 
         $.addEvent(image, 'load', function () {
             _this.width = image.naturalWidth;
