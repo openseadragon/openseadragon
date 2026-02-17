@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenSeadragon TileCache Failure Stress Demo</title>
+
+  <!-- OSD build (same pattern as plugin demo) -->
+  <script type="text/javascript" src="/build/openseadragon/openseadragon.js"></script>
+
+  <!-- JQuery (same as plugin demo) -->
+  <script src="/test/lib/jquery-1.9.1.min.js"></script>
+  <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
+  <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 16px; }
+    h1 { margin: 0 0 6px 0; font-size: 22px; }
+    p { margin: 0 0 14px 0; color: #444; }
+    .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+    #demo { width: 820px; height: 620px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+    .panel { width: min(920px, 100%); flex: 1; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); background: #fff; }
+    .card + .card { margin-top: 12px; }
+    label { display: inline-flex; gap: 8px; align-items: center; margin: 6px 12px 6px 0; }
+    input[type="number"]{ width: 84px; padding: 4px 6px; }
+    button { padding: 8px 12px; border: 0; border-radius: 8px; background: #0b6efd; color: #fff; cursor: pointer; }
+    button.secondary { background: #6c757d; }
+    button.danger { background: #dc3545; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: vertical;
+    }
+    #log {
+      width: 100%;
+      height: 240px;
+      overflow: auto;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #0b1020;
+      color: #d7e1ff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+    .muted { color: #666; font-size: 12px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 1200px) { #demo { width: 100%; } }
+  </style>
+</head>
+
+<body>
+  <h1>TileCache Failure Stress Demo</h1>
+  <p>
+    This page intentionally injects random failures into the conversion pipeline and/or the
+    <code>tile-invalidated</code> plugin chain. It’s meant to validate that TileCache stays stable even when conversions crash.
+  </p>
+
+  <div class="row">
+    <section id="demo"></section>
+
+    <div class="panel">
+      <div class="card">
+        <div class="grid">
+          <div>
+            <label><input type="checkbox" id="enableConverterFaults"> Enable converter step faults</label><br/>
+            <label>Fault probability (0–1)
+              <input type="number" id="converterProb" min="0" max="1" step="0.05" value="0.25">
+            </label><br/>
+            <label>Fault mode
+              <select id="converterMode">
+                <option value="throw">throw Error</option>
+                <option value="reject">return Promise.reject</option>
+                <option value="undefined">return undefined</option>
+              </select>
+            </label>
+            <div class="muted">
+              Wraps conversion steps returned by <code>OpenSeadragon.converter.getConversionPath()</code> and injects faults.
+            </div>
+          </div>
+
+          <div>
+            <label><input type="checkbox" id="enablePluginFaults"> Enable plugin faults</label><br/>
+            <label>Fault probability (0–1)
+              <input type="number" id="pluginProb" min="0" max="1" step="0.05" value="0.15">
+            </label><br/>
+            <label>Plugin fault point
+              <select id="pluginWhen">
+                <option value="beforeGet">before e.getData()</option>
+                <option value="afterGet">after e.getData()</option>
+                <option value="beforeSet">before e.setData()</option>
+                <option value="afterSet">after e.setData()</option>
+              </select>
+            </label>
+            <div class="muted">
+              Faults happen inside an example <code>tile-invalidated</code> plugin.
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 10px;">
+          <button id="applyBtn">Apply settings</button>
+          <button id="invalidateBtn" class="secondary">Invalidate now</button>
+          <button id="stormBtn" class="danger">Start storm</button>
+          <button id="stopStormBtn" class="secondary" disabled>Stop storm</button>
+          <button id="clearLogBtn" class="secondary">Clear log</button>
+        </div>
+        <div class="muted" style="margin-top: 6px;">
+          “Storm” repeatedly calls <code>viewer.requestInvalidate()</code> and pans/zooms slightly to force tile activity.
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content: space-between; align-items:center; gap: 10px;">
+          <div><b>Plugin script (editable)</b></div>
+          <div class="muted">Click “Apply settings” to re-eval and reattach handlers.</div>
+        </div>
+        <textarea id="scriptInput">
+// Define window.pluginA to modify tile data; you can deliberately add crashes here too.
+// The UI toggles below also inject random failures without changing this script.
+
+window.pluginA = async function (e) {
+  // Example: request context2d and draw an overlay
+  const ctx = await e.getData('context2d');
+  if (!ctx) return;
+
+  const canvas = ctx.canvas;
+  ctx.save();
+  ctx.fillStyle = "rgba(0, 140, 255, 0.20)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
+
+  await e.setData(ctx, 'context2d');
+};
+
+// Higher number = earlier execution
+window.orderPluginA = 0;
+        </textarea>
+      </div>
+
+      <div class="card">
+        <b>Event / error log</b>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ----- small logger -----
+    const logEl = document.getElementById('log');
+    const log = (msg) => {
+      const ts = new Date().toISOString().replace('T',' ').replace('Z','');
+      logEl.textContent += `[${ts}] ${msg}\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+    const safeToString = (x) => {
+      try { return typeof x === "string" ? x : JSON.stringify(x); }
+      catch { return String(x); }
+    };
+
+    // Capture runtime errors
+    window.addEventListener('error', (e) => log(`window.error: ${e.message}`));
+    window.addEventListener('unhandledrejection', (e) => log(`unhandledrejection: ${safeToString(e.reason)}`));
+
+    // Patch console.error to also log here
+    (function() {
+      const orig = console.error;
+      console.error = function(...args) {
+        try { log(`console.error: ${args.map(a => (a && a.message) ? a.message : safeToString(a)).join(' ')}`); } catch {}
+        return orig.apply(console, args);
+      };
+    })();
+
+    // ----- viewer -----
+    const viewer = window.viewer = OpenSeadragon({
+      id: "demo",
+      prefixUrl: "../../build/openseadragon/images/",
+      tileSources: "https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+      drawer: "webgl",
+      crossOriginPolicy: "Anonymous",
+      wrapHorizontal: true,
+      showNavigator: true
+    });
+
+    viewer.addHandler('open', () => log('viewer: open'));
+    viewer.addHandler('tile-loaded', (e) => log(`viewer: tile-loaded z${e.tile.level} (${e.tile.x},${e.tile.y}) type=${e.tile.dataType || "?"}`));
+    viewer.addHandler('tile-invalidated', (e) => log(`viewer: tile-invalidated z${e.tile.level} (${e.tile.x},${e.tile.y})`), null, -9999);
+
+    // ----- fault injection: converter steps -----
+    const Faults = {
+      enabledConverter: false,
+      converterProb: 0.25,
+      converterMode: 'throw',
+      enabledPlugin: false,
+      pluginProb: 0.15,
+      pluginWhen: 'afterGet',
+    };
+
+    const ConverterPatch = (() => {
+      let installed = false;
+      let origGetPath = null;
+      const wrappedEdges = new WeakMap();
+
+      function shouldFault(prob) {
+        return Math.random() < prob;
+      }
+
+      function fault(mode, label) {
+        const err = new Error(`Injected converter fault (${mode}) at ${label}`);
+        if (mode === 'throw') throw err;
+        if (mode === 'reject') return Promise.reject(err);
+        if (mode === 'undefined') return undefined;
+        throw err;
+      }
+
+      function wrapEdge(edge) {
+        if (!edge || typeof edge.transform !== 'function') return edge;
+        if (wrappedEdges.has(edge)) return wrappedEdges.get(edge);
+
+        const originalTransform = edge.transform;
+        const wrapped = Object.assign({}, edge);
+        wrapped.transform = function(tile, data) {
+          // Inject BEFORE real transform
+          if (Faults.enabledConverter && shouldFault(Faults.converterProb)) {
+            log(`ARTIFICIAL FAULT: converter ${edge.origin.value} -> ${edge.target.value}`);
+            const r = fault(Faults.converterMode, `${edge.origin.value}->${edge.target.value}`);
+            return r; // for reject/undefined paths
+          }
+
+          // Run original, but also allow turning exceptions into proper failures
+          return originalTransform.call(this, tile, data);
+        };
+
+        wrappedEdges.set(edge, wrapped);
+        return wrapped;
+      }
+
+      function install() {
+        if (installed) return;
+        if (!OpenSeadragon || !OpenSeadragon.converter) {
+          log('ERROR: OpenSeadragon.converter not available');
+          return;
+        }
+        origGetPath = OpenSeadragon.converter.getConversionPath.bind(OpenSeadragon.converter);
+        OpenSeadragon.converter.getConversionPath = function(from, to) {
+          const path = origGetPath(from, to);
+          if (!path) return path;
+          // Return a shallow-copied array whose edges are wrapped copies.
+          // This avoids mutating the original graph edges globally.
+          return path.map(wrapEdge);
+        };
+        installed = true;
+        log('converter patch: installed');
+      }
+
+      function uninstall() {
+        if (!installed) return;
+        OpenSeadragon.converter.getConversionPath = origGetPath;
+        installed = false;
+        log('converter patch: removed');
+      }
+
+      return { install, uninstall };
+    })();
+
+    // ----- fault injection: plugin wrapper -----
+    let pluginHandler = null;
+
+    function shouldFault(prob) {
+      return Math.random() < prob;
+    }
+
+    async function maybeFaultPlugin(where, tile) {
+      if (!Faults.enabledPlugin) return;
+      if (Faults.pluginWhen !== where) return;
+      if (!shouldFault(Faults.pluginProb)) return;
+
+      const msg = `Injected plugin fault at ${where} z${tile.level} (${tile.x},${tile.y})`;
+      log(`ARTIFICIAL FAULT: ${msg}`);
+      throw new Error(msg);
+    }
+
+    function attachPluginsFromTextarea() {
+      const scriptContent = document.getElementById("scriptInput").value;
+      try {
+        // Evaluate plugin definitions
+        eval(scriptContent);
+
+        if (!(typeof window.pluginA === "function")) {
+          alert("window.pluginA must be defined!");
+          return;
+        }
+
+        // detach old
+        if (pluginHandler) {
+          viewer.removeHandler('tile-invalidated', pluginHandler);
+          pluginHandler = null;
+        }
+
+        // Wrap user plugin with fault injection points
+        pluginHandler = async function(e) {
+          // This wrapper is itself the handler; it calls user plugin and can fault
+          await maybeFaultPlugin('beforeGet', e.tile);
+
+          // We don't know what the user's plugin does; common is getData/setData.
+          // Fault points are best-effort, but still effective:
+          // - afterGet/beforeSet/afterSet can be injected by patching e.getData/e.setData
+          const origGetData = e.getData;
+          const origSetData = e.setData;
+
+          e.getData = async function(type) {
+            const v = await origGetData.call(e, type);
+            await maybeFaultPlugin('afterGet', e.tile);
+            return v;
+          };
+          e.setData = async function(value, type) {
+            await maybeFaultPlugin('beforeSet', e.tile);
+            const r = await origSetData.call(e, value, type);
+            await maybeFaultPlugin('afterSet', e.tile);
+            return r;
+          };
+
+          // Now call user's plugin
+          return window.pluginA(e);
+        };
+
+        const orderA = Number(window.orderPluginA || 0);
+        viewer.addHandler('tile-invalidated', pluginHandler, null, orderA);
+        log(`pluginA attached (order=${orderA})`);
+
+      } catch (err) {
+        alert("Error executing script: " + err.message);
+        log(`SCRIPT ERROR: ${err.message}`);
+      }
+    }
+
+    // ----- storm loop -----
+    let stormTimer = null;
+    function startStorm() {
+      if (stormTimer) return;
+      let t = 0;
+      stormTimer = setInterval(() => {
+        // small pan/zoom jitter to keep loading pressure
+        t += 1;
+        const vp = viewer.viewport;
+        if (vp) {
+          const z = vp.getZoom(true);
+          const dz = (t % 10 === 0) ? (Math.random() * 0.15 - 0.05) : 0;
+          vp.zoomTo(Math.max(0.5, Math.min(8, z * (1 + dz))), null, true);
+          vp.panBy(new OpenSeadragon.Point((Math.random() - 0.5) * 0.01, (Math.random() - 0.5) * 0.01), true);
+        }
+        viewer.requestInvalidate();
+      }, 350);
+
+      document.getElementById('stormBtn').disabled = true;
+      document.getElementById('stopStormBtn').disabled = false;
+      log('storm: started');
+    }
+    function stopStorm() {
+      if (!stormTimer) return;
+      clearInterval(stormTimer);
+      stormTimer = null;
+      document.getElementById('stormBtn').disabled = false;
+      document.getElementById('stopStormBtn').disabled = true;
+      log('storm: stopped');
+    }
+
+    // ----- UI wiring -----
+    function readUiIntoFaults() {
+      Faults.enabledConverter = document.getElementById('enableConverterFaults').checked;
+      Faults.converterProb = Number(document.getElementById('converterProb').value || 0);
+      Faults.converterMode = document.getElementById('converterMode').value;
+
+      Faults.enabledPlugin = document.getElementById('enablePluginFaults').checked;
+      Faults.pluginProb = Number(document.getElementById('pluginProb').value || 0);
+      Faults.pluginWhen = document.getElementById('pluginWhen').value;
+    }
+
+    document.getElementById('applyBtn').addEventListener('click', () => {
+      readUiIntoFaults();
+
+      // Converter patch is safe to leave installed; it only injects faults when enabled.
+      ConverterPatch.install();
+
+      attachPluginsFromTextarea();
+      viewer.requestInvalidate();
+      log('apply: done');
+    });
+
+    document.getElementById('invalidateBtn').addEventListener('click', () => {
+      viewer.requestInvalidate();
+      log('manual: requestInvalidate()');
+    });
+
+    document.getElementById('stormBtn').addEventListener('click', startStorm);
+    document.getElementById('stopStormBtn').addEventListener('click', stopStorm);
+
+    document.getElementById('clearLogBtn').addEventListener('click', () => {
+      logEl.textContent = '';
+      log('log: cleared');
+    });
+
+    // Defaults: install patch, attach default plugin
+    (function init() {
+      readUiIntoFaults();
+      ConverterPatch.install();
+      attachPluginsFromTextarea();
+      log('init: ready');
+    })();
+  </script>
+</body>
+</html>
