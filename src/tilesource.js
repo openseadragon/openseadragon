@@ -816,18 +816,12 @@ $.TileSource.prototype = {
     downloadTileStart: function (context) {
         // Load the tile with an AJAX request if the loadWithAjax option is
         // set. Otherwise load the image by setting the source property of the image object.
-        if (context.loadWithAjax) {
-            const policy = context.crossOriginPolicy;
-            if (policy === 'anonymous') {
-                context.ajaxHeaders['mode'] = 'cors';
-                context.ajaxHeaders['credentials'] = 'omit';
-            } else if (policy === 'use-credentials') {
-                context.ajaxHeaders['mode'] = 'cors';
-                context.ajaxHeaders['credentials'] = 'include';
-            } else if (policy) {
-                $.console.warn('Unknown crossOriginPolicy: ' + policy);
-            }
 
+        // TODO: the cors/creds is not optimal here:
+        //  - XMLHttpRequest can only setup credentials flag, so `ajaxWithCredentials` is a boolean
+        //  - <img> item can turn on/off cors, and include credentials if cors on, therefore `crossOriginPolicy` can have three values (one is null)
+        //  --> we should merge these flags to a single value to avoid confusion with usage, and use modern fetch that can setup also cors to have consistent behavior
+        if (context.loadWithAjax) {
             context.userData.request = $.makeAjaxRequest({
                 url: context.src,
                 withCredentials: context.ajaxWithCredentials,
