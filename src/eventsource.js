@@ -235,7 +235,7 @@ $.EventSource.prototype = {
             // We return a promise that gets resolved after all the events finish.
             // Returning loop result is not correct, loop promises chain dynamically
             // and outer code could process finishing logics in the middle of event loop.
-            return new $.Promise(resolve => {
+            return new $.Promise((resolve, reject) => {
                 const length = events.length;
                 function loop(index) {
                     if ( index >= length || !events[ index ] ) {
@@ -244,7 +244,12 @@ $.EventSource.prototype = {
                     }
                     args.eventSource = source;
                     args.userData = events[ index ].userData;
-                    let result = events[ index ].handler( args );
+                    let result;
+                    try {
+                        result = events[ index ].handler( args );
+                    } catch (e) {
+                        return reject(e);
+                    }
                     result = (!result || $.type(result) !== "promise") ? $.Promise.resolve() : result;
                     return result.then(() => {
                         if (!args.stopPropagation || (typeof args.stopPropagation === "function" && args.stopPropagation() === false)) {
@@ -253,7 +258,7 @@ $.EventSource.prototype = {
                         return loop(length);
                     });
                 }
-                loop(0);
+                loop(0).catch(reject);
             });
         };
     },

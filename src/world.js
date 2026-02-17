@@ -403,6 +403,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 type = type || origCache.type;
                 workingCache = new $.CacheRecord().withTileReference(tile);
                 return origCache.getDataAs(type, true).then(data => {
+                    if (data === undefined || data === null) {
+                        // Conversion/loading failed upstream; abort invalidation for this tile.
+                        return $.Promise.reject(new Error('[World.getData] Working cache source data unavailable'));
+                    }
                     workingCache.addTile(tile, data, type);
                     return workingCache.data;
                 });
@@ -471,9 +475,31 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     // }
                     return result;
                 },
+            }).catch(err => {
+                // Plugin/invalidation error: keep existing main cache, discard working cache, and finish processing as invalid.
+                $.console.error('Update routine error:', err);
+                if (workingCache) {
+                    try {
+                        workingCache.destroy();
+                    } catch (e) {
+                        //no-op
+                    }
+                    workingCache = null;
+                }
+                wasOutdatedRun = true;
+                if (originalCache.__finishProcessing) {
+                    originalCache.__finishProcessing(true);
+                }
+                return null;
             }).then(_ => {
                 if (this.viewer.isDestroyed()) {
-                    originalCache.__finishProcessing(true);
+                    if (originalCache.__finishProcessing) {
+                        originalCache.__finishProcessing(true);
+                    }
+                    return null;
+                }
+
+                if (wasOutdatedRun) {
                     return null;
                 }
 

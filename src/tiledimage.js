@@ -331,6 +331,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
      * @param {boolean} [viewportOnly=false] optionally invalidate only viewport-visible tiles if true
      * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+     * @return {OpenSeadragon.Promise}
      */
     requestInvalidate: function (restoreTiles = true, viewportOnly = false, tStamp = $.now()) {
         const tiles = viewportOnly ? this._lastDrawn.map(x => x.tile) : this._tileCache.getLoadedTilesFor(this);
@@ -2231,6 +2232,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 const desiredType = $.converter.getConversionPathFinalType(conversion);
                 $.converter.convert(tile, data, dataType, desiredType).then(newData => {
                     this._setTileLoaded(tile, newData, null, tileRequest, desiredType);
+                }).catch(e => {
+                    $.console.warn("Failed to satisfy original type [%s] %s from %s: %s", desiredType, tile, dataType, e);
+                    this._setTileLoaded(tile, data, null, tileRequest, dataType);
                 });
             } else {
                 $.console.warn( "Ignoring default base tile data type %s: no conversion possible from %s", this.originalDataType, dataType);
@@ -2312,7 +2316,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
              * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
              * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
-             *  NOTE: do no await the promise in the handler: you will create a deadlock!
+             *   NOTE: DO NOT await the promise in the handler: you will create a deadlock!
              * @property {function} getCompletionCallback - deprecated
              */
             _this.viewer.raiseEventAwaiting("tile-loaded", {
@@ -2343,7 +2347,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (tileCacheCreated) {
             // setting invalidation tstamp to 1 makes sure any update gets applied later on
-            this.viewer.world.requestTileInvalidateEvent([tile], undefined, false, true, true).then(markTileAsReady);
+            this.viewer.world.requestTileInvalidateEvent([tile], undefined, false, true, true).then(markTileAsReady).catch(markTileAsReady);
         } else {
             const origCache = tile.getCache(tile.originalCacheKey);
             // First, ensure we really are ready to draw the tile
