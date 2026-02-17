@@ -820,7 +820,7 @@ $.TileSource.prototype = {
         // TODO: the cors/creds is not optimal here:
         //  - XMLHttpRequest can only setup credentials flag, so `ajaxWithCredentials` is a boolean
         //  - <img> item can turn on/off cors, and include credentials if cors on, therefore `crossOriginPolicy` can have three values (one is null)
-        //  --> we should merge these flags to a single value to avoid confusion with usage, and use modern fetch that can setup also cors to have consitent behavior
+        //  --> we should merge these flags to a single value to avoid confusion with usage, and use modern fetch that can setup also cors to have consistent behavior
         if (context.loadWithAjax) {
             context.userData.request = $.makeAjaxRequest({
                 url: context.src,
