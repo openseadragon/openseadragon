@@ -1026,6 +1026,7 @@
                 clickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.clickDistThreshold,
                 dblClickTimeThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickTimeThreshold,
                 dblClickDistThreshold: OpenSeadragon.DEFAULT_SETTINGS.dblClickDistThreshold,
+                flipPrimaryMouseButton: OpenSeadragon.DEFAULT_SETTINGS.flipPrimaryMouseButton,
                 focusHandler: onMouseTrackerFocus,
                 blurHandler: onMouseTrackerBlur,
                 enterHandler: onMouseTrackerEnter,

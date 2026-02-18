@@ -362,6 +362,10 @@
   *      The maximum distance allowed between two pointer click events
   *      to be treated as a double-click gesture.
   *
+  * @property {Boolean} [flipPrimaryMouseButton=false]
+  *     Configure which mouse button should control panning. If enabled,
+  *     button 2 will be used for panning instead of 0.
+  *
   * @property {Number} [springStiffness=6.5]
   *
   * @property {Number} [animationTime=1.2]
@@ -1293,6 +1297,7 @@ function OpenSeadragon( options ){
             clickDistThreshold:     5,
             dblClickTimeThreshold:  300,
             dblClickDistThreshold:  20,
+            flipPrimaryMouseButton: false,
             springStiffness:        6.5,
             animationTime:          1.2,
             loadDestinationTilesOnAnimation: true,
