@@ -324,6 +324,37 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
     },
 
     /**
+             * Controls the visibility of the navigator element.
+             * This method hides or shows the entire navigator, including its background and borders.
+             * @function
+             * @param {Boolean} visible - True to show the navigator, false to hide it.
+             */
+    setVisible: function (visible) {
+        if (this.element) {
+            // Only proceed if there's a valid element to control
+            if (visible) {
+                // Show the navigator element
+                this.element.style.display = "block";
+                if (this.viewport) {
+                    // Update the viewport and ensure constraints are applied
+                    this.viewport.goHome(true);
+                    this.world.update();
+                    this.world.draw();
+                    this.update(this.viewer.viewport);
+                }
+            } else {
+                // Hide the navigator element
+                this.element.style.display = "none";
+            }
+        } else {
+            // Log a warning if the navigator element is missing
+            $.console.warn(
+                "Navigator element not found. Unable to set visibility."
+            );
+        }
+    },
+
+    /**
      * Explicitly sets the height of the navigator, in web coordinates. Disables automatic resizing.
      * @param {Number|String} height - the new height, either a number of pixels or a CSS string, such as "100%"
      */
