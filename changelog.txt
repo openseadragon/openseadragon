@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+6.0.1: (in progress...)
+
 6.0.0:
 
 * NEW BEHAVIOR: OpenSeadragon Data Pipeline Overhaul (#2407, #2643, #2718, #2739, #2775, #2762, #2816, #2863, #2858, #2871 @Aiosa)
