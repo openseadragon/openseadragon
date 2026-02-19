@@ -1952,7 +1952,9 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
 
                 if (queueItem.originalSuccess) {
-                    queueItem.originalSuccess(event);
+                    queueItem.originalSuccess({
+                        item: tiledImage
+                    });
                 }
 
                 // It might happen processReadyItems() is called after viewer.destroy()
