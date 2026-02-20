@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 6.0.1: (in progress...)
 
+* Fixed: in a multi-image scene, some images wouldn't load (#2874 @ahankinson)
+
 6.0.0:
 
 * NEW BEHAVIOR: OpenSeadragon Data Pipeline Overhaul (#2407, #2643, #2718, #2739, #2775, #2762, #2816, #2863, #2858, #2871 @Aiosa)
