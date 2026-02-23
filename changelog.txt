@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-6.0.1: (in progress...)
+6.0.1:
 
 * Fixed: in a multi-image scene, some images wouldn't load (#2874 @ahankinson)
 
