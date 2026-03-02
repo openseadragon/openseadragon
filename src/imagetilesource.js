@@ -40,7 +40,7 @@
  * 1. viewer.open({type: 'image', url: fooUrl});
  * 2. viewer.open(new OpenSeadragon.ImageTileSource({url: fooUrl}));
  *
- * With the first syntax, the crossOriginPolicy, ajaxWithCredentials and
+ * With the first syntax, the crossOriginPolicy and
  * useCanvas options are inherited from the viewer if they are not
  * specified directly in the options object.
  *
@@ -54,8 +54,7 @@
  * 'Anonymous', 'use-credentials', and false. If false, image requests will
  * not use CORS preventing internal pyramid building for images from other
  * domains.
- * @param {String|Boolean} [options.ajaxWithCredentials=false] Whether to set
- * the withCredentials XHR flag for AJAX requests (when loading tile sources).
+ * @param {String|Boolean} [options.ajaxWithCredentials=false] deprecated
  * @param {Boolean} [options.useCanvas=true] Set to false to prevent any use
  * of the canvas API.
  */
@@ -65,7 +64,6 @@ $.ImageTileSource = class extends $.TileSource {
         super($.extend({
             buildPyramid: true,
             crossOriginPolicy: false,
-            ajaxWithCredentials: false,
         }, props));
     }
 
