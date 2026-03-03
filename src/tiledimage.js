@@ -1443,28 +1443,43 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
     // private
     _getLevelsInterval: function() {
-        let lowestLevel = Math.max(
-            this.source.minLevel,
-            Math.floor(Math.log(this.minZoomImageRatio) / Math.log(2))
-        );
-        const currentZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
-                this.source.getPixelRatio(0), true).x *
-            this._scaleSpring.current.value;
-        let highestLevel = Math.min(
-            Math.abs(this.source.maxLevel),
-            Math.abs(Math.floor(
-                Math.log(currentZeroRatio / this.minPixelRatio) / Math.log(2)
-            ))
-        );
+        const minLevel = this.source.minLevel || 0;
+        const maxLevel = this.source.maxLevel || 0;
 
-        // Calculations for the interval of levels to draw
-        // can return invalid intervals; fix that here if necessary
-        highestLevel = Math.max(highestLevel, this.source.minLevel || 0);
+        const minPixelRatio = this.minPixelRatio || 0;
+        const minZoomImageRatio = this.minZoomImageRatio || 0;
+
+        let highestLevel = minLevel;
+        let lowestLevel = minLevel;
+
+        // 1) Find the finest level whose current render pixel ratio
+        //    is still >= minPixelRatio
+        for (let level = minLevel; level <= maxLevel; level++) {
+            const currentRenderPixelRatio =
+                this.viewport.deltaPixelsFromPointsNoRotate(
+                    this.source.getPixelRatio(level),
+                    true
+                ).x * this._scaleSpring.current.value;
+
+            if (currentRenderPixelRatio >= minPixelRatio) {
+                highestLevel = level;
+            } else {
+                // For coarser levels the pixel ratio will only get smaller,
+                // so we can stop.
+                break;
+            }
+        }
+
+        if (minZoomImageRatio > 0 && highestLevel > minLevel) {
+            // Just as a heuristic: show one extra level below for smooth zoom-out.
+            lowestLevel = Math.max(minLevel, highestLevel - 1);
+        }
+
+        // Sanity check
+        highestLevel = Math.max(highestLevel, minLevel);
         lowestLevel = Math.min(lowestLevel, highestLevel);
-        return {
-            lowestLevel: lowestLevel,
-            highestLevel: highestLevel
-        };
+
+        return { lowestLevel, highestLevel };
     },
 
     // returns boolean flag of whether the image should be marked as fully loaded

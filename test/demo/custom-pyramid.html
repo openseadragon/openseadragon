@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Custom Levels & Tiles Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+
+        body {
+            font-family: sans-serif;
+            font-size: 14px;
+        }
+
+        .controls {
+            margin-bottom: 10px;
+            max-width: 900px;
+        }
+
+        .controls table {
+            border-collapse: collapse;
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .controls th,
+        .controls td {
+            border: 1px solid #ddd;
+            padding: 4px 6px;
+            text-align: center;
+        }
+
+        .controls input[type="number"] {
+            width: 90px;
+        }
+
+        .controls button {
+            margin-top: 5px;
+            margin-right: 6px;
+            padding: 4px 10px;
+            cursor: pointer;
+        }
+
+        .note {
+            font-size: 12px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .preset-label {
+            font-size: 12px;
+            color: #333;
+            margin-top: 4px;
+        }
+
+        .preset-container {
+            margin-top: 6px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+<div>
+    Custom OpenSeadragon demo with <b>arbitrary level scales</b> and
+    <b>per-level tile sizes</b>, plus three presets to stress-test the pyramid.
+</div>
+
+<div class="controls">
+    <div>
+        <label>
+            Number of levels:
+            <input id="levelsInput" type="number" min="1" value="4">
+        </label>
+        <button id="rebuildLevelsBtn">Rebuild level controls</button>
+    </div>
+
+    <div class="note">
+        <label>
+            <input id="fractalToggle" type="checkbox" checked>
+            Render fractal (can be expensive)
+        </label>
+    </div>
+
+    <div class="note">
+        Convention: level 0 is the lowest-res, level N-1 is the highest-res.<br>
+        For OpenSeadragon, typically the <b>highest level</b> has scale ≈ 1.0 and
+        lower levels &lt; 1.0.
+    </div>
+
+    <div class="preset-container">
+        <div><b>Presets:</b></div>
+        <button id="presetDeepManySmall">Preset A: 16 levels, tiny tiles</button>
+        <button id="presetIrregularHuge">Preset B: 7 levels, irregular scales & huge tiles</button>
+        <button id="presetCrazyMixed">Preset C: 8 levels, crazy mixed tiles & scales</button>
+        <div class="preset-label">
+            A = deep pyramid with small tiles; B = non-power-of-two scales & very large tiles;
+            C = alternating tiny/huge tile sizes and uneven scales.
+        </div>
+    </div>
+
+    <table id="levelsTable">
+        <thead>
+        <tr>
+            <th>Level</th>
+            <th>Scale</th>
+            <th>Tile size</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- Filled by JS -->
+        </tbody>
+    </table>
+
+    <button id="applyBtn">Apply to viewer</button>
+</div>
+
+<div id="contentDiv" class="openseadragon1"></div>
+
+<script type="text/javascript">
+
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    class MyTileSource extends OpenSeadragon.TileSource {
+        constructor(options) {
+            const minLevel = options.minLevel != null ? options.minLevel : 0;
+            const maxLevel = options.maxLevel != null
+                ? options.maxLevel
+                : (options.levelScales ? options.levelScales.length - 1 : 0);
+
+            // Pass cleaned options to the base constructor
+            const baseOptions = Object.assign({}, options, {
+                minLevel: minLevel,
+                maxLevel: maxLevel
+            });
+
+            super(baseOptions);
+
+            this.width = options.width;
+            this.height = options.height;
+            this.minLevel = minLevel;
+            this.maxLevel = maxLevel;
+
+            this.levelScales = options.levelScales || [];
+            this.levelTileSizes = options.levelTileSizes || [];
+
+            this.maxIterations = options.maxIterations || 200;
+            this.rawScales = options.rawScales || options.levelScales || [];
+            this.maxRawScale = options.maxRawScale || 1;
+
+            this.fractalEnabled = options.fractalEnabled !== false;
+        }
+
+        iterateMandelbrot(refPoint) {
+            var squareAndAddPoint = function(z, point) {
+                let a = Math.pow(z.a,2)-Math.pow(z.b, 2) + point.a;
+                let b = 2*z.a*z.b + point.b;
+                z.a = a;
+                z.b = b;
+            };
+
+            var length = function(z) {
+                return Math.sqrt(Math.pow(z.a, 2) + Math.pow(z.b, 2));
+            };
+
+            let z = {a: 0, b: 0};
+            for (let i=0;i < this.maxIterations; i++){
+                squareAndAddPoint(z, refPoint);
+                if(length(z)>2) return i/this.maxIterations;
+            }
+            return 1.0;
+        }
+
+        // Arbitrary per-level scale
+        getLevelScale(level) {
+            if (this.levelScales && this.levelScales[level] != null) {
+                return this.levelScales[level];
+            }
+            // Fallback
+            return 1 / Math.pow(2, this.maxLevel - level);
+        }
+
+        // Arbitrary per-level tile size (we keep tiles square for simplicity)
+        getTileWidth(level) {
+            if (this.levelTileSizes && this.levelTileSizes[level] != null) {
+                return this.levelTileSizes[level];
+            }
+            // Fallback
+            return (this.levelTileSizes && this.levelTileSizes.length)
+                ? this.levelTileSizes[this.levelTileSizes.length - 1]
+                : 256;
+        }
+
+        getTileHeight(level) {
+            // same as width in this demo
+            return this.getTileWidth(level);
+        }
+
+        async downloadTileStart(context) {
+            const { level, x, y } = context.tile;
+            const tileSize = this.getTileWidth(level);
+
+            let size = this.getTileBounds(level, x, y, true);
+            let bounds = this.getTileBounds(level, x, y, false);
+            let canvas = document.createElement("canvas");
+            let ctx = canvas.getContext('2d');
+
+            size.width = Math.floor(size.width);
+            size.height = Math.floor(size.height);
+
+            if (size.width < 1 || size.height < 1) {
+                canvas.width = 1;
+                canvas.height = 1;
+                context.finish(ctx, null, "context2d");
+                return;
+            } else {
+                canvas.width = size.width;
+                canvas.height = size.height;
+            }
+
+            if (this.fractalEnabled) {
+                // --- original Mandelbrot rendering ---
+                bounds.x = bounds.x * 2.5 - 1.5;
+                bounds.width = bounds.width * 2.5;
+                bounds.y = (bounds.y * 2.5) - 1.2;
+                bounds.height = bounds.height * 2.5;
+
+                const imagedata = ctx.createImageData(size.width, size.height);
+                for (let ix = 0; ix < size.width; ix++) {
+                    for (let iy = 0; iy < size.height; iy++) {
+                        const index = (iy * size.width + ix) * 4;
+                        const value = this.iterateMandelbrot({
+                            a: bounds.x + bounds.width * ((ix + 1) / size.width),
+                            b: bounds.y + bounds.height * ((iy + 1) / size.height)
+                        });
+
+                        imagedata.data[index] = Math.floor(value * 255);
+                        imagedata.data[index + 3] = 255;
+                    }
+                }
+                ctx.putImageData(imagedata, 0, 0);
+            } else {
+                // --- cheap fallback: simple gradient background ---
+                const grd = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                grd.addColorStop(0, '#b9ff08');
+                grd.addColorStop(1, '#ff0000');
+                ctx.fillStyle = grd;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // Text info
+            ctx.fillStyle = 'blue';
+            ctx.font = (tileSize / 12) + 'px serif';
+            ctx.fillText(`level: ${level}`, 10, tileSize / 10);
+            ctx.fillText(`x: ${x} y: ${y}`, 10, (tileSize / 10) * 2);
+            ctx.fillText(`scale: ${this.getLevelScale(level).toFixed(4)}`, 10, (tileSize / 10) * 3);
+            ctx.fillText(`tile: ${tileSize}px`, 10, (tileSize / 10) * 4);
+
+            context.finish(ctx, null, 'context2d');
+        }
+
+        getTileUrl(level, x, y) {
+            return `MyTileSource::${level}/${x}-${y}`;
+        }
+
+        supports(data, url) {
+            return true;
+        }
+    }
+
+
+    let viewer = null;
+
+    const BASE_WIDTH = 8192;
+    const BASE_HEIGHT = 8192;
+
+    const levelsInput = document.getElementById('levelsInput');
+    const levelsTableBody = document.querySelector('#levelsTable tbody');
+    const rebuildLevelsBtn = document.getElementById('rebuildLevelsBtn');
+    const applyBtn = document.getElementById('applyBtn');
+
+    const presetDeepManySmallBtn = document.getElementById('presetDeepManySmall');
+    const presetIrregularHugeBtn = document.getElementById('presetIrregularHuge');
+    const presetCrazyMixedBtn = document.getElementById('presetCrazyMixed');
+    const fractalToggle = document.getElementById('fractalToggle');
+
+    function buildLevelRows(numLevels) {
+        levelsTableBody.innerHTML = '';
+
+        for (let level = 0; level < numLevels; level++) {
+            const tr = document.createElement('tr');
+
+            const levelCell = document.createElement('td');
+            levelCell.textContent = level;
+
+            const scaleCell = document.createElement('td');
+            const scaleInput = document.createElement('input');
+            scaleInput.type = 'number';
+            scaleInput.step = '0.01';
+
+            // Default: simple power-of-two-ish with highest level = 1
+            const maxLevel = numLevels - 1;
+            const defaultScale = 1 / Math.pow(2, maxLevel - level);
+            scaleInput.value = defaultScale.toFixed(2);
+
+            scaleCell.appendChild(scaleInput);
+
+            const tileSizeCell = document.createElement('td');
+            const tileSizeInput = document.createElement('input');
+            tileSizeInput.type = 'number';
+            tileSizeInput.min = '32';
+            tileSizeInput.value = '512';  // default tile size
+            tileSizeCell.appendChild(tileSizeInput);
+
+            tr.appendChild(levelCell);
+            tr.appendChild(scaleCell);
+            tr.appendChild(tileSizeCell);
+
+            levelsTableBody.appendChild(tr);
+        }
+    }
+
+    function readSettingsFromUI() {
+        const numLevels = parseInt(levelsInput.value, 10);
+        const rawScales = [];
+        const levelTileSizes = [];
+
+        const rows = levelsTableBody.querySelectorAll('tr');
+        rows.forEach((row, idx) => {
+            const inputs = row.querySelectorAll('input');
+            const scale = parseFloat(inputs[0].value);
+            const tileSize = parseInt(inputs[1].value, 10);
+
+            rawScales[idx] = isNaN(scale) ? 1 : scale;
+            levelTileSizes[idx] = isNaN(tileSize) ? 512 : tileSize;
+        });
+
+        const maxScale = Math.max.apply(null, rawScales) || 1;
+        const levelScales = rawScales.map(s => s / maxScale);
+
+        // adjust width to make 'reasonable' zoom
+        const nativeWidth  = BASE_WIDTH  * maxScale;
+        const nativeHeight = BASE_HEIGHT * maxScale;
+
+        const fractalEnabled = fractalToggle.checked;
+
+        return {
+            fractalEnabled,
+            numLevels,
+            levelScales,      // normalized (≤ 1) – given to TileSource
+            levelTileSizes,
+            nativeWidth,
+            nativeHeight,
+            rawScales,        // if you ever want the original numbers for display
+        };
+    }
+
+    function createViewerFromSettings() {
+        const {
+            fractalEnabled,
+            numLevels,
+            levelScales,
+            levelTileSizes,
+            nativeWidth,
+            nativeHeight
+        } = readSettingsFromUI();
+
+        const minLevel = 0;
+        const maxLevel = numLevels - 1;
+
+        if (viewer) {
+            viewer.destroy();
+            viewer = null;
+        }
+
+        viewer = OpenSeadragon({
+            id: 'contentDiv',
+            prefixUrl: '../../build/openseadragon/images/',
+            showRotationControl: true,
+            drawer: 'canvas',
+            loadTilesWithAjax: true,
+            minZoomImageRatio: 0,
+            showNavigator: true,
+            // you can also add this if you want arbitrarily deep zoom-in:
+            // maxZoomPixelRatio: Infinity,
+            tileSources: new MyTileSource({
+                width:  nativeWidth,
+                height: nativeHeight,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                levelScales: levelScales,       // normalized up to 1.0
+                levelTileSizes: levelTileSizes,
+                fractalEnabled: fractalEnabled
+            })
+        });
+    }
+
+    // -------------------------
+    // Presets that stress-test stuff
+    // -------------------------
+
+    // Preset A: 16 levels, small tiles; very deep pyramid
+    function presetDeepManySmall() {
+        const numLevels = 16;
+        const scales = [];
+        const tileSizes = [];
+        const maxLevel = numLevels - 1;
+        for (let level = 0; level < numLevels; level++) {
+            // classic 1 / 2^(max - level)
+            scales[level] = 1 / Math.pow(2, maxLevel - level);
+            tileSizes[level] = 128; // tiny tiles at all levels
+        }
+        return { numLevels, scales, tileSizes };
+    }
+
+    // Preset B: 7 levels, irregular scales and very big tiles
+    function presetIrregularHuge() {
+        const scales = [
+            0.005,  // extremely tiny
+            0.02,
+            0.06,
+            0.15,
+            0.35,
+            0.7,
+            1.0     // full-res
+        ];
+        const tileSizes = [
+            256,
+            512,
+            1024,
+            2048,
+            3072,
+            4096,
+            4096   // huge tiles at top
+        ];
+        return { numLevels: scales.length, scales, tileSizes };
+    }
+
+    // Preset C: 8 levels, wildly mixed scales and alternating tiny/huge tiles
+    function presetCrazyMixed() {
+        const scales = [
+            0.01,  // ultra tiny
+            0.04,
+            0.10,
+            0.25,
+            0.70,
+            1.8,
+            4.5,
+            10,
+            25
+        ];
+        const tileSizes = [
+            64,
+            1024,
+            64,
+            2048,
+            128,
+            2048,
+            256,
+            4096,
+            521
+        ];
+        return { numLevels: scales.length, scales, tileSizes };
+    }
+
+    function applyPreset(presetData) {
+        const { numLevels, scales, tileSizes } = presetData;
+        const n = Math.max(1, numLevels);
+
+        levelsInput.value = n;
+        buildLevelRows(n);
+
+        const rows = levelsTableBody.querySelectorAll('tr');
+        rows.forEach((row, idx) => {
+            const inputs = row.querySelectorAll('input');
+            if (scales[idx] != null) {
+                inputs[0].value = scales[idx];
+            }
+            if (tileSizes[idx] != null) {
+                inputs[1].value = tileSizes[idx];
+            }
+        });
+
+        createViewerFromSettings();
+    }
+
+    // -------------------------
+    // UI events
+    // -------------------------
+    rebuildLevelsBtn.addEventListener('click', function() {
+        const n = Math.max(1, parseInt(levelsInput.value, 10) || 1);
+        levelsInput.value = n;
+        buildLevelRows(n);
+    });
+
+    applyBtn.addEventListener('click', function() {
+        createViewerFromSettings();
+    });
+
+    presetDeepManySmallBtn.addEventListener('click', function() {
+        applyPreset(presetDeepManySmall());
+    });
+
+    presetIrregularHugeBtn.addEventListener('click', function() {
+        applyPreset(presetIrregularHuge());
+    });
+
+    presetCrazyMixedBtn.addEventListener('click', function() {
+        applyPreset(presetCrazyMixed());
+    });
+
+    // -------------------------
+    // Initial setup
+    // -------------------------
+    (function init() {
+        buildLevelRows(parseInt(levelsInput.value, 10));
+        createViewerFromSettings();
+    })();
+</script>
+</body>
+</html>
