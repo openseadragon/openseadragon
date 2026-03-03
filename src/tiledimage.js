@@ -1499,17 +1499,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const minLevel = this.source.minLevel || 0;
         const maxLevel = this.source.maxLevel || 0;
 
-        // Special case: at absolute max zoom, stick to the top level
-        const zoom = this.viewport.getZoom();
-        const maxZoom = this.viewport.getMaxZoom();
-        const epsZoom = 1e-4;
-        if (zoom >= maxZoom - epsZoom) {
-            return {
-                lowestLevel: Math.max(maxLevel - 1, minLevel),
-                highestLevel: maxLevel
-            };
-        }
-
         let bestLevel = minLevel;
         let bestDZoom = Infinity;
 
