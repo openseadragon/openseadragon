@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Custom Level Sizes & Tiles Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+        body {
+            font-family: sans-serif;
+        }
+        .openseadragon1 {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        .controls {
+            margin-bottom: 10px;
+        }
+        .controls > div {
+            margin-bottom: 5px;
+        }
+        table {
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 2px 4px;
+            font-size: 12px;
+        }
+        input[type=number] {
+            width: 70px;
+        }
+        button {
+            margin-right: 5px;
+        }
+        .note {
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+<h1>OpenSeadragon – Custom Level Sizes (width/height) + Tile Sizes</h1>
+
+<div class="controls">
+    <div>
+        <label>
+            Number of levels:
+            <input id="levelsInput" type="number" min="1" value="9">
+        </label>
+        <button id="rebuildLevelsBtn">Rebuild level controls</button>
+    </div>
+
+    <div>
+        <button id="presetSampleSizesBtn">
+            Load sample sizes preset
+        </button>
+    </div>
+
+    <div class="note">
+        Each row defines a level's <b>image size</b> and <b>tile size</b>.
+        The largest width/height is treated as the full-resolution level.
+    </div>
+
+    <table id="levelsTable">
+        <thead>
+        <tr>
+            <th>Level</th>
+            <th>Width (px)</th>
+            <th>Height (px)</th>
+            <th>Tile size (px)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <!-- filled by JS -->
+        </tbody>
+    </table>
+
+    <div style="margin-top:8px;">
+        <button id="applyBtn">Apply to viewer</button>
+    </div>
+</div>
+
+<div id="contentDiv" class="openseadragon1"></div>
+
+<script type="text/javascript">
+    // -------------
+    // Custom TileSource
+    // -------------
+    class PerSizeTileSource extends OpenSeadragon.TileSource {
+        constructor(options) {
+            const minLevel = options.minLevel != null ? options.minLevel : 0;
+            const maxLevel = options.maxLevel != null
+                ? options.maxLevel
+                : (options.levelDimensions ? options.levelDimensions.length - 1 : 0);
+
+            // Pass base info up to OpenSeadragon.TileSource
+            const baseOptions = Object.assign({}, options, {
+                minLevel: minLevel,
+                maxLevel: maxLevel
+            });
+
+            super(baseOptions);
+
+            this.width  = options.width;   // native full-res width
+            this.height = options.height;  // native full-res height
+            this.minLevel = minLevel;
+            this.maxLevel = maxLevel;
+
+            // Array of { width, height } per level
+            this.levelDimensions = options.levelDimensions || [];
+            // Per-level tile sizes
+            this.levelTileSizes = options.levelTileSizes || [];
+        }
+
+        // Map a level's width to a uniform scalar scale factor
+        // relative to "native" (full-res) width.
+        getLevelScale(level) {
+            const dims = this.levelDimensions[level];
+            if (!dims) {
+                return 1;
+            }
+            return dims.width / this.width;
+        }
+
+        // Per-level tile sizes (square tiles for this demo)
+        getTileWidth(level) {
+            if (this.levelTileSizes && this.levelTileSizes[level] != null) {
+                return this.levelTileSizes[level];
+            }
+            return 256;
+        }
+
+        getTileHeight(level) {
+            return this.getTileWidth(level);
+        }
+
+        // This is where tiles are actually drawn (no network requests).
+        downloadTileStart(context) {
+            const { level, x, y } = context.tile;
+            const tileSize = this.getTileWidth(level);
+            const dims = this.levelDimensions[level] || { width: this.width, height: this.height };
+
+            const canvas = document.createElement('canvas');
+            canvas.width = tileSize;
+            canvas.height = tileSize;
+            const ctx = canvas.getContext('2d');
+
+            // Background: level-dependent color so you can see mixing
+            const hue = (level * 40) % 360;
+            ctx.fillStyle = `hsl(${hue}, 60%, 85%)`;
+            ctx.fillRect(0, 0, tileSize, tileSize);
+
+            // Border
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(0.5, 0.5, tileSize - 1, tileSize - 1);
+
+            // Debug text
+            ctx.fillStyle = 'blue';
+            ctx.font = (tileSize / 12) + 'px sans-serif';
+
+            let row = 1;
+            const lineY = () => (tileSize / 10) * row++;
+
+            ctx.fillText(`level: ${level}`, 8, lineY());
+            ctx.fillText(`tile: ${x}, ${y}`, 8, lineY());
+            ctx.fillText(`level size: ${dims.width}×${dims.height}`, 8, lineY());
+            ctx.fillText(`tileSize: ${tileSize}`, 8, lineY());
+
+            // Tell OSD we've drawn this tile
+            context.finish(ctx, null, 'context2d');
+            return true;
+        }
+
+        // Required for custom sources (we don't actually load URLs)
+        getTileUrl(level, x, y) {
+            return `PerSizeTileSource:${level}/${x}-${y}`;
+        }
+
+        supports(data, url) {
+            return true;
+        }
+
+        hasTransparency() {
+            return true;
+        }
+    }
+
+    // -------------------------
+    // Viewer + UI wiring
+    // -------------------------
+    let viewer = null;
+
+    const levelsInput = document.getElementById('levelsInput');
+    const levelsTableBody = document.querySelector('#levelsTable tbody');
+    const rebuildLevelsBtn = document.getElementById('rebuildLevelsBtn');
+    const applyBtn = document.getElementById('applyBtn');
+    const presetSampleSizesBtn = document.getElementById('presetSampleSizesBtn');
+
+    // Your sample level sizes
+    const SAMPLE_LEVEL_SIZES = [
+        { width: 200,  height: 177 },
+        { width: 300,  height: 266 },
+        { width: 400,  height: 354 },
+        { width: 600,  height: 532 },
+        { width: 800,  height: 709 },
+        { width: 1000, height: 886 },
+        { width: 1200, height: 1063 },
+        { width: 1600, height: 1417 },
+        { width: 2400, height: 2126 }
+    ];
+
+    function buildLevelRows(numLevels) {
+        levelsTableBody.innerHTML = '';
+
+        for (let level = 0; level < numLevels; level++) {
+            const tr = document.createElement('tr');
+
+            const levelCell = document.createElement('td');
+            levelCell.textContent = level;
+
+            // Width
+            const widthCell = document.createElement('td');
+            const widthInput = document.createElement('input');
+            widthInput.type = 'number';
+            widthInput.min = '1';
+            widthInput.value = SAMPLE_LEVEL_SIZES[level]?.width || 512;
+            widthCell.appendChild(widthInput);
+
+            // Height
+            const heightCell = document.createElement('td');
+            const heightInput = document.createElement('input');
+            heightInput.type = 'number';
+            heightInput.min = '1';
+            heightInput.value = SAMPLE_LEVEL_SIZES[level]?.height || 512;
+            heightCell.appendChild(heightInput);
+
+            // Tile size
+            const tileCell = document.createElement('td');
+            const tileInput = document.createElement('input');
+            tileInput.type = 'number';
+            tileInput.min = '32';
+            tileInput.value = '256';
+            tileCell.appendChild(tileInput);
+
+            tr.appendChild(levelCell);
+            tr.appendChild(widthCell);
+            tr.appendChild(heightCell);
+            tr.appendChild(tileCell);
+
+            levelsTableBody.appendChild(tr);
+        }
+    }
+
+    function readSettingsFromUI() {
+        const numLevels = parseInt(levelsInput.value, 10);
+        const levelDimensions = [];
+        const levelTileSizes = [];
+
+        const rows = levelsTableBody.querySelectorAll('tr');
+
+        rows.forEach((row, idx) => {
+            const inputs = row.querySelectorAll('input');
+            const width  = parseInt(inputs[0].value, 10);
+            const height = parseInt(inputs[1].value, 10);
+            const tile   = parseInt(inputs[2].value, 10);
+
+            levelDimensions[idx] = {
+                width:  isNaN(width)  ? 512 : width,
+                height: isNaN(height) ? 512 : height
+            };
+            levelTileSizes[idx] = isNaN(tile) ? 256 : tile;
+        });
+
+        // Native full-res dimensions: max over all levels
+        let nativeWidth  = 1;
+        let nativeHeight = 1;
+        levelDimensions.forEach(dim => {
+            if (dim.width  > nativeWidth)  nativeWidth  = dim.width;
+            if (dim.height > nativeHeight) nativeHeight = dim.height;
+        });
+
+        return {
+            numLevels,
+            nativeWidth,
+            nativeHeight,
+            levelDimensions,
+            levelTileSizes
+        };
+    }
+
+    function createViewerFromSettings() {
+        const {
+            numLevels,
+            nativeWidth,
+            nativeHeight,
+            levelDimensions,
+            levelTileSizes
+        } = readSettingsFromUI();
+
+        const minLevel = 0;
+        const maxLevel = numLevels - 1;
+
+        if (viewer) {
+            viewer.destroy();
+            viewer = null;
+        }
+
+        viewer = OpenSeadragon({
+            id: 'contentDiv',
+            prefixUrl: '../../build/openseadragon/images/',
+            showRotationControl: true,
+            drawer: 'canvas',
+            loadTilesWithAjax: true,
+            showNavigator: true,
+
+            tileSources: new PerSizeTileSource({
+                width: nativeWidth,
+                height: nativeHeight,
+                minLevel: minLevel,
+                maxLevel: maxLevel,
+                levelDimensions: levelDimensions,
+                levelTileSizes: levelTileSizes
+            })
+        });
+    }
+
+    // --- UI hooks ---
+    rebuildLevelsBtn.addEventListener('click', () => {
+        const numLevels = parseInt(levelsInput.value, 10) || 1;
+        buildLevelRows(numLevels);
+    });
+
+    applyBtn.addEventListener('click', () => {
+        createViewerFromSettings();
+    });
+
+    presetSampleSizesBtn.addEventListener('click', () => {
+        levelsInput.value = SAMPLE_LEVEL_SIZES.length;
+        buildLevelRows(SAMPLE_LEVEL_SIZES.length);
+        // fill rows explicitly with sample sizes
+        const rows = levelsTableBody.querySelectorAll('tr');
+        rows.forEach((row, idx) => {
+            const inputs = row.querySelectorAll('input');
+            if (SAMPLE_LEVEL_SIZES[idx]) {
+                inputs[0].value = SAMPLE_LEVEL_SIZES[idx].width;
+                inputs[1].value = SAMPLE_LEVEL_SIZES[idx].height;
+            }
+        });
+    });
+
+    // Initial setup: sample preset
+    levelsInput.value = SAMPLE_LEVEL_SIZES.length;
+    buildLevelRows(SAMPLE_LEVEL_SIZES.length);
+    createViewerFromSettings();
+</script>
+</body>
+</html>

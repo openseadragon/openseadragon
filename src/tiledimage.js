@@ -1441,19 +1441,79 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this.viewer.world.getItemAt(0) === this;
     },
 
-    // private
-    _getLevelsInterval: function() {
+    // private - todo delete, original logics
+    // _getLevelsInterval: function () {
+    //     const minLevel = this.source.minLevel || 0;
+    //     const maxLevel = this.source.maxLevel || 0;
+    //
+    //     const minPixelRatio = this.minPixelRatio || 0;
+    //
+    //     // 1) Find the *coarsest* level that still meets minPixelRatio
+    //     //    using the real per-level pixel ratios.
+    //     let chosenLevel = null;
+    //     let finalLevel = null;
+    //     let finalDZoom = null;
+    //
+    //     console.log(this.source.maxLevel);
+    //
+    //     for (let level = minLevel; level <= maxLevel; level++) {
+    //         const currentRenderPixelRatio =
+    //             this.viewport.deltaPixelsFromPointsNoRotate(
+    //                 this.source.getPixelRatio(level),
+    //                 true
+    //             ).x * this._scaleSpring.current.value;
+    //
+    //         console.log(level, currentRenderPixelRatio, minPixelRatio);
+    //
+    //         // we will remember level that was chosen before we dropped below 1
+    //         finalLevel = chosenLevel;
+    //         chosenLevel = level;
+    //         const currentDZoom = Math.abs(currentRenderPixelRatio - 1);
+    //
+    //         // As soon as pixel render ratio drops below 1 (we start downsampling instead of supersampling)
+    //         if (currentRenderPixelRatio <= 1) {
+    //             // prefer the smaller error
+    //             if (finalDZoom !== null) {
+    //                 finalLevel = currentDZoom < finalDZoom ? chosenLevel : finalLevel;
+    //             }
+    //             break;
+    //         }
+    //
+    //         finalDZoom = currentDZoom;
+    //     }
+    //
+    //     console.log("CHOSE", finalLevel, finalDZoom);
+    //
+    //     // 2) Fallbacks if *no* level is sharp enough or pyramid is weird
+    //     if (finalLevel === null) {
+    //         finalLevel = minLevel;
+    //     }
+    //
+    //     return {
+    //         lowestLevel: Math.max(finalLevel - 1, minLevel),
+    //         highestLevel: finalLevel
+    //     };
+    // },
+
+    _getLevelsInterval: function () {
         const minLevel = this.source.minLevel || 0;
         const maxLevel = this.source.maxLevel || 0;
 
-        const minPixelRatio = this.minPixelRatio || 0;
-        const minZoomImageRatio = this.minZoomImageRatio || 0;
+        // Special case: at absolute max zoom, stick to the top level
+        const zoom = this.viewport.getZoom();
+        const maxZoom = this.viewport.getMaxZoom();
+        const epsZoom = 1e-4;
+        if (zoom >= maxZoom - epsZoom) {
+            return {
+                lowestLevel: Math.max(maxLevel - 1, minLevel),
+                highestLevel: maxLevel
+            };
+        }
 
-        let highestLevel = minLevel;
-        let lowestLevel = minLevel;
+        let bestLevel = minLevel;
+        let bestDZoom = Infinity;
 
-        // 1) Find the finest level whose current render pixel ratio
-        //    is still >= minPixelRatio
+        // 1) Find the level whose render pixel ratio is closest to 1
         for (let level = minLevel; level <= maxLevel; level++) {
             const currentRenderPixelRatio =
                 this.viewport.deltaPixelsFromPointsNoRotate(
@@ -1461,25 +1521,22 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     true
                 ).x * this._scaleSpring.current.value;
 
-            if (currentRenderPixelRatio >= minPixelRatio) {
-                highestLevel = level;
-            } else {
-                // For coarser levels the pixel ratio will only get smaller,
-                // so we can stop.
-                break;
+            const dZoom = Math.abs(currentRenderPixelRatio - 1);
+
+            if (dZoom < bestDZoom) {
+                bestDZoom = dZoom;
+                bestLevel = level;
             }
         }
 
-        if (minZoomImageRatio > 0 && highestLevel > minLevel) {
-            // Just as a heuristic: show one extra level below for smooth zoom-out.
-            lowestLevel = Math.max(minLevel, highestLevel - 1);
-        }
+        // 2) Build a small interval around that best level
+        const lowest = Math.max(bestLevel - 1, minLevel);
+        const highest = bestLevel;
 
-        // Sanity check
-        highestLevel = Math.max(highestLevel, minLevel);
-        lowestLevel = Math.min(lowestLevel, highestLevel);
-
-        return { lowestLevel, highestLevel };
+        return {
+            lowestLevel: lowest,
+            highestLevel: highest
+        };
     },
 
     // returns boolean flag of whether the image should be marked as fully loaded
