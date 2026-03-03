@@ -2597,16 +2597,41 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @returns {Boolean}
      */
     _isCovered: function( coverage, level, x, y ) {
+        // Whole-level shortcut: if every tile at level+1 provides coverage,
+        // then level is completely covered by higher-resolution content.
         if ( x === undefined || y === undefined ) {
             return this._providesCoverage( coverage, level + 1 );
-        } else {
-            return (
-                this._providesCoverage( coverage, level + 1, 2 * x, 2 * y ) &&
-                this._providesCoverage( coverage, level + 1, 2 * x, 2 * y + 1 ) &&
-                this._providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y ) &&
-                this._providesCoverage( coverage, level + 1, 2 * x + 1, 2 * y + 1 )
-            );
         }
+
+        const nextLevel = level + 1;
+
+        // No finer level -> nothing can cover this tile.
+        if (nextLevel > this.source.maxLevel) {
+            return false;
+        }
+
+        // If we don't even have a coverage map for the finer level yet,
+        // we conservatively assume it's not covered.
+        if (!coverage[nextLevel]) {
+            return false;
+        }
+
+        // Geometric bounds of this tile in tiled-image normalized coordinates.
+        const parentBounds = this.getTileBounds(level, x, y);
+
+        let covered = true;
+        const self = this;
+
+        // Visit all tiles at the next level that intersect this parent tile's area.
+        // _visitTiles handles wrap and flip consistently with how coverage indices
+        // are generated in _updateLevel.
+        this._visitTiles(nextLevel, parentBounds, function(childX, childY) {
+            if (!self._providesCoverage(coverage, nextLevel, childX, childY)) {
+                covered = false;
+            }
+        });
+
+        return covered;
     },
 
     /**
