@@ -122,10 +122,6 @@
 
 <script type="text/javascript">
 
-    function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
     class MyTileSource extends OpenSeadragon.TileSource {
         constructor(options) {
             const minLevel = options.minLevel != null ? options.minLevel : 0;
