@@ -77,6 +77,11 @@
         </tbody>
     </table>
 
+    <label>
+        Minimum pixel ratio:
+        <input type="number" id="minPixelRatio" checked value="0.5" step="0.1">
+    </label>
+
     <div style="margin-top:8px;">
         <button id="applyBtn">Apply to viewer</button>
     </div>
@@ -315,6 +320,7 @@
             drawer: 'canvas',
             loadTilesWithAjax: true,
             showNavigator: true,
+            minPixelRatio: Number.parseFloat(document.getElementById('minPixelRatio').value),
 
             tileSources: new PerSizeTileSource({
                 width: nativeWidth,

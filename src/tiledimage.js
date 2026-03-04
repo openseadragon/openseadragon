@@ -1441,98 +1441,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this.viewer.world.getItemAt(0) === this;
     },
 
-    // private - todo delete, original logics
-    // _getLevelsInterval: function () {
-    //     const minLevel = this.source.minLevel || 0;
-    //     const maxLevel = this.source.maxLevel || 0;
-    //
-    //     const minPixelRatio = this.minPixelRatio || 0;
-    //
-    //     // 1) Find the *coarsest* level that still meets minPixelRatio
-    //     //    using the real per-level pixel ratios.
-    //     let chosenLevel = null;
-    //     let finalLevel = null;
-    //     let finalDZoom = null;
-    //
-    //     console.log(this.source.maxLevel);
-    //
-    //     for (let level = minLevel; level <= maxLevel; level++) {
-    //         const currentRenderPixelRatio =
-    //             this.viewport.deltaPixelsFromPointsNoRotate(
-    //                 this.source.getPixelRatio(level),
-    //                 true
-    //             ).x * this._scaleSpring.current.value;
-    //
-    //         console.log(level, currentRenderPixelRatio, minPixelRatio);
-    //
-    //         // we will remember level that was chosen before we dropped below 1
-    //         finalLevel = chosenLevel;
-    //         chosenLevel = level;
-    //         const currentDZoom = Math.abs(currentRenderPixelRatio - 1);
-    //
-    //         // As soon as pixel render ratio drops below 1 (we start downsampling instead of supersampling)
-    //         if (currentRenderPixelRatio <= 1) {
-    //             // prefer the smaller error
-    //             if (finalDZoom !== null) {
-    //                 finalLevel = currentDZoom < finalDZoom ? chosenLevel : finalLevel;
-    //             }
-    //             break;
-    //         }
-    //
-    //         finalDZoom = currentDZoom;
-    //     }
-    //
-    //     console.log("CHOSE", finalLevel, finalDZoom);
-    //
-    //     // 2) Fallbacks if *no* level is sharp enough or pyramid is weird
-    //     if (finalLevel === null) {
-    //         finalLevel = minLevel;
-    //     }
-    //
-    //     return {
-    //         lowestLevel: Math.max(finalLevel - 1, minLevel),
-    //         highestLevel: finalLevel
-    //     };
-    // },
-
-    _getLevelsInterval: function () {
-        const minLevel = this.source.minLevel || 0;
-        const maxLevel = this.source.maxLevel || 0;
-
-        let bestLevel = minLevel;
-        let bestDZoom = Infinity;
-
-        // 1) Find the level whose render pixel ratio is closest to 1
-        for (let level = minLevel; level <= maxLevel; level++) {
-            const currentRenderPixelRatio =
-                this.viewport.deltaPixelsFromPointsNoRotate(
-                    this.source.getPixelRatio(level),
-                    true
-                ).x * this._scaleSpring.current.value;
-
-            const dZoom = Math.abs(currentRenderPixelRatio - 1);
-
-            if (dZoom < bestDZoom) {
-                bestDZoom = dZoom;
-                bestLevel = level;
-            }
-        }
-
-        // 2) Build a small interval around that best level
-        const lowest = Math.max(bestLevel - 1, minLevel);
-        const highest = bestLevel;
-
-        return {
-            lowestLevel: lowest,
-            highestLevel: highest
-        };
-    },
-
     // returns boolean flag of whether the image should be marked as fully loaded
     _updateLevelsForViewport: function(){
-        const levelsInterval = this._getLevelsInterval();
-        const lowestLevel = levelsInterval.lowestLevel; // the lowest level we should draw at our current zoom
-        const highestLevel = levelsInterval.highestLevel; // the highest level we should draw at our current zoom
         const drawArea = this.getDrawArea();
 
         let loadArea = drawArea;
@@ -1557,47 +1467,42 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return this._fullyLoaded;
         }
 
-        // make a list of levels to use for the current zoom level
-        const levelList = this._getCachedArray('levelList', highestLevel - lowestLevel + 1);
-        // go from highest to lowest resolution
-        for (let i = 0, level = highestLevel; level >= lowestLevel; level--, i++) {
-            levelList[i] = level;
-        }
+        // Figure the list of levels we should draw at the current zoom
+        const minLevel = this.source.minLevel || 0;
+        const maxLevel = this.source.maxLevel || 0;
 
-        // if a single-tile level is loaded, add that to the end of the list
-        // as a fallback to use during zooming out, until a lower-res tile is
-        // loaded
-        for (let level = highestLevel + 1; level <= this.source.maxLevel; level++) {
-            const tile = (
-                this.tilesMatrix[level] &&
-                this.tilesMatrix[level][0] &&
-                this.tilesMatrix[level][0][0]
-            );
-            if (tile && tile.isBottomMost && tile.isRightMost && tile.loaded) {
-                levelList.push(level);
-                break;
-            }
-        }
+        // This preserves the old behavior (logarithmic sensitivity gatekeeper) by converting to a linear scale
+        // as our current gate is linear (old code assumed powers of two and computed log2( zeroLevelPixelRatio / minPixelRatio)
+        const minRatio = Math.pow(2, this.minPixelRatio - 0.5);
 
+        // Find the level whose render pixel ratio is closest to 1
+        for (let level = maxLevel; level >= minLevel; level--) {
+            const currentRenderPixelRatio =
+                this.viewport.deltaPixelsFromPointsNoRotate(
+                    this.source.getPixelRatio(level),
+                    true
+                ).x * this._scaleSpring.current.value;
 
-        // Update any level that will be drawn.
-        // We are iterating from highest resolution to lowest resolution
-        // Once a level fully covers the viewport the loop is halted and
-        // lower-resolution levels are skipped
-        let useLevel = false;
-        for (let i = 0; i < levelList.length; i++) {
-            const level = levelList[i];
+            // This code was removed - it does not make much sense - we just keep
+            // considering highest levels of zoom we have, and keep downscaling until we have 100% coverage - that's all
 
-            const currentRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
-                this.source.getPixelRatio(level),
-                true
-            ).x * this._scaleSpring.current.value;
+            //        // if a single-tile level is loaded, add that to the end of the list
+            //         // as a fallback to use during zooming out, until a lower-res tile is
+            //         // loaded
+            //         for (let level = highestLevel + 1; level <= this.source.maxLevel; level++) {
+            //             const tile = (
+            //                 this.tilesMatrix[level] &&
+            //                 this.tilesMatrix[level][0] &&
+            //                 this.tilesMatrix[level][0][0]
+            //             );
+            //             if (tile && tile.isBottomMost && tile.isRightMost && tile.loaded) {
+            //                 levelList.push(level);
+            //                 break;
+            //             }
+            //         }
 
-            // make sure we skip levels until currentRenderPixelRatio becomes >= minPixelRatio
-            // but always use the last level in the list so we draw something
-            if (i === levelList.length - 1 || currentRenderPixelRatio >= this.minPixelRatio ) {
-                useLevel = true;
-            } else if (!useLevel) {
+            // Keep skipping levels that are too big to render, but always keep to render min level
+            if (currentRenderPixelRatio < minRatio && level !== minLevel) {
                 continue;
             }
 
