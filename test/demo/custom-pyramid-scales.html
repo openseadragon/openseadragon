@@ -96,7 +96,7 @@
         <div><b>Presets:</b></div>
         <button id="presetDeepManySmall">Preset A: 16 levels, tiny tiles</button>
         <button id="presetIrregularHuge">Preset B: 7 levels, irregular scales & huge tiles</button>
-        <button id="presetCrazyMixed">Preset C: 8 levels, crazy mixed tiles & scales</button>
+        <button id="presetCrazyMixed">Preset C: 9 levels, crazy mixed tiles & scales</button>
         <div class="preset-label">
             A = deep pyramid with small tiles; B = non-power-of-two scales & very large tiles;
             C = alternating tiny/huge tile sizes and uneven scales.
@@ -442,7 +442,7 @@
         return { numLevels: scales.length, scales, tileSizes };
     }
 
-    // Preset C: 8 levels, wildly mixed scales and alternating tiny/huge tiles
+    // Preset C: 9 levels, wildly mixed scales and alternating tiny/huge tiles
     function presetCrazyMixed() {
         const scales = [
             0.01,  // ultra tiny

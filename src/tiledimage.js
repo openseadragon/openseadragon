@@ -249,6 +249,8 @@ $.TiledImage = function( options ) {
         animationTime: this.animationTime
     });
 
+    this._cutOffLevel = this.source.getClosestLevel();
+
     this._updateForScale();
 
     if (fitBounds) {
@@ -1474,6 +1476,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // This preserves the old behavior (logarithmic sensitivity gatekeeper) by converting to a linear scale
         // as our current gate is linear (old code assumed powers of two and computed log2( zeroLevelPixelRatio / minPixelRatio)
         const minRatio = Math.pow(2, this.minPixelRatio - 0.5);
+        let levelsIterated = 0;
+        let coverageSucceeded = false;
 
         // Find the level whose render pixel ratio is closest to 1
         for (let level = maxLevel; level >= minLevel; level--) {
@@ -1482,24 +1486,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     this.source.getPixelRatio(level),
                     true
                 ).x * this._scaleSpring.current.value;
-
-            // This code was removed - it does not make much sense - we just keep
-            // considering highest levels of zoom we have, and keep downscaling until we have 100% coverage - that's all
-
-            //        // if a single-tile level is loaded, add that to the end of the list
-            //         // as a fallback to use during zooming out, until a lower-res tile is
-            //         // loaded
-            //         for (let level = highestLevel + 1; level <= this.source.maxLevel; level++) {
-            //             const tile = (
-            //                 this.tilesMatrix[level] &&
-            //                 this.tilesMatrix[level][0] &&
-            //                 this.tilesMatrix[level][0][0]
-            //             );
-            //             if (tile && tile.isBottomMost && tile.isRightMost && tile.loaded) {
-            //                 levelList.push(level);
-            //                 break;
-            //             }
-            //         }
 
             // Keep skipping levels that are too big to render, but always keep to render min level
             if (currentRenderPixelRatio < minRatio && level !== minLevel) {
@@ -1512,13 +1498,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ).x * this._scaleSpring.current.value;
 
             const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
-                this.source.getPixelRatio(
-                    Math.max(
-                        this.source.getClosestLevel(),
-                        0
-                    )
-                ),
-                false
+                this.source.getPixelRatio(Math.max(this._cutOffLevel, 0)), false
             ).x * this._scaleSpring.current.value;
 
             const optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
@@ -1546,8 +1526,61 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // Stop the loop if lower-res tiles would all be covered by
             // already drawn tiles
             if (this._providesCoverage(this.coverage, level)) {
+                coverageSucceeded = true;
                 break;
             }
+
+            // We assume 'coverage ok' if we hit the cutoff level
+            coverageSucceeded = coverageSucceeded || level === this._cutOffLevel;
+
+            // We have now simple heuristic - always consider 'best' level +1 level up for loading,
+            //  consider other levels up (except for cutoff) unnecessary - user would wait for loading
+            //  of low level tiles which are not in satisfactory resolution, and we have the cutoff to ensure
+            //  that some 'low level' stuff is loaded
+            if (levelsIterated++ > 0) {
+                break;
+            }
+        }
+
+        if (!coverageSucceeded) {
+            // Force the cutoff level to be drawn - which happens if coverage test fails and we did not covered cutfOffLevel yet
+            const level = this._cutOffLevel;
+            const targetRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
+                this.source.getPixelRatio(level),
+                false
+            ).x * this._scaleSpring.current.value;
+
+            const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
+                this.source.getPixelRatio(Math.max(this._cutOffLevel, 0)), false
+            ).x * this._scaleSpring.current.value;
+
+            const currentRenderPixelRatio =
+                this.viewport.deltaPixelsFromPointsNoRotate(
+                    this.source.getPixelRatio(level),
+                    true
+                ).x * this._scaleSpring.current.value;
+
+            const optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
+            const levelOpacity = Math.min(1, (currentRenderPixelRatio - 0.5) / 0.5);
+            const levelVisibility = optimalRatio / Math.abs(
+                optimalRatio - targetRenderPixelRatio
+            );
+
+            // Update the level and keep track of 'best' tiles to load
+            const result = this._updateLevel(
+                level,
+                levelOpacity,
+                levelVisibility,
+                drawArea,
+                loadArea,
+                currentTime,
+                bestLoadTileCandidates
+            );
+
+            this.viewer.world.ensureTilesUpToDate(result.tilesToDraw);
+
+            bestLoadTileCandidates = result.bestLoadTileCandidates;
+            this._tilesToDraw[level] = result.tilesToDraw;
         }
 
 
@@ -2500,6 +2533,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} x - The X position of the tile.
      * @param {Number} y - The Y position of the tile.
      * @returns {Boolean}
+     *
+     * TODO:
+     * In _isCovered, once covered becomes false the callback continues to check the remaining child tiles.
+     * Since this method can be called many times per frame, it’s worth short-circuiting the remaining _providesCoverage
+     * checks (e.g., skip work in the callback when covered is already false, or add a way for _visitTiles to break early).
      */
     _isCovered: function( coverage, level, x, y ) {
         // Whole-level shortcut: if every tile at level+1 provides coverage,
