@@ -209,7 +209,10 @@
         ],
         'non-square': [
             { w: 500, h: 500, tw: 512, th: 128 }, { w: 1000, h: 1000, tw: 512, th: 128 }
-        ]
+        ], 'single-tile-irregular': [
+            { w: 50, h: 50, tw: 50 }, { w: 300, h: 300, tw: 300 }, { w: 900, h: 900, tw: 900 },
+            { w: 1500, h: 1500, tw: 1500 }, { w: 4096, h: 4096, tw: 4096 }
+        ],
     };
 
     function loadPreset(key) {
@@ -309,6 +312,7 @@
         <button onclick="loadPreset('dzi')">DZI (1x1 to 4k)</button>
         <button onclick="loadPreset('single-tile')">All Single-Tile</button>
         <button onclick="loadPreset('non-square')">Non-Square Tiles</button>
+        <button onclick="loadPreset('single-tile-irregular')">Single Tiled by Growing Tile Size, Irregular</button>
     `;
 
     // Initial load
