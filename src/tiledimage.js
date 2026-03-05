@@ -249,7 +249,12 @@ $.TiledImage = function( options ) {
         animationTime: this.animationTime
     });
 
-    this._cutOffLevel = this.source.getClosestLevel();
+    /**
+     * Cached cutoff level which should not change. It is THE level
+     * which covers the whole image while being cheap to load.
+     * @type {Number|*}
+     */
+    this.savedCutOffLevel = this.source.getClosestLevel();
 
     this._updateForScale();
 
@@ -1498,7 +1503,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ).x * this._scaleSpring.current.value;
 
             const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
-                this.source.getPixelRatio(Math.max(this._cutOffLevel, 0)), false
+                this.source.getPixelRatio(Math.max(this.savedCutOffLevel, 0)), false
             ).x * this._scaleSpring.current.value;
 
             const optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
@@ -1531,7 +1536,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
 
             // We assume 'coverage ok' if we hit the cutoff level
-            coverageSucceeded = coverageSucceeded || level === this._cutOffLevel;
+            coverageSucceeded = coverageSucceeded || level === this.savedCutOffLevel;
 
             // We have now simple heuristic - always consider 'best' level +1 level up for loading,
             //  consider other levels up (except for cutoff) unnecessary - user would wait for loading
@@ -1544,14 +1549,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         if (!coverageSucceeded) {
             // Force the cutoff level to be drawn - which happens if coverage test fails and we did not covered cutfOffLevel yet
-            const level = this._cutOffLevel;
+            const level = this.savedCutOffLevel;
             const targetRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(level),
                 false
             ).x * this._scaleSpring.current.value;
 
             const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
-                this.source.getPixelRatio(Math.max(this._cutOffLevel, 0)), false
+                this.source.getPixelRatio(Math.max(this.savedCutOffLevel, 0)), false
             ).x * this._scaleSpring.current.value;
 
             const currentRenderPixelRatio =
@@ -2027,7 +2032,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             return false;
         }
         tile.loading = true;
-        this._setTileLoaded(tile, record.data, null, null, record.type);
+        this._setTileLoaded(tile, record.data, null, record.type);
         return true;
     },
 
@@ -2230,17 +2235,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             if (conversion) {
                 const desiredType = $.converter.getConversionPathFinalType(conversion);
                 $.converter.convert(tile, data, dataType, desiredType).then(newData => {
-                    this._setTileLoaded(tile, newData, null, tileRequest, desiredType);
+                    this._setTileLoaded(tile, newData, tileRequest, desiredType);
                 }).catch(e => {
                     $.console.warn("Failed to satisfy original type [%s] %s from %s: %s", desiredType, tile, dataType, e);
-                    this._setTileLoaded(tile, data, null, tileRequest, dataType);
+                    this._setTileLoaded(tile, data, tileRequest, dataType);
                 });
             } else {
                 $.console.warn( "Ignoring default base tile data type %s: no conversion possible from %s", this.originalDataType, dataType);
-                this._setTileLoaded(tile, data, null, tileRequest, dataType);
+                this._setTileLoaded(tile, data, tileRequest, dataType);
             }
         } else {
-            this._setTileLoaded(tile, data, null, tileRequest, dataType);
+            this._setTileLoaded(tile, data, tileRequest, dataType);
         }
     },
 
@@ -2249,11 +2254,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {OpenSeadragon.Tile} tile
      * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object,
      *   can be null: in that case, cache is assigned to a tile without further processing
-     * @param {?Number} cutoff ignored, @deprecated
      * @param {?XMLHttpRequest} tileRequest
      * @param {?String} [dataType=undefined] data type, derived automatically if not set
      */
-    _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType) {
+    _setTileLoaded: function(tile, data, tileRequest, dataType) {
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // does nothing if tile.cacheKey already present
 
