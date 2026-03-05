@@ -3,7 +3,6 @@
 <head>
     <title>OpenSeadragon Custom Levels & Tiles Demo</title>
     <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
-    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
     <style type="text/css">
         .openseadragon1 {
             width: 800px;
@@ -122,10 +121,6 @@
 <div id="contentDiv" class="openseadragon1"></div>
 
 <script type="text/javascript">
-
-    function delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
 
     class MyTileSource extends OpenSeadragon.TileSource {
         constructor(options) {
