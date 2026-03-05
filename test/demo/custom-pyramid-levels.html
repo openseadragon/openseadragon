@@ -77,13 +77,18 @@
         </tbody>
     </table>
 
-    <label>
-        Minimum pixel ratio:
+    <label style="display:inline-block;">
+        minPixelRatio: Whether we are OK with low-res tiles (1.5+) or we need larger quality levels (<0.5): <br>
         <input type="number" id="minPixelRatio" checked value="0.5" step="0.1">
     </label>
 
-    <label>
-        Simulate network delay (ms):
+    <label style="display:inline-block;">
+        minZoomImageRatio: How far we can zoom out? <br>
+        <input type="number" id="minZoomImageRatio" checked value="0.9" step="0.1">
+    </label>
+
+    <label style="display:inline-block;">
+        Simulate network delay (ms): <br>
         <input type="number" id="delayInMs" value="0" step="10">
     </label>
 
@@ -281,6 +286,7 @@
             loadTilesWithAjax: true,
             showNavigator: true,
             minPixelRatio: Number.parseFloat(document.getElementById('minPixelRatio').value),
+            minZoomImageRatio: Number.parseFloat(document.getElementById('minZoomImageRatio').value),
             tileSources: new PerSizeTileSource({
                 width: settings.nativeWidth,
                 height: settings.nativeHeight,

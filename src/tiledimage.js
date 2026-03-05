@@ -1876,11 +1876,15 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Visit all tiles in an a given area on a given level.
+     * Visit all tiles in an a given area on a given level. Can be used as 'all' predicate.
+     * If not used as predicate, returns true.
      * @private
      * @param {Number} level
      * @param {OpenSeadragon.Rect} area
-     * @param {Function} callback - x, y, total - tile x, y position and total number of tiles
+     * @param {Function} callback - x, y, total - tile x, y position and total number of tiles, if
+     *   the method returns boolean false, the iteration is stopped (_visitTiles returns false), otherwise
+     *   the iteration continues and the return value of _visitTiles is true
+     * @returns {boolean} true if function was not early-exited, false otherwise
      */
     _visitTiles: function(level, area, callback) {
         const bbox = area.getBoundingBox();
@@ -1906,8 +1910,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         for (let x = drawTopLeftTile.x; x <= drawBottomRightTile.x; x++) {
             for (let y = drawTopLeftTile.y; y <= drawBottomRightTile.y; y++) {
-
-                let flippedX;
+                let flippedX = x;
                 if (this.getFlip()) {
                     const xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
                     flippedX = x + numberOfTiles.x - xMod - xMod - 1;
@@ -1920,9 +1923,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     continue;
                 }
 
-                callback(flippedX, y, numTiles);
+                // If callback returns false, we exit all loops immediately
+                if (callback(flippedX, y, numTiles) === false) {
+                    return false;
+                }
             }
         }
+        return true;
     },
 
     /**
@@ -2537,11 +2544,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} x - The X position of the tile.
      * @param {Number} y - The Y position of the tile.
      * @returns {Boolean}
-     *
-     * TODO:
-     * In _isCovered, once covered becomes false the callback continues to check the remaining child tiles.
-     * Since this method can be called many times per frame, it’s worth short-circuiting the remaining _providesCoverage
-     * checks (e.g., skip work in the callback when covered is already false, or add a way for _visitTiles to break early).
      */
     _isCovered: function( coverage, level, x, y ) {
         // Whole-level shortcut: if every tile at level+1 provides coverage,
@@ -2576,6 +2578,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             if (!self._providesCoverage(coverage, nextLevel, childX, childY)) {
                 covered = false;
             }
+            return covered;
         });
 
         return covered;
