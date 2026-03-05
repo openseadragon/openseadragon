@@ -84,6 +84,7 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.levelOverFetch] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Set to draw at proportional opacity. If zero, images will not draw.
@@ -206,6 +207,7 @@ $.TiledImage = function( options ) {
         blendTime:                         $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
+        levelOverFetch:                    $.DEFAULT_SETTINGS.levelOverFetch,
         smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:                         $.DEFAULT_SETTINGS.debugMode,
@@ -1538,11 +1540,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // We assume 'coverage ok' if we hit the cutoff level
             coverageSucceeded = coverageSucceeded || level === this.savedCutOffLevel;
 
-            // We have now simple heuristic - always consider 'best' level +1 level up for loading,
+            // We have now simple heuristic - always consider 'best' level + levelOverFetch level up for loading,
             //  consider other levels up (except for cutoff) unnecessary - user would wait for loading
             //  of low level tiles which are not in satisfactory resolution, and we have the cutoff to ensure
-            //  that some 'low level' stuff is loaded
-            if (levelsIterated++ > 0) {
+            //  that some 'low level' stuff is always rendered.
+            if (++levelsIterated > this.levelOverFetch) {
                 break;
             }
         }
