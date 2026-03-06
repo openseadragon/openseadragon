@@ -1538,13 +1538,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             }
 
             // We assume 'coverage ok' if we hit the cutoff level
-            coverageSucceeded = coverageSucceeded || level === this.savedCutOffLevel;
+            coverageSucceeded = level === this.savedCutOffLevel;
 
             // We have now simple heuristic - always consider 'best' level + levelOverFetch level up for loading,
             //  consider other levels up (except for cutoff) unnecessary - user would wait for loading
             //  of low level tiles which are not in satisfactory resolution, and we have the cutoff to ensure
             //  that some 'low level' stuff is always rendered.
-            if (++levelsIterated > this.levelOverFetch) {
+            if (++levelsIterated > this.levelOverFetch || coverageSucceeded) {
                 break;
             }
         }
