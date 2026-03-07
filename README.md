@@ -21,7 +21,7 @@ Learn more at: https://www.newline.co/courses/openseadragon-deep-dive
 
 ## Development
 
-If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at [https://openseadragon.github.io/][openseadragon]. If you want to modify OpenSeadragon and/or contribute to its development, read the [contributing guide][github-contributing] for instructions.
+If you want to use OpenSeadragon in your own projects, you can find the latest stable build, API documentation, and example code at [https://openseadragon.github.io/][openseadragon]. If you want to modify OpenSeadragon and/or contribute to it's development, read the [contributing guide][github-contributing] for instructions.
 
 ## License
 
