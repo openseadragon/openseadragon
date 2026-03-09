@@ -248,7 +248,7 @@ declare namespace OpenSeadragon {
 
     type DrawerType = "auto" | "html" | "canvas" | "webgl";
     type DrawerConstructor = new(options: TDrawerOptions) => DrawerBase;
-    type TypeConverter<TIn = any, TOut = any> = (tile: OpenSeadragon.Tile, data: TIn) => TOut | Promise<TOut>;
+    type TypeConverter<TIn = any, TOut = any> = (tile: Tile, data: TIn) => TOut | Promise<TOut>;
     type TypeDestructor<TIn = any, TOut = any> = (data: TIn) => TOut | Promise<TOut>;
 
     interface Options {
@@ -2383,4 +2383,4 @@ export as namespace OpenSeadragon;
 
 declare function OpenSeadragon(options: OpenSeadragon.Options): OpenSeadragon.Viewer;
 
-export default OpenSeadragon;
+export = OpenSeadragon;
