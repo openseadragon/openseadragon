@@ -972,122 +972,80 @@ declare namespace OpenSeadragon {
         dblClickTimeThreshold?: number;
         dblClickDistThreshold?: number;
         stopDelay?: number;
-        preProcessEventHandler?: PreprocessEventHandler;
+        userData?: unknown;
+
+        preProcessEventHandler?: EventHandler<PreProcessMouseTrackerEvent>;
+        keyDownHandler?: EventHandler<KeyMouseTrackerEvent>;
+        keyUpHandler?: EventHandler<KeyMouseTrackerEvent>;
+        keyHandler?: EventHandler<KeyMouseTrackerEvent>;
+        focusHandler?: EventHandler<MouseTrackerEvent<FocusEvent>>;
+        blurHandler?: EventHandler<MouseTrackerEvent<FocusEvent>>;
         contextMenuHandler?: EventHandler<ContextMenuMouseTrackerEvent>;
-        enterHandler?: EventHandler<MouseTrackerEvent>;
-        /**
-         * @deprecated use leaveHandler instead
-         */
-        exitHandler?: EventHandler<MouseTrackerEvent>;
-        leaveHandler?: EventHandler<MouseTrackerEvent>;
-        overHandler?: EventHandler<MouseTrackerEvent>;
-        outHandler?: EventHandler<MouseTrackerEvent>;
-        pressHandler?: EventHandler<PressMouseTrackerEvent>;
-        nonPrimaryPressHandler?: EventHandler<MouseTrackerEvent>;
-        releaseHandler?: EventHandler<MouseTrackerEvent>;
-        nonPrimaryReleaseHandler?: EventHandler<MouseTrackerEvent>;
-        moveHandler?: EventHandler<MouseTrackerEvent>;
-        scrollHandler?: EventHandler<MouseTrackerEvent>;
-        clickHandler?: EventHandler<MouseTrackerEvent>;
-        dblClickHandler?: EventHandler<MouseTrackerEvent>;
-        dragHandler?: EventHandler<MouseTrackerEvent>;
-        dragEndHandler?: EventHandler<MouseTrackerEvent>;
-        pinchHandler?: EventHandler<MouseTrackerEvent>;
-        keyDownHandler?: EventHandler<MouseTrackerEvent>;
-        keyUpHandler?: EventHandler<MouseTrackerEvent>;
-        keyHandler?: EventHandler<MouseTrackerEvent>;
-        focusHandler?: EventHandler<MouseTrackerEvent>;
-        blurHandler?: EventHandler<MouseTrackerEvent>;
-        userData?: object;
+        scrollHandler?: EventHandler<ScrollMouseTrackerEvent>;
+        enterHandler?: EventHandler<EnterLeaveMouseTrackerEvent>;
+        /** @deprecated use leaveHandler instead */
+        exitHandler?: EventHandler<EnterLeaveMouseTrackerEvent>;
+        leaveHandler?: EventHandler<EnterLeaveMouseTrackerEvent>;
+        overHandler?: EventHandler<EnterLeaveMouseTrackerEvent>;
+        outHandler?: EventHandler<EnterLeaveMouseTrackerEvent>;
+        pressHandler?: EventHandler<PointerMouseTrackerEvent>;
+        releaseHandler?: EventHandler<ReleaseMouseTrackerEvent>;
+        nonPrimaryPressHandler?: EventHandler<NonPrimaryPressMouseTrackerEvent>;
+        nonPrimaryReleaseHandler?: EventHandler<NonPrimaryPressMouseTrackerEvent>;
+        moveHandler?: EventHandler<PointerMouseTrackerEvent>;
+        clickHandler?: EventHandler<ClickMouseTrackerEvent>;
+        dblClickHandler?: EventHandler<DblClickMouseTrackerEvent>;
+        dragHandler?: EventHandler<DragMouseTrackerEvent>;
+        dragEndHandler?: EventHandler<DragEndMouseTrackerEvent>;
+        pinchHandler?: EventHandler<PinchMouseTrackerEvent>;
+        stopHandler?: EventHandler<StopMouseTrackerEvent>;
     }
 
     class MouseTracker {
+        element: Element;
         clickTimeThreshold: number;
         clickDistThreshold: number;
         dblClickTimeThreshold: number;
         dblClickDistThreshold: number;
-        element: Element;
-        hash: string;
         stopDelay: number;
-        userData: any;
+        userData: unknown;
+
+        destroy(): void;
+        /** deprecated use `this.tracking` */
+        isTracking(): boolean;
+        setTracking(track: boolean): MouseTracker;
+        getActivePointersListByType(type: string): GesturePointList;
+        getActivePointerCount(): number;
+        get hasGestureHandlers(): boolean;
+        get hasScrollHandler(): boolean;
 
         constructor(options: MouseTrackerOptions);
 
-        blurHandler: EventHandler<MouseTrackerEvent>;
-        clickHandler: EventHandler<MouseTrackerEvent>;
-        contextMenuHandler: EventHandler<ContextMenuMouseTrackerEvent>;
-        dblClickHandler: EventHandler<MouseTrackerEvent>;
-        destroy(): void;
-        dragEndHandler: EventHandler<MouseTrackerEvent>;
-        dragHandler: EventHandler<MouseTrackerEvent>;
-        enterHandler: EventHandler<MouseTrackerEvent>;
-        /**
-         * @deprecated use leaveHandler instead
-         */
-        exitHandler: EventHandler<MouseTrackerEvent>;
-        leaveHandler: EventHandler<MouseTrackerEvent>;
-        focusHandler: EventHandler<MouseTrackerEvent>;
-        getActivePointerCount(): number;
-        getActivePointersListByType(type: string): GesturePointList;
-        get hasGestureHandlers(): boolean;
-        get hasScrollHandler(): boolean;
-        /**
-         * @deprecated Just use `this.tracking`
-         */
-        isTracking(): boolean;
-        keyDownHandler: EventHandler<KeyMouseTrackerEvent>;
-        keyHandler: EventHandler<KeyMouseTrackerEvent>;
-        keyUpHandler: EventHandler<KeyMouseTrackerEvent>;
-        moveHandler: EventHandler<MouseTrackerEvent>;
-        nonPrimaryPressHandler: EventHandler<MouseTrackerEvent>;
-        nonPrimaryReleaseHandler: EventHandler<MouseTrackerEvent>;
-        overHandler: EventHandler<MouseTrackerEvent>;
-        outHandler: EventHandler<MouseTrackerEvent>;
-        pinchHandler: EventHandler<MouseTrackerEvent>;
-        pressHandler: EventHandler<PressMouseTrackerEvent>;
-        preProcessEventHandler: PreprocessEventHandler;
-        releaseHandler: EventHandler<MouseTrackerEvent>;
-        scrollHandler: EventHandler<MouseTrackerEvent>;
-        setTracking(track: boolean): MouseTracker;
-        stopHandler: EventHandler<MouseTrackerEvent>;
-    }
-
-    interface EventProcessInfo {
-        eventSource: MouseTracker;
-        originalEvent: Event;
-        originalTarget: Element;
-        eventPhase: EventPhase;
-        eventType:
-            | "keydown"
-            | "keyup"
-            | "keypress"
-            | "focus"
-            | "blur"
-            | "contextmenu"
-            | "gotpointercapture"
-            | "lostpointercapture"
-            | "pointerenter"
-            | "pointerleave"
-            | "pointerover"
-            | "pointerout"
-            | "pointerdown"
-            | "pointerup"
-            | "pointermove"
-            | "pointercancel"
-            | "wheel"
-            | "click"
-            | "dblclick";
-        pointerType: string;
-        isEmulated: boolean;
-        isStoppable: boolean;
-        isCancelable: boolean;
-        defaultPrevented: boolean;
-        preventDefault: boolean;
-        preventGesture: boolean;
-        stopPropagation: boolean;
-        shouldCapture: boolean;
-        shouldReleaseCapture: boolean;
-        userData: unknown;
+        preProcessEventHandler: EventHandler<PreProcessMouseTrackerEvent> | null;
+        keyDownHandler: EventHandler<KeyMouseTrackerEvent> | null;
+        keyUpHandler: EventHandler<KeyMouseTrackerEvent> | null;
+        keyHandler: EventHandler<KeyMouseTrackerEvent> | null;
+        focusHandler: EventHandler<MouseTrackerEvent<FocusEvent>> | null;
+        blurHandler: EventHandler<MouseTrackerEvent<FocusEvent>> | null;
+        contextMenuHandler: EventHandler<ContextMenuMouseTrackerEvent> | null;
+        scrollHandler: EventHandler<ScrollMouseTrackerEvent> | null;
+        enterHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
+        /** deprecated use leaveHandler instead */
+        exitHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
+        leaveHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
+        overHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
+        outHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
+        pressHandler: EventHandler<PointerMouseTrackerEvent> | null;
+        releaseHandler: EventHandler<ReleaseMouseTrackerEvent> | null;
+        nonPrimaryPressHandler: EventHandler<NonPrimaryPressMouseTrackerEvent> | null;
+        nonPrimaryReleaseHandler: EventHandler<NonPrimaryPressMouseTrackerEvent> | null;
+        moveHandler: EventHandler<PointerMouseTrackerEvent> | null;
+        clickHandler: EventHandler<ClickMouseTrackerEvent> | null;
+        dblClickHandler: EventHandler<DblClickMouseTrackerEvent> | null;
+        dragHandler: EventHandler<DragMouseTrackerEvent> | null;
+        dragEndHandler: EventHandler<DragEndMouseTrackerEvent> | null;
+        pinchHandler: EventHandler<PinchMouseTrackerEvent> | null;
+        stopHandler: EventHandler<StopMouseTrackerEvent> | null;
     }
 
     interface GesturePoint {
@@ -1606,8 +1564,9 @@ declare namespace OpenSeadragon {
     }
 
     class Viewer {
-        canvas: HTMLCanvasElement;
+        canvas: HTMLElement;
         container: HTMLElement;
+        overlaysContainer: HTMLElement;
         drawer: DrawerBase;
         element: HTMLElement;
         initialPage: number;
@@ -1847,8 +1806,6 @@ declare namespace OpenSeadragon {
     }
 
     type EventHandler<T> = (event: T) => void;
-
-    type PreprocessEventHandler = (event: EventProcessInfo) => void;
 
     interface ButtonEventMap {
         "blur": ButtonEvent;
@@ -2343,17 +2300,44 @@ declare namespace OpenSeadragon {
     }
 
     // -- MOUSE TRACKER EVENTS --
-    interface MouseTrackerEvent<T extends Event = Event> extends OSDEvent<MouseTracker> {
+    interface MouseTrackerEvent<T> {
+        eventSource: MouseTracker;
         originalEvent: T;
+        userData: unknown;
     }
 
-    interface PointerMouseTrackerEvent extends MouseTrackerEvent<PointerEvent> {
-        pointerType: PointerType;
-        position: Point;
-        /**
-         * @deprecated Use `pointerType` and/or `originalEvent` instead
-         */
-        isTouchEvent: boolean;
+    interface PreProcessMouseTrackerEvent extends MouseTrackerEvent<KeyboardEvent | FocusEvent | WheelEvent | SimulatedWheelEvent | MouseEvent | TouchEvent | PointerEvent> {
+        eventPhase: EventPhase;
+        eventType:
+            | "keydown"
+            | "keyup"
+            | "keypress"
+            | "focus"
+            | "blur"
+            | "contextmenu"
+            | "gotpointercapture"
+            | "lostpointercapture"
+            | "pointerenter"
+            | "pointerleave"
+            | "pointerover"
+            | "pointerout"
+            | "pointerdown"
+            | "pointerup"
+            | "pointermove"
+            | "pointercancel"
+            | "wheel"
+            | "click"
+            | "dblclick";
+        pointerType: string;
+        isEmulated: boolean;
+        isStoppable: boolean;
+        isCancelable: boolean;
+        defaultPrevented: boolean;
+        preventDefault: boolean;
+        preventGesture: boolean;
+        stopPropagation: boolean;
+        shouldCapture: boolean;
+        shouldReleaseCapture: boolean;
     }
 
     interface KeyMouseTrackerEvent extends MouseTrackerEvent<KeyboardEvent> {
@@ -2365,18 +2349,129 @@ declare namespace OpenSeadragon {
         preventDefault: boolean;
     }
 
-    interface ContextMenuMouseTrackerEvent extends MouseTrackerEvent<MouseEvent> {
+    interface ContextMenuMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | PointerEvent> {
         position: Point;
         preventDefault: boolean;
     }
 
-    interface PressMouseTrackerEvent extends PointerMouseTrackerEvent {
+    interface SimulatedWheelEvent {
+        target:     EventTarget;
+        type:       'wheel';
+        shiftKey:   boolean;
+        clientX:    number;
+        clientY:    number;
+        pageX:      number;
+        pageY:      number;
+        deltaMode:  WheelDeltaMode;
+        deltaX:     number;
+        deltaY:     number;
+        deltaZ:     number;
+    }
+
+    interface ScrollMouseTrackerEvent extends MouseTrackerEvent<WheelEvent | SimulatedWheelEvent> {
+        pointerType: 'mouse';
+        position: Point;
+        scroll: number;
+        shift: boolean;
+        isTouchEvent: false;
+        preventDefault: boolean;
+    }
+
+    interface StopMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | PointerEvent> {
+        pointerType: 'mouse';
+        position: Point;
+        /** Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser. */
         buttons: number;
+        /** @deprecated Use `pointerType` and/or `originalEvent` instead */
+        isTouchEvent: false;
+    }
+
+    interface PointerMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | TouchEvent | PointerEvent> {
+        pointerType: PointerType;
+        position: Point;
+        /** Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser */
+        buttons: number;
+        /** @deprecated Use `pointerType` and/or `originalEvent` instead */
+        isTouchEvent: boolean;
+    }
+
+    interface EnterLeaveMouseTrackerEvent extends PointerMouseTrackerEvent {
+        pointers: number;
+        insideElementPressed: boolean;
+        buttonDownAny: boolean;
+    }
+
+    interface ReleaseMouseTrackerEvent extends PointerMouseTrackerEvent {
+        insideElementPressed: boolean;
+        insideElementReleased: boolean;
+    }
+
+    interface NonPrimaryPressMouseTrackerEvent extends PointerMouseTrackerEvent {
+        /** -1: none, 0: primary/left, 1: aux/middle, 2: secondary/right, 3: X1/back, 4: X2/forward, 5: pen eraser */
+        button: number;
+    }
+
+    interface ClickMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | TouchEvent | PointerEvent> {
+       pointerType: PointerType;
+        position: Point;
+        quick: boolean;
+        shift: boolean;
+        originalTarget: Element;
+        /** @deprecated Use `pointerType` and/or `originalEvent` instead */
+        isTouchEvent: boolean;
+    }
+
+    interface DblClickMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | TouchEvent | PointerEvent> {
+       pointerType: PointerType;
+        position: Point;
+        shift: boolean;
+        /** @deprecated Use `pointerType` and/or `originalEvent` instead */
+        isTouchEvent: boolean;
+    }
+
+    interface DragMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | TouchEvent | PointerEvent> {
+        pointerType: PointerType;
+        position: Point;
+        /** Combination of bit flags 0: none, 1: primary (or touch contact), 2: secondary, 4: aux (often middle), 8: X1 (often back), 16: X2 (often forward), 32: pen eraser */
+        buttons: number;
+        delta: Point;
+        speed: number;
+        direction: number;
+        shift: boolean;
+        /** @deprecated Use `pointerType` and/or `originalEvent` instead */
+        isTouchEvent: boolean;
+    }
+
+    interface DragEndMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | TouchEvent | PointerEvent> {
+        pointerType: PointerType;
+        position: Point;
+        speed: number;
+        direction: number;
+        shift: boolean;
+        /** @deprecated Use `pointerType` and/or `originalEvent` instead */
+        isTouchEvent: boolean;
+    }
+
+    interface PinchMouseTrackerEvent extends MouseTrackerEvent<MouseEvent | TouchEvent | PointerEvent> {
+        pointerType: PointerType;
+        position: Point;
+        gesturePoints: GesturePoint[];
+        lastCenter: Point;
+        center: Point;
+        lastDistance: number;
+        distance: number;
+        shift: boolean;
+        /** @deprecated Use `pointerType` and/or `originalEvent` instead */
+        isTouchEvent: boolean;
     }
 
     type PointerType = "mouse" | "touch" | "pen";
 
+    /** 0=NONE, 1=CAPTURING_PHASE, 2=AT_TARGET, 2=BUBBLING_PHASE */
     type EventPhase = 0 | 1 | 2 | 3;
+
+    /** 0=DOM_DELTA_PIXEL, 1=DOM_DELTA_LINE, 2=DOM_DELTA_PAGE */
+    type WheelDeltaMode = 0 | 1 | 2;
 }
 
 export as namespace OpenSeadragon;
