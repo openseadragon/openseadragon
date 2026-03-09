@@ -1135,7 +1135,7 @@ declare namespace OpenSeadragon {
         userData: unknown;
 
         destroy(): void;
-        /** deprecated use `this.tracking` */
+        /** @deprecated use `this.tracking` */
         isTracking(): boolean;
         setTracking(track: boolean): MouseTracker;
         getActivePointersListByType(type: string): GesturePointList;
@@ -1154,7 +1154,7 @@ declare namespace OpenSeadragon {
         contextMenuHandler: EventHandler<ContextMenuMouseTrackerEvent> | null;
         scrollHandler: EventHandler<ScrollMouseTrackerEvent> | null;
         enterHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
-        /** deprecated use leaveHandler instead */
+        /** @deprecated use leaveHandler instead */
         exitHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
         leaveHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
         overHandler: EventHandler<EnterLeaveMouseTrackerEvent> | null;
