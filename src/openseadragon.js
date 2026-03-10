@@ -551,6 +551,12 @@
   *     It's a tradeoff between fast loading, and 'user feel - iterating over all levels until
   *     the high-resolution data'.
   *
+  * @property {Number} [requireLevelDownsampleRatio=0]
+  *     You can force the viewer to skip levels that have smaller pixel ratio
+  *     difference gap than a specified value. For example, setting the value to
+  *     4 with each level smaller by 2 (powers of two), the viewer will access only
+  *     odd levels.
+  *
   * @property {Boolean} [mouseNavEnabled=true]
   *     Is the user able to interact with the image via mouse or touch. Default
   *     interactions include draging the image in a plane, and zooming in toward
@@ -1292,6 +1298,7 @@ function OpenSeadragon( options ){
             visibilityRatio:        0.5, //-> how much of the viewer can be negative space
             minPixelRatio:          0.5, //->closer to 0 draws tiles meant for a higher zoom at this zoom
             levelOverFetch:         Infinity,
+            requireLevelDownsampleRatio: 0,
             defaultZoomLevel:       0,
             minZoomLevel:           null,
             maxZoomLevel:           null,

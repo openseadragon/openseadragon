@@ -201,9 +201,9 @@
             { w: 800, h: 709, tw: 256 }, { w: 1600, h: 1417, tw: 256 },
             { w: 2400, h: 2126, tw: 256 }
         ],
-        'dzi': Array.from({length: 13}, (_, i) => ({
+        'dzi': Array.from({length: 14}, (_, i) => ({
             w: Math.pow(2, i), h: Math.pow(2, i), tw: 256
-        })), // 1x1 up to 4096x4096
+        })), // 1x1 up to 8k
         'single-tile': [
             { w: 50, h: 50, tw: 256 }, { w: 128, h: 128, tw: 256 }, { w: 200, h: 200, tw: 256 }
         ],
@@ -287,7 +287,8 @@
             drawer: 'canvas',
             debug: true,
             loadTilesWithAjax: true,
-            showNavigator: true,
+            showNavigator: false,
+            requireLevelDownsampleRatio: 4,
             minPixelRatio: Number.parseFloat(document.getElementById('minPixelRatio').value),
             minZoomImageRatio: Number.parseFloat(document.getElementById('minZoomImageRatio').value),
             tileSources: new PerSizeTileSource({
@@ -309,7 +310,7 @@
     const btnContainer = document.querySelector('.controls div:nth-child(2)');
     btnContainer.innerHTML = `
         <button onclick="loadPreset('default')">Default Sample</button>
-        <button onclick="loadPreset('dzi')">DZI (1x1 to 4k)</button>
+        <button onclick="loadPreset('dzi')">DZI (1x1 to 8k)</button>
         <button onclick="loadPreset('single-tile')">All Single-Tile</button>
         <button onclick="loadPreset('non-square')">Non-Square Tiles</button>
         <button onclick="loadPreset('single-tile-irregular')">Single Tiled by Growing Tile Size, Irregular</button>

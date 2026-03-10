@@ -85,6 +85,7 @@
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.levelOverFetch] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.requireLevelDownsampleRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Set to draw at proportional opacity. If zero, images will not draw.
@@ -208,6 +209,7 @@ $.TiledImage = function( options ) {
         alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
         levelOverFetch:                    $.DEFAULT_SETTINGS.levelOverFetch,
+        requireLevelDownsampleRatio:       $.DEFAULT_SETTINGS.requireLevelDownsampleRatio,
         smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:                         $.DEFAULT_SETTINGS.debugMode,
@@ -221,6 +223,10 @@ $.TiledImage = function( options ) {
         originalDataType:                  undefined,
         _currentMaxTilesPerFrame:          (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10
     }, options );
+
+    if (this.immediateRender) {
+        this.levelOverFetch = 0;
+    }
 
     this._preload = this.preload;
     delete this.preload;
@@ -1486,14 +1492,27 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         let levelsIterated = 0;
         let coverageSucceeded = false;
 
+        const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
+            this.source.getPixelRatio(Math.max(this.savedCutOffLevel, 0)), false
+        ).x * this._scaleSpring.current.value;
+
+        let maxPxRatio = this.source.getPixelRatio(maxLevel).x;
+
         // Find the level whose render pixel ratio is closest to 1
         for (let level = maxLevel; level >= minLevel; level--) {
-            const currentRenderPixelRatio =
-                this.viewport.deltaPixelsFromPointsNoRotate(
-                    this.source.getPixelRatio(level),
-                    true
-                ).x * this._scaleSpring.current.value;
+            const levelPixelRatio = this.source.getPixelRatio(level);
 
+            // If we require e.g., 4x downsample factor between levels, here we check that last time we
+            // accepted a level with ratio X, next time we accept only level ratio Y where Y/X >= 4
+            if (this.requireLevelDownsampleRatio > 0 &&
+                levelPixelRatio.x / maxPxRatio < this.requireLevelDownsampleRatio && level !== maxLevel) {
+                continue;
+            }
+            maxPxRatio = levelPixelRatio.x;
+
+            const currentRenderPixelRatio =
+                this.viewport.deltaPixelsFromPointsNoRotate(levelPixelRatio, true).x *
+                this._scaleSpring.current.value;
             // Keep skipping levels that are too big to render, but always keep to render min level
             if (currentRenderPixelRatio < minRatio && level !== minLevel) {
                 continue;
@@ -1502,10 +1521,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             const targetRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
                 this.source.getPixelRatio(level),
                 false
-            ).x * this._scaleSpring.current.value;
-
-            const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
-                this.source.getPixelRatio(Math.max(this.savedCutOffLevel, 0)), false
             ).x * this._scaleSpring.current.value;
 
             const optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
