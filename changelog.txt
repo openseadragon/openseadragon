@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 6.0.2: (in progress...)
 
 * Fixed an issue with being able to augment OSD's TypeScript types (#2887 @rssaini01)
+* Enhanced/fixed MouseTracker TypeScript types (#2888 @msalsbery)
 
 6.0.1:
 
