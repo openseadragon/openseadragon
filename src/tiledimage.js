@@ -1495,7 +1495,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
             this.source.getPixelRatio(Math.max(this.savedCutOffLevel, 0)), false
         ).x * this._scaleSpring.current.value;
-
+        const optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
         let maxPxRatio = this.source.getPixelRatio(maxLevel).x;
 
         // Find the level whose render pixel ratio is closest to 1
@@ -1523,7 +1523,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 false
             ).x * this._scaleSpring.current.value;
 
-            const optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
             const levelOpacity = Math.min(1, (currentRenderPixelRatio - 0.5) / 0.5);
             const levelVisibility = optimalRatio / Math.abs(
                 optimalRatio - targetRenderPixelRatio
