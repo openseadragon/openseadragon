@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+6.0.3: (in progress...)
+
 6.0.2:
 
 * Fixed an issue with being able to augment OSD's TypeScript types (#2887 @rssaini01)
