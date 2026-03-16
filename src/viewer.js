@@ -302,6 +302,11 @@ $.Viewer = function( options ) {
         this.tileSources = [ this.xmlPath ];
     }
 
+    if (!this.httpClient) {
+        //todo pass it args like the headers etc
+        this.httpClient = new $.DefaultHttpClient();
+    }
+
     this.element              = this.element || document.getElementById( this.id );
     this.canvas               = $.makeNeutralElement( "div" );
     this.canvas.className = "openseadragon-canvas";
@@ -1784,7 +1789,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @property {String} [options.compositeOperation] How the image is composited onto other images.
      * @property {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
      * overriding viewer.crossOriginPolicy.
-     * @property {Boolean} [options.ajaxWithCredentials] Whether to set withCredentials on tile AJAX
+     * @property {Boolean} [options.ajaxWithCredentials] deprecated
      * @property {Boolean} [options.loadTilesWithAjax]
      *      Whether to load tile data using AJAX requests.
      *      Defaults to the setting in {@link OpenSeadragon.Options}.

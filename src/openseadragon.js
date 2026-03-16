@@ -708,20 +708,22 @@
   * @property {Number} [collectionTileMargin=80]
   *     If collectionMode is true, specifies the margin, in viewport coordinates, between each TiledImage.
   *
-  * @property {String|Boolean} [crossOriginPolicy=false]
+  * @property {String|Boolean} [crossOriginPolicy=false]   TODO: this needs to be updated and properly integrated with the default client
   *     Valid values are 'Anonymous', 'use-credentials', and false. If false, canvas requests will
   *     not use CORS, and the canvas will be tainted.
   *
   * @property {Boolean} [ajaxWithCredentials=false]
-  *     Whether to set the withCredentials XHR flag for AJAX requests.
-  *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *     Deprecated.
   *
-  * @property {Boolean} [loadTilesWithAjax=false]
+  * @property {Boolean} [loadTilesWithAjax=false]   TODO: this needs to be updated and properly integrated with the default client, CONSIDER renaming
   *     Whether to load tile data using AJAX requests.
-  *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level.
+  *     Note that this can be overridden at the {@link OpenSeadragon.TileSource} level
   *
-  * @property {Object} [ajaxHeaders={}]
+  * @property {Object} [ajaxHeaders={}]  TODO: this needs to be updated and properly integrated with the default client, CONSIDER renaming
   *     A set of headers to include when making AJAX requests for tile sources or tiles.
+  *
+  * @property {DefaultHttpClient} [httpClient=undefined]
+  *     AuthClient providing access logics including authorization for resource access.
   *
   * @property {Boolean} [splitHashDataForPost=false]
   *     Allows to treat _first_ hash ('#') symbol as a separator for POST data:
@@ -1272,6 +1274,7 @@ function OpenSeadragon( options ){
             ajaxWithCredentials:    false,
             loadTilesWithAjax:      false,
             ajaxHeaders:            {},
+            httpClient:             undefined,
             splitHashDataForPost:   false,
             callTileLoadedWithCachedData: false,
 
@@ -2392,10 +2395,11 @@ function OpenSeadragon( options ){
         /**
          * Create an XHR object
          * @private
-         * @param {type} [local] Deprecated. Ignored (IE/ActiveXObject file protocol no longer supported).
          * @returns {XMLHttpRequest}
+         * @deprecated
          */
         createAjaxRequest: function() {
+            console.warn("This method is deprecated.");
             if ( window.XMLHttpRequest ) {
                 $.createAjaxRequest = function() {
                     return new XMLHttpRequest();
@@ -2424,11 +2428,13 @@ function OpenSeadragon( options ){
          * @param {String} options.responseType - the response type of the AJAX request
          * @param {String} options.postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
          *      see TileSource::getTilePostData), GET method used if null
-         * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
+         * @param {Boolean} [options.withCredentials=false] - deprecated
          * @throws {Error}
          * @returns {XMLHttpRequest}
+         * @deprecated
          */
         makeAjaxRequest: function( url, onSuccess, onError ) {
+            console.warn("THis method is deprecated!");
             let withCredentials;
             let headers;
             let responseType;
