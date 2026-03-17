@@ -1730,12 +1730,12 @@
      * @inner
      */
     function handlePropagation( eventInfo, event ) {
-        if ( eventInfo.isStoppable ) {
+        if ( eventInfo.isStoppable && !eventInfo.isEmulated ) {
             if ( eventInfo.stopImmediatePropagation ) {
-                $.stopEventImmediate( event );
+                event.stopImmediatePropagation();
             }
             else if ( eventInfo.stopPropagation ) {
-                $.stopEvent( event );
+                event.stopPropagation();
             }
         }
     }

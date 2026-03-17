@@ -2361,17 +2361,6 @@ function OpenSeadragon( options ){
 
 
         /**
-         * Stops the propagation of the event to any other listeners on the same event,
-         * for the current element or any other elements
-         * @function
-         * @param {Event} [event]
-         */
-        stopEventImmediate: function( event ) {
-            event.stopImmediatePropagation();
-        },
-
-
-        /**
          * Retrieves the value of a url parameter from the window.location string.
          * @function
          * @param {String} key
