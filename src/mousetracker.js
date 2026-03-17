@@ -1218,10 +1218,10 @@
      *      Set to true to prevent this MouseTracker from generating a gesture from the event.
      *      Valid on eventType "pointerdown".
      * @property {Boolean} stopPropagation
-     *      Set to true prevent the event from propagating to ancestor/descendent elements on capture/bubble phase.
+     *      Set to true to prevent the event from propagating to ancestor/descendent elements on the capture/bubble phase.
      * @property {Boolean} stopImmediatePropagation
-     *      Set to true to stop the propagation of the event to any other listeners on the same event,
-     *      for the current element or any other elements
+     *      Set to true to prevent any further listeners for this event from being invoked on the current target,
+     *      and to stop the event from propagating any further in the event flow (no additional capture or bubble).
      * @property {Boolean} shouldCapture
      *      (Internal Use) Set to true if the pointer should be captured (events (re)targeted to tracker element).
      * @property {Boolean} shouldReleaseCapture
