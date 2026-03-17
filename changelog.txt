@@ -3,7 +3,7 @@ OPENSEADRAGON CHANGELOG
 
 6.0.3: (in progress...)
 
-* Add stopImmediatePropagation to MouseTracker.EventProcessInfo options
+* Add stopImmediatePropagation to MouseTracker.EventProcessInfo options (#2891 @msalsbery)
 
 6.0.2:
 
