@@ -213,7 +213,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         }
 
         // Iterate over the tiles to draw, and draw them
-        for (let i = lastDrawn.length - 1; i >= 0; i--) {
+        for (let i = 0; i < lastDrawn.length; i++) {
             const tile = lastDrawn[ i ];
             this._drawTile( tile );
 

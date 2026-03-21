@@ -551,6 +551,9 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
 
         context.save();
 
+        const opacity = context.globalAlpha * tile.opacity;
+        context.globalAlpha = opacity;
+
         if (typeof scale === 'number' && scale !== 1) {
             // draw tile at a different scale
             position = position.times(scale);
@@ -566,7 +569,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
         //ie its done fading or fading is turned off, and if we are drawing
         //an image with an alpha channel, then the only way
         //to avoid seeing the tile underneath is to clear the rectangle
-        if (context.globalAlpha === 1 && tile.hasTransparency) {
+        if (opacity === 1 && tile.hasTransparency) {
             if (shouldRoundPositionAndSize) {
                 // Round to the nearest whole pixel so we don't get seams from overlap.
                 position.x = Math.round(position.x);
