@@ -2623,6 +2623,7 @@ declare namespace OpenSeadragon {
         preventDefault: boolean;
         preventGesture: boolean;
         stopPropagation: boolean;
+        stopImmediatePropagation: boolean;
         shouldCapture: boolean;
         shouldReleaseCapture: boolean;
     }
