@@ -26,6 +26,208 @@
     } );
 
     // ----------
+    QUnit.test( 'MouseTracker: DOM event propagation', function (assert) {
+        const done = assert.async();
+        const $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
+        let simEvent = {};
+        const offset = $canvas.offset();
+        const tracker = viewer.innerTracker;
+        const parentTracker = viewer.outerTracker;
+        let stopPropagation;
+        let stopImmediatePropagation;
+        let origPreProcessEventHandler;
+        let origMoveHandler;
+        let origParentMoveHandler;
+        let preProcessEventCount;
+        let moveCount;
+        let secondaryMoveCount;
+        let parentMoveCount;
+
+        const handleMouseMove = function ( /*event*/ ) {
+            secondaryMoveCount++;
+        }
+
+        const hookViewerHandlers = function () {
+            origPreProcessEventHandler = tracker.preProcessEventHandler;
+            tracker.preProcessEventHandler = function ( eventInfo ) {
+                preProcessEventCount++;
+                if (origPreProcessEventHandler) {
+                    origPreProcessEventHandler( eventInfo );
+                }
+                eventInfo.stopPropagation = stopPropagation;
+                eventInfo.stopImmediatePropagation = stopImmediatePropagation;
+            };
+            origMoveHandler = tracker.moveHandler;
+            tracker.moveHandler = function ( event ) {
+                moveCount++;
+                if (origMoveHandler) {
+                    origMoveHandler( event );
+                }
+            };
+
+            OpenSeadragon.addEvent(
+                tracker.element,
+                'mousemove',
+                handleMouseMove,
+                false
+            );
+
+            origParentMoveHandler = parentTracker.moveHandler;
+            parentTracker.moveHandler = function ( event ) {
+                parentMoveCount++;
+                if (origParentMoveHandler) {
+                    origParentMoveHandler( event );
+                }
+            };
+        };
+
+        const unhookViewerHandlers = function () {
+            tracker.preProcessEventHandler = origPreProcessEventHandler;
+            tracker.moveHandler = origMoveHandler;
+
+            OpenSeadragon.removeEvent(
+                tracker.element,
+                'mousemove',
+                handleMouseMove,
+                false
+            );
+
+            parentTracker.moveHandler = origParentMoveHandler;
+        };
+
+        const simulateEnter = function (x, y) {
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top + y;
+            $canvas.simulate( 'mouseenter', simEvent );
+        };
+
+        const simulateLeave = function (x, y) {
+            simEvent.clientX = offset.left + x;
+            simEvent.clientY = offset.top + y;
+            simEvent.relatedTarget = document.body;
+            $canvas.simulate( 'mouseleave', simEvent );
+        };
+
+        const simulateMove = function (dX, dY, count) {
+            for ( let i = 0; i < count; i++ ) {
+                simEvent.clientX += dX;
+                simEvent.clientY += dY;
+                $canvas.simulate( 'mousemove', simEvent );
+            }
+        };
+
+        const resetForAssessment = function () {
+            simEvent = {
+                button: 0,
+                clientX: offset.left,
+                clientY: offset.top
+            };
+            stopPropagation = false;
+            stopImmediatePropagation = false;
+            preProcessEventCount = 0;
+            moveCount = 0;
+            secondaryMoveCount = 0;
+            parentMoveCount = 0;
+        };
+
+        const assessGestureExpectations = function (expected) {
+            if ('preProcessEventCount' in expected) {
+                assert.equal( preProcessEventCount, expected.preProcessEventCount, expected.description + 'preProcessEventHandler event count matches expected (' + expected.preProcessEventCount + ')' );
+            }
+            if ('moveCount' in expected) {
+                assert.equal( moveCount, expected.moveCount, expected.description + 'moveHandler event count matches expected (' + expected.moveCount + ')' );
+            }
+
+            if ('secondaryMoveCount' in expected) {
+                assert.equal( secondaryMoveCount, expected.secondaryMoveCount, expected.description + 'secondary moveHandler event count matches expected (' + expected.secondaryMoveCount + ')' );
+            }
+
+            if ('parentMoveCount' in expected) {
+                assert.equal( parentMoveCount, expected.parentMoveCount, expected.description + 'parent moveHandler event count matches expected (' + expected.parentMoveCount + ')' );
+            }
+        };
+
+        const onOpen = function ( event ) {
+
+            viewer.removeHandler( 'open', onOpen );
+
+            hookViewerHandlers();
+
+            // stopPropagation false stopImmediatePropagation false
+            resetForAssessment();
+            stopPropagation = false;
+            stopImmediatePropagation = false;
+            simulateEnter(0, 0);
+            simulateMove(1, 1, 10);
+            simulateMove(-1, -1, 10);
+            simulateLeave(-1, -1);
+            assessGestureExpectations({
+                description:           'stopPropagation false stopImmediatePropagation false:  ',
+                preProcessEventCount:  22,
+                moveCount:             20,
+                secondaryMoveCount:    20,
+                parentMoveCount:       20,
+            });
+
+            // stopPropagation true stopImmediatePropagation false
+            resetForAssessment();
+            stopPropagation = true;
+            stopImmediatePropagation = false;
+            simulateEnter(0, 0);
+            simulateMove(1, 1, 10);
+            simulateMove(-1, -1, 10);
+            simulateLeave(-1, -1);
+            assessGestureExpectations({
+                description:           'stopPropagation false stopImmediatePropagation false:  ',
+                preProcessEventCount:  22,
+                moveCount:             20,
+                secondaryMoveCount:    20,
+                parentMoveCount:       0,
+            });
+
+            // stopPropagation false stopImmediatePropagation true
+            resetForAssessment();
+            stopPropagation = false;
+            stopImmediatePropagation = true;
+            simulateEnter(0, 0);
+            simulateMove(1, 1, 10);
+            simulateMove(-1, -1, 10);
+            simulateLeave(-1, -1);
+            assessGestureExpectations({
+                description:           'stopPropagation false stopImmediatePropagation false:  ',
+                preProcessEventCount:  22,
+                moveCount:             20,
+                secondaryMoveCount:    0,
+                parentMoveCount:       0,
+            });
+
+            // stopPropagation true stopImmediatePropagation true
+            resetForAssessment();
+            stopPropagation = true;
+            stopImmediatePropagation = true;
+            simulateEnter(0, 0);
+            simulateMove(1, 1, 10);
+            simulateMove(-1, -1, 10);
+            simulateLeave(-1, -1);
+            assessGestureExpectations({
+                description:           'stopPropagation false stopImmediatePropagation false:  ',
+                preProcessEventCount:  22,
+                moveCount:             20,
+                secondaryMoveCount:    0,
+                parentMoveCount:       0,
+            });
+
+            unhookViewerHandlers();
+
+            viewer.close();
+            done();
+        };
+
+        viewer.addHandler( 'open', onOpen );
+        viewer.open( '/test/data/testpattern.dzi' );
+    } );
+
+    // ----------
     QUnit.test( 'MouseTracker: mouse gestures', function (assert) {
         const done = assert.async();
         const $canvas = $( viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
