@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OpenSeadragon Blend Time Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #111827;
+            --panel-2: #1f2937;
+            --ink: #e5e7eb;
+            --muted: #9ca3af;
+            --accent: #60a5fa;
+            --border: #334155;
+            --ok: #34d399;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+            color: var(--ink);
+        }
+
+        a { color: #93c5fd; }
+
+        .page {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .hero,
+        .controls,
+        .notes {
+            background: rgba(17, 24, 39, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .hero h1 {
+            margin: 0 0 8px;
+            font-size: 28px;
+        }
+
+        .hero p,
+        .notes p,
+        .notes li {
+            color: var(--muted);
+            line-height: 1.45;
+        }
+
+        .stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .field input,
+        .field select,
+        .field button {
+            height: 40px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            background: #0b1220;
+            color: var(--ink);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0 12px;
+            outline: none;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        button {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--panel-2);
+            color: var(--ink);
+            padding: 0 14px;
+            cursor: pointer;
+            transition: transform 120ms ease, background 120ms ease;
+        }
+
+        button:hover {
+            background: #253246;
+            transform: translateY(-1px);
+        }
+
+        button.primary {
+            background: #1d4ed8;
+            border-color: #2563eb;
+        }
+
+        button.good {
+            background: #065f46;
+            border-color: #047857;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 40px;
+            padding: 0 4px;
+        }
+
+        .checkbox-row input {
+            width: 16px;
+            height: 16px;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .viewers {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .viewer-card {
+            background: rgba(17, 24, 39, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+        }
+
+        .viewer-head {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .viewer-head h2 {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .viewer-head .meta {
+            color: var(--muted);
+            font-size: 13px;
+            margin-top: 4px;
+        }
+
+        .viewer-box {
+            width: 100%;
+            height: 420px;
+            background: #000;
+        }
+
+        .viewer-foot {
+            border-top: 1px solid var(--border);
+            padding: 10px 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 6px 10px;
+            color: var(--ink);
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--ok);
+            flex: 0 0 auto;
+        }
+
+        code {
+            background: rgba(2, 6, 23, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1px 6px;
+            color: #c4b5fd;
+        }
+
+        .notes ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+        }
+
+        @media (max-width: 1100px) {
+            .viewers { grid-template-columns: 1fr; }
+            .controls-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 720px) {
+            .controls-grid { grid-template-columns: 1fr; }
+            .viewer-box { height: 340px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page stack">
+        <section class="hero">
+            <h1>OpenSeadragon blendTime / alwaysBlend comparison</h1>
+            <p>
+                This page is meant for visually testing how tile replacement feels while zooming and panning.
+                The first four viewers are fixed presets; the fifth viewer is a sandbox you can rebuild with your own settings.
+                Enable sync to keep all viewers on the same viewport while you interact with any one of them.
+            </p>
+        </section>
+
+        <section class="controls">
+            <div class="controls-grid">
+
+                <div class="field" style="grid-column: span 2;">
+                    <label for="drawerMode">Drawer</label>
+                    <select id="drawerMode">
+                        <option value="canvas" selected>canvas</option>
+                        <option value="auto">auto</option>
+                        <option value="webgl">webgl</option>
+                        <option value="html">html</option>
+                    </select>
+                </div>
+
+                <div class="field" style="grid-column: span 2;">
+                    <label for="sandboxBlendTime">Sandbox blendTime</label>
+                    <input id="sandboxBlendTime" type="number" min="0" step="0.05" value="0.75">
+                </div>
+
+                <div class="field" style="grid-column: span 1;">
+                    <label>&nbsp;</label>
+                    <button class="primary" id="reloadAllBtn">Reload all viewers</button>
+                </div>
+
+                <div class="field" style="grid-column: span 2;">
+                    <label>&nbsp;</label>
+                    <button class="good" id="rebuildSandboxBtn">Rebuild sandbox</button>
+                </div>
+
+                <div class="field" style="grid-column: span 3;">
+                    <label for="sandboxBlendRange">Sandbox blendTime slider</label>
+                    <input id="sandboxBlendRange" type="range" min="0" max="2" step="0.05" value="0.75">
+                </div>
+
+                <div class="field" style="grid-column: span 2;">
+                    <label>&nbsp;</label>
+                    <div class="checkbox-row">
+                        <input id="sandboxAlwaysBlend" type="checkbox">
+                        <span>Sandbox alwaysBlend</span>
+                    </div>
+                </div>
+
+                <div class="field" style="grid-column: span 2;">
+                    <label>&nbsp;</label>
+                    <div class="checkbox-row">
+                        <input id="showNavigator" type="checkbox" checked>
+                        <span>Sandbox navigator</span>
+                    </div>
+                </div>
+
+                <div class="field" style="grid-column: span 3;">
+                    <label>&nbsp;</label>
+                    <div class="quick-actions">
+                        <button id="useRepoSourceBtn">Use repo testpattern</button>
+                        <button id="useRemoteSourceBtn">Use public DZI</button>
+                        <button id="homeAllBtn">Home all</button>
+                        <button id="zoomAllBtn">Zoom all ×2</button>
+                        <button id="panAllBtn">Pan all</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="viewers" id="viewerGrid"></section>
+
+        <section class="notes">
+            <p><strong>Suggested checks</strong></p>
+            <ul>
+                <li>Compare <code>blendTime: 0</code> against a longer blend while rapidly wheel-zooming.</li>
+                <li>Compare equal <code>blendTime</code> values with <code>alwaysBlend</code> off vs on.</li>
+                <li><code>tile-drawn</code> stats are most useful with the canvas drawer; the WebGL drawer does not raise that event.</li>
+                <li>If you open this outside the OpenSeadragon repo, swap the source to the public DZI button or another valid DZI/IIIF source.</li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+        (function () {
+            const delayInMs = 200;
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            // -------------
+            // Custom TileSource
+            // -------------
+            class PerSizeTileSource extends OpenSeadragon.TileSource {
+                constructor(options) {
+                    const minLevel = options.minLevel != null ? options.minLevel : 0;
+                    const maxLevel = options.maxLevel != null
+                        ? options.maxLevel
+                        : (options.levelDimensions ? options.levelDimensions.length - 1 : 0);
+
+                    const baseOptions = Object.assign({}, options, {
+                        minLevel: minLevel,
+                        maxLevel: maxLevel
+                    });
+
+                    super(baseOptions);
+
+                    this.width  = options.width;
+                    this.height = options.height;
+                    this.minLevel = minLevel;
+                    this.maxLevel = maxLevel;
+                    this.levelDimensions = options.levelDimensions || [];
+                    this.levelTileSizes = options.levelTileSizes || [];
+                }
+
+                getLevelScale(level) {
+                    const dims = this.levelDimensions[level];
+                    return dims ? dims.width / this.width : 1;
+                }
+
+                getTileWidth(level) {
+                    return (this.levelTileSizes && this.levelTileSizes[level]) ? this.levelTileSizes[level].w : 256;
+                }
+
+                getTileHeight(level) {
+                    return (this.levelTileSizes && this.levelTileSizes[level]) ? this.levelTileSizes[level].h : 256;
+                }
+
+                async downloadTileStart(context) {
+
+                    if (delayInMs) {
+                        await delay(delayInMs);
+                    }
+
+                    const { level, x, y } = context.tile;
+                    const tw = this.getTileWidth(level);
+                    const th = this.getTileHeight(level);
+                    const dims = this.levelDimensions[level] || { width: this.width, height: this.height };
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = tw;
+                    canvas.height = th;
+                    const ctx = canvas.getContext('2d');
+
+                    const hue = (level * 40) % 360;
+                    ctx.fillStyle = `hsl(${hue}, 60%, 85%)`;
+                    ctx.fillRect(0, 0, tw, th);
+
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(0.5, 0.5, tw - 1, th - 1);
+
+                    ctx.fillStyle = 'blue';
+                    ctx.font = (tw / 14) + 'px sans-serif';
+
+                    let row = 1;
+                    const lineY = () => (th / 10) * row++;
+
+                    ctx.fillText(`L: ${level} | T: ${x},${y}`, 8, lineY());
+                    ctx.fillText(`Img: ${dims.width}×${dims.height}`, 8, lineY());
+                    ctx.fillText(`Tile: ${tw}×${th}`, 8, lineY());
+
+                    context.finish(ctx, null, 'context2d');
+                    return true;
+                }
+
+                getTileUrl(level, x, y) { return `PerSize:${level}/${x}-${y}`; }
+                supports(data, url) { return true; }
+                hasTransparency() { return true; }
+            }
+
+            const presetConfigs = [
+                { id: 'preset-0', title: 'Preset A — no blend', blendTime: 0, alwaysBlend: false },
+                { id: 'preset-1', title: 'Preset B — light blend', blendTime: 0.25, alwaysBlend: false },
+                { id: 'preset-2', title: 'Preset C — visible blend', blendTime: 0.75, alwaysBlend: false },
+                { id: 'preset-3', title: 'Preset D — alwaysBlend on', blendTime: 0.75, alwaysBlend: true },
+                { id: 'sandbox', title: 'Sandbox — rebuild from controls', sandbox: true }
+            ];
+
+            const viewerGrid = document.getElementById('viewerGrid');
+            const drawerModeInput = document.getElementById('drawerMode');
+            const sandboxBlendInput = document.getElementById('sandboxBlendTime');
+            const sandboxBlendRange = document.getElementById('sandboxBlendRange');
+            const sandboxAlwaysBlendInput = document.getElementById('sandboxAlwaysBlend');
+            const showNavigatorInput = document.getElementById('showNavigator');
+
+            const viewerEntries = [];
+
+            function createViewerCard(config) {
+                const card = document.createElement('section');
+                card.className = 'viewer-card';
+                card.innerHTML = [
+                    '<div class="viewer-head">',
+                    '  <div>',
+                    '    <h2>' + escapeHtml(config.title) + '</h2>',
+                    '    <div class="meta" id="' + config.id + '-meta"></div>',
+                    '  </div>',
+                    '  <div class="badge"><span class="dot"></span><span id="' + config.id + '-status">Idle</span></div>',
+                    '</div>',
+                    '<div class="viewer-box" id="' + config.id + '-viewer"></div>',
+                    '<div class="viewer-foot" id="' + config.id + '-stats"></div>'
+                ].join('');
+                viewerGrid.appendChild(card);
+                return card;
+            }
+
+            function escapeHtml(value) {
+                return String(value)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function setStatus(entry, text) {
+                entry.statusEl.textContent = text;
+            }
+
+            function updateMeta(entry) {
+                const resolvedBlend = entry.options.blendTime;
+                const resolvedAlwaysBlend = entry.options.alwaysBlend;
+                entry.metaEl.textContent = 'blendTime=' + resolvedBlend + ' | alwaysBlend=' + resolvedAlwaysBlend + ' | drawer=' + entry.options.drawer;
+            }
+
+            function renderStats(entry) {
+                const zoomText = entry.viewer && entry.viewer.viewport && entry.viewer.world && entry.viewer.world.getItemCount()
+                    ? entry.viewer.viewport.getZoom(true).toFixed(3)
+                    : '—';
+
+                entry.statsEl.innerHTML = [
+                    '<span>open: <strong>' + entry.stats.open + '</strong></span>',
+                    '<span>tile-loaded: <strong>' + entry.stats.tileLoaded + '</strong></span>',
+                    '<span>tile-drawn: <strong>' + entry.stats.tileDrawn + '</strong></span>',
+                    '<span>viewport-change: <strong>' + entry.stats.viewportChange + '</strong></span>',
+                    '<span>zoom: <strong>' + zoomText + '</strong></span>'
+                ].join('');
+            }
+
+            function buildSpec(rows) {
+                const levelDimensions = [];
+                const levelTileSizes = [];
+
+                rows.forEach((row, idx) => {
+                    levelDimensions[idx] = {
+                        width: parseInt(row.w) || 1,
+                        height: parseInt(row.h) || 1
+                    };
+                    // Support both single and double input for tile size
+                    const tw = parseInt(row.tw);
+                    const th = row.th ? parseInt(row.th) : tw;
+                    levelTileSizes[idx] = { w: tw, h: th };
+                });
+
+                let width = Math.max(...levelDimensions.map(d => d.width));
+                let height = Math.max(...levelDimensions.map(d => d.height));
+
+                return { width, height, levelDimensions, levelTileSizes };
+            }
+
+            function makeViewerOptions(config) {
+                const isSandbox = !!config.sandbox;
+                const blendTime = isSandbox ? Number(sandboxBlendInput.value || 0) : config.blendTime;
+                const alwaysBlend = isSandbox ? sandboxAlwaysBlendInput.checked : config.alwaysBlend;
+                return {
+                    id: config.id + '-viewer',
+                    tileSources: new PerSizeTileSource(buildSpec(Array.from({length: 14}, (_, i) => ({
+                        w: Math.pow(2, i), h: Math.pow(2, i), tw: 256
+                    })))),
+                    showNavigationControl: false,
+                    showNavigator: isSandbox ? showNavigatorInput.checked : false,
+                    animationTime: 1.2,
+                    blendTime: blendTime,
+                    alwaysBlend: alwaysBlend,
+                    drawer: drawerModeInput.value,
+                    maxZoomPixelRatio: 2,
+                    visibilityRatio: 0.8,
+                    minZoomImageRatio: 0.5,
+                    timeout: 15000
+                };
+            }
+
+            function destroyViewer(entry) {
+                if (entry.viewer && typeof entry.viewer.destroy === 'function') {
+                    entry.viewer.destroy();
+                }
+                entry.viewer = null;
+            }
+
+            function attachCommonHandlers(entry) {
+                entry.viewer.addHandler('open', function () {
+                    entry.stats.open += 1;
+                    setStatus(entry, 'Open');
+                    renderStats(entry);
+                });
+
+                entry.viewer.addHandler('open-failed', function (event) {
+                    setStatus(entry, 'Open failed');
+                    const message = event && event.message ? event.message : 'Could not open tile source';
+                    entry.metaEl.textContent = message;
+                });
+
+                entry.viewer.addHandler('tile-loaded', function () {
+                    entry.stats.tileLoaded += 1;
+                    renderStats(entry);
+                });
+
+                entry.viewer.addHandler('tile-drawn', function () {
+                    entry.stats.tileDrawn += 1;
+                    renderStats(entry);
+                });
+
+                entry.viewer.addHandler('viewport-change', function () {
+                    entry.stats.viewportChange += 1;
+                    renderStats(entry);
+                });
+
+                entry.viewer.addHandler('animation-start', function () {
+                    setStatus(entry, 'Animating');
+                });
+
+                entry.viewer.addHandler('animation-finish', function () {
+                    setStatus(entry, 'Ready');
+                    renderStats(entry);
+                });
+            }
+
+            function rebuildEntry(entry) {
+                destroyViewer(entry);
+                entry.stats = {
+                    open: 0,
+                    tileLoaded: 0,
+                    tileDrawn: 0,
+                    viewportChange: 0
+                };
+                entry.options = makeViewerOptions(entry.config);
+                updateMeta(entry);
+                setStatus(entry, 'Loading');
+                renderStats(entry);
+                entry.viewer = OpenSeadragon(entry.options);
+                attachCommonHandlers(entry);
+            }
+
+            function rebuildAll() {
+                viewerEntries.forEach(rebuildEntry);
+                console.log(viewerEntries);
+            }
+
+            function rebuildSandboxOnly() {
+                const sandboxEntry = viewerEntries.find(function (entry) {
+                    return entry.config.sandbox;
+                });
+                if (sandboxEntry) {
+                    rebuildEntry(sandboxEntry);
+                }
+            }
+
+            function applyToAllViewers(callback) {
+                viewerEntries.forEach(function (entry) {
+                    if (entry.viewer && entry.viewer.viewport && entry.viewer.world && entry.viewer.world.getItemCount()) {
+                        callback(entry.viewer);
+                    }
+                });
+            }
+
+            function connectControls() {
+                function syncBlendInputs(source) {
+                    const value = source === sandboxBlendInput ? sandboxBlendInput.value : sandboxBlendRange.value;
+                    sandboxBlendInput.value = value;
+                    sandboxBlendRange.value = value;
+                }
+
+                sandboxBlendInput.addEventListener('input', function () {
+                    syncBlendInputs(sandboxBlendInput);
+                });
+
+                sandboxBlendRange.addEventListener('input', function () {
+                    syncBlendInputs(sandboxBlendRange);
+                });
+
+                document.getElementById('reloadAllBtn').addEventListener('click', rebuildAll);
+                document.getElementById('rebuildSandboxBtn').addEventListener('click', rebuildSandboxOnly);
+
+                document.getElementById('homeAllBtn').addEventListener('click', function () {
+                    applyToAllViewers(function (viewer) {
+                        viewer.viewport.goHome(true);
+                    });
+                });
+
+                document.getElementById('zoomAllBtn').addEventListener('click', function () {
+                    applyToAllViewers(function (viewer) {
+                        const currentZoom = viewer.viewport.getZoom(true);
+                        viewer.viewport.zoomTo(currentZoom * 2, null, false);
+                    });
+                });
+
+                document.getElementById('panAllBtn').addEventListener('click', function () {
+                    applyToAllViewers(function (viewer) {
+                        const center = viewer.viewport.getCenter(true);
+                        const target = new OpenSeadragon.Point(center.x + 0.12, center.y + 0.06);
+                        viewer.viewport.panTo(target, false);
+                    });
+                });
+            }
+
+            function init() {
+                const url = new URL(window.location.href);
+                const initialTileSource = url.searchParams.get('tileSource');
+                const initialDrawer = url.searchParams.get('drawer');
+                const initialBlend = url.searchParams.get('sandboxBlendTime');
+                const initialAlwaysBlend = url.searchParams.get('sandboxAlwaysBlend');
+
+                if (initialTileSource) {
+                    tileSourceInput.value = initialTileSource;
+                }
+                if (initialDrawer && ['auto', 'canvas', 'webgl', 'html'].indexOf(initialDrawer) !== -1) {
+                    drawerModeInput.value = initialDrawer;
+                }
+                if (initialBlend !== null && !isNaN(Number(initialBlend))) {
+                    sandboxBlendInput.value = initialBlend;
+                    sandboxBlendRange.value = initialBlend;
+                }
+                if (initialAlwaysBlend === 'true') {
+                    sandboxAlwaysBlendInput.checked = true;
+                }
+
+                presetConfigs.forEach(function (config) {
+                    createViewerCard(config);
+                    const entry = {
+                        config: config,
+                        viewer: null,
+                        metaEl: document.getElementById(config.id + '-meta'),
+                        statsEl: document.getElementById(config.id + '-stats'),
+                        statusEl: document.getElementById(config.id + '-status'),
+                        stats: {
+                            open: 0,
+                            tileLoaded: 0,
+                            tileDrawn: 0,
+                            viewportChange: 0
+                        },
+                        options: null
+                    };
+                    viewerEntries.push(entry);
+                });
+
+                connectControls();
+                rebuildAll();
+            }
+
+            init();
+        }());
+    </script>
+</body>
+</html>
