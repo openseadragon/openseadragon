@@ -45,7 +45,7 @@
 
         const handleMouseMove = function ( /*event*/ ) {
             secondaryMoveCount++;
-        }
+        };
 
         const hookViewerHandlers = function () {
             origPreProcessEventHandler = tracker.preProcessEventHandler;
@@ -178,7 +178,7 @@
             simulateMove(-1, -1, 10);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'stopPropagation false stopImmediatePropagation false:  ',
+                description:           'stopPropagation true stopImmediatePropagation false:  ',
                 preProcessEventCount:  22,
                 moveCount:             20,
                 secondaryMoveCount:    20,
@@ -194,7 +194,7 @@
             simulateMove(-1, -1, 10);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'stopPropagation false stopImmediatePropagation false:  ',
+                description:           'stopPropagation false stopImmediatePropagation true:  ',
                 preProcessEventCount:  22,
                 moveCount:             20,
                 secondaryMoveCount:    0,
@@ -210,7 +210,7 @@
             simulateMove(-1, -1, 10);
             simulateLeave(-1, -1);
             assessGestureExpectations({
-                description:           'stopPropagation false stopImmediatePropagation false:  ',
+                description:           'stopPropagation true stopImmediatePropagation true:  ',
                 preProcessEventCount:  22,
                 moveCount:             20,
                 secondaryMoveCount:    0,
