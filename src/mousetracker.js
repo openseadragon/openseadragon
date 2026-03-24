@@ -1730,11 +1730,14 @@
      * @inner
      */
     function handlePropagation( eventInfo, event ) {
-        if ( eventInfo.isStoppable && !eventInfo.isEmulated ) {
-            if ( eventInfo.stopImmediatePropagation ) {
+        if ( eventInfo.isStoppable && event ) {
+            const canStopImmediate = typeof event.stopImmediatePropagation === 'function';
+            const canStop = typeof event.stopPropagation === 'function';
+
+            if ( eventInfo.stopImmediatePropagation && canStopImmediate ) {
                 event.stopImmediatePropagation();
             }
-            else if ( eventInfo.stopPropagation ) {
+            else if ( eventInfo.stopPropagation && canStop ) {
                 event.stopPropagation();
             }
         }
