@@ -1218,7 +1218,10 @@
      *      Set to true to prevent this MouseTracker from generating a gesture from the event.
      *      Valid on eventType "pointerdown".
      * @property {Boolean} stopPropagation
-     *      Set to true prevent the event from propagating to ancestor/descendent elements on capture/bubble phase.
+     *      Set to true to prevent the event from propagating to ancestor/descendent elements on the capture/bubble phase.
+     * @property {Boolean} stopImmediatePropagation
+     *      Set to true to prevent any further listeners for this event from being invoked on the current target,
+     *      and to stop the event from propagating any further in the event flow (no additional capture or bubble).
      * @property {Boolean} shouldCapture
      *      (Internal Use) Set to true if the pointer should be captured (events (re)targeted to tracker element).
      * @property {Boolean} shouldReleaseCapture
@@ -1726,6 +1729,25 @@
      * @private
      * @inner
      */
+    function handlePropagation( eventInfo, event ) {
+        if ( eventInfo.isStoppable && event ) {
+            const canStopImmediate = typeof event.stopImmediatePropagation === 'function';
+            const canStop = typeof event.stopPropagation === 'function';
+
+            if ( eventInfo.stopImmediatePropagation && canStopImmediate ) {
+                event.stopImmediatePropagation();
+            }
+            else if ( eventInfo.stopPropagation && canStop ) {
+                event.stopPropagation();
+            }
+        }
+    }
+
+
+    /**
+     * @private
+     * @inner
+     */
     function onClick( tracker, event ) {
         //$.console.log('click ' + (tracker.userData ? tracker.userData.toString() : ''));
 
@@ -1740,9 +1762,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -1764,9 +1785,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -1805,9 +1825,8 @@
         if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
                 $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -1847,9 +1866,8 @@
         if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -1889,9 +1907,8 @@
         if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -1988,9 +2005,8 @@
         if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2082,9 +2098,8 @@
             tracker.scrollHandler( eventArgs );
         }
 
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( originalEvent );
-        }
+        handlePropagation( eventInfo, originalEvent );
+
         if ( ( eventArgs && eventArgs.preventDefault ) || ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) ) {
                 $.cancelEvent( originalEvent );
         }
@@ -2116,9 +2131,7 @@
             updatePointerCaptured( tracker, gPoint, false );
         }
 
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2167,9 +2180,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2210,9 +2222,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2246,9 +2257,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2278,9 +2288,7 @@
             updatePointerCancel( tracker, eventInfo, gPoint );
         }
 
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2331,9 +2339,7 @@
             }, true );
         }
 
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2360,9 +2366,7 @@
             }, false );
         }
 
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2463,9 +2467,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2500,9 +2503,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2547,9 +2549,9 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
+
         if ( eventInfo.shouldCapture ) {
             if ( implicitlyCaptured ) {
                 updatePointerCaptured( tracker, gPoint, true );
@@ -2622,9 +2624,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
 
         // Per spec, pointerup events are supposed to release capture. Not all browser
         //   versions have adhered to the spec, and there's no harm in releasing
@@ -2701,9 +2702,8 @@
         if ( eventInfo.preventDefault && !eventInfo.defaultPrevented ) {
             $.cancelEvent( event );
         }
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2730,9 +2730,7 @@
         //TODO need to only do this if our element is target?
         updatePointerCancel( tracker, eventInfo, gPoint );
 
-        if ( eventInfo.stopPropagation ) {
-            $.stopEvent( event );
-        }
+        handlePropagation( eventInfo, event );
     }
 
 
@@ -2806,13 +2804,15 @@
      * @inner
      */
     function getEventProcessDefaults( tracker, eventInfo ) {
+        eventInfo.stopPropagation = false;
+        eventInfo.stopImmediatePropagation = false;
+
         switch ( eventInfo.eventType ) {
             case 'pointermove':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
-                eventInfo.stopPropagation = false;
                 break;
             case 'pointerover':
             case 'pointerout':
@@ -2824,28 +2824,24 @@
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // onContextMenu(), onKeyDown(), onKeyUp(), onKeyPress() may set true
                 eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
                 break;
             case 'pointerdown':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // updatePointerDown() may set true (tracker.hasGestureHandlers)
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
-                eventInfo.stopPropagation = false;
                 break;
             case 'pointerup':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = !tracker.hasGestureHandlers;
-                eventInfo.stopPropagation = false;
                 break;
             case 'wheel':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = false; // handleWheelEvent() may set true
                 eventInfo.preventGesture = !tracker.hasScrollHandler;
-                eventInfo.stopPropagation = false;
                 break;
             case 'gotpointercapture':
             case 'lostpointercapture':
@@ -2854,21 +2850,18 @@
                 eventInfo.isCancelable = false;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
                 break;
             case 'click':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.clickHandler;
                 eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
                 break;
             case 'dblclick':
                 eventInfo.isStoppable = true;
                 eventInfo.isCancelable = true;
                 eventInfo.preventDefault = !!tracker.dblClickHandler;
                 eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
                 break;
             case 'focus':
             case 'blur':
@@ -2879,7 +2872,6 @@
                 eventInfo.isCancelable = false;
                 eventInfo.preventDefault = false;
                 eventInfo.preventGesture = false;
-                eventInfo.stopPropagation = false;
                 break;
         }
     }
