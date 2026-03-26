@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 6.0.3: (in progress...)
 
 * Add stopImmediatePropagation to MouseTracker.EventProcessInfo options (#2891 @msalsbery)
+* Fixed tile blending in canvas and HTML drawers (#2893 @Aiosa)
 
 6.0.2:
 
