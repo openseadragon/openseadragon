@@ -93,7 +93,7 @@
  * @param {Boolean} [options.debugMode] - See {@link OpenSeadragon.Options}.
  * @param {String|CanvasGradient|CanvasPattern|Function} [options.placeholderFillStyle] - See {@link OpenSeadragon.Options}.
  * @param {String|Boolean} [options.crossOriginPolicy] - See {@link OpenSeadragon.Options}.
- * @param {Boolean} [options.ajaxWithCredentials] - See {@link OpenSeadragon.Options}.
+ * @param {Boolean} [options.ajaxWithCredentials] deprecated
  * @param {Boolean} [options.loadTilesWithAjax]
  *      Whether to load tile data using AJAX requests.
  *      Defaults to the setting in {@link OpenSeadragon.Options}.
@@ -2149,8 +2149,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             ajaxHeaders: tile.ajaxHeaders,
             crossOriginPolicy: this.crossOriginPolicy,
             ajaxWithCredentials: this.ajaxWithCredentials,
-            callback: function( data, errorMsg, tileRequest, dataType, tries ){
-                _this._onTileLoad( tile, time, data, errorMsg, tileRequest, dataType, tries );
+            callback: function( data, errorMsg, dataType, tries ){
+                _this._onTileLoad( tile, time, data, errorMsg, dataType, tries );
             },
             abort: function() {
                 tile.loading = false;
@@ -2181,11 +2181,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} time
      * @param {*} data image data
      * @param {String} errorMsg
-     * @param {XMLHttpRequest} tileRequest
      * @param {String} [dataType=undefined] data type, derived automatically if not set
      * @param {number} tries - The number of times the tile has been retried.
      */
-    _onTileLoad: function( tile, time, data, errorMsg, tileRequest, dataType, tries ) {
+    _onTileLoad: function( tile, time, data, errorMsg, dataType, tries ) {
         //data is set to null on error by image loader, allow custom falsey values (e.g. 0)
         if ( data === null || data === undefined ) {
             $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.getUrl(), errorMsg );
@@ -2201,14 +2200,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {string} message - The error message.
              * @property {number} tries - The number of times the tile has been retried.
              * @property {boolean} maxReached - Whether the maximum number of retries has been reached.
-             * @property {XMLHttpRequest} tileRequest - The XMLHttpRequest used to load the tile if available.
+             * @property {XMLHttpRequest} tileRequest - deprecated
              */
             this.viewer.raiseEvent("tile-load-failed", {
                 tile: tile,
                 tiledImage: this,
                 time: time,
                 message: errorMsg,
-                tileRequest: tileRequest,
+                tileRequest: null,
                 tries: tries,
                 maxReached: this.viewer.tileRetryMax === 0 ? true : tries >= this.viewer.tileRetryMax
             });
@@ -2231,17 +2230,17 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             if (conversion) {
                 const desiredType = $.converter.getConversionPathFinalType(conversion);
                 $.converter.convert(tile, data, dataType, desiredType).then(newData => {
-                    this._setTileLoaded(tile, newData, null, tileRequest, desiredType);
+                    this._setTileLoaded(tile, newData, null, desiredType);
                 }).catch(e => {
                     $.console.warn("Failed to satisfy original type [%s] %s from %s: %s", desiredType, tile, dataType, e);
-                    this._setTileLoaded(tile, data, null, tileRequest, dataType);
+                    this._setTileLoaded(tile, data, null, dataType);
                 });
             } else {
                 $.console.warn( "Ignoring default base tile data type %s: no conversion possible from %s", this.originalDataType, dataType);
-                this._setTileLoaded(tile, data, null, tileRequest, dataType);
+                this._setTileLoaded(tile, data, null, dataType);
             }
         } else {
-            this._setTileLoaded(tile, data, null, tileRequest, dataType);
+            this._setTileLoaded(tile, data, null, dataType);
         }
     },
 
@@ -2251,10 +2250,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {*} data image data, the data sent to ImageJob.prototype.finish(), by default an Image object,
      *   can be null: in that case, cache is assigned to a tile without further processing
      * @param {?Number} cutoff ignored, @deprecated
-     * @param {?XMLHttpRequest} tileRequest
      * @param {?String} [dataType=undefined] data type, derived automatically if not set
      */
-    _setTileLoaded: function(tile, data, cutoff, tileRequest, dataType) {
+    _setTileLoaded: function(tile, data, cutoff, dataType) {
         tile.tiledImage = this; //unloaded with tile.unload(), so we need to set it back
         // does nothing if tile.cacheKey already present
 
@@ -2314,7 +2312,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
              * @property {String} dataType type of the data
              * @property {OpenSeadragon.TiledImage} tiledImage - The tiled image of the loaded tile.
              * @property {OpenSeadragon.Tile} tile - The tile which has been loaded.
-             * @property {XMLHttpRequest} tileRequest - The AJAX request that loaded this tile (if applicable).
+             * @property {null} tileRequest - deprecated
              * @property {OpenSeadragon.Promise} - Promise resolved when the tile gets fully loaded.
              *   NOTE: DO NOT await the promise in the handler: you will create a deadlock!
              * @property {function} getCompletionCallback - deprecated
@@ -2322,7 +2320,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             _this.viewer.raiseEventAwaiting("tile-loaded", {
                 tile: tile,
                 tiledImage: _this,
-                tileRequest: tileRequest,
+                tileRequest: null,
                 promise: new $.Promise(resolve => {
                     resolver = resolve;
                 }),

@@ -45,7 +45,7 @@
  * @param {TileSource} [options.source] - Image loading strategy
  * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
  * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
- * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
+ * @param {Boolean} [options.ajaxWithCredentials] - deprecated
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
  * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
  *      see TileSource::getTilePostData) or null
@@ -98,6 +98,7 @@ $.ImageJob = function(options) {
      * Whether to set withCredentials on AJAX requests.
      * @member {boolean} ajaxWithCredentials
      * @memberof OpenSeadragon.ImageJob#
+     * @deprecated
      */
 
     /**
@@ -211,23 +212,34 @@ $.ImageJob.prototype = {
      *   Usage: context.finish(data, request, dataType=undefined). Pass the downloaded data object
      *   add also reference to an ajax request if used. Optionally, specify what data type the data is.
      * @param {*} data data that has been downloaded
-     * @param {XMLHttpRequest} request reference to the request if used
-     * @param {string} dataType data type identifier
+     * @param {string} dataType data type identifier, used to be request argument (deprecated, yet still supported)
+     * @param {string} dataTypeOld data type identifier - old deprecated position
      *   fallback compatibility behavior: dataType treated as errorMessage if data is falsey value
      * @memberof OpenSeadragon.ImageJob#
      */
-    finish: function(data, request, dataType) {
+    finish: function(data, dataType, dataTypeOld) {
         if (!this.jobId) {
             return;
         }
         // old behavior, no deprecation due to possible finish calls with invalid data item (e.g. different error)
         if (isInvalidData(data)) {
-            this.fail(dataType || "[downloadTileStart->finish()] Retrieved data is invalid!", request);
+            this.fail(dataType || "[downloadTileStart->finish()] Retrieved data is invalid!");
             return;
         }
 
+        if (typeof dataTypeOld === "string") {
+            if (!dataType) {
+                dataType = dataTypeOld;
+            } else {
+                $.console.warn(
+                    'ImageJob.prototype.finish() called with both dataType and dataTypeOld. ' +
+                    'dataType is deprecated, dataTypeOld is still supported. ' +
+                    'dataType:', dataType, 'dataTypeOld:', dataTypeOld
+                );
+            }
+        }
+
         this.data = data;
-        this.request = request;
         this.errorMsg = null;
         this.dataType = dataType;
 
@@ -242,11 +254,10 @@ $.ImageJob.prototype = {
      *   Usage: context.fail(errMessage, request). Provide error message in case of failure,
      *   add also reference to an ajax request if used.
      * @param {string} errorMessage description upon failure
-     * @param {XMLHttpRequest} request reference to the request if used
+     * @param {XMLHttpRequest} request deprecated
      */
-    fail: function(errorMessage, request) {
+    fail: function(errorMessage, request = undefined) {
         this.data = null;
-        this.request = request;
         this.errorMsg = errorMessage;
         this.dataType = null;
 
@@ -350,7 +361,6 @@ $.BatchImageJob.prototype = {
      */
     fail: function(errorMessage, request) {
         this.data = null;
-        this.request = request;
         this.errorMsg = errorMessage;
         this.dataType = null;
 
@@ -410,8 +420,7 @@ $.ImageLoader.prototype = {
      * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,
      *      see TileSource::getTilePostData) or null
-     * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
-     *      requests.
+     * @param {Boolean} [options.ajaxWithCredentials] - deprecated
      * @param {Function} [options.callback] - Called once image has been downloaded.
      * @param {Function} [options.abort] - Called when this image job is aborted.
      * @returns {boolean} true if job was immediatelly started, false if queued
