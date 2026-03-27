@@ -543,6 +543,20 @@
   *     example, if you are targeting mobile devices with less bandwidth you may
   *     try setting this to 1.5 or higher.
   *
+  * @property {Number} [levelOverFetch=Infinity]
+  *     OpenSeadragon will attempt to load all levels data up to the single-tile
+  *     viewport-covering (cutoff) level, potentially over-fetching tiles. You can change
+  *     how many levels are over-fetched by setting this property. With
+  *     levelOverFetch=1 the viewer will load best level, best level - 1, and cutoff level.
+  *     It's a tradeoff between fast loading, and 'user feel - iterating over all levels until
+  *     the high-resolution data'.
+  *
+  * @property {Number} [requireLevelDownsampleRatio=0]
+  *     You can force the viewer to skip levels that have smaller pixel ratio
+  *     difference gap than a specified value. For example, setting the value to
+  *     4 with each level smaller by 2 (powers of two), the viewer will access only
+  *     odd levels.
+  *
   * @property {Boolean} [mouseNavEnabled=true]
   *     Is the user able to interact with the image via mouse or touch. Default
   *     interactions include draging the image in a plane, and zooming in toward
@@ -1283,6 +1297,8 @@ function OpenSeadragon( options ){
             wrapVertical:           false,
             visibilityRatio:        0.5, //-> how much of the viewer can be negative space
             minPixelRatio:          0.5, //->closer to 0 draws tiles meant for a higher zoom at this zoom
+            levelOverFetch:         Infinity,
+            requireLevelDownsampleRatio: 0,
             defaultZoomLevel:       0,
             minZoomLevel:           null,
             maxZoomLevel:           null,
