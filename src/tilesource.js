@@ -44,8 +44,7 @@
  * @property {Function} [options.success]
  *      A function to be called upon successful creation.
  * @property {Boolean} [options.ajaxWithCredentials]
- *      If this TileSource needs to make an AJAX call, this specifies whether to set
- *      the XHR's withCredentials (for accessing secure data).
+ *      Deprecated. Use crossOriginPolicy instead.
  * @property {Object} [options.ajaxHeaders]
  *      A set of headers to include in AJAX requests.
  * @property {Boolean} [options.splitHashDataForPost]
@@ -440,142 +439,53 @@ $.TileSource.prototype = {
      */
     getImageInfo: function( url ) {
         const _this = this;
-        let callbackName;
-        let callback;
-        let readySource;
-        let options;
-        let urlParts;
-        let filename;
-        let lastDot;
 
-
-        if( url ) {
-            urlParts = url.split( '/' );
-            filename = urlParts[ urlParts.length - 1 ];
-            lastDot  = filename.lastIndexOf( '.' );
-            if ( lastDot > -1 ) {
-                urlParts[ urlParts.length - 1 ] = filename.slice( 0, lastDot );
-            }
-        }
-
+        const client = this.viewer.httpClient;
+        // Handle POST data hidden in URL fragments if enabled
         let postData = null;
+        let requestUrl = url;
         if (this.splitHashDataForPost) {
             const hashIdx = url.indexOf("#");
             if (hashIdx !== -1) {
                 postData = url.substring(hashIdx + 1);
-                url = url.substr(0, hashIdx);
+                requestUrl = url.substring(0, hashIdx);
             }
         }
 
-        callback = function( data ){
-            if( typeof (data) === "string" ) {
-                data = $.parseXml( data );
-            }
-            const $TileSource = $.TileSource.determineType( _this, data, url );
-            if ( !$TileSource ) {
-                /**
-                 * Raised when an error occurs loading a TileSource.
-                 *
-                 * @event open-failed
-                 * @memberof OpenSeadragon.TileSource
-                 * @type {object}
-                 * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
-                 * @property {String} message
-                 * @property {String} source
-                 * @property {?Object} userData - Arbitrary subscriber-defined object.
-                 */
-                _this.raiseEvent( 'open-failed', { message: "Unable to load TileSource", source: url } );
-                return;
-            }
-
-            options = $TileSource.prototype.configure.apply( _this, [ data, url, postData ]);
-            if (options.ajaxWithCredentials === undefined) {
-                options.ajaxWithCredentials = _this.ajaxWithCredentials;
-            }
-
-            options.ready = true;  // force synchronous finish
-            readySource = new $TileSource( options );
-            _this.ready = true;
-            /**
-             * Raised when a TileSource is opened and initialized.
-             *
-             * @event ready
-             * @memberof OpenSeadragon.TileSource
-             * @type {object}
-             * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
-             * @property {Object} tileSource
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            _this.raiseEvent( 'ready', { tileSource: readySource } );
-        };
-
-        if( url.match(/\.js$/) ){
-            //TODO: Its not very flexible to require tile sources to end jsonp
-            //      request for info  with a url that ends with '.js' but for
-            //      now it's the only way I see to distinguish uniformly.
-            callbackName = url.split('/').pop().replace('.js', '');
-            $.jsonp({
-                url: url,
-                async: false,
-                callbackName: callbackName,
-                callback: callback
-            });
-        } else {
-            // request info via xhr asynchronously.
-            $.makeAjaxRequest( {
-                url: url,
-                postData: postData,
-                withCredentials: this.ajaxWithCredentials,
-                headers: this.ajaxHeaders,
-                success: function( xhr ) {
-                    const data = processResponse( xhr );
-                    callback( data );
-                },
-                error: function ( xhr, exc ) {
-                    let msg;
-
-                    /*
-                        IE < 10 will block XHR requests to different origins. Any property access on the request
-                        object will raise an exception which we'll attempt to handle by formatting the original
-                        exception rather than the second one raised when we try to access xhr.status
-                     */
-                    try {
-                        msg = "HTTP " + xhr.status + " attempting to load TileSource: " + url;
-                    } catch ( e ) {
-                        let formattedExc;
-                        if ( typeof ( exc ) === "undefined" || !exc.toString ) {
-                            formattedExc = "Unknown error";
-                        } else {
-                            formattedExc = exc.toString();
-                        }
-
-                        msg = formattedExc + " attempting to load TileSource: " + url;
-                    }
-
-                    $.console.error(msg);
-
-                    /***
-                     * Raised when an error occurs loading a TileSource.
-                     *
-                     * @event open-failed
-                     * @memberof OpenSeadragon.TileSource
-                     * @type {object}
-                     * @property {OpenSeadragon.TileSource} eventSource - A reference to the TileSource which raised the event.
-                     * @property {String} message
-                     * @property {String} source
-                     * @property {String} postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
-                     *      see TileSource::getTilePostData) or null
-                     * @property {?Object} userData - Arbitrary subscriber-defined object.
-                     */
-                    _this.raiseEvent( 'open-failed', {
-                        message: msg,
-                        source: url,
-                        postData: postData
+        client.request(requestUrl, {
+            method: postData ? "POST" : "GET",
+            body: postData,
+            headers: this.ajaxHeaders || {},
+            expect: "auto" // Automatically parses JSON/XML based on response headers
+        })
+            .then(data => {
+                // Determine the specific TileSource type (DZI, IIIF, etc.)
+                const $TileSource = $.TileSource.determineType(_this, data, url);
+                if (!$TileSource) {
+                    _this.raiseEvent('open-failed', {
+                        message: "Unable to determine TileSource type from response",
+                        source: url
                     });
+                    return;
                 }
-            });
-        }
 
+                // Configure and initialize the source
+                const options = $TileSource.prototype.configure.apply(_this, [data, url, postData]);
+                options.ready = true;
+                const readySource = new $TileSource(options);
+
+                _this.ready = true;
+                _this.raiseEvent('ready', {tileSource: readySource});
+            })
+            .catch(err => {
+                // Use your HTTPError statusCode or default to OSD error format
+                const status = err.statusCode || "Error";
+                _this.raiseEvent('open-failed', {
+                    message: `HttpClient metadata fetch failed [${status}]: ${err.message}`,
+                    source: url,
+                    postData: postData
+                });
+            });
     },
 
     /**
@@ -817,63 +727,63 @@ $.TileSource.prototype = {
         // Load the tile with an AJAX request if the loadWithAjax option is
         // set. Otherwise load the image by setting the source property of the image object.
 
-        // TODO: the cors/creds is not optimal here:
-        //  - XMLHttpRequest can only setup credentials flag, so `ajaxWithCredentials` is a boolean
-        //  - <img> item can turn on/off cors, and include credentials if cors on, therefore `crossOriginPolicy` can have three values (one is null)
-        //  --> we should merge these flags to a single value to avoid confusion with usage, and use modern fetch that can setup also cors to have consistent behavior
+        // TODO: the cors/creds merge not completed, need to replace withCredentials with crossOriginPolicy
+
+        // instead of using some weird header options, just inject http client
+        //  somehow rename the property below...
         if (context.loadWithAjax) {
-            context.userData.request = $.makeAjaxRequest({
-                url: context.src,
-                withCredentials: context.ajaxWithCredentials,
-                headers: context.ajaxHeaders,
-                responseType: "arraybuffer",
-                postData: context.postData,
-                success: function(request) {
-                    let blb;
-                    // Make the raw data into a blob.
-                    // BlobBuilder fallback adapted from
-                    // http://stackoverflow.com/questions/15293694/blob-constructor-browser-compatibility
-                    try {
-                        blb = new window.Blob([request.response]);
-                    } catch (e) {
-                        const BlobBuilder = (
-                            window.BlobBuilder ||
-                            window.WebKitBlobBuilder ||
-                            window.MozBlobBuilder ||
-                            window.MSBlobBuilder
-                        );
-                        if (e.name === 'TypeError' && BlobBuilder) {
-                            const bb = new BlobBuilder();
-                            bb.append(request.response);
-                            blb = bb.getBlob();
-                        }
+            const client = this.viewer.httpClient;
+
+            // Setup AbortController for OSD's abort signal
+            const controller = new AbortController();
+            context.userData.abortController = controller;
+
+            const requestOptions = {
+                method: context.postData ? "POST" : "GET",
+                headers: context.ajaxHeaders || {},
+                body: context.postData,
+                signal: controller.signal,
+                expect: "auto" // Let your client handle smart parsing
+            };
+
+            // Use your client's .request() method
+            client.request(context.src, requestOptions)
+                // todo async not supported yet, need to replace with $.Promise
+                .then(async (data) => {
+                    // If the data isn't a Blob/Image yet (e.g. raw string/JSON),
+                    // we ensure it's in a format OSD TileCache can handle.
+                    if (data instanceof Response) {
+                        data = await data.blob();
                     }
-                    // If the blob is empty for some reason consider the image load a failure.
-                    if (blb.size === 0) {
-                        context.fail("[downloadTileStart] Empty image response.", request);
-                    } else {
-                        context.finish(blb, request, "rasterBlob");
+
+                    if (!data || (data instanceof Blob && data.size === 0)) {
+                        context.fail("Empty tile data received.");
+                        return;
                     }
-                },
-                error: function(request) {
-                    context.fail("[downloadTileStart] Image load aborted - XHR error", request);
-                }
-            });
+
+                    // 'rasterBlob' tells OSD to treat the result as binary image data
+                    context.finish(data, "rasterBlob");
+                })
+                .catch((err) => {
+                    // Handle your custom HTTPError class
+                    const status = err.statusCode || "Unknown";
+                    context.fail(`HttpClient Error [${status}]: ${err.message}`);
+                });
         } else {
             // While we could just do this one-liner, we found out that downloading the data _before_ a cache is initialized
             // works better in general cases. Network access is the most error-prone part, and this scenario better supports
             // all default use-cases, including the fact that retry logic works only at this stage, not on the cache level.
-            //  context.finish(context.src, null, "__private__imageUrl");
+            //  context.finish(context.src, "__private__imageUrl");
 
             const image = new Image();
             context.userData.imageRequest = image;
             image.onload = function () {
                 image.onload = image.onerror = image.onabort = null;
-                context.finish(image, null, "image");
+                context.finish(image, "image");
             };
             image.onabort = image.onerror = function() {
                 image.onload = image.onerror = image.onabort = null;
-                context.fail("[downloadTileStart] Image load aborted or errored out.", null);
+                context.fail("[downloadTileStart] Image load aborted or errored out.");
             };
             if (typeof context.crossOriginPolicy === "string") {
                 image.crossOrigin = context.crossOriginPolicy;
@@ -891,8 +801,8 @@ $.TileSource.prototype = {
      * @param {*} [context.userData] - Empty object to attach (and mainly read) your own data.
      */
     downloadTileAbort: function (context) {
-        if (context.userData.request) {
-            context.userData.request.abort();
+        if (context.userData.abortController) {
+            context.userData.abortController.abort();
         }
         if (context.userData.imageRequest) {
             const image = context.userData.imageRequest;

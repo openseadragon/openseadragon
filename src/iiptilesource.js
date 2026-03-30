@@ -170,6 +170,7 @@
 
       const _this = this;
 
+      // todo update this
       $.makeAjaxRequest( {
         url: url,
         type: "GET",
