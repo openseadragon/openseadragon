@@ -640,6 +640,9 @@
              */
             this._enableContextRecovery = true;
             this._firstPassInstanced = null;
+            this._textureUnitIndices = null;
+            this._instancedArrays = null;
+            this._instancedArrayCapacity = 0;
             this._outputCanvas = null;
             this._outputContext = null;
             this._clippingCanvas = null;
@@ -705,6 +708,9 @@
                 gl.deleteProgram(this._firstPassInstanced.shaderProgram);
             }
             this._firstPassInstanced = null;
+            this._textureUnitIndices = null;
+            this._instancedArrays = null;
+            this._instancedArrayCapacity = 0;
 
             // Destroy WebGL context manager
             if (this._glContext) {
@@ -1310,6 +1316,70 @@
         }
 
         // private
+        _getTextureUnitIndices(count) {
+            if (!this._textureUnitIndices || this._textureUnitIndices.length < count) {
+                const start = this._textureUnitIndices ? this._textureUnitIndices.length : 0;
+                const textureUnitIndices = new Int32Array(count);
+                if (this._textureUnitIndices) {
+                    textureUnitIndices.set(this._textureUnitIndices);
+                }
+                for (let i = start; i < count; i++) {
+                    textureUnitIndices[i] = i;
+                }
+                this._textureUnitIndices = textureUnitIndices;
+            }
+            return this._textureUnitIndices.subarray(0, count);
+        }
+
+        // private
+        _ensureInstancedArrays(capacity) {
+            if (this._instancedArrays && this._instancedArrayCapacity >= capacity) {
+                return this._instancedArrays;
+            }
+
+            this._instancedArrayCapacity = capacity;
+            this._instancedArrays = {
+                texturePositionTLArray: new Float32Array(capacity * 2),
+                texturePositionSizeArray: new Float32Array(capacity * 2),
+                transformMatrixArray: new Float32Array(capacity * 9),
+                opacityArray: new Float32Array(capacity),
+                textureIndexArray: new Float32Array(capacity),
+                textureDataArray: new Array(capacity)
+            };
+
+            return this._instancedArrays;
+        }
+
+        // private
+        _bindTileTextures(textureDataArray, drawCount) {
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            if (!gl) {
+                return;
+            }
+
+            for (let i = 0; i < drawCount; i++) {
+                gl.activeTexture(gl.TEXTURE0 + i);
+                gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
+            }
+        }
+
+        // private
+        _resetInstancedAttributeDivisors(pass) {
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            if (!gl || !pass) {
+                return;
+            }
+
+            gl.vertexAttribDivisor(pass.aTexturePositionTL, 0);
+            gl.vertexAttribDivisor(pass.aTexturePositionSize, 0);
+            gl.vertexAttribDivisor(pass.aTransformCol0, 0);
+            gl.vertexAttribDivisor(pass.aTransformCol1, 0);
+            gl.vertexAttribDivisor(pass.aTransformCol2, 0);
+            gl.vertexAttribDivisor(pass.aOpacity, 0);
+            gl.vertexAttribDivisor(pass.aTextureIndex, 0);
+        }
+
+        // private
         // WebGL1 batched rendering path (original implementation)
         _drawTilesBatched(tilesToDraw, tiledImage, overallMatrix, maxTextures){
             const gl = this._glContext ? this._glContext.getContext() : null;
@@ -1322,6 +1392,7 @@
             const textureDataArray = new Array(maxTextures);
             const matrixArray = new Array(maxTextures);
             const opacityArray = new Array(maxTextures);
+            let drawCount = 0;
 
             // Use the non-instanced first pass shader
             gl.useProgram(firstPass.shaderProgram);
@@ -1329,33 +1400,28 @@
             // iterate over tiles and add data for each one to the buffers
             for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
                 const tile = tilesToDraw[tileIndex].tile;
-                const indexInDrawArray = tileIndex % maxTextures;
-                const numTilesToDraw =  indexInDrawArray + 1;
                 const textureInfo = this.getDataToDraw(tile);
 
                 if (textureInfo && textureInfo.texture) {
-                    this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                    this._getTileData(tile, tiledImage, textureInfo, overallMatrix, drawCount, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                    drawCount++;
                 }
 
-                if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
+                if( drawCount === maxTextures || (tileIndex === tilesToDraw.length - 1 && drawCount > 0)){
                     // We've filled up the buffers: time to draw this set of tiles
 
-                    // bind each tile's texture to the appropriate gl.TEXTURE#
-                    for(let i = 0; i <= numTilesToDraw; i++){
-                        gl.activeTexture(gl.TEXTURE0 + i);
-                        gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
-                    }
+                    this._bindTileTextures(textureDataArray, drawCount);
 
                     // set the buffer data for the texture coordinates to use for each tile
                     gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
-                    gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
+                    gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray.subarray(0, drawCount * 12), gl.DYNAMIC_DRAW);
 
                     // set the transform matrix uniform for each tile
-                    matrixArray.forEach( (matrix, index) => {
-                        gl.uniformMatrix3fv(firstPass.uTransformMatrices[index], false, matrix);
-                    });
+                    for (let index = 0; index < drawCount; index++) {
+                        gl.uniformMatrix3fv(firstPass.uTransformMatrices[index], false, matrixArray[index]);
+                    }
                     // set the opacity uniform for each tile
-                    gl.uniform1fv(firstPass.uOpacities, new Float32Array(opacityArray));
+                    gl.uniform1fv(firstPass.uOpacities, new Float32Array(opacityArray.slice(0, drawCount)));
 
                     // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
                     gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
@@ -1368,7 +1434,8 @@
                     gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
 
                     // Draw! 6 vertices per tile (2 triangles per rectangle)
-                    gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
+                    gl.drawArrays(gl.TRIANGLES, 0, 6 * drawCount);
+                    drawCount = 0;
                 }
             }
         }
@@ -1386,91 +1453,71 @@
             gl.useProgram(pass.shaderProgram);
 
             // Re-set the texture unit indices (in case they were cleared by another shader)
-            gl.uniform1iv(pass.uImages, [...Array(this._glContext.getMaxTextures()).keys()]);
+            gl.uniform1iv(pass.uImages, this._getTextureUnitIndices(maxTextures));
 
-            // Pre-allocate arrays for per-instance data
-            const texturePositionTLArray = new Float32Array(maxTextures * 2);  // vec2 per instance
-            const texturePositionSizeArray = new Float32Array(maxTextures * 2); // vec2 per instance
-            const transformMatrixArray = new Float32Array(maxTextures * 9);     // mat3 per instance
-            const opacityArray = new Float32Array(maxTextures);                 // float per instance
-            const textureIndexArray = new Float32Array(maxTextures);            // float per instance
-            const textureDataArray = new Array(maxTextures);
+            const arrays = this._ensureInstancedArrays(maxTextures);
+            const texturePositionTLArray = arrays.texturePositionTLArray;
+            const texturePositionSizeArray = arrays.texturePositionSizeArray;
+            const transformMatrixArray = arrays.transformMatrixArray;
+            const opacityArray = arrays.opacityArray;
+            const textureIndexArray = arrays.textureIndexArray;
+            const textureDataArray = arrays.textureDataArray;
+            let drawCount = 0;
 
-            // iterate over tiles and add data for each one to the buffers
-            for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
-                const tile = tilesToDraw[tileIndex].tile;
-                const indexInDrawArray = tileIndex % maxTextures;
-                const numTilesToDraw =  indexInDrawArray + 1;
-                const textureInfo = this.getDataToDraw(tile);
+            try {
+                for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
+                    const tile = tilesToDraw[tileIndex].tile;
+                    const textureInfo = this.getDataToDraw(tile);
 
-                if (textureInfo && textureInfo.texture) {
-                    this._getTileDataInstanced(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray,
-                        texturePositionTLArray, texturePositionSizeArray, transformMatrixArray,
-                        opacityArray, textureIndexArray, textureDataArray);
-                }
-
-                if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
-                    // We've filled up the buffers: time to draw this batch of tiles
-
-                    // Bind textures to texture units
-                    for(let i = 0; i < numTilesToDraw; i++){
-                        gl.activeTexture(gl.TEXTURE0 + i);
-                        gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
+                    if (textureInfo && textureInfo.texture) {
+                        this._getTileDataInstanced(tile, tiledImage, textureInfo, overallMatrix, drawCount,
+                            texturePositionTLArray, texturePositionSizeArray, transformMatrixArray,
+                            opacityArray, textureIndexArray, textureDataArray);
+                        drawCount++;
                     }
 
-                    // Set up per-instance attributes with divisor = 1
-                    // Divisors must be set each frame because they're global state
+                    if( drawCount === maxTextures || (tileIndex === tilesToDraw.length - 1 && drawCount > 0)){
+                        this._bindTileTextures(textureDataArray, drawCount);
 
-                    // Upload per-instance data to buffers
-                    gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTexturePositionTL);
-                    gl.bufferData(gl.ARRAY_BUFFER, texturePositionTLArray.subarray(0, numTilesToDraw * 2), gl.DYNAMIC_DRAW);
-                    gl.vertexAttribPointer(pass.aTexturePositionTL, 2, gl.FLOAT, false, 0, 0);
-                    gl.vertexAttribDivisor(pass.aTexturePositionTL, 1);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTexturePositionTL);
+                        gl.bufferData(gl.ARRAY_BUFFER, texturePositionTLArray.subarray(0, drawCount * 2), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTexturePositionTL, 2, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aTexturePositionTL, 1);
 
-                    gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTexturePositionSize);
-                    gl.bufferData(gl.ARRAY_BUFFER, texturePositionSizeArray.subarray(0, numTilesToDraw * 2), gl.DYNAMIC_DRAW);
-                    gl.vertexAttribPointer(pass.aTexturePositionSize, 2, gl.FLOAT, false, 0, 0);
-                    gl.vertexAttribDivisor(pass.aTexturePositionSize, 1);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTexturePositionSize);
+                        gl.bufferData(gl.ARRAY_BUFFER, texturePositionSizeArray.subarray(0, drawCount * 2), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTexturePositionSize, 2, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aTexturePositionSize, 1);
 
-                    gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTransformMatrix);
-                    gl.bufferData(gl.ARRAY_BUFFER, transformMatrixArray.subarray(0, numTilesToDraw * 9), gl.DYNAMIC_DRAW);
-                    gl.vertexAttribPointer(pass.aTransformCol0, 3, gl.FLOAT, false, 36, 0);
-                    gl.vertexAttribDivisor(pass.aTransformCol0, 1);
-                    gl.vertexAttribPointer(pass.aTransformCol1, 3, gl.FLOAT, false, 36, 12);
-                    gl.vertexAttribDivisor(pass.aTransformCol1, 1);
-                    gl.vertexAttribPointer(pass.aTransformCol2, 3, gl.FLOAT, false, 36, 24);
-                    gl.vertexAttribDivisor(pass.aTransformCol2, 1);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTransformMatrix);
+                        gl.bufferData(gl.ARRAY_BUFFER, transformMatrixArray.subarray(0, drawCount * 9), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTransformCol0, 3, gl.FLOAT, false, 36, 0);
+                        gl.vertexAttribDivisor(pass.aTransformCol0, 1);
+                        gl.vertexAttribPointer(pass.aTransformCol1, 3, gl.FLOAT, false, 36, 12);
+                        gl.vertexAttribDivisor(pass.aTransformCol1, 1);
+                        gl.vertexAttribPointer(pass.aTransformCol2, 3, gl.FLOAT, false, 36, 24);
+                        gl.vertexAttribDivisor(pass.aTransformCol2, 1);
 
-                    gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferOpacity);
-                    gl.bufferData(gl.ARRAY_BUFFER, opacityArray.subarray(0, numTilesToDraw), gl.DYNAMIC_DRAW);
-                    gl.vertexAttribPointer(pass.aOpacity, 1, gl.FLOAT, false, 0, 0);
-                    gl.vertexAttribDivisor(pass.aOpacity, 1);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferOpacity);
+                        gl.bufferData(gl.ARRAY_BUFFER, opacityArray.subarray(0, drawCount), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aOpacity, 1, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aOpacity, 1);
 
-                    gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTextureIndex);
-                    gl.bufferData(gl.ARRAY_BUFFER, textureIndexArray.subarray(0, numTilesToDraw), gl.DYNAMIC_DRAW);
-                    gl.vertexAttribPointer(pass.aTextureIndex, 1, gl.FLOAT, false, 0, 0);
-                    gl.vertexAttribDivisor(pass.aTextureIndex, 1);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTextureIndex);
+                        gl.bufferData(gl.ARRAY_BUFFER, textureIndexArray.subarray(0, drawCount), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTextureIndex, 1, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aTextureIndex, 1);
 
-                    // Bind the unit quad buffer for per-vertex data (no divisor needed, default is 0)
-                    gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferOutputPosition);
-                    gl.vertexAttribPointer(pass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferOutputPosition);
+                        gl.vertexAttribPointer(pass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
 
-                    // Draw all instances with a single call!
-                    // 6 vertices per quad (2 triangles), numTilesToDraw instances
-                    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, numTilesToDraw);
+                        gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, drawCount);
+                        drawCount = 0;
+                    }
                 }
+            } finally {
+                this._resetInstancedAttributeDivisors(pass);
             }
-
-            // Reset vertex attribute divisors to 0 for all per-instance attributes
-            // This is important because divisors are global state (not per-program)
-            // and other shaders might use these attribute locations differently
-            gl.vertexAttribDivisor(pass.aTexturePositionTL, 0);
-            gl.vertexAttribDivisor(pass.aTexturePositionSize, 0);
-            gl.vertexAttribDivisor(pass.aTransformCol0, 0);
-            gl.vertexAttribDivisor(pass.aTransformCol1, 0);
-            gl.vertexAttribDivisor(pass.aTransformCol2, 0);
-            gl.vertexAttribDivisor(pass.aOpacity, 0);
-            gl.vertexAttribDivisor(pass.aTextureIndex, 0);
         }
 
         // private
@@ -1634,7 +1681,7 @@ void main() {
             };
 
             // Set up texture unit indices
-            gl.uniform1iv(this._firstPassInstanced.uImages, [...Array(numTextures).keys()]);
+            gl.uniform1iv(this._firstPassInstanced.uImages, this._getTextureUnitIndices(numTextures));
 
             // Set up the unit quad buffer (per-vertex, shared by all instances)
             gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPassInstanced.bufferOutputPosition);
@@ -1684,15 +1731,7 @@ void main() {
             gl.vertexAttribPointer(this._firstPassInstanced.aTextureIndex, 1, gl.FLOAT, false, 0, 0);
             gl.vertexAttribDivisor(this._firstPassInstanced.aTextureIndex, 1);
 
-            // Reset divisors to 0 after setup to avoid affecting other shaders
-            // Divisors are global state, not per-program
-            gl.vertexAttribDivisor(this._firstPassInstanced.aTexturePositionTL, 0);
-            gl.vertexAttribDivisor(this._firstPassInstanced.aTexturePositionSize, 0);
-            gl.vertexAttribDivisor(this._firstPassInstanced.aTransformCol0, 0);
-            gl.vertexAttribDivisor(this._firstPassInstanced.aTransformCol1, 0);
-            gl.vertexAttribDivisor(this._firstPassInstanced.aTransformCol2, 0);
-            gl.vertexAttribDivisor(this._firstPassInstanced.aOpacity, 0);
-            gl.vertexAttribDivisor(this._firstPassInstanced.aTextureIndex, 0);
+            this._resetInstancedAttributeDivisors(this._firstPassInstanced);
 
             } catch (e) {
                 // If instanced shader setup fails, we'll fall back to batched rendering
