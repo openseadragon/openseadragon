@@ -639,6 +639,10 @@
              * @private
              */
             this._enableContextRecovery = true;
+            this._firstPassInstanced = null;
+            this._textureUnitIndices = null;
+            this._instancedArrays = null;
+            this._instancedArrayCapacity = 0;
             this._outputCanvas = null;
             this._outputContext = null;
             this._clippingCanvas = null;
@@ -691,6 +695,22 @@
                 this.viewer.removeHandler("resize", this._resizeHandler);
                 this._resizeHandler = null;
             }
+
+            const gl = this._glContext ? this._glContext.getContext() : null;
+
+            if (gl && this._firstPassInstanced) {
+                gl.deleteBuffer(this._firstPassInstanced.bufferOutputPosition);
+                gl.deleteBuffer(this._firstPassInstanced.bufferTexturePositionTL);
+                gl.deleteBuffer(this._firstPassInstanced.bufferTexturePositionSize);
+                gl.deleteBuffer(this._firstPassInstanced.bufferTransformMatrix);
+                gl.deleteBuffer(this._firstPassInstanced.bufferOpacity);
+                gl.deleteBuffer(this._firstPassInstanced.bufferTextureIndex);
+                gl.deleteProgram(this._firstPassInstanced.shaderProgram);
+            }
+            this._firstPassInstanced = null;
+            this._textureUnitIndices = null;
+            this._instancedArrays = null;
+            this._instancedArrayCapacity = 0;
 
             // Destroy WebGL context manager
             if (this._glContext) {
@@ -1054,60 +1074,10 @@
                     if too many contexts have been created and not released, or there is another problem with the graphics card.`);
                 }
 
-                const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
-                const textureDataArray = new Array(maxTextures);
-                const matrixArray = new Array(maxTextures);
-                const opacityArray = new Array(maxTextures);
-
-                // iterate over tiles and add data for each one to the buffers
-                for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
-                    const tile = tilesToDraw[tileIndex].tile;
-                    const indexInDrawArray = tileIndex % maxTextures;
-                    const numTilesToDraw =  indexInDrawArray + 1;
-                    const textureInfo = this.getDataToDraw(tile);
-
-                    if (textureInfo && textureInfo.texture) {
-                        this._getTileData(tile, tiledImage, textureInfo, overallMatrix, indexInDrawArray, texturePositionArray, textureDataArray, matrixArray, opacityArray);
-                    }
-                    // else {
-                    //   If the texture info is not available, we cannot draw this tile. This is either because
-                    //   the tile data is still being processed, or the data was not correct - in that case,
-                    //   internalCacheCreate(..) already logged an error.
-                    // }
-
-                    if( (numTilesToDraw === maxTextures) || (tileIndex === tilesToDraw.length - 1)){
-                        // We've filled up the buffers: time to draw this set of tiles
-
-                        // bind each tile's texture to the appropriate gl.TEXTURE#
-                        for(let i = 0; i < numTilesToDraw; i++){
-                            gl.activeTexture(gl.TEXTURE0 + i);
-                            gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
-                        }
-
-                        // set the buffer data for the texture coordinates to use for each tile
-                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
-                        gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
-
-                        // set the transform matrix uniform for each tile
-                        matrixArray.forEach( (matrix, index) => {
-                            gl.uniformMatrix3fv(firstPass.uTransformMatrices[index], false, matrix);
-                        });
-                        // set the opacity uniform for each tile
-                        gl.uniform1fv(firstPass.uOpacities, new Float32Array(opacityArray));
-
-                        // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
-                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
-                        gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
-
-                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
-                        gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-
-                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
-                        gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
-
-                        // Draw! 6 vertices per tile (2 triangles per rectangle)
-                        gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
-                    }
+                if (this.isWebGL2() && this._firstPassInstanced) {
+                    this._drawTilesInstanced(tilesToDraw, tiledImage, overallMatrix, maxTextures);
+                } else {
+                    this._drawTilesBatched(tilesToDraw, tiledImage, overallMatrix, maxTextures);
                 }
 
                 if(useTwoPassRendering){
@@ -1345,6 +1315,263 @@
             matrixArray[index] = model.values;
         }
 
+        // private
+        _getTextureUnitIndices(count) {
+            if (!this._textureUnitIndices || this._textureUnitIndices.length < count) {
+                const start = this._textureUnitIndices ? this._textureUnitIndices.length : 0;
+                const textureUnitIndices = new Int32Array(count);
+                if (this._textureUnitIndices) {
+                    textureUnitIndices.set(this._textureUnitIndices);
+                }
+                for (let i = start; i < count; i++) {
+                    textureUnitIndices[i] = i;
+                }
+                this._textureUnitIndices = textureUnitIndices;
+            }
+            return this._textureUnitIndices.subarray(0, count);
+        }
+
+        // private
+        _ensureInstancedArrays(capacity) {
+            if (this._instancedArrays && this._instancedArrayCapacity >= capacity) {
+                return this._instancedArrays;
+            }
+
+            this._instancedArrayCapacity = capacity;
+            this._instancedArrays = {
+                texturePositionTLArray: new Float32Array(capacity * 2),
+                texturePositionSizeArray: new Float32Array(capacity * 2),
+                transformMatrixArray: new Float32Array(capacity * 9),
+                opacityArray: new Float32Array(capacity),
+                textureIndexArray: new Float32Array(capacity),
+                textureDataArray: new Array(capacity)
+            };
+
+            return this._instancedArrays;
+        }
+
+        // private
+        _bindTileTextures(textureDataArray, drawCount) {
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            if (!gl) {
+                return;
+            }
+
+            for (let i = 0; i < drawCount; i++) {
+                gl.activeTexture(gl.TEXTURE0 + i);
+                gl.bindTexture(gl.TEXTURE_2D, textureDataArray[i]);
+            }
+        }
+
+        // private
+        _resetInstancedAttributeDivisors(pass) {
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            if (!gl || !pass) {
+                return;
+            }
+
+            gl.vertexAttribDivisor(pass.aTexturePositionTL, 0);
+            gl.vertexAttribDivisor(pass.aTexturePositionSize, 0);
+            gl.vertexAttribDivisor(pass.aTransformCol0, 0);
+            gl.vertexAttribDivisor(pass.aTransformCol1, 0);
+            gl.vertexAttribDivisor(pass.aTransformCol2, 0);
+            gl.vertexAttribDivisor(pass.aOpacity, 0);
+            gl.vertexAttribDivisor(pass.aTextureIndex, 0);
+        }
+
+        // private
+        // WebGL1 batched rendering path (original implementation)
+        _drawTilesBatched(tilesToDraw, tiledImage, overallMatrix, maxTextures){
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            const firstPass = this._glContext ? this._glContext.getFirstPass() : null;
+            if (!gl || !firstPass) {
+                return;
+            }
+
+            const texturePositionArray = new Float32Array(maxTextures * 12); // 6 vertices (2 triangles) x 2 coordinates per vertex
+            const textureDataArray = new Array(maxTextures);
+            const matrixArray = new Array(maxTextures);
+            const opacityArray = new Array(maxTextures);
+            let drawCount = 0;
+
+            // Use the non-instanced first pass shader
+            gl.useProgram(firstPass.shaderProgram);
+
+            // iterate over tiles and add data for each one to the buffers
+            for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
+                const tile = tilesToDraw[tileIndex].tile;
+                const textureInfo = this.getDataToDraw(tile);
+
+                if (textureInfo && textureInfo.texture) {
+                    this._getTileData(tile, tiledImage, textureInfo, overallMatrix, drawCount, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                    drawCount++;
+                }
+
+                if( drawCount === maxTextures || (tileIndex === tilesToDraw.length - 1 && drawCount > 0)){
+                    // We've filled up the buffers: time to draw this set of tiles
+
+                    this._bindTileTextures(textureDataArray, drawCount);
+
+                    // set the buffer data for the texture coordinates to use for each tile
+                    gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                    gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray.subarray(0, drawCount * 12), gl.DYNAMIC_DRAW);
+
+                    // set the transform matrix uniform for each tile
+                    for (let index = 0; index < drawCount; index++) {
+                        gl.uniformMatrix3fv(firstPass.uTransformMatrices[index], false, matrixArray[index]);
+                    }
+                    // set the opacity uniform for each tile
+                    gl.uniform1fv(firstPass.uOpacities, new Float32Array(opacityArray.slice(0, drawCount)));
+
+                    // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
+                    gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
+                    gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                    gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+
+                    gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
+                    gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+
+                    // Draw! 6 vertices per tile (2 triangles per rectangle)
+                    gl.drawArrays(gl.TRIANGLES, 0, 6 * drawCount);
+                    drawCount = 0;
+                }
+            }
+        }
+
+        // private
+        // WebGL2 instanced rendering path - draws multiple tiles with a single drawArraysInstanced() call
+        _drawTilesInstanced(tilesToDraw, tiledImage, overallMatrix, maxTextures){
+            const gl = this._glContext ? this._glContext.getContext() : null;
+            const pass = this._firstPassInstanced;
+            if (!gl || !pass) {
+                return;
+            }
+
+            // Use the instanced shader program
+            gl.useProgram(pass.shaderProgram);
+
+            // Re-set the texture unit indices (in case they were cleared by another shader)
+            gl.uniform1iv(pass.uImages, this._getTextureUnitIndices(maxTextures));
+
+            const arrays = this._ensureInstancedArrays(maxTextures);
+            const texturePositionTLArray = arrays.texturePositionTLArray;
+            const texturePositionSizeArray = arrays.texturePositionSizeArray;
+            const transformMatrixArray = arrays.transformMatrixArray;
+            const opacityArray = arrays.opacityArray;
+            const textureIndexArray = arrays.textureIndexArray;
+            const textureDataArray = arrays.textureDataArray;
+            let drawCount = 0;
+
+            try {
+                for(let tileIndex = 0; tileIndex < tilesToDraw.length; tileIndex++){
+                    const tile = tilesToDraw[tileIndex].tile;
+                    const textureInfo = this.getDataToDraw(tile);
+
+                    if (textureInfo && textureInfo.texture) {
+                        this._getTileDataInstanced(tile, tiledImage, textureInfo, overallMatrix, drawCount,
+                            texturePositionTLArray, texturePositionSizeArray, transformMatrixArray,
+                            opacityArray, textureIndexArray, textureDataArray);
+                        drawCount++;
+                    }
+
+                    if( drawCount === maxTextures || (tileIndex === tilesToDraw.length - 1 && drawCount > 0)){
+                        this._bindTileTextures(textureDataArray, drawCount);
+
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTexturePositionTL);
+                        gl.bufferData(gl.ARRAY_BUFFER, texturePositionTLArray.subarray(0, drawCount * 2), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTexturePositionTL, 2, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aTexturePositionTL, 1);
+
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTexturePositionSize);
+                        gl.bufferData(gl.ARRAY_BUFFER, texturePositionSizeArray.subarray(0, drawCount * 2), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTexturePositionSize, 2, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aTexturePositionSize, 1);
+
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTransformMatrix);
+                        gl.bufferData(gl.ARRAY_BUFFER, transformMatrixArray.subarray(0, drawCount * 9), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTransformCol0, 3, gl.FLOAT, false, 36, 0);
+                        gl.vertexAttribDivisor(pass.aTransformCol0, 1);
+                        gl.vertexAttribPointer(pass.aTransformCol1, 3, gl.FLOAT, false, 36, 12);
+                        gl.vertexAttribDivisor(pass.aTransformCol1, 1);
+                        gl.vertexAttribPointer(pass.aTransformCol2, 3, gl.FLOAT, false, 36, 24);
+                        gl.vertexAttribDivisor(pass.aTransformCol2, 1);
+
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferOpacity);
+                        gl.bufferData(gl.ARRAY_BUFFER, opacityArray.subarray(0, drawCount), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aOpacity, 1, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aOpacity, 1);
+
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferTextureIndex);
+                        gl.bufferData(gl.ARRAY_BUFFER, textureIndexArray.subarray(0, drawCount), gl.DYNAMIC_DRAW);
+                        gl.vertexAttribPointer(pass.aTextureIndex, 1, gl.FLOAT, false, 0, 0);
+                        gl.vertexAttribDivisor(pass.aTextureIndex, 1);
+
+                        gl.bindBuffer(gl.ARRAY_BUFFER, pass.bufferOutputPosition);
+                        gl.vertexAttribPointer(pass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+                        gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, drawCount);
+                        drawCount = 0;
+                    }
+                }
+            } finally {
+                this._resetInstancedAttributeDivisors(pass);
+            }
+        }
+
+        // private
+        // Prepare tile data for instanced rendering
+        _getTileDataInstanced(tile, tiledImage, textureInfo, viewMatrix, index,
+            texturePositionTLArray, texturePositionSizeArray, transformMatrixArray,
+            opacityArray, textureIndexArray, textureDataArray){
+
+            const texture = textureInfo.texture;
+            const textureQuad = textureInfo.position;
+            const overlapFraction = textureInfo.overlapFraction;
+
+            // Extract texture coordinates from the quad
+            // textureQuad format from _makeQuadVertexBuffer(left, right, top, bottom):
+            // [left,bottom, right,bottom, left,top, left,top, right,bottom, right,top]
+            // So: [0,1]=BL, [2,3]=BR, [4,5]=TL, [6,7]=TL, [8,9]=BR, [10,11]=TR
+            // We need TL (left,top) and BR (right,bottom)
+            const tlX = textureQuad[4];  // left
+            const tlY = textureQuad[5];  // top
+            const brX = textureQuad[2];  // right
+            const brY = textureQuad[3];  // bottom
+
+            texturePositionTLArray[index * 2] = tlX;
+            texturePositionTLArray[index * 2 + 1] = tlY;
+            texturePositionSizeArray[index * 2] = brX - tlX;     // width
+            texturePositionSizeArray[index * 2 + 1] = brY - tlY; // height
+
+            // compute offsets that account for tile overlap
+            const xOffset = tile.positionedBounds.width * overlapFraction.x;
+            const yOffset = tile.positionedBounds.height * overlapFraction.y;
+            const x = tile.positionedBounds.x + (tile.x === 0 ? 0 : xOffset);
+            const y = tile.positionedBounds.y + (tile.y === 0 ? 0 : yOffset);
+            const right = tile.positionedBounds.x + tile.positionedBounds.width - (tile.isRightMost ? 0 : xOffset);
+            const bottom = tile.positionedBounds.y + tile.positionedBounds.height - (tile.isBottomMost ? 0 : yOffset);
+
+            const model = new $.Mat3([
+                right - x, 0, 0,
+                0, bottom - y, 0,
+                x, y, 1
+            ]);
+
+            if (tile.flipped) {
+                model.scaleAndTranslateSelf(-1, 1, 1, 0);
+            }
+
+            model.scaleAndTranslateOtherSetSelf(viewMatrix);
+
+            // Store the matrix values
+            transformMatrixArray.set(model.values, index * 9);
+
+            opacityArray[index] = tile.opacity;
+            textureIndexArray[index] = index; // Use the index as texture unit
+            textureDataArray[index] = texture;
+        }
 
         // private
         _setupRenderer(){
@@ -1353,6 +1580,164 @@
                 return;
             }
             this._glContext.setupRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
+            this._firstPassInstanced = null;
+            this._makeFirstPassInstancedShaderProgram();
+        }
+        // private
+        // Creates an instanced rendering shader program for WebGL2
+        // Uses drawArraysInstanced() to draw multiple tiles with a single draw call
+        _makeFirstPassInstancedShaderProgram(){
+            if (!this.isWebGL2()) {
+                return;
+            }
+
+            try {
+                const gl = this._glContext.getContext();
+                const numTextures = this._glContext.getMaxTextures();
+                const unitQuad = this._glContext.getUnitQuad();
+
+                const vertexShaderProgram = `#version 300 es
+// Per-vertex attributes (the unit quad - same for all instances)
+in vec2 a_output_position;
+
+// Per-instance attributes (different for each tile)
+in vec2 a_texture_position_tl;
+in vec2 a_texture_position_size;
+in vec3 a_transform_col0;
+in vec3 a_transform_col1;
+in vec3 a_transform_col2;
+in float a_opacity;
+in float a_texture_index;
+
+out vec2 v_texture_position;
+out float v_texture_index;
+out float v_opacity;
+
+void main() {
+    // Reconstruct the transform matrix from its columns
+    mat3 transform = mat3(a_transform_col0, a_transform_col1, a_transform_col2);
+
+    // Transform the unit quad position to clip space
+    gl_Position = vec4(transform * vec3(a_output_position, 1.0), 1.0);
+
+    // Compute texture coordinates
+    v_texture_position = a_texture_position_tl + a_output_position * a_texture_position_size;
+    v_texture_index = a_texture_index;
+    v_opacity = a_opacity;
+}
+`;
+
+            // Generate texture lookup conditionals at compile time
+            // This avoids the "array index for samplers must be constant integral expressions" error
+            const makeTextureConditionals = () => {
+                return [...Array(numTextures).keys()].map(index =>
+                    `${index > 0 ? 'else ' : ''}if(int(v_texture_index) == ${index}) { color = texture(u_images[${index}], v_texture_position); }`
+                ).join('\n    ');
+            };
+
+            // GLSL ES 3.0 fragment shader
+            const fragmentShaderProgram = `#version 300 es
+precision mediump float;
+
+uniform sampler2D u_images[${numTextures}];
+
+in vec2 v_texture_position;
+in float v_texture_index;
+in float v_opacity;
+
+out vec4 fragColor;
+
+void main() {
+    vec4 color = vec4(0.0);
+    ${makeTextureConditionals()}
+    fragColor = color * v_opacity;
+}
+`;
+
+            const program = this.constructor.initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
+            gl.useProgram(program);
+
+            this._firstPassInstanced = {
+                shaderProgram: program,
+                // Per-vertex attribute (the unit quad)
+                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
+                // Per-instance attributes
+                aTexturePositionTL: gl.getAttribLocation(program, 'a_texture_position_tl'),
+                aTexturePositionSize: gl.getAttribLocation(program, 'a_texture_position_size'),
+                aTransformCol0: gl.getAttribLocation(program, 'a_transform_col0'),
+                aTransformCol1: gl.getAttribLocation(program, 'a_transform_col1'),
+                aTransformCol2: gl.getAttribLocation(program, 'a_transform_col2'),
+                aOpacity: gl.getAttribLocation(program, 'a_opacity'),
+                aTextureIndex: gl.getAttribLocation(program, 'a_texture_index'),
+                // Uniforms
+                uImages: gl.getUniformLocation(program, 'u_images'),
+                // Buffers
+                bufferOutputPosition: gl.createBuffer(),      // Per-vertex: unit quad
+                bufferTexturePositionTL: gl.createBuffer(),   // Per-instance: texture top-left
+                bufferTexturePositionSize: gl.createBuffer(), // Per-instance: texture size
+                bufferTransformMatrix: gl.createBuffer(),     // Per-instance: transform matrices (9 floats each)
+                bufferOpacity: gl.createBuffer(),             // Per-instance: opacities
+                bufferTextureIndex: gl.createBuffer(),        // Per-instance: texture indices
+            };
+
+            // Set up texture unit indices
+            gl.uniform1iv(this._firstPassInstanced.uImages, this._getTextureUnitIndices(numTextures));
+
+            // Set up the unit quad buffer (per-vertex, shared by all instances)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPassInstanced.bufferOutputPosition);
+            gl.bufferData(gl.ARRAY_BUFFER, unitQuad, gl.STATIC_DRAW);
+            gl.enableVertexAttribArray(this._firstPassInstanced.aOutputPosition);
+            gl.vertexAttribPointer(this._firstPassInstanced.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+            // Enable per-instance attributes (data will be set at draw time)
+            // These use vertexAttribDivisor to advance once per instance
+
+            // Texture position top-left (vec2)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPassInstanced.bufferTexturePositionTL);
+            gl.enableVertexAttribArray(this._firstPassInstanced.aTexturePositionTL);
+            gl.vertexAttribPointer(this._firstPassInstanced.aTexturePositionTL, 2, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribDivisor(this._firstPassInstanced.aTexturePositionTL, 1);
+
+            // Texture position size (vec2)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPassInstanced.bufferTexturePositionSize);
+            gl.enableVertexAttribArray(this._firstPassInstanced.aTexturePositionSize);
+            gl.vertexAttribPointer(this._firstPassInstanced.aTexturePositionSize, 2, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribDivisor(this._firstPassInstanced.aTexturePositionSize, 1);
+
+            // Transform matrix columns (3 vec3 attributes from a single buffer)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPassInstanced.bufferTransformMatrix);
+            // Column 0
+            gl.enableVertexAttribArray(this._firstPassInstanced.aTransformCol0);
+            gl.vertexAttribPointer(this._firstPassInstanced.aTransformCol0, 3, gl.FLOAT, false, 36, 0);
+            gl.vertexAttribDivisor(this._firstPassInstanced.aTransformCol0, 1);
+            // Column 1
+            gl.enableVertexAttribArray(this._firstPassInstanced.aTransformCol1);
+            gl.vertexAttribPointer(this._firstPassInstanced.aTransformCol1, 3, gl.FLOAT, false, 36, 12);
+            gl.vertexAttribDivisor(this._firstPassInstanced.aTransformCol1, 1);
+            // Column 2
+            gl.enableVertexAttribArray(this._firstPassInstanced.aTransformCol2);
+            gl.vertexAttribPointer(this._firstPassInstanced.aTransformCol2, 3, gl.FLOAT, false, 36, 24);
+            gl.vertexAttribDivisor(this._firstPassInstanced.aTransformCol2, 1);
+
+            // Opacity (float)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPassInstanced.bufferOpacity);
+            gl.enableVertexAttribArray(this._firstPassInstanced.aOpacity);
+            gl.vertexAttribPointer(this._firstPassInstanced.aOpacity, 1, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribDivisor(this._firstPassInstanced.aOpacity, 1);
+
+            // Texture index (float, will be converted to int in shader)
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPassInstanced.bufferTextureIndex);
+            gl.enableVertexAttribArray(this._firstPassInstanced.aTextureIndex);
+            gl.vertexAttribPointer(this._firstPassInstanced.aTextureIndex, 1, gl.FLOAT, false, 0, 0);
+            gl.vertexAttribDivisor(this._firstPassInstanced.aTextureIndex, 1);
+
+            this._resetInstancedAttributeDivisors(this._firstPassInstanced);
+
+            } catch (e) {
+                // If instanced shader setup fails, we'll fall back to batched rendering
+                $.console.warn('[WebGL2] Instanced rendering initialization failed, falling back to batched rendering:', e.message || e);
+                this._firstPassInstanced = null;
+            }
         }
 
 
@@ -1974,8 +2359,10 @@
                 // See if it compiled successfully
 
                 if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    const errorMsg = gl.getShaderInfoLog(shader);
+                    const shaderType = type === gl.VERTEX_SHADER ? 'vertex' : 'fragment';
                     $.console.error(
-                        `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`
+                        `An error occurred compiling the ${shaderType} shader: ${errorMsg}`
                     );
                     gl.deleteShader(shader);
                     return null;
@@ -1985,7 +2372,13 @@
             }
 
             const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+            if (!vertexShader) {
+                throw new Error('Failed to compile vertex shader');
+            }
             const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+            if (!fragmentShader) {
+                throw new Error('Failed to compile fragment shader');
+            }
 
             // Create the shader program
 
