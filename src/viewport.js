@@ -1050,11 +1050,13 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {OpenSeadragon.Point} newContainerSize
+     * @param {boolean} maintain - if true, bounds are adjusted to maintain the current zoom level
      * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:resize
      */
     resize: function( newContainerSize, maintain ) {
-        const oldBounds = this.getBoundsNoRotate();
+        const oldBounds = this.getBoundsNoRotate(false);
         const newBounds = oldBounds;
         let widthDeltaFactor;
         this._sizeChanged = !this.containerSize.equals(newContainerSize);
