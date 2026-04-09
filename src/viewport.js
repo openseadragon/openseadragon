@@ -1039,6 +1039,7 @@ $.Viewport.prototype = {
      * @function
      * @param {Number} degrees The degrees by which to rotate the viewport.
      * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
+     * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * around which the rotation should be performed. Defaults to the center of the viewport.
      * * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * or rotate immediately.
@@ -1050,11 +1051,17 @@ $.Viewport.prototype = {
 
     /**
      * @function
+     * @param {OpenSeadragon.Point} [newContainerSize=undefined] - current size if not defined
+     * @param {boolean} [maintain=false] - if true, bounds are adjusted to maintain the current zoom level
      * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:resize
      */
-    resize: function( newContainerSize, maintain ) {
-        const oldBounds = this.getBoundsNoRotate();
+    resize: function( newContainerSize = undefined, maintain = false ) {
+        if (!newContainerSize) {
+            const el = $.getElement(this.viewer.container);
+            newContainerSize = new $.Point(el.clientWidth || 1, el.clientHeight || 1);
+        }
+        const oldBounds = this.getBoundsNoRotate(false);
         const newBounds = oldBounds;
         let widthDeltaFactor;
         this._sizeChanged = !this.containerSize.equals(newContainerSize);

@@ -395,7 +395,7 @@ $.Viewer = function( options ) {
         leaveHandler:          $.delegate( this, onContainerLeave )
     });
 
-    if( this.toolbar ){
+    if ( this.toolbar ){
         this.toolbar = new $.ControlDock({ element: this.toolbar });
     }
 
@@ -403,16 +403,11 @@ $.Viewer = function( options ) {
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
-    if(window.ResizeObserver){
-        this._autoResizePolling = false;
-        this._resizeObserver = new ResizeObserver(function(){
-            THIS[_this.hash].needsResize = true;
-        });
+    this._resizeObserver = new ResizeObserver(function(){
+        THIS[_this.hash].needsResize = true;
+    });
 
-        this._resizeObserver.observe(this.container, {});
-    } else {
-        this._autoResizePolling = true;
-    }
+    this._resizeObserver.observe(this.container, {});
 
     // Create the world
     this.world = new $.World({
@@ -4137,7 +4132,7 @@ function updateMulti( viewer ) {
     }
 }
 
-function doViewerResize(viewer, containerSize){
+function doViewerResize(viewer, containerSize = undefined){
     const viewport = viewer.viewport;
     const zoom = viewport.getZoom();
     const center = viewport.getCenter();
@@ -4230,23 +4225,10 @@ function updateOnce( viewer ) {
     }
 
     let viewerWasResized = false;
-    if (viewer.autoResize || THIS[viewer.hash].forceResize){
-        let containerSize;
-        if(viewer._autoResizePolling){
-            containerSize = _getSafeElemSize(viewer.container);
-            const prevContainerSize = THIS[viewer.hash].prevContainerSize;
-            if (!containerSize.equals(prevContainerSize)) {
-                THIS[viewer.hash].needsResize = true;
-            }
-        }
-        if(THIS[viewer.hash].needsResize){
-            doViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
-            viewerWasResized = true;
-        }
-
+    if (THIS[viewer.hash].needsResize && (viewer.autoResize || THIS[viewer.hash].forceResize)) {
+        doViewerResize(viewer);
+        viewerWasResized = true;
     }
-
-
 
     const viewportChange = viewer.viewport.update() || viewerWasResized;
     let animated = viewer.world.update(viewportChange) || viewportChange;
