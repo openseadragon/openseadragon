@@ -395,8 +395,7 @@ $.Viewer = function( options ) {
         leaveHandler:          $.delegate( this, onContainerLeave )
     });
 
-    if( this.toolbar ){
-        this.toolbar = new $.ControlDock({ element: this.toolbar });
+    if ( this.toolbar ){
         this.toolbar = new $.ControlDock({ element: this.toolbar });
     }
 
