@@ -84,7 +84,6 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
- * @param {Number} [options.levelOverFetch] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.requireLevelDownsampleRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
@@ -208,7 +207,6 @@ $.TiledImage = function( options ) {
         blendTime:                         $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
-        levelOverFetch:                    $.DEFAULT_SETTINGS.levelOverFetch,
         requireLevelDownsampleRatio:       $.DEFAULT_SETTINGS.requireLevelDownsampleRatio,
         smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
@@ -223,10 +221,6 @@ $.TiledImage = function( options ) {
         originalDataType:                  undefined,
         _currentMaxTilesPerFrame:          (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10
     }, options );
-
-    if (this.immediateRender) {
-        this.levelOverFetch = 0;
-    }
 
     this._preload = this.preload;
     delete this.preload;
@@ -1554,11 +1548,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // We assume 'coverage ok' if we hit the cutoff level
             coverageSucceeded = level === this.savedCutOffLevel;
 
-            // We have now simple heuristic - always consider 'best' level + levelOverFetch level up for loading,
-            //  consider other levels up (except for cutoff) unnecessary - user would wait for loading
-            //  of low level tiles which are not in satisfactory resolution, and we have the cutoff to ensure
-            //  that some 'low level' stuff is always rendered.
-            if (++levelsIterated > this.levelOverFetch || coverageSucceeded) {
+            if (coverageSucceeded) {
                 break;
             }
         }
