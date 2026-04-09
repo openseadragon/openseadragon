@@ -152,6 +152,12 @@ $.TileSource = function( options ) {
      * @member {Boolean} ready
      * @memberof OpenSeadragon.TileSource#
      */
+    /**
+     * The number of levels to discard below the downsample ratio. Overrides
+     * the global option value.
+     * @member {Number} [discardLevelsBelowDownsampleRatio=undefined]
+     * @memberof OpenSeadragon.TileSource#
+     */
 
     this.addHandler('ready', e => {
         const source = e.tileSource;

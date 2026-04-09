@@ -84,7 +84,7 @@
  * @param {Number} [options.blendTime] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.alwaysBlend] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.minPixelRatio] - See {@link OpenSeadragon.Options}.
- * @param {Number} [options.requireLevelDownsampleRatio] - See {@link OpenSeadragon.Options}.
+ * @param {Number} [options.discardLevelsBelowDownsampleRatio] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.smoothTileEdgesMinZoom] - See {@link OpenSeadragon.Options}.
  * @param {Boolean} [options.iOSDevice] - See {@link OpenSeadragon.Options}.
  * @param {Number} [options.opacity=1] - Set to draw at proportional opacity. If zero, images will not draw.
@@ -173,6 +173,16 @@ $.TiledImage = function( options ) {
     const ajaxHeaders = options.ajaxHeaders;
     delete options.ajaxHeaders;
 
+    if (options.source.discardLevelsBelowDownsampleRatio) {
+        options.discardLevelsBelowDownsampleRatio = options.source.discardLevelsBelowDownsampleRatio;
+    }
+
+    if (!Number.isFinite(options.discardLevelsBelowDownsampleRatio) || options.discardLevelsBelowDownsampleRatio < 1) {
+        $.console.warn("discardLevelsBelowDownsampleRatio must be a positive number, defaulting to ",
+            $.DEFAULT_SETTINGS.discardLevelsBelowDownsampleRatio);
+        delete options.discardLevelsBelowDownsampleRatio;
+    }
+
     // Setter ensures lowercase
     this.crossOriginPolicy = options.crossOriginPolicy;
     delete options.crossOriginPolicy;
@@ -207,7 +217,7 @@ $.TiledImage = function( options ) {
         blendTime:                         $.DEFAULT_SETTINGS.blendTime,
         alwaysBlend:                       $.DEFAULT_SETTINGS.alwaysBlend,
         minPixelRatio:                     $.DEFAULT_SETTINGS.minPixelRatio,
-        requireLevelDownsampleRatio:       $.DEFAULT_SETTINGS.requireLevelDownsampleRatio,
+        discardLevelsBelowDownsampleRatio: $.DEFAULT_SETTINGS.discardLevelsBelowDownsampleRatio,
         smoothTileEdgesMinZoom:            $.DEFAULT_SETTINGS.smoothTileEdgesMinZoom,
         iOSDevice:                         $.DEFAULT_SETTINGS.iOSDevice,
         debugMode:                         $.DEFAULT_SETTINGS.debugMode,
@@ -1498,8 +1508,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
             // If we require e.g., 4x downsample factor between levels, here we check that last time we
             // accepted a level with ratio X, next time we accept only level ratio Y where Y/X >= 4
-            if (this.requireLevelDownsampleRatio > 0 &&
-                levelPixelRatio.x / maxPxRatio < this.requireLevelDownsampleRatio && level !== maxLevel) {
+            if (this.discardLevelsBelowDownsampleRatio > 1 &&
+                levelPixelRatio.x / maxPxRatio < this.discardLevelsBelowDownsampleRatio && level !== maxLevel) {
                 continue;
             }
             maxPxRatio = levelPixelRatio.x;
