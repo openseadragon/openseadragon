@@ -215,9 +215,11 @@ OpenSeadragon.DrawerBase = class DrawerBase {
 
     /**
      * @abstract
-     * @returns {Boolean} Whether the drawer implementation is supported by the browser. Must be overridden by extending classes.
+     * @param {Object} options For details please see {@link OpenSeadragon.DrawerOptions}.
+     * @returns {Boolean} Whether the drawer implementation is supported by the browser.
+     *  Must be overridden by extending classes.
      */
-    static isSupported() {
+    static isSupported(options) {
         $.console.error('Drawer.isSupported must be implemented by child class');
     }
 

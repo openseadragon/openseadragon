@@ -118,9 +118,10 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
     }
 
     /**
+     * @param {Object} options - Options for this drawer.
      * @returns {Boolean} always true
      */
-    static isSupported() {
+    static isSupported(options) {
         return true;
     }
 
