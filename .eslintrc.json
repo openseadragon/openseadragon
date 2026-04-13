@@ -8,7 +8,8 @@
     "ignorePatterns": [
       "**/*.d.ts",
       "types/",
-      "test-dts/**/*.ts"
+      "test-dts/**/*.ts",
+      "test/lib/*.js"
     ],
     "env": {
         "es6": true,
