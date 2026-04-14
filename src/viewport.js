@@ -1041,8 +1041,6 @@ $.Viewport.prototype = {
      * @param {OpenSeadragon.Point} [pivot] (Optional) point in viewport coordinates
      * @param {Boolean} [immediately=false] Whether to animate to the new angle
      * around which the rotation should be performed. Defaults to the center of the viewport.
-     * * @param {Boolean} [immediately=false] Whether to animate to the new angle
-     * or rotate immediately.
      * @returns {OpenSeadragon.Viewport} Chainable.
      */
     rotateBy: function(degrees, pivot, immediately){
@@ -1058,8 +1056,12 @@ $.Viewport.prototype = {
      */
     resize: function( newContainerSize = undefined, maintain = false ) {
         if (!newContainerSize) {
-            const el = $.getElement(this.viewer.container);
-            newContainerSize = new $.Point(el.clientWidth || 1, el.clientHeight || 1);
+            if (this.viewer) {
+               const el = $.getElement(this.viewer.container);
+                newContainerSize = new $.Point(el.clientWidth || 1, el.clientHeight || 1); 
+            } else {
+                $.console.warn('[Viewport::resize] needs newContainerSize argument when the viewport.viewer reference is not defined!');
+            }
         }
         const oldBounds = this.getBoundsNoRotate(false);
         const newBounds = oldBounds;
