@@ -1891,7 +1891,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Visit all tiles in an a given area on a given level. Can be used as 'all' predicate.
+     * Visit all tiles in a given area on a given level. Can be used as 'all' predicate.
      * If not used as predicate, returns true.
      * @private
      * @param {Number} level

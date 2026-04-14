@@ -546,8 +546,8 @@
   * @property {Number} [discardLevelsBelowDownsampleRatio=1]
   *     You can force the viewer to skip levels that have smaller pixel ratio
   *     difference gap than a specified value. For example, setting the value to
-  *     4 with each level smaller by 2 (powers of two), the viewer will access only
-  *     odd levels.
+  *     4 with each level smaller by 2 (powers of two), the viewer will access
+  *     every other level (that is, levels spaced by a 4x downsample factor).
   *
   * @property {Boolean} [mouseNavEnabled=true]
   *     Is the user able to interact with the image via mouse or touch. Default

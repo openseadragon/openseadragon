@@ -153,7 +153,7 @@ $.TileSource = function( options ) {
      * @memberof OpenSeadragon.TileSource#
      */
     /**
-     * The number of levels to discard below the downsample ratio. Overrides
+     * Discard levels until reaching in-between accepted level below the downsample ratio. Overrides
      * the global option value.
      * @member {Number} [discardLevelsBelowDownsampleRatio=undefined]
      * @memberof OpenSeadragon.TileSource#
