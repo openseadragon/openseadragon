@@ -1051,8 +1051,8 @@ $.Viewport.prototype = {
 
     /**
      * @function
-     * @param {OpenSeadragon.Point} [newContainerSize=undefined] - current size if not defined
-     * @param {boolean} [maintain=false] - if true, bounds are adjusted to maintain the current zoom level
+     * @param {OpenSeadragon.Point} [newContainerSize] - current size if not defined
+     * @param {Boolean} [maintain=false] - if true, bounds are adjusted to maintain the current zoom level
      * @returns {OpenSeadragon.Viewport} Chainable.
      * @fires OpenSeadragon.Viewer.event:resize
      */
