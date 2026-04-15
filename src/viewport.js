@@ -1056,12 +1056,12 @@ $.Viewport.prototype = {
      */
     resize: function( newContainerSize = undefined, maintain = false ) {
         if (!newContainerSize) {
-            if (this.viewer) {
-               const el = $.getElement(this.viewer.container);
-                newContainerSize = new $.Point(el.clientWidth || 1, el.clientHeight || 1);
-            } else {
+            if (!this.viewer) {
                 $.console.warn('[Viewport::resize] needs newContainerSize argument when the viewport.viewer reference is not defined!');
+                return;
             }
+            const el = $.getElement(this.viewer.container);
+            newContainerSize = new $.Point(el.clientWidth || 1, el.clientHeight || 1);
         }
         const oldBounds = this.getBoundsNoRotate(false);
         const newBounds = oldBounds;
