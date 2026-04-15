@@ -1492,7 +1492,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         // This preserves the old behavior (logarithmic sensitivity gatekeeper) by converting to a linear scale
         // as our current gate is linear (old code assumed powers of two and computed log2( zeroLevelPixelRatio / minPixelRatio)
-        const minRatio = Math.pow(2, this.minPixelRatio - 0.5);
+        const minRatio = this.minPixelRatio;
         let coverageSucceeded = false;
 
         const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
