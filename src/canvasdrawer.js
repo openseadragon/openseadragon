@@ -378,7 +378,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             }
             usedClip = true;
         }
-        tiledImage._hasOpaqueTile = false;
+
         if ( tiledImage.placeholderFillStyle && tiledImage._hasOpaqueTile === false ) {
             let placeholderRect = this.viewportToDrawerRectangle(tiledImage.getBoundsNoRotate(true));
             if (sketchScale) {
