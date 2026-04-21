@@ -4231,7 +4231,7 @@ function updateOnce( viewer ) {
 
     let viewerWasResized = false;
     if (viewer.autoResize || THIS[viewer.hash].forceResize) {
-        let containerSize = undefined;
+        let containerSize;
         if (viewer._autoResizePolling) {
             containerSize = _getSafeElemSize(viewer.container);
             const prevContainerSize = THIS[viewer.hash].prevContainerSize;
