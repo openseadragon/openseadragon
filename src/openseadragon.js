@@ -541,7 +541,12 @@
   *     The higher the minPixelRatio, the lower the quality of the image that
   *     is considered sufficient to stop rendering a given zoom level.  For
   *     example, if you are targeting mobile devices with less bandwidth you may
-  *     try setting this to 1.5 or higher.
+  *     try setting this to 1.5 or higher. The default value of 0.5 means that
+  *     one level is always fetched ahead. This means users will usually see
+  *     sharper data as they navigate, since during zoom we have already one level
+  *     up loaded. If you experience high network traffic/latency, you might want
+  *     to set this value to 1.0 (~fetch at most identical pixel size) or higher
+  *     to force upsampling.
   *
   * @property {Number} [discardLevelsBelowDownsampleRatio=1]
   *     You can force the viewer to skip levels that have smaller pixel ratio

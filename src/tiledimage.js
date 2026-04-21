@@ -1490,9 +1490,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const minLevel = this.source.minLevel || 0;
         const maxLevel = this.source.maxLevel || 0;
 
-        // This preserves the old behavior (logarithmic sensitivity gatekeeper) by converting to a linear scale
-        // as our current gate is linear (old code assumed powers of two and computed log2( zeroLevelPixelRatio / minPixelRatio)
-        const minRatio = this.minPixelRatio;
         let coverageSucceeded = false;
 
         const targetZeroRatio = this.viewport.deltaPixelsFromPointsNoRotate(
@@ -1517,7 +1514,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 this.viewport.deltaPixelsFromPointsNoRotate(levelPixelRatio, true).x *
                 this._scaleSpring.current.value;
             // Keep skipping levels that are too big to render, but always keep to render min level
-            if (currentRenderPixelRatio < minRatio && level !== minLevel) {
+            if (currentRenderPixelRatio < this.minPixelRatio && level !== minLevel) {
                 continue;
             }
 
