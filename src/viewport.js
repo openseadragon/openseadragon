@@ -1058,7 +1058,7 @@ $.Viewport.prototype = {
         if (!newContainerSize) {
             if (!this.viewer) {
                 $.console.warn('[Viewport::resize] needs newContainerSize argument when the viewport.viewer reference is not defined!');
-                return;
+                return this;
             }
             const el = $.getElement(this.viewer.container);
             newContainerSize = new $.Point(el.clientWidth || 1, el.clientHeight || 1);
