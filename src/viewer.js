@@ -403,11 +403,16 @@ $.Viewer = function( options ) {
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
-    this._resizeObserver = new ResizeObserver(function(){
-        THIS[_this.hash].needsResize = true;
-    });
+    if (window.ResizeObserver) {
+        this._autoResizePolling = false;
+        this._resizeObserver = new ResizeObserver(function() {
+            THIS[_this.hash].needsResize = true;
+        });
 
-    this._resizeObserver.observe(this.container, {});
+        this._resizeObserver.observe(this.container, {});
+    } else {
+        this._autoResizePolling = true;
+    }
 
     // Create the world
     this.world = new $.World({
@@ -4225,9 +4230,19 @@ function updateOnce( viewer ) {
     }
 
     let viewerWasResized = false;
-    if (THIS[viewer.hash].needsResize && (viewer.autoResize || THIS[viewer.hash].forceResize)) {
-        doViewerResize(viewer);
-        viewerWasResized = true;
+    if (viewer.autoResize || THIS[viewer.hash].forceResize) {
+        let containerSize = undefined;
+        if (viewer._autoResizePolling) {
+            containerSize = _getSafeElemSize(viewer.container);
+            const prevContainerSize = THIS[viewer.hash].prevContainerSize;
+            if (!containerSize.equals(prevContainerSize)) {
+                THIS[viewer.hash].needsResize = true;
+            }
+        }
+        if (THIS[viewer.hash].needsResize) {
+            doViewerResize(viewer, containerSize);
+            viewerWasResized = true;
+        }
     }
 
     const viewportChange = viewer.viewport.update() || viewerWasResized;
