@@ -221,6 +221,7 @@ OpenSeadragon.DrawerBase = class DrawerBase {
      */
     static isSupported(options) {
         $.console.error('Drawer.isSupported must be implemented by child class');
+        return false;
     }
 
     /**
