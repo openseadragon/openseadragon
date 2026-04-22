@@ -1156,7 +1156,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         let supported = false;
         if (Drawer) {
             try {
-                supported = Drawer.isSupported();
+                supported = Drawer.isSupported(drawerOptions || this.drawerOptions[drawerCandidate]);
             } catch (e) {
                 $.console.warn('Error in %s isSupported(); treating this drawer as unsupported:', drawerCandidate, e && e.message ? e.message : e);
             }
@@ -1164,7 +1164,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (supported) {
             // if the drawer is supported, create it and return it.
             // first destroy the previous drawer
-            if(oldDrawer && mainDrawer){
+            if (oldDrawer && mainDrawer){
                 oldDrawer.destroy();
             }
 

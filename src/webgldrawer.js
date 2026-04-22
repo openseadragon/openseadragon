@@ -742,9 +742,10 @@
          * Functional test: true if WebGL is supported and the real first-pass shader pipeline
          * can render (same shaders/context path used at runtime). Uses a temp context and
          * WebglContextManager, draws known non-black pixels to an FBO, then readPixels.
+         * @param {Object} options - Options for this drawer.
          * @returns {Boolean} true if WebGL is supported and the pipeline renders successfully
          */
-        static isSupported(){
+        static isSupported(options){
             let contextManager = null;
             let testTexture = null;
             let gl = null;
