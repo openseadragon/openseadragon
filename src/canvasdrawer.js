@@ -87,9 +87,10 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
     }
 
     /**
+     * @param {Object} options - Options for this drawer.
      * @returns {Boolean} true if canvas is supported by the browser, otherwise false
      */
-    static isSupported(){
+    static isSupported(options){
         return $.supportsCanvas;
     }
 

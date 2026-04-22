@@ -269,7 +269,7 @@ declare namespace OpenSeadragon {
     }
 
     type DrawerType = "auto" | "html" | "canvas" | "webgl";
-    type DrawerConstructor = new (options: TDrawerOptions) => DrawerBase;
+    type DrawerConstructor = new (options: DrawerConstructorParameters) => DrawerBase;
     type TypeConverter<TIn = any, TOut = any> = (
         tile: Tile,
         data: TIn,
@@ -752,17 +752,18 @@ declare namespace OpenSeadragon {
         viewportToDrawerRectangle(rectangle: Rect): Rect;
     }
 
-    interface TDrawerOptions {
+    interface DrawerConstructorParameters {
         viewer: Viewer;
         viewport: Viewport;
         element: HTMLElement;
         debugGridColor?: string | string[];
+        options: BaseDrawerOptions;
     }
 
     class CanvasDrawer extends DrawerBase {
         container: HTMLElement;
 
-        constructor(options: TDrawerOptions);
+        constructor(options: DrawerConstructorParameters);
 
         get canvas(): HTMLCanvasElement;
         blendSketch(options: {
@@ -843,7 +844,7 @@ declare namespace OpenSeadragon {
 
     class HTMLDrawer extends DrawerBase {
         container: HTMLElement;
-        constructor(options: TDrawerOptions);
+        constructor(options: DrawerConstructorParameters);
         get canvas(): HTMLCanvasElement;
     }
 
@@ -2024,7 +2025,7 @@ declare namespace OpenSeadragon {
         container: HTMLElement;
         context: CanvasRenderingContext2D;
 
-        constructor(options: TDrawerOptions);
+        constructor(options: DrawerConstructorParameters);
 
         draw(tiledImages: any[]): void;
         setContextRecoveryEnabled(enabled: boolean): void;
