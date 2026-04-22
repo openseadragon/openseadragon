@@ -4,6 +4,7 @@ OPENSEADRAGON CHANGELOG
 6.0.3: (in progress...)
 
 * Add stopImmediatePropagation to MouseTracker.EventProcessInfo options (#2891 @msalsbery)
+* Improved the isSupported API and documentation for drawers (#2903 @Aiosa)
 * Fixed tile blending in canvas and HTML drawers (#2893 @Aiosa)
 * Fixed an issue with placeholderFillStyle in the canvas drawer that would sometimes show a seam at the edge of an image (#2905 @pearcetm)
 
