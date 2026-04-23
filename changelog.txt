@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 6.0.3: (in progress...)
 
+* Now properly supporting non-power of two tile source levels (#2884 @Aiosa)
+* Added discardLevelsBelowDownsampleRatio option for both viewer and individual tiled images so you can control the pixel ratio between loaded levels (#2884 @Aiosa)
 * Add stopImmediatePropagation to MouseTracker.EventProcessInfo options (#2891 @msalsbery)
 * Improved the isSupported API and documentation for drawers (#2903 @Aiosa)
 * Fixed tile blending in canvas and HTML drawers (#2893 @Aiosa)
