@@ -4137,7 +4137,7 @@ function updateMulti( viewer ) {
     }
 }
 
-function doViewerResize(viewer, containerSize = undefined){
+function doViewerResize(viewer, containerSize) {
     const viewport = viewer.viewport;
     const zoom = viewport.getZoom();
     const center = viewport.getCenter();
@@ -4240,7 +4240,7 @@ function updateOnce( viewer ) {
             }
         }
         if (THIS[viewer.hash].needsResize) {
-            doViewerResize(viewer, containerSize);
+            doViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
             viewerWasResized = true;
         }
     }
