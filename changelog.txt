@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Added discardLevelsBelowDownsampleRatio option for both viewer and individual tiled images so you can control the pixel ratio between loaded levels (#2884 @Aiosa)
 * Add stopImmediatePropagation to MouseTracker.EventProcessInfo options (#2891 @msalsbery)
 * Improved the isSupported API and documentation for drawers (#2903 @Aiosa)
+* Improved logic and documentation for viewer resize (#2900 @Aiosa)
 * Fixed tile blending in canvas and HTML drawers (#2893 @Aiosa)
 * Fixed an issue with placeholderFillStyle in the canvas drawer that would sometimes show a seam at the edge of an image (#2905 @pearcetm)
 
