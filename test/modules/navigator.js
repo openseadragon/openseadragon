@@ -1132,4 +1132,45 @@
         });
     });
 
+    QUnit.test('Navigator inherits parent drawerCandidates by default', function(assert) {
+        const done = assert.async();
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100,
+            showNavigator:  true,
+            drawer:        ['webgl', 'canvas']
+        });
+        viewer.addOnceHandler('open', function() {
+            assert.deepEqual(
+                viewer.navigator.drawerCandidates,
+                viewer.drawerCandidates,
+                'Navigator drawerCandidates should match parent viewer drawerCandidates when navigatorDrawer is not set.'
+            );
+            done();
+        });
+    });
+
+    QUnit.test('navigatorDrawer overrides parent drawer for navigator', function(assert) {
+        const done = assert.async();
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   '/test/data/tall.dzi',
+            springStiffness: 100,
+            showNavigator:  true,
+            drawer:        'webgl',
+            navigatorDrawer: 'canvas'
+        });
+        viewer.addOnceHandler('open', function() {
+            assert.equal(
+                viewer.navigator.drawer.getType(),
+                'canvas',
+                'Navigator should use the drawer type specified by navigatorDrawer.'
+            );
+            done();
+        });
+    });
+
 })();

@@ -621,11 +621,20 @@ $.Viewer = function( options ) {
             displayRegionColor: this.navigatorDisplayRegionColor,
             crossOriginPolicy: this.crossOriginPolicy,
             animationTime:     this.animationTime,
-            drawer:            this.drawer.getType(),
+            drawer:            this.navigatorDrawer || this.drawerCandidates,
             drawerOptions:     this.drawerOptions,
             loadTilesWithAjax: this.loadTilesWithAjax,
             ajaxHeaders:       this.ajaxHeaders,
             ajaxWithCredentials: this.ajaxWithCredentials,
+        });
+
+        this.navigator.addOnceHandler('drawer-error', () => {
+            $.console.warn(
+                'OpenSeadragon: The navigator has fallen back to canvas rendering because WebGL ' +
+                'could not process the tile data. If tiles are cross-origin, set ' +
+                'crossOriginPolicy: "Anonymous" (requires CORS headers on the tile server), or ' +
+                'set navigatorDrawer: "canvas" to use canvas explicitly.'
+            );
         });
     }
 
