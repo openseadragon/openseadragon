@@ -930,7 +930,7 @@ declare namespace OpenSeadragon {
         src?: string;
         tile?: Tile;
         source?: TileSource;
-        loadWithAjax?: string;
+        loadWithAjax?: boolean;
         ajaxHeaders?: Record<string, string>;
         ajaxWithCredentials?: boolean;
         crossOriginPolicy?: string;
