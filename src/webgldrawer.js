@@ -1589,7 +1589,7 @@
 
             let data = cache.data;
             let isCanvas = false;
-            if (data instanceof CanvasRenderingContext2D) {
+            if (data instanceof CanvasRenderingContext2D || data instanceof OffscreenCanvasRenderingContext2D) {
                 data = data.canvas;
                 isCanvas = true;
             }
@@ -1660,7 +1660,7 @@
                 context.drawImage( data, 0, 0 );
                 data = context;
             }
-            if (data instanceof CanvasRenderingContext2D) {
+            if (data instanceof CanvasRenderingContext2D || data instanceof OffscreenCanvasRenderingContext2D ) {
                 return data;
             }
             $.console.error("Unsupported data used for WebGL Drawer - probably a bug!");
