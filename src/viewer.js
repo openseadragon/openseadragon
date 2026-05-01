@@ -3301,10 +3301,10 @@ function getActiveActionFromKey(code, shift) {
 /**
  * Handles the keyup event on the viewer's canvas element.
  *
- * @private
  * For the released key, marks both the shifted and non-shifted navigation actions as inactive in the _activeActions object.
  * If either action is released before reaching the minimum frame threshold, sets that action as "virtually held" in _navActionVirtuallyHeld,
  * ensuring smooth completion of the minimum pan or zoom distance regardless of modifier key release order.
+ * @private
  */
 function onCanvasKeyUp(event) {
 

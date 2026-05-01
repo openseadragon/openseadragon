@@ -74,7 +74,7 @@
     }
   };
 
-  $.extend($.IrisTileSource.prototype, $.TileSource.prototype, {
+  $.extend($.IrisTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.IrisTileSource.prototype */{
     /**
      * Return URL string for image metadata
      * @function
