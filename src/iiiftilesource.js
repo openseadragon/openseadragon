@@ -44,6 +44,14 @@
  * @see http://iiif.io/api/image/
  * @param {String} [options.tileFormat='jpg']
  *      The extension that will be used when requiring tiles.
+ * @param {String} [options.tileQuality]
+ *      The IIIF quality to request for each tile. Must be a value the server
+ *      lists as supported. The Image API spec defines 'native', 'color',
+ *      'grey' and 'bitonal' for version 1.x, and 'default', 'color', 'gray'
+ *      and 'bitonal' for versions 2.x and 3.x. Servers may also advertise
+ *      additional qualities via the info.json profile or extraQualities.
+ *      Defaults to 'native' for 1.x and 'default' for 2.x and 3.x.
+ *      @see https://iiif.io/api/image/3.0/#quality
  */
 $.IIIFTileSource = function( options ){
 
@@ -484,11 +492,15 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         tileHeight = this.getTileHeight(level);
         iiifTileSizeWidth = Math.round( tileWidth / scale );
         iiifTileSizeHeight = Math.round( tileHeight / scale );
-        if (this.version === 1) {
-            iiifQuality = "native." + this.tileFormat;
+        let quality;
+        if ( this.tileQuality ) {
+            quality = this.tileQuality;
+        } else if ( this.version === 1 ) {
+            quality = "native";
         } else {
-            iiifQuality = "default." + this.tileFormat;
+            quality = "default";
         }
+        iiifQuality = quality + "." + this.tileFormat;
         if ( levelWidth < tileWidth && levelHeight < tileHeight ){
             if ( this.version === 2 && levelWidth === this.width ) {
                 iiifSize = "full";
