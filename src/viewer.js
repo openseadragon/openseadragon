@@ -1779,7 +1779,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @property {Boolean} [options.zombieCache] In the case that this method removes any TiledImage instance,
      *      allow the item-referenced cache to remain in memory even without active tiles. Default false.
      * @property {Number} [options.degrees=0] Initial rotation of the tiled image around
-     * its top left corner in degrees.
+     * its center in degrees.
      * @property {Boolean} [options.flipped=false] Whether to horizontally flip the image.
      * @property {String} [options.compositeOperation] How the image is composited onto other images.
      * @property {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
