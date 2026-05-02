@@ -288,4 +288,22 @@
         assert.equal(source3DescendingSizeOrder.getTileUrl(2, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");
     });
 
+    QUnit.test('IIIFTileSource.getTileUrl honours tileQuality option', function( assert ) {
+        const withQuality = function( info, quality ) {
+            return OpenSeadragon.extend({}, info, { tileQuality: quality });
+        };
+
+        const source11Grey = getSource(withQuality(infoJson11level1, "grey"));
+        assert.equal(source11Grey.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/grey.jpg",
+            "Version 1 source uses supplied tileQuality instead of 'native'");
+
+        const source2Gray = getSource(withQuality(infoJson2level1, "gray"));
+        assert.equal(source2Gray.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/gray.jpg",
+            "Version 2 source uses supplied tileQuality instead of 'default'");
+
+        const source3Bitonal = getSource(withQuality(infoJson3level1, "bitonal"));
+        assert.equal(source3Bitonal.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,4/0/bitonal.jpg",
+            "Version 3 source uses supplied tileQuality instead of 'default'");
+    });
+
 })();
