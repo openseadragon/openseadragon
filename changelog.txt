@@ -6,6 +6,7 @@ OPENSEADRAGON CHANGELOG
 * Now properly supporting non-power of two tile source levels (#2884 @Aiosa)
 * Added discardLevelsBelowDownsampleRatio option for both viewer and individual tiled images so you can control the pixel ratio between loaded levels (#2884 @Aiosa)
 * Add stopImmediatePropagation to MouseTracker.EventProcessInfo options (#2891 @msalsbery)
+* It's now possible for the WebGLDrawer to use context2d objects from offscreen canvases (#2914 @koltenpearson)
 * Improved the isSupported API and documentation for drawers (#2903 @Aiosa)
 * Improved logic and documentation for viewer resize (#2900 @Aiosa)
 * Improved type annotation (#2912 @altundag)
