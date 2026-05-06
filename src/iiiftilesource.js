@@ -45,11 +45,12 @@
  * @param {String} [options.tileFormat='jpg']
  *      The extension that will be used when requiring tiles.
  * @param {String} [options.tileQuality]
- *      The IIIF quality to request for each tile. Must be a value the server
- *      lists as supported. The Image API spec defines 'native', 'color',
- *      'grey' and 'bitonal' for version 1.x, and 'default', 'color', 'gray'
- *      and 'bitonal' for versions 2.x and 3.x. Servers may also advertise
- *      additional qualities via the info.json profile or extraQualities.
+ *      The IIIF quality to request for each tile. The Image API spec defines
+ *      'native', 'color', 'grey' and 'bitonal' for version 1.x, and 'default',
+ *      'color', 'gray' and 'bitonal' for versions 2.x and 3.x. Servers may
+ *      advertise additional qualities via the info.json profile (v2) or
+ *      extraQualities (v3); these are accepted without warning. Unknown
+ *      values produce a console warning but are still sent to the server.
  *      Defaults to 'native' for 1.x and 'default' for 2.x and 3.x.
  *      @see https://iiif.io/api/image/3.0/#quality
  */
@@ -71,6 +72,10 @@ $.IIIFTileSource = function( options ){
     this.tileFormat = this.tileFormat || 'jpg';
 
     this.version = options.version;
+
+    if ( this.tileQuality ) {
+        warnIfUnknownQuality( this.tileQuality, this.version, options );
+    }
 
     this.isLevel0 = checkLevel0( options );
 
@@ -620,6 +625,52 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
         });
     }
 
+
+    /**
+     * Collect IIIF qualities the server may accept for a given info.json.
+     * Combines the spec-defined set for the API version with any qualities
+     * advertised by the server (profile.qualities for v2, extraQualities for v3).
+     * @function
+     * @param {Number} version
+     * @param {Object} options - the info.json data
+     * @returns {String[]}
+     */
+    function getKnownQualities ( version, options ) {
+        const specQualities = version === 1 ?
+            [ 'native', 'color', 'grey', 'bitonal' ] :
+            [ 'default', 'color', 'gray', 'bitonal' ];
+        const advertised = [];
+        if ( version === 2 && Array.isArray(options.profile) ) {
+            for ( let i = 1; i < options.profile.length; i++ ) {
+                const entry = options.profile[i];
+                if ( entry && Array.isArray(entry.qualities) ) {
+                    advertised.push.apply(advertised, entry.qualities);
+                }
+            }
+        }
+        if ( version === 3 && Array.isArray(options.extraQualities) ) {
+            advertised.push.apply(advertised, options.extraQualities);
+        }
+        return specQualities.concat(advertised);
+    }
+
+    /**
+     * Emit a console warning if tileQuality is not in the set of known
+     * qualities for this server. Does not throw; the value is still used.
+     * @function
+     */
+    function warnIfUnknownQuality ( quality, version, options ) {
+        const known = getKnownQualities(version, options);
+        if ( known.indexOf(quality) === -1 ) {
+            $.console.warn(
+                "[IIIFTileSource] tileQuality '%s' is not in the set of " +
+                "qualities known for this image (%s). The request will still " +
+                "be sent; the server may reject it.",
+                quality,
+                known.join(', ')
+            );
+        }
+    }
 
     function configureFromXml10(xmlDoc) {
         //parse the xml

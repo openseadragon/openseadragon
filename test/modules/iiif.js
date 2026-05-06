@@ -314,4 +314,67 @@
             "Version 3 legacy pyramid uses supplied tileQuality instead of 'default'");
     });
 
+    QUnit.test('IIIFTileSource warns on unknown tileQuality but still uses it', function( assert ) {
+        const originalWarn = OpenSeadragon.console.warn;
+        const calls = [];
+        OpenSeadragon.console.warn = function() {
+            calls.push(Array.prototype.slice.call(arguments));
+        };
+        try {
+            const data = OpenSeadragon.extend({}, infoJson3level1, { tileQuality: "sepia" });
+            const source = getSource(data);
+            assert.equal(calls.length, 1, "Unknown quality triggers exactly one warning");
+            assert.ok(calls[0][0].indexOf("[IIIFTileSource]") === 0, "Warning is namespaced");
+            assert.equal(source.getTileUrl(0, 0, 0),
+                "http://example.com/identifier/full/8,4/0/sepia.jpg",
+                "Unknown quality is still used in tile URL");
+        } finally {
+            OpenSeadragon.console.warn = originalWarn;
+        }
+    });
+
+    QUnit.test('IIIFTileSource accepts extraQualities (v3) without warning', function( assert ) {
+        const originalWarn = OpenSeadragon.console.warn;
+        const calls = [];
+        OpenSeadragon.console.warn = function() {
+            calls.push(Array.prototype.slice.call(arguments));
+        };
+        try {
+            const data = OpenSeadragon.extend({}, infoJson3level1, {
+                extraQualities: [ "sepia", "infrared" ],
+                tileQuality: "sepia"
+            });
+            const source = getSource(data);
+            assert.equal(calls.length, 0, "Quality listed in extraQualities does not warn");
+            assert.equal(source.getTileUrl(0, 0, 0),
+                "http://example.com/identifier/full/8,4/0/sepia.jpg",
+                "extraQualities value is used in tile URL");
+        } finally {
+            OpenSeadragon.console.warn = originalWarn;
+        }
+    });
+
+    QUnit.test('IIIFTileSource accepts profile.qualities (v2) without warning', function( assert ) {
+        const originalWarn = OpenSeadragon.console.warn;
+        const calls = [];
+        OpenSeadragon.console.warn = function() {
+            calls.push(Array.prototype.slice.call(arguments));
+        };
+        try {
+            const base = OpenSeadragon.extend(true, {}, infoJson2level1);
+            base.profile = [
+                "http://iiif.io/api/image/2/level1.json",
+                { qualities: [ "sepia" ] }
+            ];
+            base.tileQuality = "sepia";
+            const source = getSource(base);
+            assert.equal(calls.length, 0, "Quality listed in profile.qualities does not warn");
+            assert.equal(source.getTileUrl(0, 0, 0),
+                "http://example.com/identifier/full/8,/0/sepia.jpg",
+                "profile.qualities value is used in tile URL");
+        } finally {
+            OpenSeadragon.console.warn = originalWarn;
+        }
+    });
+
 })();
