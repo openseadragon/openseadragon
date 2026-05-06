@@ -304,6 +304,14 @@
         const source3Bitonal = getSource(withQuality(infoJson3level1, "bitonal"));
         assert.equal(source3Bitonal.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,4/0/bitonal.jpg",
             "Version 3 source uses supplied tileQuality instead of 'default'");
+
+        const source2Level0Gray = getSource(withQuality(infoJson2level0, "gray"));
+        assert.equal(source2Level0Gray.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,/0/gray.jpg",
+            "Version 2 legacy pyramid uses supplied tileQuality instead of 'default'");
+
+        const source3Level0Bitonal = getSource(withQuality(infoJson3level0, "bitonal"));
+        assert.equal(source3Level0Bitonal.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,500/0/bitonal.jpg",
+            "Version 3 legacy pyramid uses supplied tileQuality instead of 'default'");
     });
 
 })();

@@ -604,11 +604,13 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
      */
     function constructLevels(options) {
         const levels = [];
+        const quality = options.tileQuality ||
+            (options.version === 1 ? 'native' : 'default');
         for(let i = 0; i < options.sizes.length; i++) {
             levels.push({
                 url: options._id + '/full/' + options.sizes[i].width + ',' +
                     (options.version === 3 ? options.sizes[i].height : '') +
-                    '/0/default.' + options.tileFormat,
+                    '/0/' + quality + '.' + options.tileFormat,
                 width: options.sizes[i].width,
                 height: options.sizes[i].height
             });
