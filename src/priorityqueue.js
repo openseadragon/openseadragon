@@ -15,13 +15,11 @@ const OpenSeadragon = $; // alias for JSDoc
 /**
  * @class OpenSeadragon.PriorityQueue
  * @classdesc Fast priority queue. Implemented as a Heap.
+ * @param {?OpenSeadragon.PriorityQueue} optHeap Optional Heap or
+ *     Object to initialize heap with.
  */
 OpenSeadragon.PriorityQueue = class PriorityQueue {
 
-    /**
-     * @param {?OpenSeadragon.PriorityQueue} optHeap Optional Heap or
-     *     Object to initialize heap with.
-     */
     constructor(optHeap = undefined) {
         /**
          * The nodes of the heap.
