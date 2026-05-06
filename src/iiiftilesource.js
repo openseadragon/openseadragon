@@ -53,6 +53,14 @@
  *      values produce a console warning but are still sent to the server.
  *      Defaults to 'native' for 1.x and 'default' for 2.x and 3.x.
  *      @see https://iiif.io/api/image/3.0/#quality
+ * @param {String[]} [options.extraQualities]
+ *      Additional quality values the server supports beyond the IIIF Image
+ *      API 3.x spec defaults. Normally populated automatically from the
+ *      server's info.json `extraQualities` field, but may also be passed
+ *      explicitly. Values listed here are treated as known qualities and
+ *      will not trigger the unknown quality warning when used as
+ *      `tileQuality`.
+ *      @see https://iiif.io/api/image/3.0/#53-extra-functionality
  */
 $.IIIFTileSource = function( options ){
 
