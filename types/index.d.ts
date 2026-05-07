@@ -853,6 +853,7 @@ declare namespace OpenSeadragon {
         levelSizes?: Array<{ width: number; height: number }>;
         scale_factors?: number[];
         tileFormat: string;
+        tileQuality?: string;
         tiles?: Array<{
             width: number;
             height?: number;
@@ -860,7 +861,7 @@ declare namespace OpenSeadragon {
         }>;
         version: number;
 
-        constructor(options: TileSourceOptions & { tileFormat?: string });
+        constructor(options: TileSourceOptions & { tileFormat?: string; tileQuality?: string });
     }
 
     interface IrisTileSourceOptions extends TileSourceOptions {

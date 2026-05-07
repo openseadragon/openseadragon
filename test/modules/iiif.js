@@ -288,4 +288,93 @@
         assert.equal(source3DescendingSizeOrder.getTileUrl(2, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");
     });
 
+    QUnit.test('IIIFTileSource.getTileUrl honours tileQuality option', function( assert ) {
+        const withQuality = function( info, quality ) {
+            return OpenSeadragon.extend({}, info, { tileQuality: quality });
+        };
+
+        const source11Grey = getSource(withQuality(infoJson11level1, "grey"));
+        assert.equal(source11Grey.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/grey.jpg",
+            "Version 1 source uses supplied tileQuality instead of 'native'");
+
+        const source2Gray = getSource(withQuality(infoJson2level1, "gray"));
+        assert.equal(source2Gray.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,/0/gray.jpg",
+            "Version 2 source uses supplied tileQuality instead of 'default'");
+
+        const source3Bitonal = getSource(withQuality(infoJson3level1, "bitonal"));
+        assert.equal(source3Bitonal.getTileUrl(0, 0, 0), "http://example.com/identifier/full/8,4/0/bitonal.jpg",
+            "Version 3 source uses supplied tileQuality instead of 'default'");
+
+        const source2Level0Gray = getSource(withQuality(infoJson2level0, "gray"));
+        assert.equal(source2Level0Gray.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,/0/gray.jpg",
+            "Version 2 legacy pyramid uses supplied tileQuality instead of 'default'");
+
+        const source3Level0Bitonal = getSource(withQuality(infoJson3level0, "bitonal"));
+        assert.equal(source3Level0Bitonal.getTileUrl(0, 0, 0), "http://example.com/identifier/full/1000,500/0/bitonal.jpg",
+            "Version 3 legacy pyramid uses supplied tileQuality instead of 'default'");
+    });
+
+    QUnit.test('IIIFTileSource warns on unknown tileQuality but still uses it', function( assert ) {
+        const originalWarn = OpenSeadragon.console.warn;
+        const calls = [];
+        OpenSeadragon.console.warn = function() {
+            calls.push(Array.prototype.slice.call(arguments));
+        };
+        try {
+            const data = OpenSeadragon.extend({}, infoJson3level1, { tileQuality: "sepia" });
+            const source = getSource(data);
+            assert.equal(calls.length, 1, "Unknown quality triggers exactly one warning");
+            assert.ok(calls[0][0].indexOf("[IIIFTileSource]") === 0, "Warning is namespaced");
+            assert.equal(source.getTileUrl(0, 0, 0),
+                "http://example.com/identifier/full/8,4/0/sepia.jpg",
+                "Unknown quality is still used in tile URL");
+        } finally {
+            OpenSeadragon.console.warn = originalWarn;
+        }
+    });
+
+    QUnit.test('IIIFTileSource accepts extraQualities (v3) without warning', function( assert ) {
+        const originalWarn = OpenSeadragon.console.warn;
+        const calls = [];
+        OpenSeadragon.console.warn = function() {
+            calls.push(Array.prototype.slice.call(arguments));
+        };
+        try {
+            const data = OpenSeadragon.extend({}, infoJson3level1, {
+                extraQualities: [ "sepia", "infrared" ],
+                tileQuality: "sepia"
+            });
+            const source = getSource(data);
+            assert.equal(calls.length, 0, "Quality listed in extraQualities does not warn");
+            assert.equal(source.getTileUrl(0, 0, 0),
+                "http://example.com/identifier/full/8,4/0/sepia.jpg",
+                "extraQualities value is used in tile URL");
+        } finally {
+            OpenSeadragon.console.warn = originalWarn;
+        }
+    });
+
+    QUnit.test('IIIFTileSource accepts profile.qualities (v2) without warning', function( assert ) {
+        const originalWarn = OpenSeadragon.console.warn;
+        const calls = [];
+        OpenSeadragon.console.warn = function() {
+            calls.push(Array.prototype.slice.call(arguments));
+        };
+        try {
+            const base = OpenSeadragon.extend(true, {}, infoJson2level1);
+            base.profile = [
+                "http://iiif.io/api/image/2/level1.json",
+                { qualities: [ "sepia" ] }
+            ];
+            base.tileQuality = "sepia";
+            const source = getSource(base);
+            assert.equal(calls.length, 0, "Quality listed in profile.qualities does not warn");
+            assert.equal(source.getTileUrl(0, 0, 0),
+                "http://example.com/identifier/full/8,/0/sepia.jpg",
+                "profile.qualities value is used in tile URL");
+        } finally {
+            OpenSeadragon.console.warn = originalWarn;
+        }
+    });
+
 })();
