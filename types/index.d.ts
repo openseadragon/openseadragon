@@ -269,7 +269,9 @@ declare namespace OpenSeadragon {
     }
 
     type DrawerType = "auto" | "html" | "canvas" | "webgl";
-    type DrawerConstructor = new (options: DrawerConstructorParameters) => DrawerBase;
+    type DrawerConstructor = new (
+        options: DrawerConstructorParameters,
+    ) => DrawerBase;
     type TypeConverter<TIn = any, TOut = any> = (
         tile: Tile,
         data: TIn,
@@ -824,7 +826,9 @@ declare namespace OpenSeadragon {
             eventName: K,
             bindTarget: any,
         ): (source: EventSource<EventMap>, eventArgs: object) => Promise<any>;
-        getHandler<K extends keyof EventMap>(eventName: K): (source: EventSource<EventMap>, eventArgs: object) => void;
+        getHandler<K extends keyof EventMap>(
+            eventName: K,
+        ): (source: EventSource<EventMap>, eventArgs: object) => void;
         numberOfHandlers<K extends keyof EventMap>(eventName: K): number;
         raiseEvent<K extends keyof EventMap>(
             eventName: K,
