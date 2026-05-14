@@ -510,13 +510,13 @@ declare namespace OpenSeadragon {
         srcDown?: string;
         fadeDelay?: number;
         fadeLength?: number;
-        onPress?: EventHandler<ButtonEvent>;
-        onRelease?: EventHandler<ButtonEvent>;
-        onClick?: EventHandler<ButtonEvent>;
-        onEnter?: EventHandler<ButtonEvent>;
-        onExit?: EventHandler<ButtonEvent>;
-        onFocus?: EventHandler<ButtonEvent>;
-        onBlur?: EventHandler<ButtonEvent>;
+        onPress?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
+        onRelease?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
+        onClick?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
+        onEnter?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
+        onExit?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
+        onFocus?: EventHandler<ButtonEvent<FocusEvent>>;
+        onBlur?: EventHandler<ButtonEvent<FocusEvent>>;
     }
 
     class Button extends EventSource<ButtonEventMap> {
@@ -837,7 +837,7 @@ declare namespace OpenSeadragon {
         raiseEventAwaiting<K extends keyof EventMap>(
             eventName: K,
             eventArgs?: object,
-            bindTarget?: any = null,
+            bindTarget?: any,
         ): Promise<any>;
         removeAllHandlers<K extends keyof EventMap>(eventName: K): void;
         removeHandler<K extends keyof EventMap>(
