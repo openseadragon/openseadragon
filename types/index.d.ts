@@ -511,8 +511,8 @@ declare namespace OpenSeadragon {
         fadeDelay?: number;
         fadeLength?: number;
         onPress?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
-        onRelease?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
-        onClick?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
+        onRelease?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent | KeyboardEvent>>;
+        onClick?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent | KeyboardEvent>>;
         onEnter?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
         onExit?: EventHandler<ButtonEvent<MouseEvent | TouchEvent | PointerEvent>>;
         onFocus?: EventHandler<ButtonEvent<FocusEvent>>;
