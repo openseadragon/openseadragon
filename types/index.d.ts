@@ -865,7 +865,12 @@ declare namespace OpenSeadragon {
         }>;
         version: number;
 
-        constructor(options: TileSourceOptions & { tileFormat?: string; tileQuality?: string });
+        constructor(
+            options: TileSourceOptions & {
+                tileFormat?: string;
+                tileQuality?: string;
+            },
+        );
     }
 
     interface IrisTileSourceOptions extends TileSourceOptions {
@@ -2099,12 +2104,16 @@ declare namespace OpenSeadragon {
 
     interface ButtonEventMap {
         blur: ButtonEvent<FocusEvent>;
-        click: ButtonEvent<MouseEvent | TouchEvent | PointerEvent | KeyboardEvent>;
+        click: ButtonEvent<
+            MouseEvent | TouchEvent | PointerEvent | KeyboardEvent
+        >;
         enter: ButtonEvent<MouseEvent | TouchEvent | PointerEvent>;
         exit: ButtonEvent<MouseEvent | TouchEvent | PointerEvent>;
         focus: ButtonEvent<FocusEvent>;
         press: ButtonEvent<MouseEvent | TouchEvent | PointerEvent>;
-        release: ButtonEvent<MouseEvent | TouchEvent | PointerEvent | KeyboardEvent>;
+        release: ButtonEvent<
+            MouseEvent | TouchEvent | PointerEvent | KeyboardEvent
+        >;
     }
 
     interface TiledImageEventMap {
@@ -2133,7 +2142,7 @@ declare namespace OpenSeadragon {
         "canvas-contextmenu": CanvasContextMenuEvent;
         "canvas-double-click": CanvasDoubleClickEvent;
         "canvas-drag": CanvasDragEvent;
-        "canvas-drag-end": Omit<CanvasDragEvent, 'delta'>;
+        "canvas-drag-end": Omit<CanvasDragEvent, "delta">;
         "canvas-enter": CanvasEnterExitEvent;
         "canvas-exit": CanvasEnterExitEvent;
         "canvas-focus": CanvasTrackerEvent;
