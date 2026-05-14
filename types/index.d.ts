@@ -269,7 +269,9 @@ declare namespace OpenSeadragon {
     }
 
     type DrawerType = "auto" | "html" | "canvas" | "webgl";
-    type DrawerConstructor = new (options: DrawerConstructorParameters) => DrawerBase;
+    type DrawerConstructor = new (
+        options: DrawerConstructorParameters,
+    ) => DrawerBase;
     type TypeConverter<TIn = any, TOut = any> = (
         tile: Tile,
         data: TIn,
@@ -809,13 +811,13 @@ declare namespace OpenSeadragon {
     class EventSource<EventMap extends Record<string, any> = any> {
         addHandler<K extends keyof EventMap>(
             eventName: K,
-            handler: EventHandler<EventMap[K]>,
+            handler: EventHandler<EventMap[K]> | AsyncEventHandler<EventMap[K]>,
             userData?: object,
             priority?: number,
         ): boolean;
         addOnceHandler<K extends keyof EventMap>(
             eventName: K,
-            handler: EventHandler<EventMap[K]>,
+            handler: EventHandler<EventMap[K]> | AsyncEventHandler<EventMap[K]>,
             userData?: object,
             times?: number,
             priority?: number,
@@ -823,23 +825,25 @@ declare namespace OpenSeadragon {
         getAwaitingHandler<K extends keyof EventMap>(
             eventName: K,
             bindTarget: any,
-        ): null | Promise<any>;
-        getHandler<K extends keyof EventMap>(eventName: K): void;
+        ): (source: EventSource<EventMap>, eventArgs: object) => Promise<any>;
+        getHandler<K extends keyof EventMap>(
+            eventName: K,
+        ): (source: EventSource<EventMap>, eventArgs: object) => void;
         numberOfHandlers<K extends keyof EventMap>(eventName: K): number;
         raiseEvent<K extends keyof EventMap>(
             eventName: K,
-            eventArgs: object,
+            eventArgs?: object,
         ): boolean;
         raiseEventAwaiting<K extends keyof EventMap>(
             eventName: K,
-            eventArgs: object | undefined,
-            bindTarget: any,
-        ): Promise<any> | undefined;
-        removeAllHandlers<K extends keyof EventMap>(eventName: K): boolean;
+            eventArgs?: object,
+            bindTarget?: any = null,
+        ): Promise<any>;
+        removeAllHandlers<K extends keyof EventMap>(eventName: K): void;
         removeHandler<K extends keyof EventMap>(
             eventName: K,
-            handler: EventHandler<EventMap[K]>,
-        ): boolean;
+            handler: EventHandler<EventMap[K]> | AsyncEventHandler<EventMap[K]>,
+        ): void;
     }
 
     class HTMLDrawer extends DrawerBase {
@@ -2091,6 +2095,7 @@ declare namespace OpenSeadragon {
     }
 
     type EventHandler<T> = (event: T) => void;
+    type AsyncEventHandler<T> = (event: T) => Promise<void>;
 
     interface ButtonEventMap {
         blur: ButtonEvent;
