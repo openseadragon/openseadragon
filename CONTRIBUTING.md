@@ -78,7 +78,7 @@ and open `http://localhost:8000/test/test.html` in your browser.
 Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
 
 
-> [!NOTE] 
+> [!NOTE]
 > corresponding npm commands for the above are:
 >  - npm run test
 >  - npm run test -- --module="navigator"
@@ -89,6 +89,13 @@ You can also get a report of the tests' code coverage:
     grunt coverage
 
 The report shows up at `coverage/html/index.html` viewable in a browser.
+
+### Building and Testing Documentation
+
+* Clone https://github.com/openseadragon/site-build to your hard drive next to this repository and do an `npm install` in it.
+* In this repository, do `grunt publish`; that will build the code and send a copy over to the `site-build` folder.
+* In this `site-build` folder, do a `grunt doc`. That will build the JSDocs.
+* Run `grunt dev` there. That'll start a server at localhost:9000 so you can see the docs.
 
 ### Installing from forked Github repo/branch
 
