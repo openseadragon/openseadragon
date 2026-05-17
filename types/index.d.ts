@@ -422,6 +422,7 @@ declare namespace OpenSeadragon {
         navigatorOpacity?: number;
         navigatorBorderColor?: string;
         navigatorDisplayRegionColor?: string;
+        navigatorDrawer?: string | string[];
         controlsFadeDelay?: number;
         controlsFadeLength?: number;
         maxImageCacheCount?: number;
