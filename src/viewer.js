@@ -919,6 +919,201 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Open tiled images into the viewer, closing any others, and return a Promise
+     * that resolves when all images are loaded successfully or rejects on failure.
+     * @function
+     * @param {Array|String|Object|Function} tileSources - This can be a TiledImage
+     * specifier, a TileSource specifier, or an array of either. A TiledImage specifier
+     * is the same as the options parameter for {@link OpenSeadragon.Viewer#addTiledImage},
+     * except for the index property; images are added in sequence.
+     * A TileSource specifier is anything you could pass as the tileSource property
+     * of the options parameter for {@link OpenSeadragon.Viewer#addTiledImage}.
+     * @param {Number} initialPage - If sequenceMode is true, display this page initially
+     * for the given tileSources. If specified, will overwrite the Viewer's existing initialPage property.
+     * @returns {Promise} A promise that resolves when all tile sources are opened successfully,
+     *          or rejects with an error if any fail to load.
+     * @fires OpenSeadragon.Viewer.event:open
+     * @fires OpenSeadragon.Viewer.event:open-failed
+     */
+    openAsync: function (tileSources, initialPage) {
+        const _this = this;
+
+        // Return a Promise that will resolve/reject based on tile loading success/failure
+        return new $.Promise(function(resolve, reject) {
+            // First, close any existing content
+            this.close();
+
+            if (!tileSources) {
+                resolve(this);
+                return;
+            }
+
+            if (this.sequenceMode && $.isArray(tileSources)) {
+                if (this.referenceStrip) {
+                    this.referenceStrip.destroy();
+                    this.referenceStrip = null;
+                }
+
+                if (typeof initialPage !== 'undefined' && !isNaN(initialPage)) {
+                  this.initialPage = initialPage;
+                }
+
+                this.tileSources = tileSources;
+                this._sequenceIndex = Math.max(0, Math.min(this.tileSources.length - 1, this.initialPage));
+                if (this.tileSources.length) {
+                    // Use the regular open method for sequence mode since it's handled differently
+                    this.open(this.tileSources[this._sequenceIndex]);
+
+                    if ( this.showReferenceStrip ){
+                        this.addReferenceStrip();
+                    }
+                    this._updateSequenceButtons( this._sequenceIndex );
+                    // In sequence mode, we consider it successful immediately since it's just setting up the sequence
+                    resolve(this);
+                } else {
+                    resolve(this);
+                }
+
+                return;
+            }
+
+            if (!$.isArray(tileSources)) {
+                tileSources = [tileSources];
+            }
+
+            if (!tileSources.length) {
+                resolve(this);
+                return;
+            }
+
+            this._opening = true;
+
+            const expected = tileSources.length;
+            let successes = 0;
+            let failures = 0;
+            let failEvent;
+
+            // Set up handler for when all tiles are fully loaded
+            const onFullyLoaded = function(event) {
+                if (event.fullyLoaded) {
+                    _this.removeHandler('fully-loaded-change', onFullyLoaded);
+
+                    if (successes > 0) {
+                        _this._opening = false;
+                        resolve(_this);
+                    }
+                }
+            };
+
+            const checkCompletion = function() {
+                if (successes + failures === expected) {
+                    if (successes) {
+                        if (_this._firstOpen || !_this.preserveViewport) {
+                            _this.viewport.goHome( true );
+                            _this.viewport.update();
+                        }
+
+                        _this._firstOpen = false;
+
+                        let source = tileSources[0];
+                        if (source.tileSource) {
+                            source = source.tileSource;
+                        }
+
+                        // Global overlays
+                        if( _this.overlays && !_this.preserveOverlays ){
+                            for ( let i = 0; i < _this.overlays.length; i++ ) {
+                                _this.currentOverlays[ i ] = getOverlayObject( _this, _this.overlays[ i ] );
+                            }
+                        }
+
+                        _this._drawOverlays();
+
+                        // Add the fully loaded handler to wait for all tiles to finish loading
+                        _this.addHandler('fully-loaded-change', onFullyLoaded);
+                    } else {
+                        _this._opening = false;
+
+                        /**
+                         * Raised when an error occurs loading a TileSource.
+                         *
+                         * @event open-failed
+                         * @memberof OpenSeadragon.Viewer
+                         * @type {object}
+                         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                         * @property {String} message - Information about what failed.
+                         * @property {String} source - The tile source that failed.
+                         * @property {?Object} userData - Arbitrary subscriber-defined object.
+                         */
+                        _this.raiseEvent( 'open-failed', failEvent );
+
+                        reject(new Error(failEvent ? failEvent.message : 'Failed to open tile sources'));
+                    }
+                }
+            };
+
+            const doOne = function(options) {
+                if (!$.isPlainObject(options) || !options.tileSource) {
+                    options = {
+                        tileSource: options
+                    };
+                }
+
+                if (options.index !== undefined) {
+                    $.console.error('[Viewer.openAsync] setting indexes here is not supported; use addTiledImage instead');
+                    delete options.index;
+                }
+
+                if (options.collectionImmediately === undefined) {
+                    options.collectionImmediately = true;
+                }
+
+                const originalSuccess = options.success;
+                options.success = function(event) {
+                    successes++;
+
+                    // TODO: now that options has other things besides tileSource, the overlays
+                    // should probably be at the options level, not the tileSource level.
+                    if (options.tileSource.overlays) {
+                        for (let i = 0; i < options.tileSource.overlays.length; i++) {
+                            _this.addOverlay(options.tileSource.overlays[i]);
+                        }
+                    }
+
+                    if (originalSuccess) {
+                        originalSuccess(event);
+                    }
+
+                    checkCompletion();
+                };
+
+                const originalError = options.error;
+                options.error = function(event) {
+                    failures++;
+
+                    if (!failEvent) {
+                        failEvent = event;
+                    }
+
+                    if (originalError) {
+                        originalError(event);
+                    }
+
+                    checkCompletion();
+                };
+
+                _this.addTiledImage(options);
+            };
+
+            // TileSources
+            for (let i = 0; i < tileSources.length; i++) {
+                doOne(tileSources[i]);
+            }
+        });
+    },
+
+
+    /**
      * Updates data within every tile in the viewer. Should be called
      * when tiles are outdated and should be re-processed. Useful mainly
      * for plugins that change tile data.
