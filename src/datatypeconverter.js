@@ -470,7 +470,6 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
      * Note: although we try to implement the type guessing, do
      * not rely on this functionality! Prefer explicit type declaration.
      *
-     * @function guessType
      * @param x object to get unique identifier for
      *  - can be array, in that case, alphabetically-ordered list of inner unique types
      *    is returned (null, undefined are ignored)

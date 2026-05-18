@@ -284,7 +284,7 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
         for (let i = 0; i < allTiles.length; i++) {
             const tile = allTiles[i];
             const isRecentlyTouched = tile.lastTouchTime >= drawnTstamp;
-            const isAboveCutoff = tile.level <= (tile.tiledImage.source.getClosestLevel() || 0);
+            const isAboveCutoff = tile.level <= (tile.tiledImage.savedCutOffLevel || 0);
 
             if (isRecentlyTouched || isAboveCutoff) {
                 tilesToRestore[restoreIndex++] = tile;

@@ -762,9 +762,10 @@
          * Functional test: true if WebGL is supported and the real first-pass shader pipeline
          * can render (same shaders/context path used at runtime). Uses a temp context and
          * WebglContextManager, draws known non-black pixels to an FBO, then readPixels.
+         * @param {Object} options - Options for this drawer.
          * @returns {Boolean} true if WebGL is supported and the pipeline renders successfully
          */
-        static isSupported(){
+        static isSupported(options){
             let contextManager = null;
             let testTexture = null;
             let gl = null;
@@ -1973,7 +1974,7 @@ void main() {
 
             let data = cache.data;
             let isCanvas = false;
-            if (data instanceof CanvasRenderingContext2D) {
+            if (data instanceof CanvasRenderingContext2D || data instanceof OffscreenCanvasRenderingContext2D) {
                 data = data.canvas;
                 isCanvas = true;
             }
@@ -2044,7 +2045,7 @@ void main() {
                 context.drawImage( data, 0, 0 );
                 data = context;
             }
-            if (data instanceof CanvasRenderingContext2D) {
+            if (data instanceof CanvasRenderingContext2D || data instanceof OffscreenCanvasRenderingContext2D ) {
                 return data;
             }
             $.console.error("Unsupported data used for WebGL Drawer - probably a bug!");

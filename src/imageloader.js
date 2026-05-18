@@ -43,7 +43,7 @@
  * @param {String} [options.src] - URL of image to download.
  * @param {Tile} [options.tile] - Tile that belongs the data to.
  * @param {TileSource} [options.source] - Image loading strategy
- * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
+ * @param {Boolean} [options.loadWithAjax] - Whether to load this image with AJAX.
  * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
  * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
  * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
@@ -405,7 +405,7 @@ $.ImageLoader.prototype = {
      * @param {String} [options.src] - URL of image to download.
      * @param {Tile} [options.tile] - Tile that belongs the data to. The tile instance
      *      is not internally used and serves for custom TileSources implementations.
-     * @param {String} [options.loadWithAjax] - Whether to load this image with AJAX.
+     * @param {Boolean} [options.loadWithAjax] - Whether to load this image with AJAX.
      * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
      * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
      * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,

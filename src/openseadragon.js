@@ -541,7 +541,18 @@
   *     The higher the minPixelRatio, the lower the quality of the image that
   *     is considered sufficient to stop rendering a given zoom level.  For
   *     example, if you are targeting mobile devices with less bandwidth you may
-  *     try setting this to 1.5 or higher.
+  *     try setting this to 1.5 or higher. The default value of 0.5 means that
+  *     one level is always fetched ahead. This means users will usually see
+  *     sharper data as they navigate, since during zoom we have already one level
+  *     up loaded. If you experience high network traffic/latency, you might want
+  *     to set this value to 1.0 (~fetch at most identical pixel size) or higher
+  *     to force upsampling.
+  *
+  * @property {Number} [discardLevelsBelowDownsampleRatio=1]
+  *     You can force the viewer to skip levels that have smaller pixel ratio
+  *     difference gap than a specified value. For example, setting the value to
+  *     4 with each level smaller by 2 (powers of two), the viewer will access
+  *     every other level (that is, levels spaced by a 4x downsample factor).
   *
   * @property {Boolean} [mouseNavEnabled=true]
   *     Is the user able to interact with the image via mouse or touch. Default
@@ -1283,6 +1294,7 @@ function OpenSeadragon( options ){
             wrapVertical:           false,
             visibilityRatio:        0.5, //-> how much of the viewer can be negative space
             minPixelRatio:          0.5, //->closer to 0 draws tiles meant for a higher zoom at this zoom
+            discardLevelsBelowDownsampleRatio: 1,
             defaultZoomLevel:       0,
             minZoomLevel:           null,
             maxZoomLevel:           null,

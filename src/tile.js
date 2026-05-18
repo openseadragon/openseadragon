@@ -578,7 +578,7 @@ $.Tile.prototype = {
             dataType: type,
             tile: this,
             cacheKey: key,
-            cutoff: tiledImage.source.getClosestLevel(),
+            cutoff: tiledImage.savedCutOffLevel,
         });
         const havingRecord = this._caches[key];
         if (havingRecord !== cachedItem) {

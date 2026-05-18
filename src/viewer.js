@@ -395,7 +395,7 @@ $.Viewer = function( options ) {
         leaveHandler:          $.delegate( this, onContainerLeave )
     });
 
-    if( this.toolbar ){
+    if ( this.toolbar ){
         this.toolbar = new $.ControlDock({ element: this.toolbar });
     }
 
@@ -403,9 +403,9 @@ $.Viewer = function( options ) {
 
     THIS[ this.hash ].prevContainerSize = _getSafeElemSize( this.container );
 
-    if(window.ResizeObserver){
+    if (window.ResizeObserver) {
         this._autoResizePolling = false;
-        this._resizeObserver = new ResizeObserver(function(){
+        this._resizeObserver = new ResizeObserver(function() {
             THIS[_this.hash].needsResize = true;
         });
 
@@ -1156,7 +1156,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         let supported = false;
         if (Drawer) {
             try {
-                supported = Drawer.isSupported();
+                supported = Drawer.isSupported(drawerOptions || this.drawerOptions[drawerCandidate]);
             } catch (e) {
                 $.console.warn('Error in %s isSupported(); treating this drawer as unsupported:', drawerCandidate, e && e.message ? e.message : e);
             }
@@ -1164,7 +1164,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (supported) {
             // if the drawer is supported, create it and return it.
             // first destroy the previous drawer
-            if(oldDrawer && mainDrawer){
+            if (oldDrawer && mainDrawer){
                 oldDrawer.destroy();
             }
 
@@ -1779,7 +1779,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @property {Boolean} [options.zombieCache] In the case that this method removes any TiledImage instance,
      *      allow the item-referenced cache to remain in memory even without active tiles. Default false.
      * @property {Number} [options.degrees=0] Initial rotation of the tiled image around
-     * its top left corner in degrees.
+     * its center in degrees.
      * @property {Boolean} [options.flipped=false] Whether to horizontally flip the image.
      * @property {String} [options.compositeOperation] How the image is composited onto other images.
      * @property {String} [options.crossOriginPolicy] The crossOriginPolicy for this specific image,
@@ -2014,6 +2014,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 blendTime: this.blendTime,
                 alwaysBlend: this.alwaysBlend,
                 minPixelRatio: this.minPixelRatio,
+                discardLevelsBelowDownsampleRatio: this.discardLevelsBelowDownsampleRatio,
                 smoothTileEdgesMinZoom: this.smoothTileEdgesMinZoom,
                 iOSDevice: this.iOSDevice,
                 crossOriginPolicy: options.crossOriginPolicy,
@@ -3300,10 +3301,10 @@ function getActiveActionFromKey(code, shift) {
 /**
  * Handles the keyup event on the viewer's canvas element.
  *
- * @private
  * For the released key, marks both the shifted and non-shifted navigation actions as inactive in the _activeActions object.
  * If either action is released before reaching the minimum frame threshold, sets that action as "virtually held" in _navActionVirtuallyHeld,
  * ensuring smooth completion of the minimum pan or zoom distance regardless of modifier key release order.
+ * @private
  */
 function onCanvasKeyUp(event) {
 
@@ -3753,8 +3754,6 @@ function onCanvasPress( event ) {
      * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
      * @property {String} pointerType - "mouse", "touch", "pen", etc.
      * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
-     * @property {Boolean} insideElementPressed - True if the left mouse button is currently being pressed and was initiated inside the tracked element, otherwise false.
-     * @property {Boolean} insideElementReleased - True if the cursor still inside the tracked element when the button was released.
      * @property {Object} originalEvent - The original DOM event.
      * @property {?Object} userData - Arbitrary subscriber-defined object.
      */
@@ -3762,8 +3761,6 @@ function onCanvasPress( event ) {
         tracker: event.eventSource,
         pointerType: event.pointerType,
         position: event.position,
-        insideElementPressed: event.insideElementPressed,
-        insideElementReleased: event.insideElementReleased,
         originalEvent: event.originalEvent
     });
 
@@ -4137,7 +4134,7 @@ function updateMulti( viewer ) {
     }
 }
 
-function doViewerResize(viewer, containerSize){
+function doViewerResize(viewer, containerSize) {
     const viewport = viewer.viewport;
     const zoom = viewport.getZoom();
     const center = viewport.getCenter();
@@ -4230,23 +4227,20 @@ function updateOnce( viewer ) {
     }
 
     let viewerWasResized = false;
-    if (viewer.autoResize || THIS[viewer.hash].forceResize){
+    if (viewer.autoResize || THIS[viewer.hash].forceResize) {
         let containerSize;
-        if(viewer._autoResizePolling){
+        if (viewer._autoResizePolling) {
             containerSize = _getSafeElemSize(viewer.container);
             const prevContainerSize = THIS[viewer.hash].prevContainerSize;
             if (!containerSize.equals(prevContainerSize)) {
                 THIS[viewer.hash].needsResize = true;
             }
         }
-        if(THIS[viewer.hash].needsResize){
+        if (THIS[viewer.hash].needsResize) {
             doViewerResize(viewer, containerSize || _getSafeElemSize(viewer.container));
             viewerWasResized = true;
         }
-
     }
-
-
 
     const viewportChange = viewer.viewport.update() || viewerWasResized;
     let animated = viewer.world.update(viewportChange) || viewportChange;
