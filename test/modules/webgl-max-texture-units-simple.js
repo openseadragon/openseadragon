@@ -36,7 +36,7 @@
 
             // If we get here, the fix worked
             testPassed = true;
-            assert.ok(drawer._webglFailed, 'WebGL should be disabled for invalid MAX_TEXTURE_IMAGE_UNITS');
+            assert.notOk(drawer._glContext.getContext(), 'WebGL should be disabled for invalid MAX_TEXTURE_IMAGE_UNITS');
 
         } catch (error) {
             // If we get an exception, the fix didn't work
@@ -82,7 +82,6 @@
                 });
 
                 // Should not crash - this is the main test
-                // Whether _webglFailed is set depends on the exact value and comparison behavior
                 if (drawer) {
                     passedTests++;
                 }

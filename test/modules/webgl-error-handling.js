@@ -1,8 +1,17 @@
-/* global QUnit, OpenSeadragon, MockSeadragon */
+/* global QUnit, OpenSeadragon, MockSeadragon, $ */
 
 (function() {
 
-    QUnit.module('WebGL Error Handling');
+    let viewer;
+
+    QUnit.module('WebGL Error Handling', {
+        afterEach: function() {
+            if (viewer) {
+                viewer.destroy();
+            }
+            viewer = null;
+        }
+    });
 
     // Test that MAX_TEXTURE_IMAGE_UNITS validation prevents crashes
     QUnit.test('WebGL drawer handles invalid MAX_TEXTURE_IMAGE_UNITS without crashing', function(assert) {
@@ -22,7 +31,7 @@
         const originalWarn = OpenSeadragon.console.warn;
         let warningLogged = false;
         OpenSeadragon.console.warn = function(message) {
-            if (message.includes('WebGL context invalid') && message.includes('MAX_TEXTURE_IMAGE_UNITS is 0')) {
+            if (message.includes('WebGL context invalid') && message.includes('MAX_TEXTURE_IMAGE_UNITS')) {
                 warningLogged = true;
             }
         };
@@ -38,7 +47,7 @@
 
             // Test passes if we get here without throwing
             assert.ok(true, 'WebGLDrawer constructor completed without crashing');
-            assert.ok(drawer._webglFailed, 'WebGL failed flag should be set');
+            assert.notOk(drawer._glContext.getContext(), 'WebGL context should be unavailable');
             assert.ok(warningLogged, 'Warning should be logged for invalid MAX_TEXTURE_IMAGE_UNITS');
 
         } catch (error) {
@@ -73,7 +82,7 @@
             });
 
             assert.ok(true, 'WebGLDrawer constructor completed without crashing');
-            assert.ok(drawer._webglFailed, 'WebGL failed flag should be set for null MAX_TEXTURE_IMAGE_UNITS');
+            assert.notOk(drawer._glContext.getContext(), 'WebGL context should be unavailable for null MAX_TEXTURE_IMAGE_UNITS');
 
         } catch (error) {
             assert.ok(false, 'WebGLDrawer should not crash: ' + error.message);
@@ -97,10 +106,36 @@
             });
 
             assert.ok(true, 'WebGLDrawer constructor completed without crashing');
-            assert.ok(drawer._webglFailed, 'WebGL failed flag should be set for context creation failure');
+            assert.notOk(drawer._glContext.getContext(), 'WebGL context should be unavailable for context creation failure');
 
         } catch (error) {
             assert.ok(false, 'WebGLDrawer should not crash: ' + error.message);
+        } finally {
+            MockSeadragon.restoreWebGLContext(originalGetContext);
+        }
+    });
+
+    QUnit.test('viewer falls back to canvas when WebGL reports invalid MAX_TEXTURE_IMAGE_UNITS', function(assert) {
+        $('<div id="webgl-fallback-example"></div>').appendTo("#qunit-fixture");
+
+        const mockContext = MockSeadragon.createMockWebGLContext({
+            getParameter: function(param) {
+                if (param === this.MAX_TEXTURE_IMAGE_UNITS) {
+                    return 0;
+                }
+                return 16;
+            }
+        });
+        const originalGetContext = MockSeadragon.mockWebGLContext(mockContext);
+
+        try {
+            viewer = OpenSeadragon({
+                id: 'webgl-fallback-example',
+                prefixUrl: '/build/openseadragon/images/',
+                drawer: ['webgl', 'canvas']
+            });
+
+            assert.equal(viewer.drawer.getType(), 'canvas', 'Viewer should use the next configured drawer when WebGL is not usable');
         } finally {
             MockSeadragon.restoreWebGLContext(originalGetContext);
         }

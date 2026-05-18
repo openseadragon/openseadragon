@@ -225,7 +225,7 @@ window.MockSeadragon = {
         const originalGetContext = HTMLCanvasElement.prototype.getContext;
 
         HTMLCanvasElement.prototype.getContext = function(contextType) {
-            if (contextType === 'webgl' || contextType === 'experimental-webgl') {
+            if (contextType === 'webgl2' || contextType === 'webgl' || contextType === 'experimental-webgl') {
                 return mockContext;
             }
             return originalGetContext.call(this, contextType);
@@ -243,4 +243,3 @@ window.MockSeadragon = {
         HTMLCanvasElement.prototype.getContext = originalGetContext;
     }
 };
-
