@@ -515,21 +515,38 @@
         return gl;
     }
 
+    function createFakeGlContext(gl, options = {}) {
+        return {
+            getContext() {
+                return gl;
+            },
+            getFirstPass() {
+                return options.firstPass || null;
+            },
+            getMaxTextures() {
+                return options.maxTextures || 0;
+            },
+            getUnitQuad() {
+                return options.unitQuad || null;
+            }
+        };
+    }
+
     QUnit.test('WebGLDrawer batched rendering skips missing textures and does not bind beyond draw count', function(assert) {
         const gl = createFakeGl();
+        const firstPass = {
+            shaderProgram: 'program',
+            bufferTexturePosition: 'textureBuffer',
+            bufferOutputPosition: 'outputBuffer',
+            bufferIndex: 'indexBuffer',
+            aOutputPosition: 'aOutput',
+            aTexturePosition: 'aTexture',
+            aIndex: 'aIndex',
+            uTransformMatrices: ['m0', 'm1'],
+            uOpacities: 'uOpacities'
+        };
         const drawer = {
-            _gl: gl,
-            _firstPass: {
-                shaderProgram: 'program',
-                bufferTexturePosition: 'textureBuffer',
-                bufferOutputPosition: 'outputBuffer',
-                bufferIndex: 'indexBuffer',
-                aOutputPosition: 'aOutput',
-                aTexturePosition: 'aTexture',
-                aIndex: 'aIndex',
-                uTransformMatrices: ['m0', 'm1'],
-                uOpacities: 'uOpacities'
-            },
+            _glContext: createFakeGlContext(gl, {firstPass: firstPass}),
             getDataToDraw(tile) {
                 return tile.skip ? null : {texture: tile.texture};
             },
@@ -582,7 +599,7 @@
             aOutputPosition: 'aOutput'
         };
         const drawer = {
-            _gl: gl,
+            _glContext: createFakeGlContext(gl),
             _firstPassInstanced: pass,
             _glNumTextures: 3,
             _textureUnitIndices: null,
@@ -654,12 +671,15 @@
             uniform1iv() {}
         };
         const drawer = {
-            _isWebGL2: true,
-            _gl: gl,
-            _glNumTextures: 2,
-            _unitQuad: new Float32Array([0, 0, 1, 0, 0, 1]),
+            _glContext: createFakeGlContext(gl, {
+                maxTextures: 2,
+                unitQuad: new Float32Array([0, 0, 1, 0, 0, 1])
+            }),
             _textureUnitIndices: null,
             _firstPassInstanced: {stale: true},
+            isWebGL2() {
+                return true;
+            },
             _getTextureUnitIndices: OpenSeadragon.WebGLDrawer.prototype._getTextureUnitIndices,
             _resetInstancedAttributeDivisors: OpenSeadragon.WebGLDrawer.prototype._resetInstancedAttributeDivisors
         };
