@@ -456,6 +456,40 @@
                 assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when WebGL readback fails');
                 done();
             });
+
+            // ----------
+            QUnit.test('Falls back to canvas when WebGL reports invalid MAX_TEXTURE_IMAGE_UNITS during support check', function(assert) {
+                const done = assert.async();
+                const originalGetContext = HTMLCanvasElement.prototype.getContext;
+                getContextPrototypeRestore = function() {
+                    HTMLCanvasElement.prototype.getContext = originalGetContext;
+                    getContextPrototypeRestore = null;
+                };
+                HTMLCanvasElement.prototype.getContext = function(type) {
+                    const gl = originalGetContext.apply(this, arguments);
+                    if (gl && (type === 'webgl2' || type === 'webgl' || type === 'experimental-webgl') &&
+                        typeof gl.getParameter === 'function' && gl.MAX_TEXTURE_IMAGE_UNITS !== undefined) {
+                        const originalGetParameter = gl.getParameter.bind(gl);
+                        gl.getParameter = function(param) {
+                            if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
+                                return 0;
+                            }
+                            return originalGetParameter(param);
+                        };
+                    }
+                    return gl;
+                };
+
+                assert.notOk(
+                    OpenSeadragon.WebGLDrawer.isSupported(),
+                    'WebGL functional support check rejects invalid MAX_TEXTURE_IMAGE_UNITS'
+                );
+
+                createViewer({ drawer: ['webgl', 'canvas'] });
+                assert.ok(viewer.drawer, 'viewer has a drawer');
+                assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when invalid MAX_TEXTURE_IMAGE_UNITS is reported');
+                done();
+            });
         }
     }
 
