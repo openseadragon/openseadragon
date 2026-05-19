@@ -621,13 +621,9 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         var sizes = Array.isArray(options.sizes) ? options.sizes.slice() : [64, 128, 256];
         var iterations = options.iterations || 3;
         var warmupIterations = options.warmupIterations || 1;
-        var now = typeof performance !== 'undefined' && performance && $.isFunction(performance.now) ?
-            function() {
-                return performance.now();
-            } :
-            function() {
-                return Date.now();
-            };
+        var now = function() {
+            return Date.now();
+        };
         var seenSizes = {};
 
         sizes = sizes.filter(function(size) {
