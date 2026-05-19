@@ -33,6 +33,12 @@
             output.appendChild(pre);
         }
 
+        function appendHeading(text) {
+            const heading = document.createElement('h2');
+            heading.textContent = text;
+            output.appendChild(heading);
+        }
+
         const canvas = document.getElementById('canvas');
         const gl = canvas.getContext('webgl2');
 
@@ -144,7 +150,7 @@ void main() {
             }
 
             // Test First Pass Shaders
-            output.innerHTML += '<h2>First Pass Shaders (Tile Compositing)</h2>';
+            appendHeading('First Pass Shaders (Tile Compositing)');
             log('Features: in int a_index, flat out int, texture(), out vec4 fragColor', 'info');
 
             const fp_vs = compileShader(gl.VERTEX_SHADER, firstPassVertexSource, 'First Pass Vertex Shader');
@@ -165,7 +171,7 @@ void main() {
             }
 
             // Test Second Pass Shaders
-            output.innerHTML += '<h2>Second Pass Shaders (Final Output)</h2>';
+            appendHeading('Second Pass Shaders (Final Output)');
             log('Features: in/out keywords, texture(), out vec4 fragColor', 'info');
 
             const sp_vs = compileShader(gl.VERTEX_SHADER, secondPassVertexSource, 'Second Pass Vertex Shader');
@@ -186,7 +192,7 @@ void main() {
             }
 
             // Summary
-            output.innerHTML += '<h2>GLSL ES 3.0 Features Used</h2>';
+            appendHeading('GLSL ES 3.0 Features Used');
             log('- #version 300 es directive', 'info');
             log('- Native integer attributes (in int a_index)', 'info');
             log('- flat interpolation qualifier', 'info');
