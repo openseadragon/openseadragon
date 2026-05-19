@@ -843,17 +843,14 @@
                 if (!$.isFunction(canvas.getContext)) {
                     return false;
                 }
-                gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-                if (!gl) {
-                    return false;
-                }
                 contextManager = new WebglContextManager({
                     renderingCanvas: canvas,
                     unpackWithPremultipliedAlpha: false,
                     imageSmoothingEnabled: true,
                     initShaderProgram: WebGLDrawer.initShaderProgram
                 });
-                if (!contextManager.getContext()) {
+                gl = contextManager.getContext();
+                if (!gl) {
                     return false;
                 }
                 contextManager.setupRenderer(size, size);
