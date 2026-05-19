@@ -891,12 +891,16 @@
                 gl.uniformMatrix3fv(firstPass.uTransformMatrices[0], false, ndcMatrix);
                 gl.uniform1fv(firstPass.uOpacities, new Float32Array([1]));
 
-                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
-                gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
-                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
-                gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-                gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
-                gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+                if (firstPass.vao) {
+                    contextManager.bindVertexArray(firstPass.vao);
+                } else {
+                    gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
+                    gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                    gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+                    gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
+                    gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
+                }
 
                 gl.drawArrays(gl.TRIANGLES, 0, 6);
 
