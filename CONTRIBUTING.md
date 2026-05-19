@@ -92,7 +92,7 @@ The report shows up at `coverage/html/index.html` viewable in a browser.
 
 ### Building and Testing Documentation
 
-* Clone https://github.com/openseadragon/site-build to your hard drive next to this repository and do an `npm install` in it.
+* Clone https://github.com/openseadragon/site-build to your hard drive in a sibling folder named exactly `site-build` next to this repository, and do an `npm install` in it.
 * In this repository, do `grunt publish`; that will build the code and send a copy over to the `site-build` folder.
 * In this `site-build` folder, do a `grunt doc`. That will build the JSDocs.
 * Run `grunt dev` there. That'll start a server at localhost:9000 so you can see the docs.

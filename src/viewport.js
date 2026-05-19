@@ -1791,7 +1791,7 @@ $.Viewport.prototype = {
        * @memberof OpenSeadragon.Viewer
        * @type {object}
        * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-       * @property {Number} flipped - The flip state after this change.
+       * @property {Boolean} flipped - The flip state after this change.
        * @property {?Object} userData - Arbitrary subscriber-defined object.
        */
       this.viewer.raiseEvent('flip', {flipped: state});
