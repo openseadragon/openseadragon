@@ -565,6 +565,9 @@
                 const matrixData = this._firstPassUBO.matrixData;
                 for (let index = 0; index < activeMatrixCount; index++) {
                     const matrix = matrixArray[index];
+                    if (!matrix) {
+                        continue;
+                    }
                     const base = index * 12; // 3 vec4s = 12 floats per matrix
                     matrixData[base + 0] = matrix[0];
                     matrixData[base + 1] = matrix[1];
