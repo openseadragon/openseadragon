@@ -552,9 +552,10 @@
         /**
          * Update first-pass transform matrices for either WebGL1 uniforms or the WebGL2 UBO path.
          * @param {Float32Array[]} matrixArray - Matrices for the current batch of tiles
+         * @param {Number} [activeMatrixCount=matrixArray.length] - Number of matrices to upload for this batch
          * @returns {Boolean} true if the matrices were uploaded successfully
          */
-        updateFirstPassMatrices(matrixArray) {
+        updateFirstPassMatrices(matrixArray, activeMatrixCount = matrixArray.length) {
             const gl = this._gl;
             if (!gl || !this._firstPass) {
                 return false;
@@ -562,7 +563,8 @@
 
             if (this._firstPassUBO) {
                 const matrixData = this._firstPassUBO.matrixData;
-                matrixArray.forEach((matrix, index) => {
+                for (let index = 0; index < activeMatrixCount; index++) {
+                    const matrix = matrixArray[index];
                     const base = index * 12; // 3 vec4s = 12 floats per matrix
                     matrixData[base + 0] = matrix[0];
                     matrixData[base + 1] = matrix[1];
@@ -576,10 +578,10 @@
                     matrixData[base + 9] = matrix[7];
                     matrixData[base + 10] = matrix[8];
                     matrixData[base + 11] = 0;
-                });
+                }
 
                 gl.bindBuffer(gl.UNIFORM_BUFFER, this._firstPassUBO.buffer);
-                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, matrixData);
+                gl.bufferSubData(gl.UNIFORM_BUFFER, 0, matrixData.subarray(0, activeMatrixCount * 12));
                 return true;
             }
 
@@ -779,14 +781,14 @@
                 }
             }
 
-              // Clean up references
-              this._gl = null;
-              this._firstPass = null;
-              this._firstPassUBO = null;
-              this._secondPass = null;
-              this._glFrameBuffer = null;
-              this._renderToTexture = null;
-              this._unitQuad = null;
+            // Clean up references
+            this._gl = null;
+            this._firstPass = null;
+            this._firstPassUBO = null;
+            this._secondPass = null;
+            this._glFrameBuffer = null;
+            this._renderToTexture = null;
+            this._unitQuad = null;
         }
 
         /**
@@ -1318,7 +1320,7 @@
                         gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
                         gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
 
-                        if (!this._glContext.updateFirstPassMatrices(matrixArray)) {
+                        if (!this._glContext.updateFirstPassMatrices(matrixArray, numTilesToDraw)) {
                             throw new Error('WebGL error: failed to upload first-pass transform matrices.');
                         }
 
