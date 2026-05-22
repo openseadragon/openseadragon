@@ -81,6 +81,65 @@
         });
 
         // ----------
+        QUnit.test('shared renderer auto threshold', function(assert) {
+            if (drawerType !== 'webgl') {
+                assert.expect(0);
+                return;
+            }
+
+            const viewers = [];
+            const createNamedViewer = function(id, options) {
+                $('<div></div>').attr('id', id).appendTo('#qunit-fixture');
+                // eslint-disable-next-line new-cap
+                const localViewer = OpenSeadragon(OpenSeadragon.extend({
+                    id: id,
+                    prefixUrl: '/build/openseadragon/images/',
+                    springStiffness: 100,
+                    drawer: 'webgl'
+                }, options || {}));
+                viewers.push(localViewer);
+                return localViewer;
+            };
+
+            const viewerOne = createNamedViewer('example-shared-1');
+            const viewerTwo = createNamedViewer('example-shared-2');
+            const viewerThree = createNamedViewer('example-shared-3');
+
+            assert.notOk(viewerOne.drawer._useSharedRenderer, 'first webgl drawer keeps a private renderer');
+            assert.notOk(viewerTwo.drawer._useSharedRenderer, 'second webgl drawer still keeps a private renderer');
+            assert.ok(viewerThree.drawer._useSharedRenderer, 'third webgl drawer starts using the shared renderer');
+
+            viewers.reverse().forEach(function(localViewer) {
+                localViewer.destroy();
+            });
+        });
+
+        // ----------
+        QUnit.test('shared renderer explicit opt in', function(assert) {
+            if (drawerType !== 'webgl') {
+                assert.expect(0);
+                return;
+            }
+
+            $('<div></div>').attr('id', 'example-shared-explicit').appendTo('#qunit-fixture');
+            // eslint-disable-next-line new-cap
+            const explicitViewer = OpenSeadragon({
+                id: 'example-shared-explicit',
+                prefixUrl: '/build/openseadragon/images/',
+                springStiffness: 100,
+                drawer: 'webgl',
+                drawerOptions: {
+                    webgl: {
+                        useSharedRenderer: true
+                    }
+                }
+            });
+
+            assert.ok(explicitViewer.drawer._useSharedRenderer, 'explicit opt in uses the shared renderer immediately');
+            explicitViewer.destroy();
+        });
+
+        // ----------
         QUnit.test('rotation', function(assert) {
             const done = assert.async();
 

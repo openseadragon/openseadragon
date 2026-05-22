@@ -4,6 +4,7 @@
 module.exports = function(grunt) {
     /* eslint-disable no-undef */
     const dateFormat = require('dateformat');
+    const testPort = process.env.OSD_TEST_PORT || 8000;
 
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
@@ -178,7 +179,7 @@ module.exports = function(grunt) {
         qunit: {
             normal: {
                 options: {
-                    urls: [ "http://localhost:8000/test/test.html" + moduleFilter ],
+                    urls: [ "http://localhost:" + testPort + "/test/test.html" + moduleFilter ],
                     timeout: 10000,
                     puppeteer: {
                         headless: 'new'
@@ -187,7 +188,7 @@ module.exports = function(grunt) {
             },
             coverage: {
                 options: {
-                    urls: [ "http://localhost:8000/test/coverage.html" + moduleFilter ],
+                    urls: [ "http://localhost:" + testPort + "/test/coverage.html" + moduleFilter ],
                     coverage: {
                         src: ['src/*.js'],
                         htmlReport: coverageDir + '/html/',
@@ -207,7 +208,7 @@ module.exports = function(grunt) {
         connect: {
             server: {
                 options: {
-                    port: 8000,
+                    port: testPort,
                     base: {
                         path: ".",
                         options: {
