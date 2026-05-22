@@ -228,6 +228,34 @@
         }
 
         /**
+         * Mark the WebGL context unusable and clear all dependent renderer state.
+         * @param {String} message - Warning message describing why the context is being invalidated
+         * @private
+         */
+        _invalidateContext(message) {
+            const gl = this._gl;
+
+            if (message) {
+                $.console.warn(message);
+            }
+
+            if (gl) {
+                const ext = gl.getExtension('WEBGL_lose_context');
+                if (ext) {
+                    ext.loseContext();
+                }
+            }
+
+            this._gl = null;
+            this._firstPass = null;
+            this._secondPass = null;
+            this._glFrameBuffer = null;
+            this._renderToTexture = null;
+            this._glNumTextures = 0;
+            this._unitQuad = null;
+        }
+
+        /**
          * Set up the renderer: create shaders, textures, and framebuffers
          * @param {Number} width - Canvas width
          * @param {Number} height - Canvas height
@@ -243,7 +271,7 @@
             this._unitQuad = this.makeQuadVertexBuffer(0, 1, 0, 1);
 
             if (!this.getMaxTextures()) {
-                $.console.warn('WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS. Falling back to CanvasDrawer to prevent crashes.');
+                this._invalidateContext('WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS. Falling back to CanvasDrawer to prevent crashes.');
                 return;
             }
 
