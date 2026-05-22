@@ -124,7 +124,10 @@ $.TileInvalidationManager = class {
         }
 
         // Handle interrupted processing
-        let wasOutdatedRun = false;
+        const state = {
+            wasOutdatedRun: false,
+            workingCache: null
+        };
         if (originalCache.__finishProcessing) {
             originalCache.__finishProcessing(true);
         }
@@ -139,7 +142,7 @@ $.TileInvalidationManager = class {
 
         // Create finish processing callback
         originalCache.__finishProcessing = (asInvalidRun) => {
-            wasOutdatedRun = wasOutdatedRun || asInvalidRun;
+            state.wasOutdatedRun = state.wasOutdatedRun || asInvalidRun;
             tile.processing = false;
             originalCache.__finishProcessing = null;
             if (!asInvalidRun) {
@@ -159,12 +162,10 @@ $.TileInvalidationManager = class {
         originalCache.__wasRestored = restoreTiles;
 
         // Working cache for modifications
-        let workingCache = null;
-
         // Create getter for working cache data
         const getWorkingCacheData = (type) => {
-            if (workingCache) {
-                return workingCache.getDataAs(type, false);
+            if (state.workingCache) {
+                return state.workingCache.getDataAs(type, false);
             }
 
             const targetCopyKey = restoreTiles ? tile.originalCacheKey : tile.cacheKey;
@@ -174,33 +175,33 @@ $.TileInvalidationManager = class {
                 return $.Promise.reject();
             }
             type = type || origCache.type;
-            workingCache = new $.CacheRecord().withTileReference(tile);
+            state.workingCache = new $.CacheRecord().withTileReference(tile);
             return origCache.getDataAs(type, true).then(data => {
                 if (data === undefined || data === null) {
                     return $.Promise.reject(new Error('[TileInvalidationManager.getData] Working cache source data unavailable'));
                 }
-                workingCache.addTile(tile, data, type);
-                return workingCache.data;
+                state.workingCache.addTile(tile, data, type);
+                return state.workingCache.data;
             });
         };
 
         // Create setter for working cache data
         const setWorkingCacheData = (value, type) => {
-            if (!workingCache) {
-                workingCache = new $.CacheRecord().withTileReference(tile);
-                workingCache.addTile(tile, value, type);
+            if (!state.workingCache) {
+                state.workingCache = new $.CacheRecord().withTileReference(tile);
+                state.workingCache.addTile(tile, value, type);
                 return $.Promise.resolve();
             }
-            return workingCache.setDataAs(value, type);
+            return state.workingCache.setDataAs(value, type);
         };
 
         // Atomic cache swap operation
         const atomicCacheSwap = () => {
-            if (workingCache) {
+            if (state.workingCache) {
                 const newCacheKey = tile.buildDistinctMainCacheKey();
                 tiledImage._tileCache.injectCache({
                     tile: tile,
-                    cache: workingCache,
+                    cache: state.workingCache,
                     targetKey: newCacheKey,
                     setAsMainCache: true,
                     tileAllowNotLoaded: tile.loading
@@ -215,7 +216,7 @@ $.TileInvalidationManager = class {
         };
 
         // Test if this run is outdated
-        const outdatedTest = () => wasOutdatedRun ||
+        const outdatedTest = () => state.wasOutdatedRun ||
             (typeof originalCache.__invStamp === "number" && originalCache.__invStamp < this._invalidatedAt) ||
             (!tile.loaded && !tile.loading);
 
@@ -241,9 +242,9 @@ $.TileInvalidationManager = class {
             getData: getWorkingCacheData,
             setData: setWorkingCacheData,
             resetData: () => {
-                if (workingCache) {
-                    workingCache.destroy();
-                    workingCache = null;
+                if (state.workingCache) {
+                    state.workingCache.destroy();
+                    state.workingCache = null;
                 }
             },
             stopPropagation: () => {
@@ -251,33 +252,33 @@ $.TileInvalidationManager = class {
             },
         }).catch(err => {
             $.console.error("Update routine error:", err);
-            if (workingCache) {
+            if (state.workingCache) {
                 try {
-                    workingCache.destroy();
+                    state.workingCache.destroy();
                 } catch (e) {
                     // no-op
                 }
-                workingCache = null;
+                state.workingCache = null;
             }
-            wasOutdatedRun = true;
+            state.wasOutdatedRun = true;
             if (originalCache.__finishProcessing) {
                 originalCache.__finishProcessing(true);
             }
             return null;
         }).then(_ => {
             return this._handleTileProcessingComplete(
-                tile, tiledImage, drawer, originalCache, workingCache,
-                wasOutdatedRun, outdatedTest, atomicCacheSwap,
+                tile, tiledImage, drawer, originalCache, state,
+                outdatedTest, atomicCacheSwap,
                 tStamp, restoreTiles, _isFromTileLoad, tilesThatNeedReprocessing
             );
         }).catch(e => {
             $.console.error("Update routine error:", e);
-            if (workingCache) {
-                workingCache.destroy();
-                workingCache = null;
+            if (state.workingCache) {
+                state.workingCache.destroy();
+                state.workingCache = null;
             }
             if (originalCache.__finishProcessing) {
-                originalCache.__finishProcessing(true);
+                originalCache.__finishProcessing();
             }
         });
     }
@@ -286,8 +287,8 @@ $.TileInvalidationManager = class {
      * Handle completion of tile processing after event handlers have run
      * @private
      */
-    _handleTileProcessingComplete(tile, tiledImage, drawer, originalCache, workingCache,
-                                   wasOutdatedRun, outdatedTest, atomicCacheSwap,
+    _handleTileProcessingComplete(tile, tiledImage, drawer, originalCache, state,
+                                   outdatedTest, atomicCacheSwap,
                                    tStamp, restoreTiles, _isFromTileLoad, tilesThatNeedReprocessing) {
         if (this._viewer.isDestroyed()) {
             if (originalCache.__finishProcessing) {
@@ -296,30 +297,30 @@ $.TileInvalidationManager = class {
             return null;
         }
 
-        if (wasOutdatedRun) {
+        if (state.wasOutdatedRun) {
             return null;
         }
 
         if (originalCache.__finishProcessing) {
-            if (!wasOutdatedRun && (tile.loaded || tile.loading)) {
+            if (!state.wasOutdatedRun && (tile.loaded || tile.loading)) {
                 // Check if processing was outdated
                 if (originalCache.__invStamp < this._invalidatedAt) {
                     tilesThatNeedReprocessing.push(tile);
                 } else if (originalCache.__invStamp === tStamp) {
                     // Handle working cache if created
-                    if (workingCache) {
-                        return workingCache.prepareForRendering(drawer).then(c => {
-                            if (!wasOutdatedRun) {
+                    if (state.workingCache) {
+                        return state.workingCache.prepareForRendering(drawer).then(c => {
+                            if (!state.wasOutdatedRun) {
                                 if (!outdatedTest() && c) {
                                     atomicCacheSwap();
                                 } else {
-                                    workingCache.destroy();
-                                    workingCache = null;
+                                    state.workingCache.destroy();
+                                    state.workingCache = null;
                                 }
                                 originalCache.__finishProcessing();
                             } else {
-                                workingCache.destroy();
-                                workingCache = null;
+                                state.workingCache.destroy();
+                                state.workingCache = null;
                             }
                         });
                     }
@@ -330,7 +331,7 @@ $.TileInvalidationManager = class {
                         const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
                         if (mainCacheRef !== freshOriginalCacheRef) {
                             return freshOriginalCacheRef.prepareForRendering(drawer).then((c) => {
-                                if (!wasOutdatedRun) {
+                                if (!state.wasOutdatedRun) {
                                     if (!outdatedTest() && c) {
                                         atomicCacheSwap();
                                     }
@@ -348,7 +349,7 @@ $.TileInvalidationManager = class {
                         `loaded: ${tile ? tile.loaded : 'n/a'}, loading: ${tile ? tile.loading : 'n/a'}, ` +
                         `originalCache.__invStamp: ${originalCache.__invStamp}, ` +
                         `this._invalidatedAt: ${this._invalidatedAt}, ` +
-                        `tStamp: ${tStamp}, wasOutdatedRun: ${wasOutdatedRun}`
+                        `tStamp: ${tStamp}, wasOutdatedRun: ${state.wasOutdatedRun}`
                     );
                 }
 
@@ -356,7 +357,7 @@ $.TileInvalidationManager = class {
                 if (_isFromTileLoad) {
                     const freshMainCacheRef = tile.getCache();
                     return freshMainCacheRef.prepareForRendering(drawer).then(() => {
-                        if (!wasOutdatedRun && originalCache.__finishProcessing) {
+                        if (!state.wasOutdatedRun && originalCache.__finishProcessing) {
                             originalCache.__finishProcessing();
                         }
                     });
@@ -365,7 +366,7 @@ $.TileInvalidationManager = class {
                 return null;
             }
 
-            if (!wasOutdatedRun) {
+            if (!state.wasOutdatedRun) {
                 originalCache.__finishProcessing(true);
             }
         }
@@ -374,15 +375,15 @@ $.TileInvalidationManager = class {
         if (_isFromTileLoad) {
             const freshMainCacheRef = tile.getCache();
             return freshMainCacheRef.prepareForRendering(drawer).then(() => {
-                if (!wasOutdatedRun && originalCache.__finishProcessing) {
+                if (!state.wasOutdatedRun && originalCache.__finishProcessing) {
                     originalCache.__finishProcessing();
                 }
             });
         }
 
-        if (workingCache) {
-            workingCache.destroy();
-            workingCache = null;
+        if (state.workingCache) {
+            state.workingCache.destroy();
+            state.workingCache = null;
         }
         return null;
     }
