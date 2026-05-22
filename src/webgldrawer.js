@@ -1183,20 +1183,18 @@
                         // set the opacity uniform for each tile
                         gl.uniform1fv(firstPass.uOpacities, new Float32Array(opacityArray));
 
-                        // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
-                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
-                        gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
-
-                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
-                        gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
-
-                        gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
-                        gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
-
-                        // Draw! 6 vertices per tile (2 triangles per rectangle)
-                        gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
                         if (firstPass.vao) {
                             this._glContext.bindVertexArray(firstPass.vao);
+                        } else {
+                            // bind vertex buffers and (re)set attributes before calling gl.drawArrays()
+                            gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferOutputPosition);
+                            gl.vertexAttribPointer(firstPass.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+                            gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferTexturePosition);
+                            gl.vertexAttribPointer(firstPass.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+
+                            gl.bindBuffer(gl.ARRAY_BUFFER, firstPass.bufferIndex);
+                            gl.vertexAttribPointer(firstPass.aIndex, 1, gl.FLOAT, false, 0, 0);
                         }
                         // Draw! 6 vertices per tile (2 triangles per rectangle)
                         gl.drawArrays(gl.TRIANGLES, 0, 6 * numTilesToDraw );
