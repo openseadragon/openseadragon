@@ -661,4 +661,47 @@
             done();
         })();
     });
+
+    // ----------
+    QUnit.test('learnWithBenchmark rejects when no generator exists', function(test) {
+        const done = test.async();
+
+        (async function() {
+            try {
+                await Converter.learnWithBenchmark('__nonexistent_type__', '__TEST__shouldNotRegister', function() {
+                    return {};
+                }, {});
+                test.ok(false, "learnWithBenchmark should reject when benchmarking cannot run");
+            } catch (error) {
+                test.ok(/No benchmark data generator registered/.test(error.message || String(error)),
+                    "learnWithBenchmark reports missing generator configuration");
+                test.equal(Converter.getConversionPath('__nonexistent_type__', '__TEST__shouldNotRegister'), undefined,
+                    "Conversion is not registered when benchmarking falls back");
+            }
+
+            done();
+        })();
+    });
+
+    // ----------
+    QUnit.test('learn cost encoding keeps power classes ordered above multipliers', function(test) {
+        const done = test.async();
+
+        const lowPowerType = "__TEST__lowPowerPath";
+        const highPowerType = "__TEST__highPowerPath";
+        const targetType = "__TEST__weightedTarget";
+
+        Converter.learn("__TEST__url", lowPowerType, (tile, url) => url, 0, 100000);
+        Converter.learn(lowPowerType, targetType, (tile, value) => value, 0, 1);
+
+        Converter.learn("__TEST__url", highPowerType, (tile, url) => url, 1, 1);
+        Converter.learn(highPowerType, targetType, (tile, value) => value, 0, 1);
+
+        const path = Converter.getConversionPath("__TEST__url", targetType);
+        test.ok(path, "Weighted path exists");
+        test.equal(path.length, 2, "Weighted path uses two steps");
+        test.equal(path[0].target.value, lowPowerType, "Lower power class outranks multiplier differences");
+
+        done();
+    });
 })();

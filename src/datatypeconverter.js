@@ -622,6 +622,11 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         var iterations = options.iterations || 3;
         var warmupIterations = options.warmupIterations || 1;
         var now = function() {
+            // eslint-disable-next-line compat/compat
+            if (typeof performance !== 'undefined' && performance && typeof performance.now === 'function') {
+                // eslint-disable-next-line compat/compat
+                return performance.now();
+            }
             return Date.now();
         };
         var seenSizes = {};
@@ -846,6 +851,12 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         $.console.assert($.isFunction(callback), "[DataTypeConverter:learnWithBenchmark] Callback must be a valid function!");
 
         return this.benchmark(from, callback, benchmarkOptions).then(function(result) {
+            if (result.measurements === null) {
+                return $.Promise.reject(new Error(
+                    "[DataTypeConverter:learnWithBenchmark] No benchmark data generator registered for type '" +
+                    from + "'. Use registerTestDataGenerator() or call learn() with manual costs."
+                ));
+            }
             // Register the conversion with computed costs
             self.learn(from, to, callback, result.costPower, result.costMultiplier);
 
