@@ -407,7 +407,7 @@ out vec2 v_texture_position;
 flat out int v_image_index;
 
 void main() {
-    mat3 transform_matrix;
+    mat3 transform_matrix = u_matrix_0;
     ${makeConditionals()}
 
     gl_Position = vec4(transform_matrix * vec3(a_output_position, 1.0), 1.0);
@@ -450,7 +450,7 @@ void main() {
 
             void main() {
 
-                mat3 transform_matrix; // value will be set by the if/elses in makeConditional()
+                mat3 transform_matrix = u_matrix_0; // safe default if an index falls outside the generated range
 
                 ${makeConditionals()}
 
