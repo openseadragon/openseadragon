@@ -1128,6 +1128,49 @@
         }
 
         /**
+         * Build the current viewport transform used by the main draw pipeline.
+         * @returns {OpenSeadragon.Mat3}
+         * @private
+         */
+        _getViewMatrix() {
+            const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
+            const view = {
+                bounds: bounds,
+                center: new OpenSeadragon.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
+                rotation: this.viewport.getRotation(true) * Math.PI / 180
+            };
+
+            const flipMultiplier = this.viewport.flipped ? -1 : 1;
+            const posMatrix = $.Mat3.makeTranslation(-view.center.x, -view.center.y);
+            const scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
+            const rotMatrix = $.Mat3.makeRotation(-view.rotation);
+            return scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
+        }
+
+        /**
+         * Build the tiled-image-specific transform used by the main draw pipeline.
+         * @param {OpenSeadragon.TiledImage} tiledImage
+         * @param {OpenSeadragon.Mat3} viewMatrix
+         * @returns {OpenSeadragon.Mat3}
+         * @private
+         */
+        _getTiledImageTransformMatrix(tiledImage, viewMatrix) {
+            let overallMatrix = viewMatrix;
+            const imageRotation = tiledImage.getRotation(true);
+
+            if (imageRotation % 360 !== 0) {
+                const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
+                const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
+                const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
+                const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
+                const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
+                overallMatrix = viewMatrix.multiply(localMatrix);
+            }
+
+            return overallMatrix;
+        }
+
+        /**
          * @param {TiledImage} tiledImage the tiled image that is calling the function
          * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
          * @private
@@ -1183,19 +1226,7 @@
             const secondPass = this._glContext.getSecondPass();
             const glFrameBuffer = this._glContext.getFrameBuffer();
             const renderToTexture = this._glContext.getRenderToTexture();
-            const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
-            const view = {
-                bounds: bounds,
-                center: new OpenSeadragon.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
-                rotation: this.viewport.getRotation(true) * Math.PI / 180
-            };
-
-            const flipMultiplier = this.viewport.flipped ? -1 : 1;
-            // calculate view matrix for viewer
-            const posMatrix = $.Mat3.makeTranslation(-view.center.x, -view.center.y);
-            const scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
-            const rotMatrix = $.Mat3.makeRotation(-view.rotation);
-            const viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
+            const viewMatrix = this._getViewMatrix();
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
@@ -1273,20 +1304,7 @@
                     // no need to clear, just draw on top of the existing pixels
                 }
 
-                let overallMatrix = viewMatrix;
-
-                const imageRotation = tiledImage.getRotation(true);
-                // if needed, handle the tiledImage being rotated
-                if( imageRotation % 360 !== 0){
-                    const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
-                    const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
-                    const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
-                    const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
-
-                    // update the view matrix to account for this image's rotation
-                    const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
-                    overallMatrix = viewMatrix.multiply(localMatrix);
-                }
+                const overallMatrix = this._getTiledImageTransformMatrix(tiledImage, viewMatrix);
 
                 // Check MAX_TEXTURE_IMAGE_UNITS - throw error if invalid (will be caught by outer try-catch)
                 const maxTextures = this._glContext.getMaxTextures();
@@ -1616,6 +1634,9 @@
             }
 
             const maxTextures = this._glContext.getMaxTextures();
+            if(maxTextures <= 0 || maxTextures === null || maxTextures === undefined){
+                return null;
+            }
             const numTiles = Math.min(tiles.length, maxTextures);
 
             // Build the texture position and matrix arrays similar to the draw loop
@@ -1623,8 +1644,7 @@
             const matrixArray = new Array(maxTextures);
             const opacityArray = new Array(maxTextures);
             const textureDataArray = new Array(maxTextures);
-
-            const viewMatrix = tiledImage._viewportToTiledImageMatrix;
+            const viewMatrix = this._getTiledImageTransformMatrix(tiledImage, this._getViewMatrix());
 
             let numTilesToDraw = 0;
             for (let i = 0; i < numTiles; i++) {

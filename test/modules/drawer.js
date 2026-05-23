@@ -110,6 +110,8 @@
 
             const originalGetDataToDraw = drawer.getDataToDraw;
             const originalGetTileData = drawer._getTileData;
+            const originalGetViewMatrix = drawer._getViewMatrix;
+            const originalGetTiledImageTransformMatrix = drawer._getTiledImageTransformMatrix;
             const originalCapture = drawer._glContext.captureTransformFeedback;
             const originalRead = drawer._glContext.readTransformFeedbackData;
 
@@ -131,6 +133,13 @@
                 textureDataArray[index] = textureInfo.texture;
                 opacityArray[index] = tile.opacity;
             };
+            drawer._getViewMatrix = function() {
+                return {};
+            };
+            drawer._getTiledImageTransformMatrix = function(tiledImage, viewMatrix) {
+                assert.ok(viewMatrix, 'capture computes a real draw-matrix input');
+                return {};
+            };
             drawer._glContext.captureTransformFeedback = function(texturePositionArray, matrixArray, numTilesToDraw) {
                 assert.equal(numTilesToDraw, 1, 'capture delegates only populated tiles');
                 assert.ok(matrixArray[0], 'capture receives populated matrix data');
@@ -148,14 +157,14 @@
                         opacity: 1
                     }
                 }
-            ], {
-                _viewportToTiledImageMatrix: {}
-            });
+            ], {});
 
             assert.strictEqual(result, fakeResult, 'captureTransformFeedback returns the context-manager readback result');
 
             drawer.getDataToDraw = originalGetDataToDraw;
             drawer._getTileData = originalGetTileData;
+            drawer._getViewMatrix = originalGetViewMatrix;
+            drawer._getTiledImageTransformMatrix = originalGetTiledImageTransformMatrix;
             drawer._glContext.captureTransformFeedback = originalCapture;
             drawer._glContext.readTransformFeedbackData = originalRead;
 
