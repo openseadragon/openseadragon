@@ -106,8 +106,8 @@
             const viewerThree = createNamedViewer('example-shared-3');
 
             assert.notOk(viewerOne.drawer._useSharedRenderer, 'first webgl drawer keeps a private renderer');
-            assert.notOk(viewerTwo.drawer._useSharedRenderer, 'second webgl drawer still keeps a private renderer');
-            assert.ok(viewerThree.drawer._useSharedRenderer, 'third webgl drawer starts using the shared renderer');
+            assert.ok(viewerTwo.drawer._useSharedRenderer, 'second webgl drawer starts using the shared renderer');
+            assert.ok(viewerThree.drawer._useSharedRenderer, 'subsequent webgl drawers keep using the shared renderer');
 
             viewers.reverse().forEach(function(localViewer) {
                 localViewer.destroy();

@@ -839,7 +839,7 @@
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
             this._useSharedRenderer = this.options.useSharedRenderer === true ||
-                (this.options.useSharedRenderer === undefined && activeWebGLDrawerCount >= 2);
+                (this.options.useSharedRenderer === undefined && activeWebGLDrawerCount >= 1);
 
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");

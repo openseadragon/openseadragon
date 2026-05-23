@@ -798,8 +798,8 @@
  *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
  * @property {Boolean} [useSharedRenderer]
  *  Whether to share a WebGL context across multiple WebGL drawers. When left undefined,
- *  sharing automatically starts with the third live WebGL drawer to reduce context pressure
- *  without changing the common single-viewer or viewer-plus-navigator cases.
+ *  sharing automatically starts with the second live WebGL drawer to reduce context pressure
+ *  once multiple WebGL drawers are active.
  */
 
 /**
