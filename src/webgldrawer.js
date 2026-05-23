@@ -1643,7 +1643,7 @@
                 initShaderProgram: this.constructor.initShaderProgram
             });
 
-            if (!this._glContext.getContext() && this._sharedContext) {
+            if ((!this._glContext.getContext() || this._glContext.getMaxTextures() <= 0) && this._sharedContext) {
                 this._sharedContext.release();
                 this._sharedContext = null;
                 this._useSharedRenderer = false;
@@ -1759,7 +1759,7 @@
                     }
                 }
 
-                this._glContext = new WebglContextManager({
+                const createContextManager = () => new WebglContextManager({
                     renderingCanvas: this._sharedContext ? null : this._renderingCanvas,
                     sharedContext: this._sharedContext,
                     unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha,
@@ -1767,21 +1767,39 @@
                     initShaderProgram: this.constructor.initShaderProgram
                 });
 
-                // Verify context is valid
-                if (!this._glContext.getContext()) {
-                    $.console.error('Failed to recreate WebGL context: no GL context');
-                    return null;
+                this._glContext = createContextManager();
+
+                const hasValidContext = () => {
+                    if (!this._glContext.getContext()) {
+                        return false;
+                    }
+
+                    try {
+                        return this._glContext.getMaxTextures() > 0;
+                    } catch (e) {
+                        $.console.error('Failed to verify new WebGL context:', e);
+                        return false;
+                    }
+                };
+
+                if (!hasValidContext() && this._sharedContext) {
+                    this._sharedContext.release();
+                    this._sharedContext = null;
+                    this._useSharedRenderer = false;
+                    this._renderingCanvas = document.createElement('canvas');
+                    this._renderingCanvas.width = oldWidth;
+                    this._renderingCanvas.height = oldHeight;
+                    if (oldStyleWidth) {
+                        this._renderingCanvas.style.width = oldStyleWidth;
+                    }
+                    if (oldStyleHeight) {
+                        this._renderingCanvas.style.height = oldStyleHeight;
+                    }
+                    this._glContext = createContextManager();
                 }
 
-                // Check if the new context has valid MAX_TEXTURE_IMAGE_UNITS
-                try {
-                    const maxTextures = this._glContext.getMaxTextures();
-                    if (!maxTextures || maxTextures <= 0) {
-                        $.console.error('Failed to recreate WebGL context: invalid MAX_TEXTURE_IMAGE_UNITS');
-                        return null;
-                    }
-                } catch (e) {
-                    $.console.error('Failed to verify new WebGL context:', e);
+                if (!hasValidContext()) {
+                    $.console.error('Failed to recreate WebGL context: invalid MAX_TEXTURE_IMAGE_UNITS');
                     return null;
                 }
 
