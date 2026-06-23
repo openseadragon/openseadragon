@@ -14,6 +14,7 @@ OPENSEADRAGON CHANGELOG
 * Improved documentation (#2910 @Aiosa, #2915 @lukew-cogapp)
 * Fixed tile blending in canvas and HTML drawers (#2893 @Aiosa)
 * Fixed an issue with placeholderFillStyle in the canvas drawer that would sometimes show a seam at the edge of an image (#2905 @pearcetm)
+* Now tracking built library size (#2806 @adriandarian)
 
 6.0.2:
 

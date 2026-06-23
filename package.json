@@ -46,6 +46,7 @@
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
         "qunit": "^2.24.1",
+        "source-map-explorer": "^2.5.3",
         "tsd": "^0.33.0",
         "typescript": "^5.9.3"
     },
@@ -53,8 +54,23 @@
         "test": "grunt test",
         "prepare": "grunt build",
         "build": "grunt build",
-        "dev": "grunt dev"
+        "dev": "grunt dev",
+        "bundlesize": "node scripts/check-bundle-size.js",
+        "bundlesize:visualize": "source-map-explorer build/openseadragon/openseadragon.min.js --no-border-checks",
+        "package": "grunt package"
     },
+    "bundlesize": [
+        {
+            "path": "build/openseadragon/openseadragon.min.js",
+            "maxSize": "90 kB",
+            "compression": "gzip"
+        },
+        {
+            "path": "build/openseadragon/openseadragon.min.js",
+            "maxSize": "350 kB",
+            "compression": "none"
+        }
+    ],
     "types": "types/index.d.ts",
     "tsd": {
         "directory": "test-dts"
