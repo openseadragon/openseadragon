@@ -32,7 +32,10 @@ jobs:
           npm install -g grunt-cli
           npm ci
 
+      - name: Install Chrome for Puppeteer
+        run: |
+          npx puppeteer browsers install chrome
+
       - name: Run tests
         run: |
           npm run test
-
