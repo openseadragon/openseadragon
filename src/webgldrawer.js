@@ -41,144 +41,99 @@
         alpha: true,
         preserveDrawingBuffer: true
     };
-    let activeWebGLDrawerCount = 0;
     let sharedWebGLContextInstance = null;
 
-    class SharedWebGLContext {
-        constructor() {
-            this._canvas = document.createElement('canvas');
-            this._canvas.width = 1;
-            this._canvas.height = 1;
-            this._refCount = 0;
-            this._destroyed = false;
-            this._gl = this._canvas.getContext('webgl2', WEBGL_CONTEXT_ATTRIBUTES);
-            this._isWebGL2 = !!this._gl;
+    function createSharedWebGLContext() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
 
-            if (!this._gl) {
-                this._gl = this._canvas.getContext('webgl', WEBGL_CONTEXT_ATTRIBUTES);
-            }
+        let gl = canvas.getContext('webgl2', WEBGL_CONTEXT_ATTRIBUTES);
+        const context = {
+            canvas: canvas,
+            gl: gl,
+            isWebGL2: !!gl,
+            maxTextureSize: 0,
+            refCount: 0
+        };
 
-            this._extTextureFilterAnisotropic = null;
-            this._maxAnisotropy = 0;
-            this._maxTextureSize = 0;
-
-            if (this._gl) {
-                this._setupExtensions();
-                this._maxTextureSize = this._gl.getParameter(this._gl.MAX_TEXTURE_SIZE) || 0;
-            }
+        if (!gl) {
+            gl = canvas.getContext('webgl', WEBGL_CONTEXT_ATTRIBUTES);
+            context.gl = gl;
         }
 
-        retain() {
-            this._refCount++;
+        if (gl) {
+            context.maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 0;
         }
 
-        release() {
-            if (this._refCount > 0) {
-                this._refCount--;
-            }
+        return context;
+    }
 
-            if (this._refCount === 0) {
-                this.destroy();
-                if (sharedWebGLContextInstance === this) {
-                    sharedWebGLContextInstance = null;
-                }
-            }
+    function acquireSharedWebGLContext() {
+        if (!sharedWebGLContextInstance || !sharedWebGLContextInstance.gl) {
+            sharedWebGLContextInstance = createSharedWebGLContext();
+        }
+        sharedWebGLContextInstance.refCount++;
+        return sharedWebGLContextInstance;
+    }
+
+    function releaseSharedWebGLContext(sharedContext) {
+        if (!sharedContext) {
+            return;
         }
 
-        getCanvas() {
-            return this._canvas;
+        if (sharedContext.refCount > 0) {
+            sharedContext.refCount--;
         }
 
-        getContext() {
-            return this._gl;
-        }
-
-        isWebGL2() {
-            return this._isWebGL2;
-        }
-
-        getAnisotropicExtension() {
-            return this._extTextureFilterAnisotropic;
-        }
-
-        getMaxAnisotropy() {
-            return this._maxAnisotropy;
-        }
-
-        ensureSize(width, height) {
-            if (!this._canvas || !this._gl || this._destroyed) {
-                return false;
-            }
-
-            const maxTextureSize = this._maxTextureSize || Math.max(width, height);
-            const nextWidth = Math.min(width, maxTextureSize);
-            const nextHeight = Math.min(height, maxTextureSize);
-            let resized = false;
-
-            if (this._canvas.width < nextWidth) {
-                this._canvas.width = nextWidth;
-                resized = true;
-            }
-            if (this._canvas.height < nextHeight) {
-                this._canvas.height = nextHeight;
-                resized = true;
-            }
-
-            if (resized) {
-                this._gl.viewport(0, 0, this._canvas.width, this._canvas.height);
-                this._gl.enable(this._gl.BLEND);
-                this._gl.blendFunc(this._gl.ONE, this._gl.ONE_MINUS_SRC_ALPHA);
-            }
-
-            return resized;
-        }
-
-        isDestroyed() {
-            return this._destroyed;
-        }
-
-        destroy() {
-            if (this._destroyed) {
-                return;
-            }
-
-            if (this._gl) {
-                const ext = this._gl.getExtension('WEBGL_lose_context');
+        if (sharedContext.refCount === 0) {
+            if (sharedContext.gl) {
+                const ext = sharedContext.gl.getExtension('WEBGL_lose_context');
                 if (ext) {
                     ext.loseContext();
                 }
             }
 
-            if (this._canvas) {
-                this._canvas.width = 1;
-                this._canvas.height = 1;
+            if (sharedContext.canvas) {
+                sharedContext.canvas.width = 1;
+                sharedContext.canvas.height = 1;
             }
 
-            this._gl = null;
-            this._canvas = null;
-            this._destroyed = true;
-        }
+            sharedContext.gl = null;
+            sharedContext.canvas = null;
 
-        _setupExtensions() {
-            this._extTextureFilterAnisotropic =
-                this._gl.getExtension('EXT_texture_filter_anisotropic') ||
-                this._gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic') ||
-                this._gl.getExtension('MOZ_EXT_texture_filter_anisotropic');
-
-            if (this._extTextureFilterAnisotropic) {
-                this._maxAnisotropy = this._gl.getParameter(
-                    this._extTextureFilterAnisotropic.MAX_TEXTURE_MAX_ANISOTROPY_EXT
-                );
+            if (sharedWebGLContextInstance === sharedContext) {
+                sharedWebGLContextInstance = null;
             }
         }
     }
 
-    function acquireSharedWebGLContext() {
-        if (!sharedWebGLContextInstance || sharedWebGLContextInstance.isDestroyed()) {
-            sharedWebGLContextInstance = new SharedWebGLContext();
+    function ensureSharedWebGLContextSize(sharedContext, width, height) {
+        if (!sharedContext || !sharedContext.canvas || !sharedContext.gl) {
+            return false;
         }
-        sharedWebGLContextInstance.retain();
-        return sharedWebGLContextInstance;
+
+        const maxTextureSize = sharedContext.maxTextureSize || Math.max(width, height);
+        const nextWidth = Math.min(width, maxTextureSize);
+        const nextHeight = Math.min(height, maxTextureSize);
+        let resized = false;
+
+        if (sharedContext.canvas.width < nextWidth) {
+            sharedContext.canvas.width = nextWidth;
+            resized = true;
+        }
+        if (sharedContext.canvas.height < nextHeight) {
+            sharedContext.canvas.height = nextHeight;
+            resized = true;
+        }
+
+        if (resized) {
+            sharedContext.gl.viewport(0, 0, sharedContext.canvas.width, sharedContext.canvas.height);
+            sharedContext.gl.enable(sharedContext.gl.BLEND);
+            sharedContext.gl.blendFunc(sharedContext.gl.ONE, sharedContext.gl.ONE_MINUS_SRC_ALPHA);
+        }
+
+        return resized;
     }
 
     /**
@@ -193,7 +148,7 @@
     class WebglContextManager {
         constructor(options) {
             this._sharedContext = options.sharedContext || null;
-            this._renderingCanvas = this._sharedContext ? this._sharedContext.getCanvas() : options.renderingCanvas;
+            this._renderingCanvas = this._sharedContext ? this._sharedContext.canvas : options.renderingCanvas;
             this._unpackWithPremultipliedAlpha = !!options.unpackWithPremultipliedAlpha;
             this._imageSmoothingEnabled = options.imageSmoothingEnabled !== undefined ? options.imageSmoothingEnabled : true;
             this._initShaderProgram = options.initShaderProgram;
@@ -213,10 +168,9 @@
             this._destroyed = false;
 
             if (this._sharedContext) {
-                this._gl = this._sharedContext.getContext();
-                this._isWebGL2 = this._sharedContext.isWebGL2();
-                this._extTextureFilterAnisotropic = this._sharedContext.getAnisotropicExtension();
-                this._maxAnisotropy = this._sharedContext.getMaxAnisotropy();
+                this._gl = this._sharedContext.gl;
+                this._isWebGL2 = this._sharedContext.isWebGL2;
+                this._setupWebGLExtensions();
             } else {
                 // Create WebGL context
                 this._gl = this._renderingCanvas.getContext('webgl2', WEBGL_CONTEXT_ATTRIBUTES);
@@ -762,10 +716,6 @@
         isDestroyed() {
             return this._destroyed;
         }
-
-        isShared() {
-            return !!this._sharedContext;
-        }
     }
 
    /**
@@ -825,23 +775,11 @@
              * @private
              */
             this._enableContextRecovery = true;
-            this._outputCanvas = null;
-            this._outputContext = null;
-            this._clippingCanvas = null;
-            this._clippingContext = null;
-            this._renderingCanvas = null;
-            this._backupCanvasDrawer = null;
             this._canvasFallbackAllowed = this.viewer.drawerCandidates && this.viewer.drawerCandidates.includes('canvas');
-            this._sharedContext = null;
-            this._useSharedRenderer = false;
-            this._isTrackedDrawer = false;
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
-            // Auto mode is creation-order based: the first live WebGL drawer stays dedicated,
-            // and drawers created while another live WebGL drawer already exists use the shared context.
-            this._useSharedRenderer = this.options.useSharedRenderer === true ||
-                (this.options.useSharedRenderer === undefined && activeWebGLDrawerCount >= 1);
+            this._useSharedRenderer = this.options.useSharedRenderer === true;
 
             // Reject listening for the tile-drawing and tile-drawn events, which this drawer does not fire
             this.viewer.rejectEventHandler("tile-drawn", "The WebGLDrawer does not raise the tile-drawn event");
@@ -852,8 +790,6 @@
             // the private _setupCanvases and _setupRenderer functions.
             this._setupCanvases();
             this._setupRenderer();
-            activeWebGLDrawerCount++;
-            this._isTrackedDrawer = true;
 
             this._supportedFormats = ["context2d", "image"];
             this.context = this._outputContext; // API required by tests
@@ -865,7 +801,7 @@
                 usePrivateCache: true,
                 preloadCache: false,
                 unpackWithPremultipliedAlpha: false,
-                useSharedRenderer: undefined,
+                useSharedRenderer: false,
             };
         }
 
@@ -895,7 +831,7 @@
             }
 
             if (this._sharedContext) {
-                this._sharedContext.release();
+                releaseSharedWebGLContext(this._sharedContext);
                 this._sharedContext = null;
             }
 
@@ -924,12 +860,6 @@
             }
 
             this.destroyInternalCache();
-
-            if (this._isTrackedDrawer) {
-                activeWebGLDrawerCount--;
-                this._isTrackedDrawer = false;
-            }
-
             // set our destroyed flag to true
             this._destroyed = true;
         }
@@ -1158,17 +1088,11 @@
             const viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
 
             if (this._useSharedRenderer) {
-                const width = this._outputCanvas.width;
-                const height = this._outputCanvas.height;
-                const canvasHeight = this._renderingCanvas.height;
-                const yOffset = canvasHeight - height;
-
-                gl.viewport(0, yOffset, width, height);
                 gl.disable(gl.SCISSOR_TEST);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                 gl.clear(gl.COLOR_BUFFER_BIT);
                 gl.enable(gl.SCISSOR_TEST);
-                gl.scissor(0, yOffset, width, height);
+                this._setSharedViewport(gl, false);
             } else {
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                 gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
@@ -1241,8 +1165,7 @@
                 if(useTwoPassRendering){
                     gl.bindFramebuffer(gl.FRAMEBUFFER, glFrameBuffer);
                     if (this._useSharedRenderer) {
-                        gl.viewport(0, 0, this._outputCanvas.width, this._outputCanvas.height);
-                        gl.scissor(0, 0, this._outputCanvas.width, this._outputCanvas.height);
+                        this._setSharedViewport(gl, true);
                     }
                     // clear the buffer to draw a new image
                     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -1343,12 +1266,7 @@
                     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
                     if (this._useSharedRenderer) {
-                        const width = this._outputCanvas.width;
-                        const height = this._outputCanvas.height;
-                        const canvasHeight = this._renderingCanvas.height;
-                        const yOffset = canvasHeight - height;
-                        gl.viewport(0, yOffset, width, height);
-                        gl.scissor(0, yOffset, width, height);
+                        this._setSharedViewport(gl, false);
                     }
 
                     // bind the rendered texture from the first pass to use during this second pass
@@ -1613,6 +1531,65 @@
             }
         }
 
+        _createDedicatedRenderingCanvas(width, height) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            return canvas;
+        }
+
+        _createGlContextManager() {
+            return new WebglContextManager({
+                renderingCanvas: this._sharedContext ? null : this._renderingCanvas,
+                sharedContext: this._sharedContext,
+                unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha,
+                imageSmoothingEnabled: this._imageSmoothingEnabled,
+                initShaderProgram: this.constructor.initShaderProgram
+            });
+        }
+
+        _hasValidGlContext() {
+            return !!(this._glContext && this._glContext.getContext() && this._glContext.getMaxTextures() > 0);
+        }
+
+        _fallbackToDedicatedContext(width, height) {
+            if (this._glContext) {
+                this._glContext.destroy();
+            }
+            if (this._sharedContext) {
+                releaseSharedWebGLContext(this._sharedContext);
+                this._sharedContext = null;
+            }
+            this._useSharedRenderer = false;
+            this._renderingCanvas = this._createDedicatedRenderingCanvas(width, height);
+            this._glContext = this._createGlContextManager();
+        }
+
+        _syncRenderingCanvasSize() {
+            if (this._useSharedRenderer && this._sharedContext) {
+                ensureSharedWebGLContextSize(this._sharedContext, this._outputCanvas.width, this._outputCanvas.height);
+                this._renderingCanvas = this._sharedContext.canvas;
+                return;
+            }
+
+            this._renderingCanvas.style.width = this._outputCanvas.clientWidth + 'px';
+            this._renderingCanvas.style.height = this._outputCanvas.clientHeight + 'px';
+            this._renderingCanvas.width = this._outputCanvas.width;
+            this._renderingCanvas.height = this._outputCanvas.height;
+        }
+
+        _setSharedViewport(gl, framebufferBound) {
+            if (!this._useSharedRenderer) {
+                return;
+            }
+
+            const width = this._outputCanvas.width;
+            const height = this._outputCanvas.height;
+            const yOffset = framebufferBound ? 0 : this._renderingCanvas.height - height;
+            gl.viewport(0, yOffset, width, height);
+            gl.scissor(0, yOffset, width, height);
+        }
+
         // private
         _setupCanvases(){
             const _this = this;
@@ -1625,42 +1602,28 @@
 
             if (this._useSharedRenderer) {
                 this._sharedContext = acquireSharedWebGLContext();
-                this._sharedContext.ensureSize(this._outputCanvas.width, this._outputCanvas.height);
-                this._renderingCanvas = this._sharedContext.getCanvas();
+                ensureSharedWebGLContextSize(this._sharedContext, this._outputCanvas.width, this._outputCanvas.height);
+                this._renderingCanvas = this._sharedContext.canvas;
             } else {
-                this._renderingCanvas = document.createElement('canvas');
-                this._renderingCanvas.width = this._outputCanvas.width;
-                this._renderingCanvas.height = this._outputCanvas.height;
+                this._renderingCanvas = this._createDedicatedRenderingCanvas(
+                    this._outputCanvas.width,
+                    this._outputCanvas.height
+                );
             }
 
             this._clippingCanvas.width = this._outputCanvas.width;
             this._clippingCanvas.height = this._outputCanvas.height;
 
             // Create WebGL context manager
-            this._glContext = new WebglContextManager({
-                renderingCanvas: this._useSharedRenderer ? null : this._renderingCanvas,
-                sharedContext: this._sharedContext,
-                unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha,
-                imageSmoothingEnabled: this._imageSmoothingEnabled,
-                initShaderProgram: this.constructor.initShaderProgram
-            });
+            this._glContext = this._createGlContextManager();
 
-            if ((!this._glContext.getContext() || this._glContext.getMaxTextures() <= 0) && this._sharedContext) {
+            if (!this._hasValidGlContext() && this._sharedContext) {
                 // The drawer count is incremented only after canvas/renderer setup completes,
                 // so it is safe to revert to a dedicated context here without touching the global count.
-                this._glContext.destroy();
-                this._sharedContext.release();
-                this._sharedContext = null;
-                this._useSharedRenderer = false;
-                this._renderingCanvas = document.createElement('canvas');
-                this._renderingCanvas.width = this._outputCanvas.width;
-                this._renderingCanvas.height = this._outputCanvas.height;
-                this._glContext = new WebglContextManager({
-                    renderingCanvas: this._renderingCanvas,
-                    unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha,
-                    imageSmoothingEnabled: this._imageSmoothingEnabled,
-                    initShaderProgram: this.constructor.initShaderProgram
-                });
+                this._fallbackToDedicatedContext(
+                    this._outputCanvas.width,
+                    this._outputCanvas.height
+                );
             }
 
             this._resizeHandler = function(){
@@ -1677,15 +1640,7 @@
                     _this._outputCanvas.height = viewportSize.y;
                 }
 
-                if (_this._useSharedRenderer && _this._sharedContext) {
-                    _this._sharedContext.ensureSize(_this._outputCanvas.width, _this._outputCanvas.height);
-                    _this._renderingCanvas = _this._sharedContext.getCanvas();
-                } else {
-                    _this._renderingCanvas.style.width = _this._outputCanvas.clientWidth + 'px';
-                    _this._renderingCanvas.style.height = _this._outputCanvas.clientHeight + 'px';
-                    _this._renderingCanvas.width = _this._outputCanvas.width;
-                    _this._renderingCanvas.height = _this._outputCanvas.height;
-                }
+                _this._syncRenderingCanvasSize();
                 _this._clippingCanvas.width = _this._outputCanvas.width;
                 _this._clippingCanvas.height = _this._outputCanvas.height;
 
@@ -1730,8 +1685,6 @@
                 const oldCanvas = this._renderingCanvas;
                 const oldWidth = oldCanvas.width;
                 const oldHeight = oldCanvas.height;
-                const oldStyleWidth = oldCanvas.style.width;
-                const oldStyleHeight = oldCanvas.style.height;
 
                 // Destroy internal cache FIRST (while old context still exists)
                 // This ensures textures are freed using the old context before it's destroyed
@@ -1746,64 +1699,12 @@
                 // Note: destroyInternalCache() above already properly cleaned up all texture
                 // and glContext references via internalCacheFree() callbacks
 
-                // Create new context manager with new canvas
-                if (this._sharedContext) {
-                    this._sharedContext.release();
-                    this._sharedContext = acquireSharedWebGLContext();
-                    this._sharedContext.ensureSize(oldWidth, oldHeight);
-                    this._renderingCanvas = this._sharedContext.getCanvas();
-                } else {
-                    this._renderingCanvas = document.createElement('canvas');
-                    this._renderingCanvas.width = oldWidth;
-                    this._renderingCanvas.height = oldHeight;
-                    if (oldStyleWidth) {
-                        this._renderingCanvas.style.width = oldStyleWidth;
-                    }
-                    if (oldStyleHeight) {
-                        this._renderingCanvas.style.height = oldStyleHeight;
-                    }
-                }
+                this._fallbackToDedicatedContext(
+                    oldWidth,
+                    oldHeight
+                );
 
-                const createContextManager = () => new WebglContextManager({
-                    renderingCanvas: this._sharedContext ? null : this._renderingCanvas,
-                    sharedContext: this._sharedContext,
-                    unpackWithPremultipliedAlpha: this._unpackWithPremultipliedAlpha,
-                    imageSmoothingEnabled: this._imageSmoothingEnabled,
-                    initShaderProgram: this.constructor.initShaderProgram
-                });
-
-                this._glContext = createContextManager();
-
-                const hasValidContext = () => {
-                    if (!this._glContext.getContext()) {
-                        return false;
-                    }
-
-                    try {
-                        return this._glContext.getMaxTextures() > 0;
-                    } catch (e) {
-                        $.console.error('Failed to verify new WebGL context:', e);
-                        return false;
-                    }
-                };
-
-                if (!hasValidContext() && this._sharedContext) {
-                    this._sharedContext.release();
-                    this._sharedContext = null;
-                    this._useSharedRenderer = false;
-                    this._renderingCanvas = document.createElement('canvas');
-                    this._renderingCanvas.width = oldWidth;
-                    this._renderingCanvas.height = oldHeight;
-                    if (oldStyleWidth) {
-                        this._renderingCanvas.style.width = oldStyleWidth;
-                    }
-                    if (oldStyleHeight) {
-                        this._renderingCanvas.style.height = oldStyleHeight;
-                    }
-                    this._glContext = createContextManager();
-                }
-
-                if (!hasValidContext()) {
+                if (!this._hasValidGlContext()) {
                     $.console.error('Failed to recreate WebGL context: invalid MAX_TEXTURE_IMAGE_UNITS');
                     return null;
                 }

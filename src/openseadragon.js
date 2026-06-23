@@ -801,8 +801,6 @@
  *  dedicated one per drawer.
  *  `true` enables the shared context immediately, even for the first WebGL drawer.
  *  `false` keeps this drawer on a dedicated context.
- *  When left undefined, the first live WebGL drawer stays dedicated and drawers created while
- *  another live WebGL drawer already exists switch to the shared context automatically.
  */
 
 /**
