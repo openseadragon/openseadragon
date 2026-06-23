@@ -9,3 +9,4 @@ instrumented/
 .directory
 local-test
 .DS_Store
+bundle-analysis.html
