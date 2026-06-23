@@ -35,7 +35,10 @@ jobs:
       - name: Install Chrome for Puppeteer
         run: |
           rm -rf "$HOME/.cache/puppeteer/chrome"
-          npx puppeteer browsers install chrome@127.0.6533.88
+          INSTALL_OUTPUT=$(npx @puppeteer/browsers install chrome@127.0.6533.88 --path "$HOME/.cache/puppeteer")
+          echo "$INSTALL_OUTPUT"
+          CHROME_PATH=$(echo "$INSTALL_OUTPUT" | tail -n 1 | awk '{print $2}')
+          echo "PUPPETEER_EXECUTABLE_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
 
       - name: Run tests
         run: |
