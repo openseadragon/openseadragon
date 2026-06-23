@@ -81,43 +81,14 @@
         });
 
         // ----------
-        QUnit.test('shared renderer auto threshold', function(assert) {
+        QUnit.test('shared renderer default stays dedicated', function(assert) {
             if (drawerType !== 'webgl') {
                 assert.expect(0);
                 return;
             }
 
-            const viewers = [];
-            const createNamedViewer = function(id, options) {
-                $('<div></div>').attr('id', id).appendTo('#qunit-fixture');
-                // eslint-disable-next-line new-cap
-                const localViewer = OpenSeadragon(OpenSeadragon.extend({
-                    id: id,
-                    prefixUrl: '/build/openseadragon/images/',
-                    springStiffness: 100,
-                    drawer: 'webgl'
-                }, options || {}));
-                viewers.push(localViewer);
-                return localViewer;
-            };
-
-            const viewerOne = createNamedViewer('example-shared-1', {
-                drawerOptions: {
-                    webgl: {
-                        useSharedRenderer: false
-                    }
-                }
-            });
-            const viewerTwo = createNamedViewer('example-shared-2');
-            const viewerThree = createNamedViewer('example-shared-3');
-
-            assert.notOk(viewerOne.drawer._useSharedRenderer, 'explicitly dedicated first local webgl drawer stays private');
-            assert.ok(viewerTwo.drawer._useSharedRenderer, 'auto mode uses the shared renderer once another live webgl drawer already exists');
-            assert.ok(viewerThree.drawer._useSharedRenderer, 'subsequent auto webgl drawers keep using the shared renderer');
-
-            viewers.reverse().forEach(function(localViewer) {
-                localViewer.destroy();
-            });
+            createViewer();
+            assert.notOk(viewer.drawer._useSharedRenderer, 'webgl drawers stay dedicated unless explicitly opted into shared rendering');
         });
 
         // ----------
