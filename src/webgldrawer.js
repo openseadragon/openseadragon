@@ -838,6 +838,8 @@
 
             this._imageSmoothingEnabled = true; // will be updated by setImageSmoothingEnabled
             this._unpackWithPremultipliedAlpha = !!this.options.unpackWithPremultipliedAlpha;
+            // Auto mode is creation-order based: the first live WebGL drawer stays dedicated,
+            // and drawers created while another live WebGL drawer already exists use the shared context.
             this._useSharedRenderer = this.options.useSharedRenderer === true ||
                 (this.options.useSharedRenderer === undefined && activeWebGLDrawerCount >= 1);
 
@@ -1644,6 +1646,9 @@
             });
 
             if ((!this._glContext.getContext() || this._glContext.getMaxTextures() <= 0) && this._sharedContext) {
+                // The drawer count is incremented only after canvas/renderer setup completes,
+                // so it is safe to revert to a dedicated context here without touching the global count.
+                this._glContext.destroy();
                 this._sharedContext.release();
                 this._sharedContext = null;
                 this._useSharedRenderer = false;

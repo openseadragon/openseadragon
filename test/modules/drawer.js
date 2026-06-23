@@ -101,13 +101,19 @@
                 return localViewer;
             };
 
-            const viewerOne = createNamedViewer('example-shared-1');
+            const viewerOne = createNamedViewer('example-shared-1', {
+                drawerOptions: {
+                    webgl: {
+                        useSharedRenderer: false
+                    }
+                }
+            });
             const viewerTwo = createNamedViewer('example-shared-2');
             const viewerThree = createNamedViewer('example-shared-3');
 
-            assert.equal(typeof viewerOne.drawer._useSharedRenderer, 'boolean', 'first local webgl drawer reports whether shared rendering is active');
-            assert.ok(viewerTwo.drawer._useSharedRenderer, 'second webgl drawer starts using the shared renderer');
-            assert.ok(viewerThree.drawer._useSharedRenderer, 'subsequent webgl drawers keep using the shared renderer');
+            assert.notOk(viewerOne.drawer._useSharedRenderer, 'explicitly dedicated first local webgl drawer stays private');
+            assert.ok(viewerTwo.drawer._useSharedRenderer, 'auto mode uses the shared renderer once another live webgl drawer already exists');
+            assert.ok(viewerThree.drawer._useSharedRenderer, 'subsequent auto webgl drawers keep using the shared renderer');
 
             viewers.reverse().forEach(function(localViewer) {
                 localViewer.destroy();

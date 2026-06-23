@@ -721,6 +721,7 @@ declare namespace OpenSeadragon {
 
     interface WebGLDrawerOptions extends BaseDrawerOptions {
         unpackWithPremultipliedAlpha?: boolean;
+        useSharedRenderer?: boolean;
     }
 
     interface DrawerOptions {

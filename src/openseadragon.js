@@ -797,9 +797,12 @@
  * @property {Boolean} [unpackWithPremultipliedAlpha=false]
  *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
  * @property {Boolean} [useSharedRenderer]
- *  Whether to share a WebGL context across multiple WebGL drawers. When left undefined,
- *  sharing automatically starts with the second live WebGL drawer to reduce context pressure
- *  once multiple WebGL drawers are active.
+ *  Controls whether WebGL drawers use a shared offscreen WebGL context/canvas or keep a
+ *  dedicated one per drawer.
+ *  `true` enables the shared context immediately, even for the first WebGL drawer.
+ *  `false` keeps this drawer on a dedicated context.
+ *  When left undefined, the first live WebGL drawer stays dedicated and drawers created while
+ *  another live WebGL drawer already exists switch to the shared context automatically.
  */
 
 /**
