@@ -89,6 +89,14 @@ module.exports = function(grunt) {
         grunt.config.set('gitInfo', rev);
     });
 
+    const qunitPuppeteerOptions = {
+        headless: 'new'
+    };
+
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        qunitPuppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+
     let moduleFilter =  '';
     if (grunt.option('module')) {
         moduleFilter = '?module=' + grunt.option('module')
@@ -181,9 +189,7 @@ module.exports = function(grunt) {
                 options: {
                     urls: [ "http://localhost:" + testPort + "/test/test.html" + moduleFilter ],
                     timeout: 10000,
-                    puppeteer: {
-                        headless: 'new'
-                    }
+                    puppeteer: qunitPuppeteerOptions
                 },
             },
             coverage: {
