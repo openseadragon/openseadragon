@@ -2051,6 +2051,11 @@ declare namespace OpenSeadragon {
         setContextRecoveryEnabled(enabled: boolean): void;
         isContextRecoveryEnabled(): boolean;
         isWebGL2(): boolean;
+        hasTransformFeedback(): boolean;
+        captureTransformFeedback(tiles: any[], tiledImage: TiledImage): {
+            positions: Float32Array;
+            texcoords: Float32Array;
+        } | null;
         setUnpackWithPremultipliedAlpha(enabled: boolean): void;
     }
 

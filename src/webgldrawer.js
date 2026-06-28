@@ -64,6 +64,10 @@
             this._renderToTexture = null;
             this._glNumTextures = 0;
             this._unitQuad = null;
+            this._transformFeedback = null;
+            this._tfProgram = null;
+            this._tfPositionBuffer = null;
+            this._tfTexCoordBuffer = null;
 
             this._destroyed = false;
 
@@ -246,6 +250,83 @@
 
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+            if (this._isWebGL2) {
+                this._setupTransformFeedback();
+            }
+        }
+
+        /**
+         * Check if Transform Feedback is supported and initialized
+         * @returns {Boolean} True if Transform Feedback is available
+         */
+        hasTransformFeedback() {
+            return this._isWebGL2 && this._transformFeedback !== null && this._tfProgram !== null;
+        }
+
+        /**
+         * Perform a Transform Feedback capture pass
+         * @param {Float32Array} texturePositionArray - Tile texture coordinates
+         * @param {Array<Float32Array>} matrixArray - Tile transform matrices
+         * @param {Number} numTilesToDraw - Number of populated tiles
+         * @returns {Object|null} Captured positions and texture coordinates
+         */
+        captureTransformFeedback(texturePositionArray, matrixArray, numTilesToDraw) {
+            if (!this.hasTransformFeedback() || !numTilesToDraw) {
+                return null;
+            }
+
+            const gl = this._gl;
+            const tfProgram = this._tfProgram;
+
+            gl.useProgram(tfProgram.program);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferOutputPosition);
+            gl.enableVertexAttribArray(tfProgram.aOutputPosition);
+            gl.vertexAttribPointer(tfProgram.aOutputPosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferTexturePosition);
+            gl.bufferData(gl.ARRAY_BUFFER, texturePositionArray, gl.DYNAMIC_DRAW);
+            gl.enableVertexAttribArray(tfProgram.aTexturePosition);
+            gl.vertexAttribPointer(tfProgram.aTexturePosition, 2, gl.FLOAT, false, 0, 0);
+
+            gl.bindBuffer(gl.ARRAY_BUFFER, this._firstPass.bufferIndex);
+            gl.enableVertexAttribArray(tfProgram.aIndex);
+            gl.vertexAttribPointer(tfProgram.aIndex, 1, gl.FLOAT, false, 0, 0);
+
+            for (let i = 0; i < numTilesToDraw; ++i) {
+                gl.uniformMatrix3fv(tfProgram.uTransformMatrices[i], false, matrixArray[i]);
+            }
+
+            gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, this._transformFeedback);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, this._tfPositionBuffer);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 1, this._tfTexCoordBuffer);
+
+            gl.enable(gl.RASTERIZER_DISCARD);
+            gl.beginTransformFeedback(gl.TRIANGLES);
+            gl.drawArrays(gl.TRIANGLES, 0, numTilesToDraw * 6);
+            gl.endTransformFeedback();
+            gl.disable(gl.RASTERIZER_DISCARD);
+
+            gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 0, null);
+            gl.bindBufferBase(gl.TRANSFORM_FEEDBACK_BUFFER, 1, null);
+
+            const numVertices = numTilesToDraw * 6;
+            const positionData = new Float32Array(numVertices * 4);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfPositionBuffer);
+            gl.getBufferSubData(gl.TRANSFORM_FEEDBACK_BUFFER, 0, positionData);
+
+            const texcoordData = new Float32Array(numVertices * 2);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfTexCoordBuffer);
+            gl.getBufferSubData(gl.TRANSFORM_FEEDBACK_BUFFER, 0, texcoordData);
+
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, null);
+
+            return {
+                positions: positionData,
+                texcoords: texcoordData
+            };
         }
 
         /**
@@ -523,6 +604,53 @@
         }
 
         /**
+         * Create Transform Feedback resources for the WebGL2 capture path
+         * @private
+         */
+        _setupTransformFeedback() {
+            const gl = this._gl;
+            const numTextures = this._glNumTextures;
+
+            const makeMatrixUniforms = () => {
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 u${index};`).join('');
+            };
+            const makeConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(c==${index}.0){m=u${index};}`).join('');
+            };
+
+            const tfVertexShader = `#version 300 es
+precision highp float;in vec2 a;in vec2 b;in float c;${makeMatrixUniforms()}out vec4 p;out vec2 t;void main(){mat3 m;${makeConditionals()}vec3 v=m*vec3(a,1.0);p=vec4(v.xy,0.0,1.0);t=b;gl_Position=p;}`;
+
+            const tfFragmentShader = `#version 300 es
+precision mediump float;out vec4 o;void main(){o=vec4(0.0);}`;
+
+            const program = this._initShaderProgram(gl, tfVertexShader, tfFragmentShader, ['p', 't']);
+            if (!program) {
+                return;
+            }
+
+            this._transformFeedback = gl.createTransformFeedback();
+
+            const maxVertices = 6 * numTextures;
+            this._tfPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfPositionBuffer);
+            gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER, maxVertices * 4 * 4, gl.DYNAMIC_COPY);
+
+            this._tfTexCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, this._tfTexCoordBuffer);
+            gl.bufferData(gl.TRANSFORM_FEEDBACK_BUFFER, maxVertices * 2 * 4, gl.DYNAMIC_COPY);
+            gl.bindBuffer(gl.TRANSFORM_FEEDBACK_BUFFER, null);
+
+            this._tfProgram = {
+                program: program,
+                aOutputPosition: gl.getAttribLocation(program, 'a'),
+                aTexturePosition: gl.getAttribLocation(program, 'b'),
+                aIndex: gl.getAttribLocation(program, 'c'),
+                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u${i}`))
+            };
+        }
+
+        /**
          * Destroy the WebGL context and all resources
          */
         destroy() {
@@ -555,6 +683,19 @@
                     if (this._glFrameBuffer) {
                         gl.deleteFramebuffer(this._glFrameBuffer);
                     }
+                    if (this._transformFeedback) {
+                        gl.bindTransformFeedback(gl.TRANSFORM_FEEDBACK, null);
+                        gl.deleteTransformFeedback(this._transformFeedback);
+                    }
+                    if (this._tfPositionBuffer) {
+                        gl.deleteBuffer(this._tfPositionBuffer);
+                    }
+                    if (this._tfTexCoordBuffer) {
+                        gl.deleteBuffer(this._tfTexCoordBuffer);
+                    }
+                    if (this._tfProgram) {
+                        gl.deleteProgram(this._tfProgram.program);
+                    }
                 } catch (e) {
                     // Context may already be lost, continue with cleanup
                     $.console.warn('Error during WebGL cleanup in WebglContextManager.destroy():', e);
@@ -573,6 +714,10 @@
             this._glFrameBuffer = null;
             this._renderToTexture = null;
             this._unitQuad = null;
+            this._transformFeedback = null;
+            this._tfProgram = null;
+            this._tfPositionBuffer = null;
+            this._tfTexCoordBuffer = null;
         }
 
         /**
@@ -864,6 +1009,14 @@
         }
 
         /**
+         * Check if Transform Feedback is supported and initialized
+         * @returns {Boolean} True if Transform Feedback is available
+         */
+        hasTransformFeedback() {
+            return this._glContext ? this._glContext.hasTransformFeedback() : false;
+        }
+
+        /**
          * Enable or disable automatic WebGL context re-initialization on context loss.
          * When enabled, the drawer will attempt to recover from context exhaustion errors
          * by re-initializing the WebGL context.
@@ -879,6 +1032,49 @@
          */
         isContextRecoveryEnabled() {
             return this._enableContextRecovery;
+        }
+
+        /**
+         * Build the current viewport transform used by the main draw pipeline.
+         * @returns {OpenSeadragon.Mat3}
+         * @private
+         */
+        _getViewMatrix() {
+            const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
+            const view = {
+                bounds: bounds,
+                center: new OpenSeadragon.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
+                rotation: this.viewport.getRotation(true) * Math.PI / 180
+            };
+
+            const flipMultiplier = this.viewport.flipped ? -1 : 1;
+            const posMatrix = $.Mat3.makeTranslation(-view.center.x, -view.center.y);
+            const scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
+            const rotMatrix = $.Mat3.makeRotation(-view.rotation);
+            return scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
+        }
+
+        /**
+         * Build the tiled-image-specific transform used by the main draw pipeline.
+         * @param {OpenSeadragon.TiledImage} tiledImage
+         * @param {OpenSeadragon.Mat3} viewMatrix
+         * @returns {OpenSeadragon.Mat3}
+         * @private
+         */
+        _getTiledImageTransformMatrix(tiledImage, viewMatrix) {
+            let overallMatrix = viewMatrix;
+            const imageRotation = tiledImage.getRotation(true);
+
+            if (imageRotation % 360 !== 0) {
+                const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
+                const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
+                const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
+                const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
+                const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
+                overallMatrix = viewMatrix.multiply(localMatrix);
+            }
+
+            return overallMatrix;
         }
 
         /**
@@ -937,19 +1133,7 @@
             const secondPass = this._glContext.getSecondPass();
             const glFrameBuffer = this._glContext.getFrameBuffer();
             const renderToTexture = this._glContext.getRenderToTexture();
-            const bounds = this.viewport.getBoundsNoRotateWithMargins(true);
-            const view = {
-                bounds: bounds,
-                center: new OpenSeadragon.Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2),
-                rotation: this.viewport.getRotation(true) * Math.PI / 180
-            };
-
-            const flipMultiplier = this.viewport.flipped ? -1 : 1;
-            // calculate view matrix for viewer
-            const posMatrix = $.Mat3.makeTranslation(-view.center.x, -view.center.y);
-            const scaleMatrix = $.Mat3.makeScaling(2 / view.bounds.width * flipMultiplier, -2 / view.bounds.height);
-            const rotMatrix = $.Mat3.makeRotation(-view.rotation);
-            const viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
+            const viewMatrix = this._getViewMatrix();
 
             gl.bindFramebuffer(gl.FRAMEBUFFER, null);
             gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer
@@ -1027,20 +1211,7 @@
                     // no need to clear, just draw on top of the existing pixels
                 }
 
-                let overallMatrix = viewMatrix;
-
-                const imageRotation = tiledImage.getRotation(true);
-                // if needed, handle the tiledImage being rotated
-                if( imageRotation % 360 !== 0){
-                    const imageRotationMatrix = $.Mat3.makeRotation(-imageRotation * Math.PI / 180);
-                    const imageCenter = tiledImage.getBoundsNoRotate(true).getCenter();
-                    const t1 = $.Mat3.makeTranslation(imageCenter.x, imageCenter.y);
-                    const t2 = $.Mat3.makeTranslation(-imageCenter.x, -imageCenter.y);
-
-                    // update the view matrix to account for this image's rotation
-                    const localMatrix = t1.multiply(imageRotationMatrix).multiply(t2);
-                    overallMatrix = viewMatrix.multiply(localMatrix);
-                }
+                const overallMatrix = this._getTiledImageTransformMatrix(tiledImage, viewMatrix);
 
                 // Check MAX_TEXTURE_IMAGE_UNITS - throw error if invalid (will be caught by outer try-catch)
                 const maxTextures = this._glContext.getMaxTextures();
@@ -1355,7 +1526,50 @@
             }
             this._glContext.setupRenderer(this._renderingCanvas.width, this._renderingCanvas.height);
         }
+        /**
+         * Perform a Transform Feedback capture pass and return the captured data.
+         * This is primarily for demonstration and debugging purposes.
+         * The captured data contains transformed vertex positions computed on the GPU.
+         *
+         * @param {Array} tiles - Array of tiles to capture transforms for
+         * @param {OpenSeadragon.TiledImage} tiledImage - The tiled image being rendered
+         * @returns {Object|null} Object containing positions and texcoords arrays, or null if TF not available
+         */
+        captureTransformFeedback(tiles, tiledImage) {
+            if (!this.hasTransformFeedback() || !tiles || tiles.length === 0) {
+                return null;
+            }
 
+            const maxTextures = this._glContext.getMaxTextures();
+            if(maxTextures <= 0 || maxTextures === null || maxTextures === undefined){
+                return null;
+            }
+            const numTiles = Math.min(tiles.length, maxTextures);
+
+            // Build the texture position and matrix arrays similar to the draw loop
+            const texturePositionArray = new Float32Array(maxTextures * 12);
+            const matrixArray = new Array(maxTextures);
+            const opacityArray = new Array(maxTextures);
+            const textureDataArray = new Array(maxTextures);
+            const viewMatrix = this._getTiledImageTransformMatrix(tiledImage, this._getViewMatrix());
+
+            let numTilesToDraw = 0;
+            for (let i = 0; i < numTiles; i++) {
+                const tile = tiles[i].tile || tiles[i];
+                const textureInfo = this.getDataToDraw(tile);
+
+                if (textureInfo && textureInfo.texture) {
+                    this._getTileData(tile, tiledImage, textureInfo, viewMatrix, numTilesToDraw, texturePositionArray, textureDataArray, matrixArray, opacityArray);
+                    numTilesToDraw++;
+                }
+            }
+
+            if (!numTilesToDraw) {
+                return null;
+            }
+
+            return this._glContext.captureTransformFeedback(texturePositionArray, matrixArray, numTilesToDraw);
+        }
 
         // private
         _resizeRenderer(){
@@ -1959,7 +2173,7 @@
         }
 
         // modified from https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/Tutorial/Adding_2D_content_to_a_WebGL_context
-        static initShaderProgram(gl, vsSource, fsSource) {
+        static initShaderProgram(gl, vsSource, fsSource, transformFeedbackVaryings) {
 
             function loadShader(gl, type, source) {
                 const shader = gl.createShader(type);
@@ -1993,6 +2207,9 @@
             const shaderProgram = gl.createProgram();
             gl.attachShader(shaderProgram, vertexShader);
             gl.attachShader(shaderProgram, fragmentShader);
+            if (transformFeedbackVaryings) {
+                gl.transformFeedbackVaryings(shaderProgram, transformFeedbackVaryings, gl.SEPARATE_ATTRIBS);
+            }
             gl.linkProgram(shaderProgram);
 
             // If creating the shader program failed, alert
