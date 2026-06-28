@@ -1774,9 +1774,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const numberOfTiles = this.source.getNumTiles(level);
         const viewportCenter = this.viewport.pixelFromPoint(this.viewport.getCenter());
         this._resetCoverage(this.coverage, level);
-        if (loadArea) {
-            this._resetCoverage(this.loadingCoverage, level);
-        }
+        this._resetCoverage(this.loadingCoverage, level);
 
         let tilesToDraw = null;
         let tileIndex = 0;
