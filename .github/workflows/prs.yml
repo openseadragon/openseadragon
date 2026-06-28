@@ -25,12 +25,16 @@ jobs:
         with:
           cache: npm
           cache-dependency-path: package.json
-          node-version: lts/*
+          node-version: 20 # There's a bug with puppeteer and Node 26 right now (June 23rd, 2026)
 
       - name: Setup environment and install dependencies
         run: |
           npm install -g grunt-cli
           npm ci
+
+      - name: Install Puppeteer Chrome
+        run: |
+          npx puppeteer browsers install chrome
 
       - name: Run tests
         run: |
