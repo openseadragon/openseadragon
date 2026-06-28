@@ -149,6 +149,23 @@ class WeightedGraph {
     }
 }
 
+function createTestContext(size, attributes) {
+    var canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    var ctx = attributes ? canvas.getContext('2d', attributes) : canvas.getContext('2d');
+    var imageData = ctx.createImageData(size, size);
+    var data = imageData.data;
+    for (var i = 0; i < data.length; i += 4) {
+        data[i] = Math.random() * 255;
+        data[i + 1] = Math.random() * 255;
+        data[i + 2] = Math.random() * 255;
+        data[i + 3] = 255;
+    }
+    ctx.putImageData(imageData, 0, 0);
+    return ctx;
+}
+
 let _imageConversionWorker;
 let _conversionId = 0;
 // id -> { resolve, reject, timer? }
@@ -477,35 +494,11 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
     _initTestDataGenerators() {
         this._testDataGenerators = {
             context2d: function(size) {
-                var canvas = document.createElement('canvas');
-                canvas.width = size;
-                canvas.height = size;
-                var ctx = canvas.getContext('2d', { willReadFrequently: true });
-                // Fill with noise pattern for realistic test
-                var imageData = ctx.createImageData(size, size);
-                for (var i = 0; i < imageData.data.length; i += 4) {
-                    imageData.data[i] = Math.random() * 255;     // R
-                    imageData.data[i + 1] = Math.random() * 255; // G
-                    imageData.data[i + 2] = Math.random() * 255; // B
-                    imageData.data[i + 3] = 255;                 // A
-                }
-                ctx.putImageData(imageData, 0, 0);
-                return ctx;
+                return createTestContext(size, { willReadFrequently: true });
             },
             image: function(size) {
                 return new $.Promise(function(resolve, reject) {
-                    var canvas = document.createElement('canvas');
-                    canvas.width = size;
-                    canvas.height = size;
-                    var ctx = canvas.getContext('2d');
-                    var imageData = ctx.createImageData(size, size);
-                    for (var i = 0; i < imageData.data.length; i += 4) {
-                        imageData.data[i] = Math.random() * 255;
-                        imageData.data[i + 1] = Math.random() * 255;
-                        imageData.data[i + 2] = Math.random() * 255;
-                        imageData.data[i + 3] = 255;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
+                    var canvas = createTestContext(size).canvas;
                     var img = new Image();
                     img.onload = function() {
                         resolve(img);
@@ -517,35 +510,11 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                 });
             },
             imageUrl: function(size) {
-                var canvas = document.createElement('canvas');
-                canvas.width = size;
-                canvas.height = size;
-                var ctx = canvas.getContext('2d');
-                var imageData = ctx.createImageData(size, size);
-                for (var i = 0; i < imageData.data.length; i += 4) {
-                    imageData.data[i] = Math.random() * 255;
-                    imageData.data[i + 1] = Math.random() * 255;
-                    imageData.data[i + 2] = Math.random() * 255;
-                    imageData.data[i + 3] = 255;
-                }
-                ctx.putImageData(imageData, 0, 0);
-                return canvas.toDataURL();
+                return createTestContext(size).canvas.toDataURL();
             },
             rasterBlob: function(size) {
                 return new $.Promise(function(resolve) {
-                    var canvas = document.createElement('canvas');
-                    canvas.width = size;
-                    canvas.height = size;
-                    var ctx = canvas.getContext('2d');
-                    var imageData = ctx.createImageData(size, size);
-                    for (var i = 0; i < imageData.data.length; i += 4) {
-                        imageData.data[i] = Math.random() * 255;
-                        imageData.data[i + 1] = Math.random() * 255;
-                        imageData.data[i + 2] = Math.random() * 255;
-                        imageData.data[i + 3] = 255;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
-                    canvas.toBlob(resolve);
+                    createTestContext(size).canvas.toBlob(resolve);
                 });
             },
             imageBitmap: function(size) {
@@ -555,20 +524,8 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
                         reject(new Error("createImageBitmap is not available"));
                         return;
                     }
-                    var canvas = document.createElement('canvas');
-                    canvas.width = size;
-                    canvas.height = size;
-                    var ctx = canvas.getContext('2d');
-                    var imageData = ctx.createImageData(size, size);
-                    for (var i = 0; i < imageData.data.length; i += 4) {
-                        imageData.data[i] = Math.random() * 255;
-                        imageData.data[i + 1] = Math.random() * 255;
-                        imageData.data[i + 2] = Math.random() * 255;
-                        imageData.data[i + 3] = 255;
-                    }
-                    ctx.putImageData(imageData, 0, 0);
                     // eslint-disable-next-line compat/compat
-                    createImageBitmap(canvas, { colorSpaceConversion: 'none' }).then(resolve, reject);
+                    createImageBitmap(createTestContext(size).canvas, { colorSpaceConversion: 'none' }).then(resolve, reject);
                 });
             }
         };
