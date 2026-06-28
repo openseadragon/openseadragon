@@ -113,7 +113,6 @@
             const originalGetViewMatrix = drawer._getViewMatrix;
             const originalGetTiledImageTransformMatrix = drawer._getTiledImageTransformMatrix;
             const originalCapture = drawer._glContext.captureTransformFeedback;
-            const originalRead = drawer._glContext.readTransformFeedbackData;
 
             const fakeResult = {
                 positions: new Float32Array(24),
@@ -144,10 +143,6 @@
                 assert.equal(numTilesToDraw, 1, 'capture delegates only populated tiles');
                 assert.ok(matrixArray[0], 'capture receives populated matrix data');
                 assert.equal(texturePositionArray.length, drawer._glContext.getMaxTextures() * 12, 'capture uses max-texture-sized position buffer');
-                return true;
-            };
-            drawer._glContext.readTransformFeedbackData = function(numVertices) {
-                assert.equal(numVertices, 6, 'capture reads back six vertices for one tile');
                 return fakeResult;
             };
 
@@ -166,7 +161,6 @@
             drawer._getViewMatrix = originalGetViewMatrix;
             drawer._getTiledImageTransformMatrix = originalGetTiledImageTransformMatrix;
             drawer._glContext.captureTransformFeedback = originalCapture;
-            drawer._glContext.readTransformFeedbackData = originalRead;
 
             done();
         });
