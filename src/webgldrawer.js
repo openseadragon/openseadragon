@@ -130,14 +130,6 @@
         }
 
         /**
-         * Get the WebGL2 first pass UBO resources when available
-         * @returns {Object|null} The first pass UBO object
-         */
-        getFirstPassUBO() {
-            return this._firstPassUBO;
-        }
-
-        /**
          * Get the second pass shader program and resources
          * @returns {Object|null} The second pass object with shader program, buffers, and uniforms
          */
@@ -569,18 +561,14 @@
                         continue;
                     }
                     const base = index * 12; // 3 vec4s = 12 floats per matrix
-                    matrixData[base + 0] = matrix[0];
-                    matrixData[base + 1] = matrix[1];
-                    matrixData[base + 2] = matrix[2];
-                    matrixData[base + 3] = 0;
-                    matrixData[base + 4] = matrix[3];
-                    matrixData[base + 5] = matrix[4];
-                    matrixData[base + 6] = matrix[5];
-                    matrixData[base + 7] = 0;
-                    matrixData[base + 8] = matrix[6];
-                    matrixData[base + 9] = matrix[7];
-                    matrixData[base + 10] = matrix[8];
-                    matrixData[base + 11] = 0;
+                    for (let row = 0; row < 3; row++) {
+                        const target = base + row * 4;
+                        const source = row * 3;
+                        matrixData[target] = matrix[source];
+                        matrixData[target + 1] = matrix[source + 1];
+                        matrixData[target + 2] = matrix[source + 2];
+                        matrixData[target + 3] = 0;
+                    }
                 }
 
                 gl.bindBuffer(gl.UNIFORM_BUFFER, this._firstPassUBO.buffer);
@@ -611,96 +599,64 @@
             // In std140 layout, mat3 values are stored as 3 vec4s (48 bytes) due to alignment requirements.
             // The UBO only stores transform matrices; opacities continue to use the existing uniform array.
             const vertexShaderProgram = `#version 300 es
-            layout(std140) uniform TransformBlock {
-                vec4 u_matrices[${numTextures * 3}];
-            };
-
-            in vec2 a_output_position;
-            in vec2 a_texture_position;
-            in float a_index;
-
-            out vec2 v_texture_position;
-            out float v_image_index;
-
-            mat3 getMatrix(int index) {
-                int base = index * 3;
-                return mat3(
-                    u_matrices[base].xyz,
-                    u_matrices[base + 1].xyz,
-                    u_matrices[base + 2].xyz
-                );
-            }
-
-            void main() {
-                int idx = int(a_index);
-                mat3 transform_matrix = getMatrix(idx);
-                gl_Position = vec4(transform_matrix * vec3(a_output_position, 1.0), 1.0);
-                v_texture_position = a_texture_position;
-                v_image_index = a_index;
-            }
-            `;
+layout(std140) uniform T{vec4 u[${numTextures * 3}];};
+in vec2 p;
+in vec2 q;
+in float n;
+out vec2 v;
+out float j;
+mat3 m(int i){int b=i*3;return mat3(u[b].xyz,u[b+1].xyz,u[b+2].xyz);}
+void main(){mat3 t=m(int(n));gl_Position=vec4(t*vec3(p,1.0),1.0);v=q;j=n;}`;
 
             const makeTextureConditionals = () => {
                 return [...Array(numTextures).keys()].map(index =>
-                    `${index > 0 ? 'else ' : ''}if(idx == ${index}) { color = texture(u_images[${index}], v_texture_position) * u_opacities[${index}]; }`
-                ).join('\n                ');
+                    `${index > 0 ? 'else ' : ''}if(idx==${index}){f=texture(s[${index}],v)*o[${index}];}`
+                ).join('');
             };
 
             const fragmentShaderProgram = `#version 300 es
-            precision mediump float;
+precision mediump float;
+uniform sampler2D s[${numTextures}];
+uniform float o[${numTextures}];
+in vec2 v;
+in float j;
+out vec4 f;
+void main(){int idx=int(j);f=vec4(0.0);${makeTextureConditionals()}}`;
 
-            uniform sampler2D u_images[${numTextures}];
-            uniform float u_opacities[${numTextures}];
-
-            in vec2 v_texture_position;
-            in float v_image_index;
-
-            out vec4 fragColor;
-
-            void main() {
-                int idx = int(v_image_index);
-                vec4 color = vec4(0.0);
-                ${makeTextureConditionals()}
-                fragColor = color;
-            }
-            `;
+            const fallback = () => this._makeFirstPassShaderProgram();
 
             const program = this._initShaderProgram(gl, vertexShaderProgram, fragmentShaderProgram);
             if (!program) {
-                $.console.warn('Failed to initialize WebGL2 UBO shader program; falling back to standard first-pass shaders.');
-                this._makeFirstPassShaderProgram();
+                fallback();
                 return;
             }
             gl.useProgram(program);
 
-            const transformBlockIndex = gl.getUniformBlockIndex(program, 'TransformBlock');
+            const transformBlockIndex = gl.getUniformBlockIndex(program, 'T');
             if (transformBlockIndex === gl.INVALID_INDEX || transformBlockIndex === 0xFFFFFFFF) {
-                $.console.warn('WebGL2 TransformBlock was not found; falling back to standard first-pass shaders.');
-                this._makeFirstPassShaderProgram();
+                fallback();
                 return;
             }
 
             const transformBlockSize = gl.getActiveUniformBlockParameter(program, transformBlockIndex, gl.UNIFORM_BLOCK_DATA_SIZE);
             if (!transformBlockSize) {
-                $.console.warn('WebGL2 TransformBlock size is invalid; falling back to standard first-pass shaders.');
-                this._makeFirstPassShaderProgram();
+                fallback();
                 return;
             }
 
             const uboBuffer = gl.createBuffer();
             if (!uboBuffer) {
-                $.console.warn('Failed to create WebGL2 transform UBO; falling back to standard first-pass shaders.');
-                this._makeFirstPassShaderProgram();
+                fallback();
                 return;
             }
 
             this._firstPass = {
                 shaderProgram: program,
-                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
-                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
-                aIndex: gl.getAttribLocation(program, 'a_index'),
-                uImages: gl.getUniformLocation(program, 'u_images'),
-                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
+                aOutputPosition: gl.getAttribLocation(program, 'p'),
+                aTexturePosition: gl.getAttribLocation(program, 'q'),
+                aIndex: gl.getAttribLocation(program, 'n'),
+                uImages: gl.getUniformLocation(program, 's'),
+                uOpacities: gl.getUniformLocation(program, 'o'),
                 bufferOutputPosition: gl.createBuffer(),
                 bufferTexturePosition: gl.createBuffer(),
                 bufferIndex: gl.createBuffer(),

@@ -92,7 +92,7 @@
             }
 
             assert.ok(
-                viewer.drawer._glContext.getFirstPassUBO(),
+                viewer.drawer._glContext._firstPassUBO,
                 'WebGL2 renderer initializes the UBO-backed first-pass resources'
             );
             done();
