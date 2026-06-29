@@ -1441,125 +1441,72 @@
 
             const numTextures = this._glContext.getMaxTextures();
             const makeMatrixUniforms = () => {
-                return [...Array(numTextures).keys()].map(index => `uniform mat3 u_matrix_${index};`).join('\n');
+                return [...Array(numTextures).keys()].map(index => `uniform mat3 m${index};`).join('');
             };
             const makeConditionals = () => {
-                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(a_index == ${index}) { transform_matrix = u_matrix_${index}; }`).join('\n');
+                return [...Array(numTextures).keys()].map(index => `if(n==${index}){m=m${index};}`).join('');
             };
 
             const vertexShader = `#version 300 es
-            precision highp float;
-
-            in vec2 a_output_position;
-            in vec2 a_texture_position;
-            in int a_index;
-
-            ${makeMatrixUniforms()}
-
-            out vec2 v_texture_position;
-            flat out int v_image_index;
-            out vec4 v_clip_position;
-
-            void main() {
-                mat3 transform_matrix;
-                ${makeConditionals()}
-
-                vec3 transformed = transform_matrix * vec3(a_output_position, 1.0);
-                gl_Position = vec4(transformed.xy, 0.0, 1.0);
-
-                v_texture_position = a_texture_position;
-                v_image_index = a_index;
-                v_clip_position = gl_Position;
-            }
-            `;
+in vec2 p;
+in vec2 q;
+in int n;
+${makeMatrixUniforms()}
+out vec2 v;
+flat out int j;
+out vec4 c;
+void main(){mat3 m;${makeConditionals()}vec3 t=m*vec3(p,1.0);gl_Position=vec4(t.xy,0.0,1.0);v=q;j=n;c=gl_Position;}`;
 
             const makeOutputDeclarations = () => {
-                const outputs = ['layout(location = 0) out vec4 fragColor;'];
+                const outputs = ['layout(location=0) out vec4 f;'];
                 if (numTargets > 1) {
-                    outputs.push('layout(location = 1) out vec4 fragPosition;');
+                    outputs.push('layout(location=1) out vec4 g;');
                 }
                 if (numTargets > 2) {
-                    outputs.push('layout(location = 2) out vec4 fragMetadata;');
+                    outputs.push('layout(location=2) out vec4 h;');
                 }
                 if (numTargets > 3) {
-                    outputs.push('layout(location = 3) out vec4 fragTileInfo;');
+                    outputs.push('layout(location=3) out vec4 k;');
                 }
-                return outputs.join('\n');
+                return outputs.join('');
             };
 
             const makeOutputAssignments = () => {
-                const assignments = ['fragColor = texColor * u_opacities[v_image_index];'];
+                const assignments = ['f=t*o[j];'];
                 if (numTargets > 1) {
-                    assignments.push('fragPosition = vec4(v_clip_position.xy * 0.5 + 0.5, v_clip_position.z, 1.0);');
+                    assignments.push('g=vec4(c.xy*0.5+0.5,c.z,1.0);');
                 }
                 if (numTargets > 2) {
-                    assignments.push('fragMetadata = vec4(v_texture_position, texColor.a, 1.0);');
+                    assignments.push('h=vec4(v,t.a,1.0);');
                 }
                 if (numTargets > 3) {
-                    assignments.push('fragTileInfo = vec4(float(v_image_index) / 255.0, u_opacities[v_image_index], v_texture_position);');
+                    assignments.push('k=vec4(float(j)/255.0,o[j],v);');
                 }
-                return assignments.join('\n                ');
+                return assignments.join('');
+            };
+            const makeTextureConditionals = () => {
+                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(j==${index}){t=texture(s[${index}],v);}`).join('');
             };
 
             const fragmentShader = `#version 300 es
-            precision mediump float;
+precision mediump float;
+uniform sampler2D s[${numTextures}];
+uniform float o[${numTextures}];
+in vec2 v;
+flat in int j;
+in vec4 c;
+${makeOutputDeclarations()}
+void main(){vec4 t=vec4(0.0);${makeTextureConditionals()}${makeOutputAssignments()}}`;
 
-            uniform sampler2D u_images[${numTextures}];
-            uniform float u_opacities[${numTextures}];
-
-            in vec2 v_texture_position;
-            flat in int v_image_index;
-            in vec4 v_clip_position;
-
-            ${makeOutputDeclarations()}
-
-            void main() {
-                vec4 texColor = vec4(0.0);
-
-                for (int i = 0; i < ${numTextures}; ++i) {
-                    if (i == v_image_index) {
-                        texColor = texture(u_images[i], v_texture_position);
-                        break;
-                    }
-                }
-
-                ${makeOutputAssignments()}
-            }
-            `;
-
-            const vertShader = gl.createShader(gl.VERTEX_SHADER);
-            gl.shaderSource(vertShader, vertexShader);
-            gl.compileShader(vertShader);
-            if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
-                $.console.error('MRT vertex shader compilation failed:', gl.getShaderInfoLog(vertShader));
-                gl.deleteShader(vertShader);
+            let program;
+            try {
+                program = this.constructor.initShaderProgram(gl, vertexShader, fragmentShader);
+            } catch (e) {
                 return false;
             }
-
-            const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
-            gl.shaderSource(fragShader, fragmentShader);
-            gl.compileShader(fragShader);
-            if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
-                $.console.error('MRT fragment shader compilation failed:', gl.getShaderInfoLog(fragShader));
-                gl.deleteShader(vertShader);
-                gl.deleteShader(fragShader);
+            if (!program) {
                 return false;
             }
-
-            const program = gl.createProgram();
-            gl.attachShader(program, vertShader);
-            gl.attachShader(program, fragShader);
-            gl.linkProgram(program);
-            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-                $.console.error('MRT program linking failed:', gl.getProgramInfoLog(program));
-                gl.deleteShader(vertShader);
-                gl.deleteShader(fragShader);
-                gl.deleteProgram(program);
-                return false;
-            }
-
-            gl.deleteShader(vertShader);
-            gl.deleteShader(fragShader);
 
             const outputQuads = new Float32Array(numTextures * 12);
             const indices = new Int32Array(numTextures * 6);
@@ -1571,16 +1518,15 @@
 
             this._mrtProgram = {
                 program: program,
-                aOutputPosition: gl.getAttribLocation(program, 'a_output_position'),
-                aTexturePosition: gl.getAttribLocation(program, 'a_texture_position'),
-                aIndex: gl.getAttribLocation(program, 'a_index'),
-                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u_matrix_${i}`)),
-                uImages: gl.getUniformLocation(program, 'u_images'),
-                uOpacities: gl.getUniformLocation(program, 'u_opacities'),
+                aOutputPosition: gl.getAttribLocation(program, 'p'),
+                aTexturePosition: gl.getAttribLocation(program, 'q'),
+                aIndex: gl.getAttribLocation(program, 'n'),
+                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `m${i}`)),
+                uImages: gl.getUniformLocation(program, 's'),
+                uOpacities: gl.getUniformLocation(program, 'o'),
                 bufferOutputPosition: gl.createBuffer(),
                 bufferTexturePosition: gl.createBuffer(),
                 bufferIndex: gl.createBuffer(),
-                indexArray: indices,
                 maxTextures: numTextures,
                 numTargets: numTargets
             };
