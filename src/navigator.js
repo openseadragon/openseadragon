@@ -457,6 +457,27 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
         return $.Viewer.prototype.destroy.apply(this);
     },
 
+    /**
+     * Controls the visibility of the navigator element.
+     * @function
+     * @param {Boolean} visible - True to show the navigator, false to hide it.
+     * @return {OpenSeadragon.Navigator} Chainable.
+     */
+    setVisible: function (visible) {
+        if (this.element) {
+            this.element.style.display = visible ? "block" : "none";
+
+            if (visible && this.viewport) {
+                this.updateSize();
+                this.update(this.viewer.viewport);
+            }
+        } else {
+            console.warn("[OpenSeadragon.Navigator.setVisible] Navigator element is not defined.");
+        }
+
+        return $.Viewer.prototype.setVisible.apply(this, [visible]);
+    },
+
     // private
     _getMatchingItem: function(theirItem) {
         const count = this.world.getItemCount();
