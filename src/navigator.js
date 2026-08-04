@@ -472,7 +472,7 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
                 this.update(this.viewer.viewport);
             }
         } else {
-            console.warn("[OpenSeadragon.Navigator.setVisible] Navigator element is not defined.");
+            $.console.warn("[OpenSeadragon.Navigator.setVisible] Navigator element is not defined.");
         }
 
         return $.Viewer.prototype.setVisible.apply(this, [visible]);
