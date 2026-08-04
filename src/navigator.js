@@ -464,19 +464,25 @@ $.extend( $.Navigator.prototype, $.EventSource.prototype, $.Viewer.prototype, /*
      * @return {OpenSeadragon.Navigator} Chainable.
      */
     setVisible: function (visible) {
-        if (this.element) {
-            this.element.style.display = visible ? "block" : "none";
+    if (this.element) {
+        if (visible) {
+            this.element.style.display = this._previousDisplayStyle || '';
+            this._previousDisplayStyle = undefined;
 
-            if (visible && this.viewport) {
+            if (this.viewport) {
                 this.updateSize();
                 this.update(this.viewer.viewport);
             }
         } else {
-            $.console.warn("[OpenSeadragon.Navigator.setVisible] Navigator element is not defined.");
+            this._previousDisplayStyle = this.element.style.display;
+            this.element.style.display = 'none';
         }
+    } else {
+        $.console.warn("[OpenSeadragon.Navigator.setVisible] Navigator element is not defined.");
+    }
 
-        return $.Viewer.prototype.setVisible.apply(this, [visible]);
-    },
+    return $.Viewer.prototype.setVisible.apply(this, [visible]);
+},
 
     // private
     _getMatchingItem: function(theirItem) {
