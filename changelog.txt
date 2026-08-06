@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+6.1.1: (in progress...)
+
 6.1.0:
 
 * Now properly supporting non-power of two tile source levels (#2884 @Aiosa)
