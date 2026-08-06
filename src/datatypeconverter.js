@@ -179,7 +179,9 @@ self.onmessage = async (e) => {
       return;
     }
     if (op === 'fetchDecode') {
-      const res = await fetch(e.data.url, e.data.setup);
+      const _u = new URL(e.data.url, self.location.href);
+      if (_u.protocol !== 'http:' && _u.protocol !== 'https:') throw new Error('Disallowed URL scheme: ' + _u.protocol);
+      const res = await fetch(_u.href, e.data.setup);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const b = await res.blob();
       const bmp = await createImageBitmap(b, { colorSpaceConversion: 'none' });
@@ -754,11 +756,19 @@ $.converter.learn("__private__imageUrl", "imageBitmap", (tile, url) => new $.Pro
         }
     }
     if (_imageConversionWorker) {
-        return postWorker('fetchDecode', { url, setup }).then(resolve).catch(reject);
+        const _pu = new URL(url, window.location.href);
+        if (_pu.protocol !== 'http:' && _pu.protocol !== 'https:') {
+            return reject(new Error('Disallowed URL scheme: ' + _pu.protocol));
+        }
+        return postWorker('fetchDecode', { url: _pu.href, setup }).then(resolve).catch(reject);
     }
     // Fallback to the main thread
     // eslint-disable-next-line compat/compat
-    return fetch(url, setup).then(res => {
+    const _fu = new URL(url, window.location.href);
+    if (_fu.protocol !== 'http:' && _fu.protocol !== 'https:') {
+        return Promise.reject(new Error('Disallowed URL scheme: ' + _fu.protocol));
+    }
+    return fetch(_fu.href, setup).then(res => {
         if (!res.ok) {
             throw new Error(`HTTP ${res.status} loading ${url}`);
         }
