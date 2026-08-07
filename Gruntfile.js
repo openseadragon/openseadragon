@@ -3,7 +3,6 @@
 
 module.exports = function(grunt) {
     /* eslint-disable no-undef */
-    const dateFormat = require('dateformat');
 
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
@@ -18,11 +17,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-text-replace');
     grunt.loadNpmTasks('grunt-shell');
 
-    // Only load grunt-istanbul when coverage task is run (avoids circular dependency warning)
-    if (grunt.cli.tasks.includes('coverage')) {
-        grunt.loadNpmTasks('grunt-istanbul');
-    }
-
     // ----------
     const packageJson = grunt.file.readJSON("package.json"),
         distribution = "build/openseadragon/openseadragon.js",
@@ -30,7 +24,6 @@ module.exports = function(grunt) {
         packageDirName = "openseadragon-bin-" + packageJson.version,
         packageDir = "build/" + packageDirName + "/",
         releaseRoot = "../site-build/built-openseadragon/",
-        coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
         sources = [
             "src/openseadragon.js",
             "src/matrix3.js",
@@ -106,7 +99,6 @@ module.exports = function(grunt) {
         clean: {
             build: ["build"],
             package: [packageDir],
-            coverage: ["instrumented"],
             release: {
                 src: [releaseRoot],
                 options: {
@@ -185,19 +177,6 @@ module.exports = function(grunt) {
                     }
                 },
             },
-            coverage: {
-                options: {
-                    urls: [ "http://localhost:8000/test/coverage.html" + moduleFilter ],
-                    coverage: {
-                        src: ['src/*.js'],
-                        htmlReport: coverageDir + '/html/',
-                        instrumentedFiles: 'instrumented/src/',
-                        baseUrl: '.',
-                        disposeCollector: true
-                    },
-                    timeout: 10000
-                }
-            },
             all: {
                 options: {
                     timeout: 10000
@@ -234,45 +213,14 @@ module.exports = function(grunt) {
             build: {}
         },
         gitInfo: "unknown",
-        instrument: {
-          files: sources,
-          options: {
-              lazy: false,
-              basePath: 'instrumented/'
-          }
+        shell: {
+            dts_check: {
+                command: "npx tsc --noEmit -p tsconfig.dts.json"
+            },
+            dts_smoke: {
+                command: "npx tsd"
+            }
         },
-        reloadTasks: {
-            rootPath: "instrumented/src/"
-        },
-        storeCoverage: {
-            options: {
-                dir: coverageDir,
-                'include-all-sources': true
-              }
-         },
-        makeReport: {
-          src: "coverage/**/*.json",
-          options: {
-              type: [ "lcov", "html" ],
-              dir: coverageDir,
-              print: "detail"
-          }
-      },
-      shell: {
-        dts_check: {
-            command: "npx tsc --noEmit -p tsconfig.dts.json"
-        },
-        dts_smoke: {
-            command: "npx tsd"
-        }
-      },
-    });
-
-    grunt.event.on("qunit.coverage", function(coverage) {
-        const reportPath = coverageDir + "/coverage.json";
-
-        // Create the coverage file
-        grunt.file.write(reportPath, JSON.stringify(coverage));
     });
 
     // ----------
@@ -356,11 +304,6 @@ module.exports = function(grunt) {
     // Test task.
     // Builds and runs unit tests.
     grunt.registerTask("test", ["build", "connect", "qunit:normal", "dts"]);
-
-    // ----------
-    // Coverage task.
-    // Outputs unit test code coverage report.
-    grunt.registerTask("coverage", ["clean:coverage", "instrument", "connect", "qunit:coverage", "makeReport"]);
 
     // ----------
     // Package task.
