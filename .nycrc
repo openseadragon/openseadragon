@@ -4,12 +4,20 @@
   ],
   "exclude": [
     "test/**",
-    "node_modules/**"
+    "node_modules/**",
+    "build/**",
+    "instrumented/**",
+    "coverage/**",
+    ".nyc_output/**"
   ],
   "reporter": [
     "text",
+    "text-summary",
     "lcov",
     "html"
   ],
-  "all": true
+  "report-dir": "coverage",
+  "temp-directory": ".nyc_output",
+  "all": true,
+  "check-coverage": false
 }

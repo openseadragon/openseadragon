@@ -2,7 +2,23 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>OpenSeadragon QUnit</title>
+    <title>OpenSeadragon QUnit Coverage</title>
+    <script type="text/javascript">
+        function isInteractiveMode() {
+            const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+            const isHeadless = typeof navigator !== 'undefined' && navigator.webdriver;
+            return isBrowser && !isHeadless;
+        }
+
+        window.QUnit = {
+            config: {
+                testTimeout: isInteractiveMode() ? 30000 : 10000
+            }
+        };
+
+        // Flag to indicate this is a coverage run
+        window.COVERAGE_RUN = true;
+    </script>
     <link rel="stylesheet" href="/node_modules/qunit/qunit/qunit.css">
     <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
     <link rel="stylesheet" href="/test/helpers/test.css">
@@ -10,18 +26,14 @@
 <body>
     <div id="qunit"></div>
     <div id="qunit-fixture"></div>
-
-    <script>
-        const isCoverageTest = true;
-    </script>
-
     <script src="/node_modules/qunit/qunit/qunit.js"></script>
     <script src="/test/lib/jquery-1.9.1.min.js"></script>
     <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
     <script src="/test/lib/jquery.simulate.js"></script>
 
-    <!-- OpenSeadragon sources -->
+    <!-- OpenSeadragon INSTRUMENTED sources for coverage -->
     <script src="/instrumented/src/openseadragon.js"></script>
+    <script src="/instrumented/src/matrix3.js"></script>
     <script src="/instrumented/src/fullscreen.js"></script>
     <script src="/instrumented/src/eventsource.js"></script>
     <script src="/instrumented/src/mousetracker.js"></script>
@@ -35,12 +47,16 @@
     <script src="/instrumented/src/tilesource.js"></script>
     <script src="/instrumented/src/dzitilesource.js"></script>
     <script src="/instrumented/src/iiiftilesource.js"></script>
+    <script src="/instrumented/src/iiptilesource.js"></script>
+    <script src="/instrumented/src/iristilesource.js"></script>
     <script src="/instrumented/src/osmtilesource.js"></script>
     <script src="/instrumented/src/tmstilesource.js"></script>
     <script src="/instrumented/src/zoomifytilesource.js"></script>
     <script src="/instrumented/src/legacytilesource.js"></script>
     <script src="/instrumented/src/imagetilesource.js"></script>
     <script src="/instrumented/src/tilesourcecollection.js"></script>
+    <script src="/instrumented/src/priorityqueue.js"></script>
+    <script src="/instrumented/src/datatypeconverter.js"></script>
     <script src="/instrumented/src/button.js"></script>
     <script src="/instrumented/src/buttongroup.js"></script>
     <script src="/instrumented/src/rectangle.js"></script>
@@ -50,7 +66,10 @@
     <script src="/instrumented/src/imageloader.js"></script>
     <script src="/instrumented/src/tile.js"></script>
     <script src="/instrumented/src/overlay.js"></script>
-    <script src="/instrumented/src/drawer.js"></script>
+    <script src="/instrumented/src/drawerbase.js"></script>
+    <script src="/instrumented/src/htmldrawer.js"></script>
+    <script src="/instrumented/src/canvasdrawer.js"></script>
+    <script src="/instrumented/src/webgldrawer.js"></script>
     <script src="/instrumented/src/viewport.js"></script>
     <script src="/instrumented/src/tiledimage.js"></script>
     <script src="/instrumented/src/tilecache.js"></script>
@@ -62,16 +81,21 @@
     <script src="/test/helpers/test.js"></script>
     <script src="/test/helpers/touch.js"></script>
 
-    <!-- Modules -->
     <!-- Polyfill must be inserted first because it is testing functions
          reassignments which could be done by other test. -->
     <script src="/test/modules/polyfills.js"></script>
     <script src="/test/modules/event-source.js"></script>
+    <script src="/test/modules/viewerretrieval.js"></script>
     <script src="/test/modules/basic.js"></script>
+    <script src="/test/modules/type-conversion.js"></script>
     <script src="/test/modules/strings.js"></script>
     <script src="/test/modules/formats.js"></script>
+    <script src="/test/modules/iiif.js"></script>
+    <script src="/test/modules/iip.js"></script>
+    <script src="/test/modules/iris.js"></script>
     <script src="/test/modules/utils.js"></script>
     <script src="/test/modules/events.js"></script>
+    <script src="/test/modules/cooperative-gestures.js"></script>
     <script src="/test/modules/units.js"></script>
     <script src="/test/modules/multi-image.js"></script>
     <script src="/test/modules/overlays.js"></script>
@@ -90,10 +114,10 @@
     <script src="/test/modules/ajax-tiles.js"></script>
     <script src="/test/modules/ajax-post-data.js"></script>
     <script src="/test/modules/imageloader.js"></script>
-    <script src="/test/modules/iiif.js"></script>
-    <script src="/test/modules/iip.js"></script>
-    <script src="/test/modules/iris.js"></script>
-    <!-- The navigator tests are the slowest (for now; hopefully they can be sped up)
+    <script src="/test/modules/tilesource-dynamic-url.js"></script>
+    <script src="/test/modules/data-manipulation.js"></script>
+    <script src="/test/modules/tilecache-failure-regressions.js"></script>
+    <!--The navigator tests are the slowest (for now; hopefully they can be sped up)
     so we put them last. -->
     <script src="/test/modules/navigator.js"></script>
 </body>

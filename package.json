@@ -3,17 +3,7 @@
     "version": "6.1.0",
     "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
     "keywords": [
-        "image",
-        "zoom",
-        "pan",
-        "openseadragon",
-        "seadragon",
-        "deepzoom",
-        "dzi",
-        "iiif",
-        "osm",
-        "osd",
-        "tms"
+        "image", "zoom", "pan", "openseadragon", "seadragon", "deepzoom", "dzi", "iiif", "osm", "osd", "tms"
     ],
     "homepage": "https://openseadragon.github.io/",
     "funding": "https://opencollective.com/openseadragon",
@@ -45,6 +35,7 @@
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
         "nyc": "^17.1.0",
+        "puppeteer": "^22.15.0",
         "qunit": "^2.24.1",
         "source-map-explorer": "^2.5.3",
         "tsd": "^0.33.0",
@@ -52,7 +43,7 @@
     },
     "scripts": {
         "test": "grunt test",
-        "coverage": "nyc grunt test",
+        "coverage": "grunt coverage",
         "prepare": "grunt build",
         "build": "grunt build",
         "dev": "grunt dev",
