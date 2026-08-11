@@ -402,6 +402,49 @@
         done();
     });
 
+    QUnit.test('URL scheme validation in __private__imageUrl -> imageBitmap converter', async function (test) {
+        const done = test.async();
+
+        function tryConvert(url) {
+            return OpenSeadragon.converter.convert({}, url, '__private__imageUrl', 'imageBitmap')
+                .then(bmp => ({ ok: true, value: bmp }))
+                .catch(err => ({ ok: false, error: String(err && err.message || err) }));
+        }
+
+        // Forbidden schemes — must reject with "Disallowed URL scheme"
+        const forbidden = [
+            ['file:///etc/passwd', 'file:'],
+            ['ftp://example.com/tile', 'ftp:'],
+            ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'data:'],
+            ['javascript:alert(1)', 'javascript:'],
+        ];
+        for (const [url, scheme] of forbidden) {
+            const r = await tryConvert(url);
+            test.ok(!r.ok, scheme + ' URL is rejected');
+            test.ok(r.error && r.error.includes('Disallowed URL scheme'),
+                scheme + ' rejection says "Disallowed URL scheme" (got: ' + r.error + ')');
+        }
+
+        // Allowed schemes — must NOT be rejected due to scheme check
+        // (may fail for network/CORS reasons; that's acceptable)
+        const allowed = [
+            '/test/data/A.png',          // relative → resolves to http: in test harness
+            'http://localhost/no-exist',  // explicit http:
+            'https://localhost/no-exist', // explicit https:
+        ];
+        for (const url of allowed) {
+            const r = await tryConvert(url);
+            if (!r.ok) {
+                test.ok(!r.error.includes('Disallowed URL scheme'),
+                    '"' + url + '" not rejected by scheme check (got: ' + r.error + ')');
+            } else {
+                test.ok(true, '"' + url + '" passed scheme check and resolved');
+            }
+        }
+
+        done();
+    });
+
     async function compareImages(imgA, imgB, {
         perChannel = false,       // compare RGBA channels individually
         tolerancePct = 1.0,       // allowed % of pixels that differ (0 - 100)
