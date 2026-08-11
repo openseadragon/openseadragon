@@ -3,6 +3,8 @@ OPENSEADRAGON CHANGELOG
 
 6.1.1: (in progress...)
 
+* Added missing TypeScript declarations for cooperative gesture handling (#2949 @superbland)
+
 6.1.0:
 
 * Now properly supporting non-power of two tile source levels (#2884 @Aiosa)
