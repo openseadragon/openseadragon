@@ -766,7 +766,7 @@ $.converter.learn("__private__imageUrl", "imageBitmap", (tile, url) => new $.Pro
     // eslint-disable-next-line compat/compat
     const _fu = new URL(url, window.location.href);
     if (_fu.protocol !== 'http:' && _fu.protocol !== 'https:') {
-        return Promise.reject(new Error('Disallowed URL scheme: ' + _fu.protocol));
+        return reject(new Error('Disallowed URL scheme: ' + _fu.protocol));
     }
     return fetch(_fu.href, setup).then(res => {
         if (!res.ok) {
