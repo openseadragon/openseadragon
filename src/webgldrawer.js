@@ -660,7 +660,11 @@
             this._setupCanvases();
             this._setupRenderer();
 
-            this._supportedFormats = ["context2d", "image"];
+            // ImageBitmap is texImage2D-uploadable directly and is the only format that can be decoded off the
+            // main thread, so prefer it where the browser has it.
+            this._supportedFormats = typeof createImageBitmap === 'function' ?
+                ["context2d", "image", "imageBitmap"] :
+                ["context2d", "image"];
             this.context = this._outputContext; // API required by tests
         }
 
@@ -1652,7 +1656,8 @@
                     }
                 }
             }
-            if (data instanceof Image) {
+            if (data instanceof Image ||
+                (typeof ImageBitmap !== 'undefined' && data instanceof ImageBitmap)) {
                 const canvas = document.createElement( 'canvas' );
                 canvas.width = data.width;
                 canvas.height = data.height;

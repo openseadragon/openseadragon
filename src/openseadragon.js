@@ -318,11 +318,24 @@
   * @property {Number} [rotationIncrement=90]
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
-  * @property {Number} [maxTilesPerFrame=1]
-  *     The number of tiles loaded per frame. As the frame rate of the client's machine is usually high (e.g., 50 fps),
-  *     one tile per frame should be a good choice. However, for large screens or lower frame rates, the number of
-  *     loaded tiles per frame can be adjusted here. Reasonable values might be 2 or 3 tiles per frame.
-  *     (Note that the actual frame rate is given by the client's browser and machine).
+  * @property {Number} [maxTilesPerFrame=4]
+  *     The minimum number of tiles whose download is started per frame, per tiled image. This is a floor, not a
+  *     ceiling: right after a viewport change the value is temporarily boosted to ten times this number and then
+  *     decays back down over the following frames, and {@link OpenSeadragon.Options.tileLoadingConcurrency} can
+  *     raise it further whenever the download pipeline is running dry.
+  *     Note that the actual frame rate is given by the client's browser and machine, so this value alone bounds
+  *     throughput at `maxTilesPerFrame * fps` tiles per second per tiled image.
+  *
+  * @property {Number} [tileLoadingConcurrency=0]
+  *     How many tile downloads OpenSeadragon tries to keep in flight at once, per tiled image. Each frame, enough
+  *     extra tiles are dispatched to top the pipeline back up to this number, so the download rate follows network
+  *     latency instead of the client's frame rate. Defaults to 0, which disables the behaviour and leaves
+  *     {@link OpenSeadragon.Options.maxTilesPerFrame} as the only limit; over HTTP/2 a value of 16 is a reasonable
+  *     starting point.
+  *     This is a request-scheduling target, not a hard cap - use
+  *     {@link OpenSeadragon.Options.imageLoaderLimit} to actually cap concurrent requests. Over HTTP/1.1 the
+  *     browser only opens ~6 connections per host, so values much above that mostly queue inside the browser
+  *     where OpenSeadragon can no longer reprioritize them; over HTTP/2 a higher value is a straight win.
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
@@ -1414,7 +1427,8 @@ function OpenSeadragon( options ){
             preserveImageSizeOnResize: false, // requires autoResize=true
             minScrollDeltaTime:     50,
             rotationIncrement:      90,
-            maxTilesPerFrame:       1,
+            maxTilesPerFrame:       4,
+            tileLoadingConcurrency: 0,
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE

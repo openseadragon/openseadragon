@@ -190,6 +190,50 @@
 
         if (drawerType === 'webgl') {
             // ----------
+            QUnit.test('accepts imageBitmap tile data', function(assert) {
+                const done = assert.async();
+                createViewer();
+
+                if (typeof createImageBitmap !== 'function') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                // ImageBitmap is the only tile format that can be decoded off the main thread, and texImage2D
+                // uploads it directly. Advertising it is what lets the converter route blobs the fast way.
+                assert.ok(viewer.drawer.getSupportedDataFormats().includes('imageBitmap'),
+                    'WebGL drawer advertises imageBitmap support.');
+
+                const image = new Image();
+                image.onerror = image.onabort = function() {
+                    assert.ok(false, 'Test image failed to load.');
+                    done();
+                };
+                image.onload = function() {
+                    createImageBitmap(image).then(function(bitmap) {
+                        const tile = {
+                            x: 0,
+                            y: 0,
+                            isRightMost: true,
+                            isBottomMost: true,
+                            sourceBounds: { width: bitmap.width, height: bitmap.height },
+                            tiledImage: {
+                                getIssue: function() { return undefined; },
+                                source: { tileOverlap: 0 }
+                            }
+                        };
+                        const textureInfo = viewer.drawer.internalCacheCreate({ data: bitmap }, tile);
+                        assert.ok(textureInfo && textureInfo.texture,
+                            'An ImageBitmap uploads to a WebGL texture directly.');
+                        viewer.drawer.internalCacheFree(textureInfo);
+                        done();
+                    });
+                };
+                image.src = '/test/data/A.png';
+            });
+
+            // ----------
             QUnit.test('Webgl context recovery: enabled. Recreates webgl drawer and fires webgl-context-recovered', function(assert) {
                 const done = assert.async();
                 const timeout = Util.timeWatcher(assert, 5000);
