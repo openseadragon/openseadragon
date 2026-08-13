@@ -35,7 +35,7 @@
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
         "nyc": "^17.1.0",
-        "puppeteer": "^22.15.0",
+        "puppeteer": "^24.0.0",
         "qunit": "^2.24.1",
         "source-map-explorer": "^2.5.3",
         "tsd": "^0.33.0",

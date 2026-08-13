@@ -3,22 +3,6 @@
 <head>
     <meta charset="utf-8">
     <title>OpenSeadragon QUnit Coverage</title>
-    <script type="text/javascript">
-        function isInteractiveMode() {
-            const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
-            const isHeadless = typeof navigator !== 'undefined' && navigator.webdriver;
-            return isBrowser && !isHeadless;
-        }
-
-        window.QUnit = {
-            config: {
-                testTimeout: isInteractiveMode() ? 30000 : 10000
-            }
-        };
-
-        // Flag to indicate this is a coverage run
-        window.COVERAGE_RUN = true;
-    </script>
     <link rel="stylesheet" href="/node_modules/qunit/qunit/qunit.css">
     <link rel="stylesheet" href="/test/lib/jquery-ui-1.10.2/css/smoothness/jquery-ui-1.10.2.min.css">
     <link rel="stylesheet" href="/test/helpers/test.css">
@@ -26,7 +10,30 @@
 <body>
     <div id="qunit"></div>
     <div id="qunit-fixture"></div>
+
+    <!-- Load QUnit FIRST -->
     <script src="/node_modules/qunit/qunit/qunit.js"></script>
+
+    <!-- THEN configure it so QUnit 2.x doesn't overwrite our settings -->
+    <script type="text/javascript">
+        function isInteractiveMode() {
+            const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+            const isHeadless = typeof navigator !== 'undefined' && navigator.webdriver;
+            return isBrowser && !isHeadless;
+        }
+
+        // Set config on the existing QUnit object (do not overwrite window.QUnit)
+        QUnit.config.testTimeout = isInteractiveMode() ? 30000 : 10000;
+
+        // Reliable completion signal for the Puppeteer coverage runner.
+        QUnit.done(function () {
+            window.__qunitDone = true;
+        });
+
+        // Flag to indicate this is a coverage run
+        window.COVERAGE_RUN = true;
+    </script>
+
     <script src="/test/lib/jquery-1.9.1.min.js"></script>
     <script src="/test/lib/jquery-ui-1.10.2/js/jquery-ui-1.10.2.min.js"></script>
     <script src="/test/lib/jquery.simulate.js"></script>

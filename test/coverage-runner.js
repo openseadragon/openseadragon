@@ -89,12 +89,9 @@ async function runCoverage() {
     console.log('  Waiting for QUnit tests to complete...');
 
     // Wait for QUnit to finish
-    await page.waitForFunction(() => {
-        const el = document.getElementById('qunit-testresult');
-        if (!el) return false;
-        const text = el.textContent || '';
-        return text.includes('completed');
-    }, { timeout: 300000 }); // 5 minute timeout
+    await page.waitForFunction(() => window.__qunitDone === true, {
+        timeout: 300000
+    });
 
     console.log('  Tests complete, collecting coverage data...');
     await sleep(2000);
