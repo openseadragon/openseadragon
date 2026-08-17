@@ -432,4 +432,44 @@
         });
     });
 
+    // Preloading drawers (usePrivateCache + preloadCache, e.g. the WebGL drawer) build their internal
+    // cache ahead of the drawing loop. If it is missing or was invalidated outside of the invalidation
+    // routine (setInternalCacheNeedsRefresh), getDataForRendering must still hand back drawable data
+    // instead of dropping the tile for an unbounded number of frames.
+    QUnit.test('preloading drawer: getDataForRendering builds a missing/stale internal cache in place', function (assert) {
+        const tile = { cacheKey: "k", tiledImage: { viewer: { forceRedraw() {} } }, _unload() {} };
+        let created = 0;
+        const drawer = {
+            _dataNeedsRefresh: 0,
+            options: { usePrivateCache: true, preloadCache: true },
+            getId() { return "preload-drawer"; },
+            getSupportedDataFormats() { return [T_A]; },
+            internalCacheCreate(cache) { created++; return { tex: cache.data }; },
+            internalCacheFree() {}
+        };
+
+        const cache = new OpenSeadragon.CacheRecord();
+        cache.addTile(tile, 10, T_A);
+        cache.withTileReference(tile);
+
+        // nothing preloaded yet: the drawing loop must not come up empty
+        const first = cache.getDataForRendering(drawer, tile);
+        assert.ok(first, "internal cache built on demand when preloading has not run");
+        assert.deepEqual(first.data, { tex: 10 }, "built from the current main data");
+        assert.equal(created, 1, "internalCacheCreate called exactly once");
+
+        // already prepared: no rebuild
+        assert.strictEqual(cache.getDataForRendering(drawer, tile), first, "prepared internal cache reused");
+        assert.equal(created, 1, "no rebuild while the internal cache is up to date");
+
+        // the drawer invalidates its internal caches (context recreated, smoothing changed, ...)
+        drawer._dataNeedsRefresh = OpenSeadragon.now() + 1;
+        const refreshed = cache.getDataForRendering(drawer, tile);
+        assert.ok(refreshed, "stale internal cache rebuilt rather than skipped");
+        assert.notStrictEqual(refreshed, first, "a new internal cache record is installed");
+        assert.equal(created, 2, "internalCacheCreate called again for the stale record");
+
+        cache.destroy();
+    });
+
 })();

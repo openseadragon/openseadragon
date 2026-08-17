@@ -448,6 +448,36 @@
         done();
     });
 
+    QUnit.test('A failing tile is not fetched twice', async function (test) {
+        const done = test.async();
+
+        const originalFetch = window.fetch;
+        let fetchCount = 0;
+        window.fetch = function () {
+            fetchCount++;
+            return originalFetch.apply(window, arguments);
+        };
+
+        let rejected = false;
+        try {
+            await OpenSeadragon.converter.convert({}, "data/this-tile-does-not-exist.png",
+                "__private__imageUrl", "imageBitmap");
+        } catch (e) {
+            rejected = true;
+        } finally {
+            window.fetch = originalFetch;
+        }
+
+        test.ok(rejected, "A missing tile rejects instead of resolving with nothing.");
+        // The worker reports HTTP and decode errors by rejecting, just like a dead worker does. Falling back
+        // on every rejection re-fetched broken tiles on the main thread, doubling the failed traffic - and
+        // multiplying it further once tile retries kick in. Only worker death is worth falling back for.
+        // (Counted on the main thread: when the worker is used this is 0, when it is unavailable it is 1.)
+        test.ok(fetchCount <= 1, "The missing tile is requested at most once, was " + fetchCount + ".");
+
+        done();
+    });
+
     QUnit.test('Real types conversion', async function (test) {
         const done = test.async();
 

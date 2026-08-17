@@ -224,11 +224,18 @@
                 }
                 // or check internal cache state before returning
                 const internalCache = this._getInternalCacheRef(drawer);
-                if (!internalCache || !internalCache.loaded) {
-                    $.console.error(`Attempt to draw tile cache ${this} with internal cache non-ready state!`);
-                    return undefined;
+                if (!internalCache || !this._checkInternalCacheUpToDate(internalCache, drawer)) {
+                    // Preloading has not caught up: either this cache was never prepared for the drawer,
+                    // or the drawer invalidated its internal caches outside of the invalidation routine
+                    // (setInternalCacheNeedsRefresh, e.g. on context recreation or a smoothing change).
+                    // Build it now rather than dropping the tile for an unbounded number of frames.
+                    // Synchronous creators (e.g. a GL texture upload) are drawable immediately; async
+                    // creators return a promise and simply become drawable in a later frame.
+                    const fresh = this.prepareInternalCacheSync(drawer);
+                    return fresh && fresh.loaded ? fresh : undefined;
                 }
-                return internalCache;
+                // up to date, but an async build may still be in flight
+                return internalCache.loaded ? internalCache : undefined;
             }
 
             // else just return self reference

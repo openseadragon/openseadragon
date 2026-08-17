@@ -154,6 +154,10 @@ let _imageConversionWorker;
 // (no Worker support, a Content-Security-Policy that forbids blob: workers) do not change mid-session.
 let _workerState = 'untried';
 let _conversionId = 0;
+// How many worker operations timed out in a row. A single timeout is treated as a slow request (the tile
+// retries like any other), but a worker that stops answering altogether must not swallow every tile.
+let _consecutiveWorkerTimeouts = 0;
+const MAX_CONSECUTIVE_WORKER_TIMEOUTS = 3;
 // id -> { resolve, reject, timer? }
 const _pendingConversions = new Map();
 let __warnedNoSAB = false;
@@ -197,7 +201,23 @@ function canUseWorker() {
 }
 
 /**
+ * Builds an error that marks the worker itself as the failure, as opposed to the operation it was asked to
+ * perform. Only these are worth retrying on the main thread: a 404 or a corrupt image fails there just as
+ * well, and retrying it would double the failed network traffic.
+ * @private
+ * @param {String} reason
+ * @returns {Error}
+ */
+function workerFatalError(reason) {
+    const error = new Error(reason);
+    error.__osdWorkerFatal = true;
+    return error;
+}
+
+/**
  * Marks the worker as permanently unusable and fails over every conversion still waiting on it.
+ * Terminating also cancels whatever the worker still had in flight, so the main-thread retries the callers
+ * do in response cannot duplicate live requests.
  * @private
  * @param {String} reason
  */
@@ -213,7 +233,7 @@ function disableWorker(reason) {
             clearTimeout(entry.timer);
             entry.timer = null;
         }
-        entry.reject(new Error(reason));
+        entry.reject(workerFatalError(reason));
     }
     _pendingConversions.clear();
 }
@@ -261,8 +281,12 @@ self.onmessage = async (e) => {
 
     _imageConversionWorker.onmessage = (e) => {
         const { id, ok, bmp, err } = e.data || {};
+        _consecutiveWorkerTimeouts = 0;
         const entry = _pendingConversions.get(id);
         if (!entry) {
+            if (bmp && typeof bmp.close === 'function') {
+                bmp.close();
+            }
             return;
         }
         _pendingConversions.delete(id);
@@ -294,7 +318,7 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
             worker = getIBWorker();
         } catch (e) {
             disableWorker('Worker unavailable');
-            reject(e);
+            reject(workerFatalError(e && e.message ? e.message : 'Worker unavailable'));
             return;
         }
 
@@ -307,6 +331,12 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
             entry.timer = setTimeout(() => {
                 entry.timer = null;
                 _pendingConversions.delete(id);
+                _consecutiveWorkerTimeouts++;
+                if (_consecutiveWorkerTimeouts >= MAX_CONSECUTIVE_WORKER_TIMEOUTS) {
+                    disableWorker(`Worker timeout (${op})`);
+                    reject(workerFatalError(`Worker timeout (${op})`));
+                    return;
+                }
                 reject(new Error(`Worker timeout (${op})`));
             }, timeoutMs);
         }
@@ -464,10 +494,15 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             }
             const decodeOnMainThread = () => createImageBitmap(blob, { colorSpaceConversion: 'none' });
             if (canUseWorker()) {
-                postWorker('decodeFromBlob', { blob })
-                    // The worker may die between the check above and the reply; fall back rather than lose the tile.
-                    .catch(decodeOnMainThread)
-                    .then(resolve, reject);
+                // The worker may die between the check above and the reply; fall back rather than lose the
+                // tile. Failures the worker itself reports (undecodable data) would fail here too, so they
+                // are propagated instead of being decoded a second time.
+                postWorker('decodeFromBlob', { blob }).catch(e => {
+                    if (e && e.__osdWorkerFatal) {
+                        return decodeOnMainThread();
+                    }
+                    throw e;
+                }).then(resolve, reject);
             } else {
                 decodeOnMainThread().then(resolve, reject);
             }
@@ -840,9 +875,14 @@ $.converter.learn("__private__imageUrl", "imageBitmap", (tile, url) => new $.Pro
 
     if (canUseWorker()) {
         // The worker may die between the check above and the reply; fall back rather than lose the tile.
-        return postWorker('fetchDecode', { url, setup })
-            .catch(fetchDecodeOnMainThread)
-            .then(resolve, reject);
+        // HTTP and decode errors the worker reports are relayed as-is: re-fetching them on the main thread
+        // would just double the failed traffic, and tile retries already handle transient ones.
+        return postWorker('fetchDecode', { url, setup }).catch(e => {
+            if (e && e.__osdWorkerFatal) {
+                return fetchDecodeOnMainThread();
+            }
+            throw e;
+        }).then(resolve, reject);
     }
     return fetchDecodeOnMainThread().then(resolve, reject);
 }), 1, 1);

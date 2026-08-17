@@ -330,12 +330,35 @@ $.BatchImageJob.prototype = {
 
         for (let j of this.jobs) {
             // Handle timeout securely
-            j.finish = wrap(j.finish, j);
-            j.fail = wrap(j.fail, j);
+            const originalFinish = j.finish,
+                originalFail = j.fail;
+            j.finish = wrap(originalFinish, j);
+            j.fail = wrap(originalFail, j);
+            j.unbatch = function() {
+                this.finish = originalFinish;
+                this.fail = originalFail;
+                delete this.unbatch;
+            };
             j.prepareForBatch();
         }
 
         this.source.downloadTileBatchStart(this);
+    },
+
+    /**
+     * Aborts a batch job that has not been started yet. Once start() runs it installs its own abort
+     * that also tears down the request; this one only exists for jobs still sitting in the queue.
+     * Their child jobs still carry the caller-supplied release callback (it resets tile.loading), so
+     * dropping the references without calling it strands the tiles as permanently "loading".
+     */
+    abort: function() {
+        for (let i = 0; i < this.jobs.length; i++) {
+            const job = this.jobs[i];
+            if (typeof job.abort === "function") {
+                job.abort();
+            }
+        }
+        this.jobs.length = 0;
     },
 
     /**
@@ -591,6 +614,9 @@ function completeJob(loader, job, callback) {
     if (job.errorMsg && job.data === null && job.tries < 1 + loader.tileRetryMax) {
         // Retries are ran separately.
         job.isBatched = false;
+        if (typeof job.unbatch === "function") {
+            job.unbatch();
+        }
         loader.failedTiles.push(job);
     }
 
@@ -599,21 +625,7 @@ function completeJob(loader, job, callback) {
         loader.jobsInProgress--;
     }
 
-    if (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
-        let nextJob = loader.jobQueue.shift();
-        nextJob.start();
-        loader.jobsInProgress++;
-    }
-
-    if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
-        if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
-            let nextJob = loader.failedTiles.shift();
-            setTimeout(function () {
-                nextJob.start();
-            }, loader.tileRetryDelay);
-            loader.jobsInProgress++;
-        }
-    }
+    _pumpQueue(loader);
 
     if (callback) {
         callback(job.data, job.errorMsg, job.request, job.dataType, job.tries);
@@ -631,6 +643,32 @@ function completeJob(loader, job, callback) {
 function completeBatchJob(loader, job) {
     loader.jobsInProgress--;
     job.jobs.length = 0; // make sure items are detached
+    _pumpQueue(loader);
+}
+
+/**
+ * Starts the next waiting job now that a slot has been freed: queued jobs first, then delayed retries of
+ * failed ones. Both completion paths must call this - completing a batch frees a slot just like any other job.
+ * @method
+ * @private
+ * @param {OpenSeadragon.ImageLoader} loader
+ */
+function _pumpQueue(loader) {
+    if (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
+        let nextJob = loader.jobQueue.shift();
+        nextJob.start();
+        loader.jobsInProgress++;
+    }
+
+    if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
+        if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
+            let nextJob = loader.failedTiles.shift();
+            setTimeout(function () {
+                nextJob.start();
+            }, loader.tileRetryDelay);
+            loader.jobsInProgress++;
+        }
+    }
 }
 
 // Consistent data validity checker

@@ -327,9 +327,12 @@
   *     throughput at `maxTilesPerFrame * fps` tiles per second per tiled image.
   *
   * @property {Number} [tileLoadingConcurrency=0]
-  *     How many tile downloads OpenSeadragon tries to keep in flight at once, per tiled image. Each frame, enough
-  *     extra tiles are dispatched to top the pipeline back up to this number, so the download rate follows network
-  *     latency instead of the client's frame rate. Defaults to 0, which disables the behaviour and leaves
+  *     How many tile downloads OpenSeadragon tries to keep in flight at once. The target is counted per tiled
+  *     image, so each image in the world gets its own pipeline and the result does not depend on the order in
+  *     which items are updated. Each frame, enough extra tiles are dispatched to top that image's pipeline back
+  *     up to this number, so the download rate follows network latency instead of the client's frame rate -
+  *     which matters most with a slow drawer, where the frame rate alone would throttle loading.
+  *     Defaults to 0, which disables the behaviour and leaves
   *     {@link OpenSeadragon.Options.maxTilesPerFrame} as the only limit; over HTTP/2 a value of 16 is a reasonable
   *     starting point.
   *     This is a request-scheduling target, not a hard cap - use
