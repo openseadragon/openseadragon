@@ -81,6 +81,42 @@
         });
 
         // ----------
+        QUnit.test('shared renderer default stays dedicated', function(assert) {
+            if (drawerType !== 'webgl') {
+                assert.expect(0);
+                return;
+            }
+
+            createViewer();
+            assert.notOk(viewer.drawer._useSharedRenderer, 'webgl drawers stay dedicated unless explicitly opted into shared rendering');
+        });
+
+        // ----------
+        QUnit.test('shared renderer explicit opt in', function(assert) {
+            if (drawerType !== 'webgl') {
+                assert.expect(0);
+                return;
+            }
+
+            $('<div></div>').attr('id', 'example-shared-explicit').appendTo('#qunit-fixture');
+            // eslint-disable-next-line new-cap
+            const explicitViewer = OpenSeadragon({
+                id: 'example-shared-explicit',
+                prefixUrl: '/build/openseadragon/images/',
+                springStiffness: 100,
+                drawer: 'webgl',
+                drawerOptions: {
+                    webgl: {
+                        useSharedRenderer: true
+                    }
+                }
+            });
+
+            assert.ok(explicitViewer.drawer._useSharedRenderer, 'explicit opt in uses the shared renderer immediately');
+            explicitViewer.destroy();
+        });
+
+        // ----------
         QUnit.test('rotation', function(assert) {
             const done = assert.async();
 

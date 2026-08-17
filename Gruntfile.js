@@ -4,6 +4,7 @@
 module.exports = function(grunt) {
     /* eslint-disable no-undef */
     const dateFormat = require('dateformat');
+    const testPort = process.env.OSD_TEST_PORT || 8000;
 
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
@@ -87,6 +88,14 @@ module.exports = function(grunt) {
     grunt.event.once('git-describe', function (rev) {
         grunt.config.set('gitInfo', rev);
     });
+
+    const qunitPuppeteerOptions = {
+        headless: 'new'
+    };
+
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        qunitPuppeteerOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
 
     let moduleFilter =  '';
     if (grunt.option('module')) {
@@ -178,16 +187,14 @@ module.exports = function(grunt) {
         qunit: {
             normal: {
                 options: {
-                    urls: [ "http://localhost:8000/test/test.html" + moduleFilter ],
+                    urls: [ "http://localhost:" + testPort + "/test/test.html" + moduleFilter ],
                     timeout: 10000,
-                    puppeteer: {
-                        headless: 'new'
-                    }
+                    puppeteer: qunitPuppeteerOptions
                 },
             },
             coverage: {
                 options: {
-                    urls: [ "http://localhost:8000/test/coverage.html" + moduleFilter ],
+                    urls: [ "http://localhost:" + testPort + "/test/coverage.html" + moduleFilter ],
                     coverage: {
                         src: ['src/*.js'],
                         htmlReport: coverageDir + '/html/',
@@ -207,7 +214,7 @@ module.exports = function(grunt) {
         connect: {
             server: {
                 options: {
-                    port: 8000,
+                    port: testPort,
                     base: {
                         path: ".",
                         options: {
