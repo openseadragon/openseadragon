@@ -5,6 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * Added missing TypeScript declarations for cooperative gesture handling (#2949 @superbland)
 * Improved unit tests (#2951 @lucifer2661)
+* Updated our unit test code coverage tool from istanbul to nyc (#2947 @Zaidzezo)
 
 6.1.0:
 
