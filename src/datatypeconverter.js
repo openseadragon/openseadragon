@@ -874,6 +874,7 @@ $.converter.learn("__private__imageUrl", "imageBitmap", (tile, url) => new $.Pro
         }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' }));
 
     if (canUseWorker()) {
+        url = new URL(url, location.href).href;
         // The worker may die between the check above and the reply; fall back rather than lose the tile.
         // HTTP and decode errors the worker reports are relayed as-is: re-fetching them on the main thread
         // would just double the failed traffic, and tile retries already handle transient ones.

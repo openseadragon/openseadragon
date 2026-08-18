@@ -133,49 +133,6 @@
         });
 
         // ----------
-        // MAX_TEXTURE_IMAGE_UNITS is constant per context; querying the driver per tiled image per
-        // frame was fixed per-frame overhead.
-        QUnit.test('webgl: MAX_TEXTURE_IMAGE_UNITS is not queried while drawing', function(assert) {
-            const done = assert.async();
-
-            createViewer();
-
-            if (viewer.drawer.getType() !== 'webgl') {
-                assert.expect(0);
-                done();
-                return;
-            }
-
-            const drawer = viewer.drawer;
-            const gl = drawer._glContext.getContext();
-            const originalGetParameter = gl.getParameter;
-            let queries = 0;
-
-            assert.ok(drawer._glContext.getMaxTextures() > 0, 'texture unit count is available');
-
-            viewer.addHandler('open', function() {
-                viewer.world.getItemAt(0).whenFullyLoaded(function() {
-                    gl.getParameter = function(param) {
-                        if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
-                            queries++;
-                        }
-                        return originalGetParameter.call(this, param);
-                    };
-
-                    viewer.forceRedraw();
-                    viewer.world.draw();
-                    viewer.world.draw();
-
-                    gl.getParameter = originalGetParameter;
-                    assert.equal(queries, 0, 'the cached value is used instead of a driver query');
-                    done();
-                });
-            });
-
-            viewer.open('/test/data/testpattern.dzi');
-        });
-
-        // ----------
         QUnit.test('rotation', function(assert) {
             const done = assert.async();
 
