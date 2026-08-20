@@ -3731,6 +3731,9 @@ function onCanvasDrag( event ) {
         if (gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom){
             const factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y / 50);
             this.viewport.zoomBy(factor);
+            if (this.constrainDuringPan) {
+                this.viewport.applyConstraints();
+            }
         }
         else if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom && !cooperativeTouchDrag) {
             if( !this.panHorizontal ){
@@ -3743,26 +3746,10 @@ function onCanvasDrag( event ) {
                 event.delta.x = -event.delta.x;
             }
 
-            if( this.constrainDuringPan ){
-                const delta = this.viewport.deltaPointsFromPixels( event.delta.negate() );
-
-                this.viewport.centerSpringX.target.value += delta.x;
-                this.viewport.centerSpringY.target.value += delta.y;
-
-                const constrainedBounds = this.viewport.getConstrainedBounds();
-
-                this.viewport.centerSpringX.target.value -= delta.x;
-                this.viewport.centerSpringY.target.value -= delta.y;
-
-                if (constrainedBounds.xConstrained) {
-                    event.delta.x = 0;
-                }
-
-                if (constrainedBounds.yConstrained) {
-                    event.delta.y = 0;
-                }
+            this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled);
+            if (this.constrainDuringPan) {
+                this.viewport.applyConstraints(gestureSettings.flickEnabled);
             }
-            this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
         }
 
         // The one-finger pan was suppressed in cooperative mode; notify the app once per gesture
@@ -3841,12 +3828,13 @@ function onCanvasDragEnd( event ) {
                 new $.Point(center.x - amplitudeX, center.y - amplitudeY));
             this.viewport.panTo(target, false);
         }
-        this.viewport.applyConstraints();
+        this.viewport.applyConstraints(false);
     }
 
 
     if( gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
         THIS[ this.hash ].draggingToZoom = false;
+        this.viewport.applyConstraints(false);
     }
 
 }
@@ -4100,7 +4088,7 @@ function onCanvasPinch( event ) {
             if ( !canvasPinchEventArgs.preventDefaultZoomAction ) {
                 this.viewport.zoomBy( event.distance / event.lastDistance, centerPt, true );
             }
-            this.viewport.applyConstraints();
+            this.viewport.applyConstraints(true);
         }
         if ( gestureSettings.pinchRotate && !canvasPinchEventArgs.preventDefaultRotateAction ) {
             // Pinch rotate
