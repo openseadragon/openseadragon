@@ -48,9 +48,6 @@ async function runCoverage() {
         args: [
             '--no-sandbox',
             '--allow-file-access-from-files',
-            '--use-gl=swiftshader',
-            '--enable-webgl',
-            '--ignore-gpu-blacklist',
             '--disable-dev-shm-usage'
         ]
     });
