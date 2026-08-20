@@ -37,6 +37,22 @@
 
     const OpenSeadragon = $; // alias for JSDoc
 
+    function getValidMaxTextureUnits(gl) {
+        if (!gl || ($.isFunction(gl.isContextLost) && gl.isContextLost())) {
+            return 0;
+        }
+
+        let maxTextures;
+        try {
+            maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+        } catch (error) {
+            $.console.warn('Error checking WebGL parameters:', error.message);
+            return 0;
+        }
+
+        return typeof maxTextures === 'number' && isFinite(maxTextures) && maxTextures > 0 ? maxTextures : 0;
+    }
+
     /**
      * @class WebglContextManager
      * @classdesc Handles the webgl context, isolating it from the rest of the DrawerBase API.
@@ -82,6 +98,15 @@
 
             if (this._gl) {
                 this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+
+                if (!this.getMaxTextures()) {
+                    $.console.warn('WebGL context invalid: MAX_TEXTURE_IMAGE_UNITS is unavailable. Falling back to CanvasDrawer to prevent crashes.');
+                    const ext = this._gl.getExtension('WEBGL_lose_context');
+                    if (ext) {
+                        ext.loseContext();
+                    }
+                    this._gl = null;
+                }
             }
         }
 
@@ -106,10 +131,7 @@
          * @returns {Number} MAX_TEXTURE_IMAGE_UNITS value
          */
         getMaxTextures() {
-            if (!this._gl) {
-                return 0;
-            }
-            return this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS);
+            return getValidMaxTextureUnits(this._gl);
         }
 
         /**
@@ -206,6 +228,34 @@
         }
 
         /**
+         * Mark the WebGL context unusable and clear all dependent renderer state.
+         * @param {String} message - Warning message describing why the context is being invalidated
+         * @private
+         */
+        _invalidateContext(message) {
+            const gl = this._gl;
+
+            if (message) {
+                $.console.warn(message);
+            }
+
+            if (gl) {
+                const ext = gl.getExtension('WEBGL_lose_context');
+                if (ext) {
+                    ext.loseContext();
+                }
+            }
+
+            this._gl = null;
+            this._firstPass = null;
+            this._secondPass = null;
+            this._glFrameBuffer = null;
+            this._renderToTexture = null;
+            this._glNumTextures = 0;
+            this._unitQuad = null;
+        }
+
+        /**
          * Set up the renderer: create shaders, textures, and framebuffers
          * @param {Number} width - Canvas width
          * @param {Number} height - Canvas height
@@ -219,6 +269,11 @@
 
             // Create unit quad once
             this._unitQuad = this.makeQuadVertexBuffer(0, 1, 0, 1);
+
+            if (!this.getMaxTextures()) {
+                this._invalidateContext('WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS. Falling back to CanvasDrawer to prevent crashes.');
+                return;
+            }
 
             this._makeFirstPassShaderProgram();
             this._makeSecondPassShaderProgram();
