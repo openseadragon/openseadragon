@@ -387,4 +387,126 @@
         viewer.addHandler('open', openHandler);
     });
 
+    QUnit.module('Control');
+
+    QUnit.test('deprecated number anchor', function(assert) {
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
+
+        var element = document.createElement('button');
+        var control = new OpenSeadragon.Control(element, OpenSeadragon.ControlAnchor.TOP_LEFT, container);
+
+        assert.ok(testLog.error.contains('deprecated'), 'deprecation warning logged');
+        assert.equal(control.anchor, OpenSeadragon.ControlAnchor.TOP_LEFT, 'anchor set correctly');
+
+        control.destroy();
+    });
+
+    QUnit.test('ABSOLUTE anchor', function(assert) {
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
+
+        var element = document.createElement('div');
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.ABSOLUTE,
+            top: 10,
+            left: 20,
+            width: 100,
+            height: 50
+        }, container);
+
+        assert.equal(control.wrapper.style.position, 'absolute', 'position is absolute');
+        assert.equal(control.wrapper.style.top, '10px', 'top set');
+        assert.equal(control.wrapper.style.left, '20px', 'left set');
+        assert.equal(control.wrapper.style.width, '100px', 'width set');
+        assert.equal(control.wrapper.style.height, '50px', 'height set');
+        assert.equal(control.element.style.position, 'relative', 'element position is relative');
+
+        control.destroy();
+    });
+
+    QUnit.test('NONE anchor', function(assert) {
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
+
+        var element = document.createElement('button');
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.NONE
+        }, container);
+
+        assert.equal(control.wrapper.style.width, '100%', 'width is 100%');
+        assert.equal(control.wrapper.style.height, '100%', 'height is 100%');
+
+        control.destroy();
+    });
+
+    QUnit.test('attachToViewer false', function(assert) {
+        var container = document.createElement('div');
+        var parent = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(parent);
+
+        var element = document.createElement('button');
+        parent.appendChild(element);
+
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.TOP_LEFT,
+            attachToViewer: false
+        }, container);
+
+        assert.ok(parent.contains(control.wrapper), 'wrapper added to parent, not container');
+        assert.ok(!container.contains(control.wrapper), 'wrapper not in container');
+
+        control.destroy();
+    });
+
+    QUnit.test('destroy with anchor', function(assert) {
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
+
+        var element = document.createElement('button');
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.TOP_RIGHT
+        }, container);
+
+        assert.ok(container.contains(control.wrapper), 'wrapper in container before destroy');
+        control.destroy();
+        assert.ok(!container.contains(control.wrapper), 'wrapper removed from container after destroy');
+        assert.ok(!control.wrapper.contains(element), 'element removed from wrapper after destroy');
+    });
+
+    QUnit.test('isVisible and setVisible', function(assert) {
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
+
+        var element = document.createElement('button');
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.TOP_LEFT
+        }, container);
+
+        assert.ok(control.isVisible(), 'visible by default');
+
+        control.setVisible(false);
+        assert.ok(!control.isVisible(), 'hidden after setVisible(false)');
+
+        control.setVisible(true);
+        assert.ok(control.isVisible(), 'visible after setVisible(true)');
+
+        control.destroy();
+    });
+
+    QUnit.test('setOpacity', function(assert) {
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
+
+        var element = document.createElement('button');
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.TOP_LEFT
+        }, container);
+
+        control.setOpacity(0.5);
+        assert.ok(true, 'setOpacity did not throw');
+
+        control.destroy();
+    });
+
 })();

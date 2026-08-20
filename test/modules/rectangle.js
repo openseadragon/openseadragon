@@ -289,4 +289,24 @@
             'Point 0.6,0.5 should not be inside ' + rect);
     });
 
+    QUnit.module('DisplayRect');
+
+    QUnit.test('constructor with minLevel and maxLevel', function(assert) {
+        var rect = new OpenSeadragon.DisplayRect(10, 20, 100, 200, 2, 5);
+
+        assert.equal(rect.x, 10, 'x is set');
+        assert.equal(rect.y, 20, 'y is set');
+        assert.equal(rect.width, 100, 'width is set');
+        assert.equal(rect.height, 200, 'height is set');
+        assert.equal(rect.minLevel, 2, 'minLevel is set');
+        assert.equal(rect.maxLevel, 5, 'maxLevel is set');
+    });
+
+    QUnit.test('inherits from Rect', function(assert) {
+        var rect = new OpenSeadragon.DisplayRect(0, 0, 50, 50, 0, 10);
+
+        assert.ok(rect instanceof OpenSeadragon.Rect, 'is a Rect');
+        assert.ok(rect instanceof OpenSeadragon.DisplayRect, 'is a DisplayRect');
+    });
+
 })();
