@@ -81,6 +81,58 @@
         });
 
         // ----------
+        // The WebGL drawer preloads its internal cache, so gl.texImage2D happens in the tile
+        // invalidation routine. Uploading from the drawing loop stalls exactly the frames on which
+        // new tiles arrive, which throttles tile downloads to maxTilesPerFrame * fps.
+        QUnit.test('webgl: textures are created outside of the drawing loop', function(assert) {
+            const done = assert.async();
+
+            createViewer();
+
+            if (viewer.drawer.getType() !== 'webgl') {
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            const drawer = viewer.drawer;
+            assert.ok(drawer.options.preloadCache, 'webgl drawer preloads its internal cache');
+
+            const originalDraw = drawer._draw;
+            const originalCreate = drawer.internalCacheCreate;
+            let drawing = false, created = 0, createdWhileDrawing = 0;
+
+            drawer._draw = function() {
+                drawing = true;
+                try {
+                    return originalDraw.apply(this, arguments);
+                } finally {
+                    drawing = false;
+                }
+            };
+            drawer.internalCacheCreate = function() {
+                created++;
+                if (drawing) {
+                    createdWhileDrawing++;
+                }
+                return originalCreate.apply(this, arguments);
+            };
+
+            viewer.addHandler('open', function() {
+                viewer.world.getItemAt(0).whenFullyLoaded(function() {
+                    drawer._draw = originalDraw;
+                    drawer.internalCacheCreate = originalCreate;
+
+                    assert.ok(created > 0, 'textures were created for the loaded tiles');
+                    assert.equal(createdWhileDrawing, 0, 'no texture was created from inside the drawing loop');
+                    done();
+                });
+            });
+
+            viewer.open('/test/data/testpattern.dzi');
+        });
+
+        // ----------
         QUnit.test('rotation', function(assert) {
             const done = assert.async();
 
@@ -190,6 +242,50 @@
 
         if (drawerType === 'webgl') {
             // ----------
+            QUnit.test('accepts imageBitmap tile data', function(assert) {
+                const done = assert.async();
+                createViewer();
+
+                if (typeof createImageBitmap !== 'function') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                // ImageBitmap is the only tile format that can be decoded off the main thread, and texImage2D
+                // uploads it directly. Advertising it is what lets the converter route blobs the fast way.
+                assert.ok(viewer.drawer.getSupportedDataFormats().includes('imageBitmap'),
+                    'WebGL drawer advertises imageBitmap support.');
+
+                const image = new Image();
+                image.onerror = image.onabort = function() {
+                    assert.ok(false, 'Test image failed to load.');
+                    done();
+                };
+                image.onload = function() {
+                    createImageBitmap(image).then(function(bitmap) {
+                        const tile = {
+                            x: 0,
+                            y: 0,
+                            isRightMost: true,
+                            isBottomMost: true,
+                            sourceBounds: { width: bitmap.width, height: bitmap.height },
+                            tiledImage: {
+                                getIssue: function() { return undefined; },
+                                source: { tileOverlap: 0 }
+                            }
+                        };
+                        const textureInfo = viewer.drawer.internalCacheCreate({ data: bitmap }, tile);
+                        assert.ok(textureInfo && textureInfo.texture,
+                            'An ImageBitmap uploads to a WebGL texture directly.');
+                        viewer.drawer.internalCacheFree(textureInfo);
+                        done();
+                    });
+                };
+                image.src = '/test/data/A.png';
+            });
+
+            // ----------
             QUnit.test('Webgl context recovery: enabled. Recreates webgl drawer and fires webgl-context-recovered', function(assert) {
                 const done = assert.async();
                 const timeout = Util.timeWatcher(assert, 5000);
@@ -217,6 +313,8 @@
                     }
                     return originalGetParameter.call(this, param);
                 };
+                // the value is queried once per context and cached, so invalidate the cached copy
+                oldGlContext._glNumTextures = 0;
 
                 // Set up event handler before opening an image
                 viewer.addOnceHandler('webgl-context-recovered', function(event) {
@@ -264,6 +362,7 @@
                     }
                     return originalGetParameter.call(this, param);
                 };
+                oldDrawer._glContext._glNumTextures = 0;
 
                 const previousOnError = window.onerror;
                 window.onerror = function(message) {
@@ -314,6 +413,7 @@
                     }
                     return originalGetParameter.call(this, param);
                 };
+                oldDrawer._glContext._glNumTextures = 0;
 
                 // Patch HTMLCanvasElement.prototype.getContext so _recreateContext()'s new canvas gets a context with invalid MAX_TEXTURE_IMAGE_UNITS
                 const originalGetContextProto = HTMLCanvasElement.prototype.getContext;
@@ -381,6 +481,7 @@
                     }
                     return originalGetParameter.call(this, param);
                 };
+                viewer.drawer._glContext._glNumTextures = 0;
 
                 viewer.addOnceHandler('webgl-context-recovered', function(event) {
                     gl.getParameter = originalGetParameter;

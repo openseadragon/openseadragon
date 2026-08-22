@@ -150,11 +150,93 @@ class WeightedGraph {
 }
 
 let _imageConversionWorker;
+// 'untried' | 'ready' | 'unavailable' - once 'unavailable' we never try again, since the usual causes
+// (no Worker support, a Content-Security-Policy that forbids blob: workers) do not change mid-session.
+let _workerState = 'untried';
 let _conversionId = 0;
+// How many worker operations timed out in a row. A single timeout is treated as a slow request (the tile
+// retries like any other), but a worker that stops answering altogether must not swallow every tile.
+let _consecutiveWorkerTimeouts = 0;
+const MAX_CONSECUTIVE_WORKER_TIMEOUTS = 3;
 // id -> { resolve, reject, timer? }
 const _pendingConversions = new Map();
 let __warnedNoSAB = false;
 const __hasSAB = typeof SharedArrayBuffer !== 'undefined' && self.crossOriginIsolated === true;
+
+/**
+ * Whether image decoding can be offloaded to a worker. Decides once, lazily, and degrades permanently and
+ * silently to main-thread decoding if the worker cannot be created or later dies.
+ * @private
+ * @returns {Boolean}
+ */
+function canUseWorker() {
+    if (_workerState === 'ready') {
+        return true;
+    }
+    if (_workerState === 'unavailable') {
+        return false;
+    }
+
+    if (!$.supportsAsync ||
+        typeof Worker === 'undefined' ||
+        typeof createImageBitmap !== 'function' ||
+        typeof URL === 'undefined' ||
+        typeof URL.createObjectURL !== 'function') {
+        _workerState = 'unavailable';
+        return false;
+    }
+
+    try {
+        getIBWorker();
+        _workerState = 'ready';
+        return true;
+    } catch (e) {
+        // Most commonly a CSP that blocks blob:/worker-src. Not an error worth alarming the user about -
+        // decoding simply stays on the main thread.
+        $.console.log('[DataTypeConverter] Image decoding worker unavailable, decoding on the main thread.', e);
+        _imageConversionWorker = undefined;
+        _workerState = 'unavailable';
+        return false;
+    }
+}
+
+/**
+ * Builds an error that marks the worker itself as the failure, as opposed to the operation it was asked to
+ * perform. Only these are worth retrying on the main thread: a 404 or a corrupt image fails there just as
+ * well, and retrying it would double the failed network traffic.
+ * @private
+ * @param {String} reason
+ * @returns {Error}
+ */
+function workerFatalError(reason) {
+    const error = new Error(reason);
+    error.__osdWorkerFatal = true;
+    return error;
+}
+
+/**
+ * Marks the worker as permanently unusable and fails over every conversion still waiting on it.
+ * Terminating also cancels whatever the worker still had in flight, so the main-thread retries the callers
+ * do in response cannot duplicate live requests.
+ * @private
+ * @param {String} reason
+ */
+function disableWorker(reason) {
+    _workerState = 'unavailable';
+    const worker = _imageConversionWorker;
+    _imageConversionWorker = undefined;
+    if (worker) {
+        worker.terminate();
+    }
+    for (const [, entry] of _pendingConversions) {
+        if (entry.timer) {
+            clearTimeout(entry.timer);
+            entry.timer = null;
+        }
+        entry.reject(workerFatalError(reason));
+    }
+    _pendingConversions.clear();
+}
 
 function getIBWorker() {
     if (_imageConversionWorker) {
@@ -199,8 +281,12 @@ self.onmessage = async (e) => {
 
     _imageConversionWorker.onmessage = (e) => {
         const { id, ok, bmp, err } = e.data || {};
+        _consecutiveWorkerTimeouts = 0;
         const entry = _pendingConversions.get(id);
         if (!entry) {
+            if (bmp && typeof bmp.close === 'function') {
+                bmp.close();
+            }
             return;
         }
         _pendingConversions.delete(id);
@@ -215,24 +301,27 @@ self.onmessage = async (e) => {
         }
     };
 
-    _imageConversionWorker.onerror = (e) => {
-        for (const [, entry] of _pendingConversions) {
-            if (entry.timer) {
-                clearTimeout(entry.timer);
-                entry.timer = null;
-            }
-            entry.reject(new Error('Worker error'));
-        }
-        _pendingConversions.clear();
+    _imageConversionWorker.onerror = () => {
+        // A worker that failed once (script blocked, out of memory, ...) will keep failing. Retire it rather
+        // than routing every subsequent tile into the same failure.
+        disableWorker('Worker error');
     };
     return _imageConversionWorker;
 }
 
 function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
-    const worker = getIBWorker();
     const id = ++_conversionId;
 
     return new $.Promise((resolve, reject) => {
+        let worker;
+        try {
+            worker = getIBWorker();
+        } catch (e) {
+            disableWorker('Worker unavailable');
+            reject(workerFatalError(e && e.message ? e.message : 'Worker unavailable'));
+            return;
+        }
+
         // possibly test $.supportsPromise here as well...
         payload.id = id;
         payload.op = op;
@@ -242,6 +331,12 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
             entry.timer = setTimeout(() => {
                 entry.timer = null;
                 _pendingConversions.delete(id);
+                _consecutiveWorkerTimeouts++;
+                if (_consecutiveWorkerTimeouts >= MAX_CONSECUTIVE_WORKER_TIMEOUTS) {
+                    disableWorker(`Worker timeout (${op})`);
+                    reject(workerFatalError(`Worker timeout (${op})`));
+                    return;
+                }
                 reject(new Error(`Worker timeout (${op})`));
             }, timeoutMs);
         }
@@ -397,11 +492,19 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             if (!$.supportsAsync) {
                 return reject("Not supported in sync mode!");
             }
-            if (_imageConversionWorker) {
-                postWorker('decodeFromBlob', { blob }).then(resolve).catch(reject);
+            const decodeOnMainThread = () => createImageBitmap(blob, { colorSpaceConversion: 'none' });
+            if (canUseWorker()) {
+                // The worker may die between the check above and the reply; fall back rather than lose the
+                // tile. Failures the worker itself reports (undecodable data) would fail here too, so they
+                // are propagated instead of being decoded a second time.
+                postWorker('decodeFromBlob', { blob }).catch(e => {
+                    if (e && e.__osdWorkerFatal) {
+                        return decodeOnMainThread();
+                    }
+                    throw e;
+                }).then(resolve, reject);
             } else {
-                // Fallback main thread
-                createImageBitmap(blob, { colorSpaceConversion: 'none' }).then(resolve).catch(reject);
+                decodeOnMainThread().then(resolve, reject);
             }
             return undefined;
         }), 1, 1);
@@ -458,6 +561,15 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         this.learnDestroy("context2d", ctx => {
             ctx.canvas.width = 0;
             ctx.canvas.height = 0;
+        });
+        /**
+         * Release the decoded pixels immediately instead of waiting for the collector. An ImageBitmap can hold
+         * several MB, and the cache evicts far more often than the GC runs.
+         */
+        this.learnDestroy("imageBitmap", bmp => {
+            if (bmp && typeof bmp.close === 'function') {
+                bmp.close();
+            }
         });
     }
 
@@ -533,12 +645,11 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         if (from === to) {
             this.copyings[to] = callback;
         } else {
-            //we won't know if somebody added multiple edges, though it will choose some edge anyway
             costPower++;
-            costMultiplier = Math.min(Math.max(costMultiplier, 1), 10 ^ 5);
+            costMultiplier = Math.min(Math.max(costMultiplier, 1), 1e5);
             this.graph.addVertex(from);
             this.graph.addVertex(to);
-            this.graph.addEdge(from, to, costPower * 10 ^ 5 + costMultiplier, callback);
+            this.graph.addEdge(from, to, costPower * 1e5 + costMultiplier, callback);
             this._known = {}; //invalidate precomputed paths :/
         }
     }
@@ -753,18 +864,28 @@ $.converter.learn("__private__imageUrl", "imageBitmap", (tile, url) => new $.Pro
             $.console.error(`Unsupported crossOriginPolicy ${policy}. Ignoring the property.`);
         }
     }
-    if (_imageConversionWorker) {
-        return postWorker('fetchDecode', { url, setup }).then(resolve).catch(reject);
+    const fetchDecodeOnMainThread = () =>
+        // eslint-disable-next-line compat/compat
+        fetch(url, setup).then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status} loading ${url}`);
+            }
+            return res.blob();
+        }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' }));
+
+    if (canUseWorker()) {
+        url = new URL(url, location.href).href;
+        // The worker may die between the check above and the reply; fall back rather than lose the tile.
+        // HTTP and decode errors the worker reports are relayed as-is: re-fetching them on the main thread
+        // would just double the failed traffic, and tile retries already handle transient ones.
+        return postWorker('fetchDecode', { url, setup }).catch(e => {
+            if (e && e.__osdWorkerFatal) {
+                return fetchDecodeOnMainThread();
+            }
+            throw e;
+        }).then(resolve, reject);
     }
-    // Fallback to the main thread
-    // eslint-disable-next-line compat/compat
-    return fetch(url, setup).then(res => {
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status} loading ${url}`);
-        }
-        return res.blob();
-    }).then(blob => createImageBitmap(blob, { colorSpaceConversion: 'none' })
-    ).then(resolve).catch(reject);
+    return fetchDecodeOnMainThread().then(resolve, reject);
 }), 1, 1);
 $.converter.learn("__private__imageUrl", "__private__imageUrl", (tile, url) => url, 0, 1); //strings are immutable, no need to copy
 }(OpenSeadragon));

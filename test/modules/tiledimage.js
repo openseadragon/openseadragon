@@ -253,6 +253,182 @@
     });
 
     // ----------
+    QUnit.test('tile load rate boost decays once per frame, not once per level', function(assert) {
+        const done = assert.async();
+
+        viewer.addHandler('open', function() {
+            const image = viewer.world.getItemAt(0);
+            const steady = image.maxTilesPerFrame;
+
+            // _updateLevel runs once per pyramid level, so decaying there collapsed the whole boost within a
+            // single frame and the boost never actually did anything.
+            image._boostTileLoadingRate();
+            const boosted = image._currentMaxTilesPerFrame;
+            assert.equal(boosted, steady * 10, 'Boost raises the per-frame allowance tenfold.');
+
+            image._updateLevelsForViewport();
+            assert.equal(image._currentMaxTilesPerFrame, Math.ceil(boosted / 2),
+                'One frame halves the allowance exactly once, whatever the level count.');
+
+            // And it must bottom out at the configured steady-state value rather than decaying to nothing.
+            for (let i = 0; i < 20; i++) {
+                image._updateLevelsForViewport();
+            }
+            assert.equal(image._currentMaxTilesPerFrame, steady,
+                'The allowance decays down to maxTilesPerFrame and stops there.');
+
+            done();
+        });
+
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi'
+        });
+    });
+
+    // ----------
+    QUnit.test('tile load rate is re-boosted whenever tiles become needed', function(assert) {
+        const done = assert.async();
+
+        viewer.addHandler('open', function() {
+            const image = viewer.world.getItemAt(0);
+
+            // Settle the allowance at its steady-state value.
+            image._setFullyLoaded(true);
+            for (let i = 0; i < 20; i++) {
+                image._updateLevelsForViewport();
+            }
+            assert.equal(image._currentMaxTilesPerFrame, image.maxTilesPerFrame, 'Allowance starts settled.');
+
+            // Discovering that the view is incomplete - what a pan or zoom does - must refill fast rather than
+            // trickle at the steady-state rate. Before this, only reset() ever re-armed the boost.
+            image._setFullyLoaded(false);
+            assert.equal(image._currentMaxTilesPerFrame, image.maxTilesPerFrame * 10,
+                'Becoming not-fully-loaded re-boosts the per-frame allowance.');
+
+            done();
+        });
+
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi'
+        });
+    });
+
+    // ----------
+    QUnit.test('tileLoadingConcurrency tops the download pipeline back up', function(assert) {
+        const done = assert.async();
+
+        viewer.addHandler('open', function() {
+            const image = viewer.world.getItemAt(0);
+            image.tileLoadingConcurrency = 16;
+            image._currentMaxTilesPerFrame = 2;
+
+            // Pipeline empty: dispatch enough to reach the concurrency target, not just the per-frame floor.
+            image._tilesInFlight = 0;
+            image._updateLevelsForViewport();
+            assert.equal(image._tileLoadBudget, 16, 'An empty pipeline is refilled up to the target.');
+
+            image._currentMaxTilesPerFrame = 2;
+            image._tilesInFlight = 14;
+            image._updateLevelsForViewport();
+            assert.equal(image._tileLoadBudget, 2,
+                'A nearly full pipeline falls back to the per-frame allowance as a floor.');
+
+            image._currentMaxTilesPerFrame = 2;
+            image._tilesInFlight = 40;
+            image._updateLevelsForViewport();
+            assert.equal(image._tileLoadBudget, 2, 'An over-full pipeline never yields a negative budget.');
+
+            image.tileLoadingConcurrency = 0;
+            image._currentMaxTilesPerFrame = 2;
+            image._tilesInFlight = 0;
+            image._updateLevelsForViewport();
+            assert.equal(image._tileLoadBudget, 2, 'Disabled by default: the per-frame allowance is the only limit.');
+
+            done();
+        });
+
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi'
+        });
+    });
+
+    // ----------
+    QUnit.test('tileLoadingConcurrency is budgeted per image, not per viewer', function(assert) {
+        const done = assert.async();
+
+        viewer.world.addHandler('add-item', function() {
+            if (viewer.world.getItemCount() < 2) {
+                return;
+            }
+
+            const first = viewer.world.getItemAt(0);
+            const second = viewer.world.getItemAt(1);
+
+            for (const image of [first, second]) {
+                image.tileLoadingConcurrency = 16;
+                image._currentMaxTilesPerFrame = 1;
+            }
+
+            // The images share one ImageLoader, so counting in-flight requests loader-wide would let whichever
+            // image is updated first consume the whole target and leave the other one at its per-frame floor.
+            first._tilesInFlight = 16;
+            second._tilesInFlight = 0;
+
+            first._updateLevelsForViewport();
+            assert.equal(first._tileLoadBudget, 1, 'A saturated image drops to its per-frame allowance.');
+
+            second._updateLevelsForViewport();
+            assert.equal(second._tileLoadBudget, 16,
+                'The other image still gets its own full target, whatever the first one is doing.');
+
+            done();
+        });
+
+        viewer.open([
+            { tileSource: '/test/data/testpattern.dzi' },
+            { tileSource: '/test/data/testpattern.dzi', x: 1.5 }
+        ]);
+    });
+
+    // ----------
+    QUnit.test('in-flight tile count is released exactly once', function(assert) {
+        const done = assert.async();
+
+        viewer.addHandler('open', function() {
+            const image = viewer.world.getItemAt(0);
+            const tile = MockSeadragon.getTile('/test/data/A.png', image);
+
+            let jobOptions = null;
+            image._imageLoader = {
+                addJob: function(options) {
+                    jobOptions = options;
+                    return true;
+                }
+            };
+            // The release is what this test is about; what happens with the tile afterwards is not.
+            image._onTileLoad = function() {};
+
+            image._tilesInFlight = 0;
+            image._loadTile(tile, OpenSeadragon.now());
+            assert.equal(image._tilesInFlight, 1, 'Dispatching a tile counts it as in flight.');
+
+            // An aborted job reports the abort and then fails, so both paths run for the same tile. Counting
+            // both would drift the counter negative and hand out an unbounded budget forever after.
+            jobOptions.abort();
+            assert.equal(image._tilesInFlight, 0, 'Aborting releases the tile.');
+
+            jobOptions.callback(null, 'Image load aborted.', null, undefined, 1);
+            assert.equal(image._tilesInFlight, 0, 'The failure that follows the abort does not release it twice.');
+
+            done();
+        });
+
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi'
+        });
+    });
+
+    // ----------
     QUnit.test('clip-change event', function(assert) {
         const done = assert.async();
         assert.expect(0);
