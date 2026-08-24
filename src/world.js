@@ -341,9 +341,10 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             //  We could turn this into API...
             const eventTarget = drawer._parentViewer || this.viewer;
             const originalCache = tile.getCache(tile.originalCacheKey);
-            const tileCache = tile.getCache(tile.originalCacheKey);
-            if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
-                // OpenSeadragon.trace(`Ignoring tile - old,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+            // A tile unloaded before it finished loading keeps its cache references, and those records
+            // can be destroyed afterwards - so the record may still be reachable while being dead.
+            if (!originalCache || originalCache._destroyed || !originalCache._tiles
+                    || (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
                 return Promise.resolve();
             }
 
