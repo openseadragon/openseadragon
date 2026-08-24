@@ -69,10 +69,10 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         // Since the tile-drawn event is fired by this drawer, make sure handlers can be added for it
         this.viewer.allowEventHandler("tile-drawn");
 
-        // works with canvas & image objects
-        function _prepareTile(tile, data) {
+        // Wrap the node to be placed in the DOM: the positioning happens at draw time, but the elements
+        // themselves are built here, when the cache is created.
+        function _wrapTile(imgElement, data) {
             const element = $.makeNeutralElement( "div" );
-            const imgElement = data.cloneNode();
             imgElement.style.msInterpolationMode = "nearest-neighbor";
             imgElement.style.width = "100%";
             imgElement.style.height = "100%";
@@ -85,15 +85,44 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
             };
         }
 
-        // In theory, HTML drawer should cope well with canvas node type too,
-        // but tests fail - if this conversion is used, it outputs uninitialized zeroed data
-        // (data manipulation test module).
+        // The image is placed in the DOM as-is rather than cloned. cloneNode() only carries over the
+        // src, so the clone has to load all over again - and by the time it does, the conversion has
+        // already destroyed the source, which releases the object URL a Blob-decoded image loads from.
+        // The element is already decoded, so reusing it needs no URL and no second decode.
+        function _prepareImageTile(tile, data) {
+            return _wrapTile(data, data);
+        }
 
-        // The actual placing logics will not happen at draw event, but when the cache is created:
-        // $.converter.learn("context2d", HTMLDrawer.canvasCacheType, (t, d) => _prepareTile(t, d.canvas), 1, 1);
-        $.converter.learn("image", HTMLDrawer.imageCacheType, _prepareTile, 1, 1);
+        function _copyCanvas(source) {
+            const canvas = document.createElement( "canvas" );
+            canvas.width = source.width;
+            canvas.height = source.height;
+            canvas.getContext('2d').drawImage(source, 0, 0);
+            return canvas;
+        }
+
+        // A canvas cannot be handled the same way as an image: cloneNode() on a canvas copies attributes
+        // only and never the bitmap, and the source context2d is destroyed - its canvas resized to zero -
+        // as soon as this conversion step returns. So the pixels have to be copied out right here, and
+        // that copy is then both the node placed in the DOM and the data this cache holds.
+        function _prepareCanvasTile(tile, context) {
+            const canvas = _copyCanvas(context.canvas);
+            return _wrapTile(canvas, canvas);
+        }
+
+        // Going back has to copy as well, rather than handing out a context on the canvas that is live in
+        // the DOM: the receiver owns what it gets, and the context2d destructor resizes its canvas to zero,
+        // which would blank the tile this drawer is currently displaying.
+        function _canvasTileToContext(tile, data) {
+            return _copyCanvas(data.data).getContext('2d');
+        }
+
+        // Accepting context2d directly matters for performance: reaching the image type from a canvas
+        // means encoding the tile (toBlob) and decoding it again, whereas this is a single drawImage.
+        $.converter.learn("context2d", HTMLDrawer.canvasCacheType, _prepareCanvasTile, 1, 1);
+        $.converter.learn("image", HTMLDrawer.imageCacheType, _prepareImageTile, 1, 1);
         // Also learn how to move back, since these elements can be just used as-is
-        // $.converter.learn(HTMLDrawer.canvasCacheType, "context2d", (t, d) => d.data.getContext('2d'), 1, 3);
+        $.converter.learn(HTMLDrawer.canvasCacheType, "context2d", _canvasTileToContext, 1, 3);
         $.converter.learn(HTMLDrawer.imageCacheType, "image", (t, d) => d.data, 1, 3);
 
         function _freeTile(data) {
@@ -105,7 +134,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
             }
         }
 
-        // $.converter.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
+        $.converter.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
         $.converter.learnDestroy(HTMLDrawer.imageCacheType, _freeTile);
     }
 
