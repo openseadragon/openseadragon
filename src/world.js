@@ -343,8 +343,8 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             const originalCache = tile.getCache(tile.originalCacheKey);
             // A tile unloaded before it finished loading keeps its cache references, and those records
             // can be destroyed afterwards - so the record may still be reachable while being dead.
-            if (!originalCache || originalCache._destroyed || !originalCache._tiles
-                    || (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
+            if (!originalCache || originalCache._destroyed || !originalCache._tiles ||
+                    (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
                 return Promise.resolve();
             }
 
