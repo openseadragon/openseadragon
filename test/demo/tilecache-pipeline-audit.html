@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon TileCache Pipeline Audit Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+
+      .openseadragon1 {
+          width: 800px;
+          height: 600px;
+          border: 1px solid #ccc;
+      }
+
+      fieldset {
+          display: inline-block;
+          vertical-align: top;
+          margin: 0 6px 6px 0;
+      }
+
+      #report {
+          font-family: monospace;
+          font-size: 12px;
+          white-space: pre;
+          margin-top: 8px;
+      }
+
+      .bad {
+          color: #b00;
+          font-weight: bold;
+      }
+
+    </style>
+</head>
+<body>
+    <div>
+        Demo page that keeps the v6 cache/conversion pipeline busy and continuously checks TileCache
+        invariants. Unlike the failure stress demo, nothing here is deliberately broken: every operation is
+        legal, so any invariant violation reported below is a real bug.
+        <br>
+        The pressure comes from a small cache limit (constant eviction), tile data being round-tripped
+        through a different data type every round, and optional drawer switching, which changes the data
+        format every cache has to be converted into.
+        <br>
+        Besides the invariants, it also measures data leaks - a record dropped without its destructor
+        running, which leaves a canvas unreleased, an ImageBitmap unclosed or an object URL unrevoked.
+        Those records are unreachable by then, so they are counted rather than inspected: watch that
+        <code>records live</code> tracks <code>registered</code>, and that <code>data held</code>
+        plateaus instead of climbing.
+    </div>
+
+    <fieldset>
+        <legend>Pressure</legend>
+        <label>cache limit <input type="number" id="cacheLimit" min="1" max="500" step="1" value="12"></label><br>
+        <label><input type="checkbox" id="pluginOn" checked> round-trip data through a type each round</label><br>
+        <label><input type="checkbox" id="cycleDrawers"> cycle drawers (webgl/canvas/html)</label><br>
+        <label>restore original every <input type="number" id="restoreEvery" min="0" max="50" step="1" value="7"> rounds
+            (0 = never)</label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Run</legend>
+        <button onclick="startStress()">Start</button>
+        <button onclick="stopStress()">Stop</button>
+        <button onclick="invalidateOnce()">Invalidate once</button>
+        <button onclick="resetItem()">Reset item</button>
+        <button onclick="resetCounters()">Reset counters</button>
+    </fieldset>
+
+    <div id="contentDiv" class="openseadragon1"></div>
+    <pre id="report">not started</pre>
+
+    <script type="text/javascript">
+
+        // A custom data type, so that the demo also covers third-party types: it takes part in the
+        // conversion graph, it can be copied, and it owns memory that has to be released. Counting how
+        // many are created against how many are destroyed turns a cache leak into a visible number.
+        const PROBE = "__demo__probe";
+        let probesCreated = 0, probesDestroyed = 0;
+
+        function copyCanvas(source) {
+            const canvas = document.createElement("canvas");
+            canvas.width = source.width;
+            canvas.height = source.height;
+            canvas.getContext("2d").drawImage(source, 0, 0);
+            return canvas;
+        }
+
+        OpenSeadragon.converter.learn("context2d", PROBE, (tile, ctx) => {
+            probesCreated++;
+            return { canvas: copyCanvas(ctx.canvas) };
+        }, 1, 1);
+        OpenSeadragon.converter.learn(PROBE, "context2d", (tile, probe) => {
+            return copyCanvas(probe.canvas).getContext("2d");
+        }, 1, 1);
+        // Registering a same-type conversion teaches the system how to copy the type. Without it, the
+        // invalidation routine cannot take a working copy of a cache that holds this type.
+        OpenSeadragon.converter.learn(PROBE, PROBE, (tile, probe) => {
+            probesCreated++;
+            return { canvas: copyCanvas(probe.canvas) };
+        }, 1, 1);
+        OpenSeadragon.converter.learnDestroy(PROBE, (probe) => {
+            probesDestroyed++;
+            probe.canvas.width = 0;
+            probe.canvas.height = 0;
+        });
+
+        // Data leaks are invisible to the invariant checks further down: a record that was dropped
+        // without its destructor running is, by definition, no longer reachable to be inspected. So it
+        // has to be counted instead. Cache records are built as new OpenSeadragon.CacheRecord(), looked
+        // up on the namespace at call time, which makes them interceptable from here.
+        let recordsCreated = 0, recordsDestroyed = 0, recordsFailed = 0;
+
+        const BaseCacheRecord = OpenSeadragon.CacheRecord;
+        OpenSeadragon.CacheRecord = class extends BaseCacheRecord {
+            constructor(...args) {
+                super(...args);
+                recordsCreated++;
+            }
+
+            destroy() {
+                if (!this._destroyed) {
+                    recordsDestroyed++;
+                }
+                return super.destroy();
+            }
+
+            _handleConversionError(e) {
+                // This ends the record's life without going through destroy(), so it counts here too.
+                if (!this._destroyed) {
+                    recordsDestroyed++;
+                }
+                // Data still present at this point used to be dropped without being released.
+                if (this._data !== null && this._data !== undefined) {
+                    recordsFailed++;
+                }
+                return super._handleConversionError(e);
+            }
+        };
+
+        // Rough size of what a record holds, so unbounded growth is visible as a number. Only the types
+        // this demo puts into the cache are covered; anything else counts as zero rather than guessing.
+        function estimateBytes(record) {
+            const data = record && record.loaded ? record._data : null;
+            if (!data) {
+                return 0;
+            }
+            switch (record._type) {
+                case "context2d":
+                    return data.canvas.width * data.canvas.height * 4;
+                case "image":
+                    return (data.naturalWidth || 0) * (data.naturalHeight || 0) * 4;
+                case "imageBitmap":
+                    return (data.width || 0) * (data.height || 0) * 4;
+                case "rasterBlob":
+                    return data.size || 0;
+                case PROBE:
+                    return data.canvas.width * data.canvas.height * 4;
+                default:
+                    // The html drawer wraps its node in {element, imgElement, data}
+                    if (data.data) {
+                        return (data.data.width || 0) * (data.data.height || 0) * 4;
+                    }
+                    return 0;
+            }
+        }
+
+        // Types the tile data is pushed through, one per round. Each of them reaches the drawer over a
+        // different path, and each has its own destructor behaviour.
+        const TYPE_CYCLE = ["context2d", "imageBitmap", "rasterBlob", "image", PROBE];
+        const DRAWER_CYCLE = ["webgl", "canvas", "html"];
+
+        const stress = {
+            timer: null,
+            round: 0,
+            pluginOn: true,
+            cycleDrawers: false,
+            restoreEvery: 7,
+            pluginErrors: 0,
+            restores: 0
+        };
+
+        const viewer = window.viewer = OpenSeadragon({
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            // Deliberately tiny, so records are evicted (or turned into zombies) while conversions of the
+            // very same records are still in flight.
+            maxImageCacheCount: 12,
+            showNavigator: true
+        });
+
+        viewer.addHandler('tile-invalidated', async (e) => {
+            if (!stress.pluginOn) {
+                return;
+            }
+            try {
+                if (stress.restoreEvery > 0 && stress.round % stress.restoreEvery === 0) {
+                    // Drops the working data and puts the tile back to its original cache.
+                    stress.restores++;
+                    e.resetData();
+                    return;
+                }
+
+                const ctx = await e.getData('context2d');
+                if (!ctx) {
+                    return;
+                }
+                ctx.fillStyle = "rgba(0, 128, 255, 0.12)";
+                ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                await e.setData(ctx, 'context2d');
+
+                // Round-trip through the type of this round, so the main cache ends up holding it and the
+                // drawer has to convert it back into something it can render.
+                const target = TYPE_CYCLE[stress.round % TYPE_CYCLE.length];
+                if (target !== 'context2d') {
+                    const converted = await e.getData(target);
+                    if (converted !== undefined && converted !== null) {
+                        await e.setData(converted, target);
+                    }
+                }
+            } catch (error) {
+                stress.pluginErrors++;
+                OpenSeadragon.console.error("demo plugin failed:", error);
+            }
+        });
+
+        function readSettings() {
+            stress.pluginOn = document.getElementById('pluginOn').checked;
+            stress.cycleDrawers = document.getElementById('cycleDrawers').checked;
+            stress.restoreEvery = Number(document.getElementById('restoreEvery').value) || 0;
+            const limit = Number(document.getElementById('cacheLimit').value) || 12;
+            viewer.tileCache._maxCacheItemCount = limit;
+        }
+
+        function startStress() {
+            if (stress.timer) {
+                return;
+            }
+            readSettings();
+            stress.timer = setInterval(() => {
+                stress.round++;
+                readSettings();
+
+                // Keep tiles entering and leaving the viewport, so the cache keeps evicting.
+                const viewport = viewer.viewport;
+                if (viewport) {
+                    const zoom = viewport.getZoom(true);
+                    const factor = 1 + (Math.random() - 0.5) * 0.25;
+                    viewport.zoomTo(Math.max(0.5, Math.min(12, zoom * factor)), null, true);
+                    viewport.panBy(new OpenSeadragon.Point(
+                        (Math.random() - 0.5) * 0.05,
+                        (Math.random() - 0.5) * 0.05
+                    ), true);
+                }
+
+                if (stress.cycleDrawers && stress.round % 10 === 0) {
+                    // Note: browsers cap the number of live WebGL contexts, so repeated switching may drop
+                    // the oldest one. That is a browser limit, not a cache problem.
+                    const next = DRAWER_CYCLE[(stress.round / 10) % DRAWER_CYCLE.length];
+                    viewer.requestDrawer(next, { mainDrawer: true });
+                }
+
+                viewer.requestInvalidate();
+            }, 300);
+            report();
+        }
+
+        function stopStress() {
+            if (stress.timer) {
+                clearInterval(stress.timer);
+                stress.timer = null;
+            }
+            report();
+        }
+
+        function invalidateOnce() {
+            readSettings();
+            stress.round++;
+            viewer.requestInvalidate();
+        }
+
+        function resetItem() {
+            const item = viewer.world.getItemAt(0);
+            if (item) {
+                item.reset();
+            }
+        }
+
+        function resetCounters() {
+            probesCreated = 0;
+            probesDestroyed = 0;
+            recordsCreated = 0;
+            recordsDestroyed = 0;
+            recordsFailed = 0;
+            stress.pluginErrors = 0;
+            stress.restores = 0;
+            violations.length = 0;
+            report();
+        }
+
+        const violations = [];
+
+        function describeTile(tile) {
+            return tile ? `${tile.level}/${tile.x}-${tile.y}` : "<no tile>";
+        }
+
+        // The navigator runs the Viewer constructor, so it owns a second, completely separate TileCache.
+        // Auditing only the main one would leave its records looking like they had leaked, since the
+        // record counters above cover every cache in the page.
+        function tileCaches() {
+            const caches = [];
+            if (viewer.tileCache) {
+                caches.push({ name: "viewer", cache: viewer.tileCache });
+            }
+            if (viewer.navigator && viewer.navigator.tileCache) {
+                caches.push({ name: "navigator", cache: viewer.navigator.tileCache });
+            }
+            return caches;
+        }
+
+        // Every check below is an invariant a cache is supposed to hold at all times, no matter what the
+        // pipeline is doing. They are checked between frames, when the system is expected to be consistent.
+        function auditOne(name, cache, totals) {
+            const problems = [];
+
+            const liveKeys = Object.keys(cache._cachesLoaded);
+            const zombieKeys = Object.keys(cache._zombiesLoaded);
+
+            if (liveKeys.length !== cache._cachesLoadedCount) {
+                problems.push(`live cache counter says ${cache._cachesLoadedCount}, found ${liveKeys.length} records`);
+            }
+            if (zombieKeys.length !== cache._zombiesLoadedCount) {
+                problems.push(`zombie counter says ${cache._zombiesLoadedCount}, found ${zombieKeys.length} records`);
+            }
+
+            const checkRecord = (key, record, kind) => {
+                if (!record) {
+                    problems.push(`${kind} '${key}' is registered but empty`);
+                    return;
+                }
+                if (record._destroyed) {
+                    problems.push(`${kind} '${key}' is destroyed but still registered`);
+                }
+                for (const tile of record._tiles || []) {
+                    if (!tile._caches || tile._caches[key] !== record) {
+                        problems.push(`${kind} '${key}' claims tile ${describeTile(tile)}, which does not point back`);
+                    }
+                }
+            };
+            liveKeys.forEach(key => checkRecord(key, cache._cachesLoaded[key], "cache"));
+            zombieKeys.forEach(key => checkRecord(key, cache._zombiesLoaded[key], "zombie"));
+
+            // A record is only turned into a zombie once its last tile is gone, so a zombie that still
+            // references tiles means a tile was dropped without being detached.
+            zombieKeys.forEach(key => {
+                const record = cache._zombiesLoaded[key];
+                const count = record && record._tiles ? record._tiles.length : 0;
+                if (count) {
+                    problems.push(`zombie '${key}' still references ${count} tile(s)`);
+                }
+            });
+
+            for (const tile of cache._tilesLoaded) {
+                if (!tile.exists) {
+                    totals.unrecoverable++;
+                }
+                const main = tile.getCache ? tile.getCache() : null;
+                if (tile.loaded && !main) {
+                    problems.push(`tile ${describeTile(tile)} is loaded but has no main cache`);
+                } else if (main && main._destroyed) {
+                    problems.push(`tile ${describeTile(tile)} points at a destroyed cache`);
+                }
+            }
+
+            for (const problem of problems) {
+                // Name the cache, so a violation says which one it came from.
+                const message = `[${name}] ${problem}`;
+                if (violations.indexOf(message) === -1) {
+                    violations.push(message);
+                }
+            }
+
+            const collect = (record) => {
+                totals.bytes += estimateBytes(record);
+                for (const tile of (record && record._tiles) || []) {
+                    totals.tilesWithCaches.add(tile);
+                }
+            };
+            liveKeys.forEach(key => collect(cache._cachesLoaded[key]));
+            zombieKeys.forEach(key => collect(cache._zombiesLoaded[key]));
+
+            totals.registered += liveKeys.length + zombieKeys.length;
+            totals.tiles += cache._tilesLoaded.length;
+
+            return {
+                name: name,
+                live: liveKeys.length,
+                zombies: zombieKeys.length,
+                limit: cache._maxCacheItemCount
+            };
+        }
+
+        function audit() {
+            const totals = {
+                registered: 0,
+                tiles: 0,
+                bytes: 0,
+                unrecoverable: 0,
+                tilesWithCaches: new Set()
+            };
+            const perCache = tileCaches().map(entry => auditOne(entry.name, entry.cache, totals));
+
+            return {
+                perCache: perCache,
+                tiles: totals.tiles,
+                unrecoverable: totals.unrecoverable,
+                registered: totals.registered,
+                bytes: totals.bytes,
+                tilesWithCaches: totals.tilesWithCaches.size
+            };
+        }
+
+        function report() {
+            const state = audit();
+            const lines = [];
+            lines.push(`running        ${stress.timer ? "yes" : "no"}   round ${stress.round}`);
+            lines.push(`drawer         ${viewer.drawer ? viewer.drawer.getType() : "?"}`);
+            lines.push(`next type      ${TYPE_CYCLE[stress.round % TYPE_CYCLE.length]}`);
+            lines.push("");
+            // One line per cache: the navigator owns a separate one, and the limit applies to each.
+            for (const entry of state.perCache) {
+                lines.push(`caches ${entry.name.padEnd(8)}${entry.live} live, ${entry.zombies} zombie (limit ${entry.limit})`);
+            }
+            // A tile holding caches but missing from the tracked list cannot be picked for eviction,
+            // so the two numbers drifting apart explains a cache that grows past its limit.
+            lines.push(`tiles          ${state.tilesWithCaches} holding caches, ${state.tiles} tracked for eviction`);
+            lines.push(`restores       ${stress.restores}`);
+            lines.push(`plugin errors  ${stress.pluginErrors}`);
+            lines.push("");
+            // Records dropped without destroy() are unreachable, so they can only be counted, never
+            // inspected. 'live' should track 'registered'; a gap that keeps growing means records are
+            // being lost. A small, fluctuating gap is normal - working caches are real records that are
+            // deliberately never registered with the TileCache.
+            lines.push(`records        ${recordsCreated} created, ${recordsDestroyed} destroyed, ${recordsCreated - recordsDestroyed} live`);
+            lines.push(`               ${state.registered} registered across ${state.perCache.length} cache(s)`);
+            // Records alive but in neither map. Working caches are legitimately unregistered, so this
+            // fluctuates while invalidation runs; with the demo stopped it should settle at zero.
+            lines.push(`unaccounted    ${recordsCreated - recordsDestroyed - state.registered}${stress.timer ? " (running - working caches inflate this)" : ""}`);
+            // Not a leak by itself, and not a violation: it counts records whose conversion failed while
+            // they still held data. Those used to be dropped without releasing it.
+            lines.push(`failed mid-conv ${recordsFailed}`);
+            // The figure that shows unbounded growth directly. It should plateau, not climb.
+            lines.push(`data held      ~${(state.bytes / (1024 * 1024)).toFixed(1)} MB across ${state.registered} records`);
+            lines.push("");
+            // Should stay bounded. A number that only ever grows means destructors are not running, i.e.
+            // the cache is holding on to data it already replaced.
+            lines.push(`probes         ${probesCreated} created, ${probesDestroyed} destroyed, ${probesCreated - probesDestroyed} live`);
+            // Tiles the cache gave up on. Marking a tile as non-existent is permanent, so this should stay
+            // at zero unless something genuinely failed to load.
+            lines.push(`tiles dropped  ${state.unrecoverable}`);
+            lines.push("");
+
+            if (violations.length) {
+                lines.push(`INVARIANT VIOLATIONS (${violations.length}):`);
+                for (const violation of violations.slice(0, 20)) {
+                    lines.push(`  ${violation}`);
+                }
+            } else {
+                lines.push("no invariant violations so far");
+            }
+
+            const element = document.getElementById('report');
+            element.textContent = lines.join("\n");
+            element.className = violations.length ? "bad" : "";
+        }
+
+        setInterval(report, 500);
+
+    </script>
+</body>
+</html>
