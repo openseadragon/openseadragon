@@ -423,13 +423,19 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             const atomicCacheSwap = () => {
                 if (workingCache) {
                     const newCacheKey = tile.buildDistinctMainCacheKey();
-                    tiledImage._tileCache.injectCache({
+                    const injected = tiledImage._tileCache.injectCache({
                         tile: tile,
                         cache: workingCache,
                         targetKey: newCacheKey,
                         setAsMainCache: true,
                         tileAllowNotLoaded: tile.loading
                     });
+                    if (injected) {
+                        // The cache belongs to the tile cache now: release our claim so that the cleanup
+                        // below cannot destroy a record that has just been installed. A refused cache
+                        // stays ours, and the cleanup is what frees it.
+                        workingCache = null;
+                    }
                 } else if (restoreTiles) {
                     // If we requested restore, perform now
                     tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, tile.getCache(tile.originalCacheKey), true);
@@ -624,6 +630,14 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     workingCache = null;
                 }
                 originalCache.__finishProcessing();
+            }).finally(() => {
+                // Several exits above return before reaching a disposal site - a run that was declared
+                // outdated by a newer one is the common case. Whatever the route, a working cache still
+                // held here was never installed, and it owns data nobody else will release.
+                if (workingCache) {
+                    workingCache.destroy();
+                    workingCache = null;
+                }
             });
         });
 

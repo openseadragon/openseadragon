@@ -772,8 +772,15 @@
         }
 
         _triggerNeedsDraw() {
-            if (this._tiles.length > 0) {
-                this._tiles[0].tiledImage.viewer.forceRedraw();
+            // A tile unloaded while an asynchronous plugin was still working keeps referencing this
+            // record, but its tiledImage is gone by then - so look for one that can still draw rather
+            // than assuming the first one can.
+            for (const tile of this._tiles || []) {
+                const tiledImage = tile.tiledImage;
+                if (tiledImage && tiledImage.viewer) {
+                    tiledImage.viewer.forceRedraw();
+                    return;
+                }
             }
         }
 
@@ -887,6 +894,19 @@
          */
         _handleConversionError(e) {
             $.console.error("[CacheRecord] Conversion/preparation error:", e);
+
+            // Release what the record still holds before losing the reference to it: destroy() is a no-op
+            // once _destroyed is set, so this is the last chance to run the destructors. Read paths such
+            // as getDataAs() do not consume their input, so the data here is often still the live one.
+            if (this._data !== null && this._data !== undefined) {
+                try {
+                    $.converter.destroy(this._data, this._type);
+                } catch (destroyError) {
+                    $.console.error("[CacheRecord] data destroy threw while handling a conversion error:",
+                        destroyError);
+                }
+            }
+            this.destroyInternalCache();
 
             this._destroyed = true;
             this.loaded = false;
@@ -1152,6 +1172,8 @@
                     oldKey, newKey);
                 return null; // do not remove, we perform additional fixes on caches later on when swap occurred
             } else {
+                // As in injectCache: a zombie under the target key is superseded by this record.
+                this._discardZombie(newKey);
                 this._cachesLoaded[newKey] = originalCache;
                 delete this._cachesLoaded[oldKey];
             }
@@ -1209,6 +1231,8 @@
          * @param {Boolean} options.tileAllowNotLoaded - if true, tile that is not loaded is also processed,
          *   this is internal parameter used in tile-loaded completion routine, as we need to prepare tile but
          *   it is not yet loaded and cannot be marked as so (otherwise the system would think it is ready)
+         * @return {Boolean} true if the cache was installed, false if it was refused - the caller keeps
+         *   ownership of a refused cache and is responsible for destroying it
          * @private
          */
         injectCache(options) {
@@ -1216,7 +1240,7 @@
                 tile = options.tile;
             if (!options.tileAllowNotLoaded && !tile.loaded && !tile.loading) {
                 $.console.warn("Attempt to inject cache on tile in invalid state: this is probably a bug!");
-                return;
+                return false;
             }
             const consumer = this._cachesLoaded[targetKey];
             if (consumer) {
@@ -1231,6 +1255,14 @@
             }
 
             const cache = options.cache;
+            // A zombie may still hold the previous data under this key; it is superseded by what we
+            // are about to install, and keeping it would leave two records competing for one key.
+            this._discardZombie(targetKey);
+            // The unload above already decremented for the consumer it removed, so the replacement has
+            // to be counted here. Guarded, so that the error path above cannot count the same key twice.
+            if (!this._cachesLoaded[targetKey]) {
+                this._cachesLoadedCount++;
+            }
             this._cachesLoaded[targetKey] = cache;
             cache._ownerTileCache = this;
             cache.cacheKey = targetKey;
@@ -1239,6 +1271,7 @@
             for (const t of tile.getCache(tile.originalCacheKey)._tiles) {  // grab all cache-equal tiles
                 t.setCache(targetKey, cache, options.setAsMainCache, false);
             }
+            return true;
         }
 
         /**
@@ -1448,8 +1481,15 @@
             for (const zombie in this._zombiesLoaded) {
                 this._zombiesLoaded[zombie].destroy();
             }
-            for (const tile in this._tilesLoaded) {
+            // _tilesLoaded is a real array: for..in would hand out index strings instead of tiles, and
+            // every tile would be skipped without unloading a single cache.
+            for (const tile of this._tilesLoaded) {
                 this._unloadTile(tile, true);
+            }
+            // Records holding no tiles are not reachable through the loop above, and dropping the map
+            // without destroying them would strand their data - canvases, bitmaps, GPU textures.
+            for (const key in this._cachesLoaded) {
+                this._cachesLoaded[key].destroy();
             }
             this._tilesLoaded = [];
             this._zombiesLoaded = [];
@@ -1464,12 +1504,14 @@
          */
         clearDrawerInternalCache(drawer) {
             const drawerId = drawer.getId();
-            for (const zombie of this._zombiesLoaded) {
+            for (const key in this._zombiesLoaded) {
+                const zombie = this._zombiesLoaded[key];
                 if (zombie) {
                     zombie.destroyInternalCache(drawerId);
                 }
             }
-            for (const cache of this._cachesLoaded) {
+            for (const key in this._cachesLoaded) {
+                const cache = this._cachesLoaded[key];
                 if (cache) {
                     cache.destroyInternalCache(drawerId);
                 }
@@ -1500,6 +1542,21 @@
         }
 
         /**
+         * Release a zombie parked under a key that a live record is about to take over. Leaving it
+         * behind leaks the record, and makes two entries compete for a single key.
+         * @param {string} key
+         * @private
+         */
+        _discardZombie(key) {
+            const zombie = this._zombiesLoaded[key];
+            if (zombie) {
+                delete this._zombiesLoaded[key];
+                this._zombiesLoadedCount--;
+                zombie.destroy();
+            }
+        }
+
+        /**
          * Delete cache safely from the system if it is not needed
          * @param {OpenSeadragon.CacheRecord} cache
          */
@@ -1509,6 +1566,7 @@
                     const c = this._zombiesLoaded[i];
                     if (c === cache) {
                         delete this._zombiesLoaded[i];
+                        this._zombiesLoadedCount--;
                         c.destroy();
                         return;
                     }
@@ -1537,8 +1595,17 @@
                             cacheRecord.destroy();
                         } else {
                             // #2 Tile is a zombie. Do not delete record, reuse.
-                            this._zombiesLoaded[key] = cacheRecord;
-                            this._zombiesLoadedCount++;
+                            // Count only a genuinely new entry, and never silently drop a zombie
+                            // already parked here - that would leak it and inflate the counter.
+                            const previous = this._zombiesLoaded[key];
+                            if (previous !== cacheRecord) {
+                                if (previous) {
+                                    previous.destroy();
+                                } else {
+                                    this._zombiesLoadedCount++;
+                                }
+                                this._zombiesLoaded[key] = cacheRecord;
+                            }
                         }
                         // Either way clear cache
                         delete this._cachesLoaded[key];

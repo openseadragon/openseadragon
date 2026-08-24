@@ -572,7 +572,27 @@
   *     sharper data as they navigate, since during zoom we have already one level
   *     up loaded. If you experience high network traffic/latency, you might want
   *     to set this value to 1.0 (~fetch at most identical pixel size) or higher
-  *     to force upsampling.
+  *     to force upsampling.<br><br>
+  *     This option is what sets the range of scale factors tiles are drawn at.
+  *     A level is rejected once it falls below minPixelRatio, and on a pyramid
+  *     halving each level the next finer one sits at half the ratio, so the
+  *     sharpest level being drawn always lands in
+  *     <code>[minPixelRatio, 2 * minPixelRatio)</code>:
+  *     <ul>
+  *       <li><code>0.5</code> (default) gives <code>[0.5, 1.0)</code>: always
+  *         minified, never drawn pixel for pixel, favouring one level of
+  *         preloading over sharpness.</li>
+  *       <li><code>1 / Math.SQRT2</code> (~0.707) gives
+  *         <code>[0.707, 1.414)</code>, centred on 1.0 - the least total
+  *         resampling, and the least aliasing on detailed images.</li>
+  *       <li><code>1.0</code> gives <code>[1.0, 2.0)</code>: never minified,
+  *         always magnified, at the lowest bandwidth of the three.</li>
+  *     </ul>
+  *     The ratio is measured in <b>device</b> pixels, not CSS pixels:
+  *     $.pixelDensityRatio is part of it, so the same setting fetches a finer
+  *     level on a high density display than on a standard one. The two levels
+  *     bypassing this gate are the minimum level and the cut-off level, which
+  *     are always drawn so that something covers the viewport.
   *
   * @property {Number} [discardLevelsBelowDownsampleRatio=1]
   *     You can force the viewer to skip levels that have smaller pixel ratio
@@ -3076,6 +3096,18 @@ function OpenSeadragon( options ){
                     this._value = e;
                     this._error = true;
                 }
+            }
+            return this;
+        }
+
+        finally(handler) {
+            // Runs whichever way the chain went, and passes the outcome through untouched: only a
+            // throw from the handler itself replaces it, as with the native implementation.
+            try {
+                handler();
+            } catch (e) {
+                this._value = e;
+                this._error = true;
             }
             return this;
         }
