@@ -49,6 +49,7 @@
         "dev": "grunt dev",
         "bundlesize": "node scripts/check-bundle-size.js",
         "bundlesize:visualize": "source-map-explorer build/openseadragon/openseadragon.min.js --no-border-checks",
+        "audit-dts": "node scripts/audit-dts.js",
         "package": "grunt package"
     },
     "bundlesize": [

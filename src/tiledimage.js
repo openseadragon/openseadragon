@@ -412,10 +412,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this._needsDraw;
     },
 
+    /**
+     * @private
+     */
     get crossOriginPolicy(){
         return this._crossOriginPolicy;
     },
 
+    /**
+     * @private
+     */
     set crossOriginPolicy(crossOriginPolicy) {
         if (typeof crossOriginPolicy === 'string') {
             this._crossOriginPolicy = crossOriginPolicy.toLowerCase();
@@ -1031,9 +1037,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.flipped = flip;
     },
 
+    /**
+     * @private
+     */
     get flipped() {
         return this._flipped;
     },
+
+    /**
+     * @private
+     */
     set flipped(flipped) {
         const changed = this._flipped !== !!flipped;
         this._flipped = !!flipped;
@@ -1044,9 +1057,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
     },
 
+    /**
+     * @private
+     */
     get wrapHorizontal(){
         return this._wrapHorizontal;
     },
+
+    /**
+     * @private
+     */
     set wrapHorizontal(wrap){
         const changed = this._wrapHorizontal !== !!wrap;
         this._wrapHorizontal = !!wrap;
@@ -1057,9 +1077,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
     },
 
+    /**
+     * @private
+     */
     get wrapVertical(){
         return this._wrapVertical;
     },
+
+    /**
+     * @private
+     */
     set wrapVertical(wrap){
         const changed = this._wrapVertical !== !!wrap;
         this._wrapVertical = !!wrap;
@@ -1070,9 +1097,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
     },
 
+    /**
+     * @private
+     */
     get debugMode(){
         return this._debugMode;
     },
+
+    /**
+     * @private
+     */
     set debugMode(debug){
         this._debugMode = !!debug;
         this._needsDraw = true;
@@ -1093,10 +1127,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.opacity = opacity;
     },
 
+    /**
+     * @private
+     */
     get opacity() {
         return this._opacity;
     },
 
+    /**
+     * @private
+     */
     set opacity(opacity) {
         if (opacity === this.opacity) {
             return;
@@ -1264,10 +1304,16 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         return this.getBoundsNoRotate(current).getCenter();
     },
 
+    /**
+     * @private
+     */
     get compositeOperation(){
         return this._compositeOperation;
     },
 
+    /**
+     * @private
+     */
     set compositeOperation(compositeOperation){
 
         if (compositeOperation === this._compositeOperation) {
