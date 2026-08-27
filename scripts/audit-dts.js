@@ -137,6 +137,42 @@ function addObjectLiteralMembers(sf, objLit, cls, members, loc) {
     }
 }
 
+// members of an ES class body: `$.Foo = class Foo { bar() {}, get baz() {} }`
+function addClassMembers(sf, classNode, cls, members, loc) {
+    for (const el of classNode.members) {
+        if (ts.isConstructorDeclaration(el)) {
+            continue;
+        }
+        if (
+            ts.isMethodDeclaration(el) ||
+            ts.isPropertyDeclaration(el) ||
+            ts.isGetAccessorDeclaration(el) ||
+            ts.isSetAccessorDeclaration(el)
+        ) {
+            const name = memberName(el.name);
+            if (name && !name.startsWith("_")) {
+                const doc = getLeadingJSDoc(sf, el);
+                if (!isPrivateDoc(doc)) {
+                    const key = cls + "." + name;
+                    if (!members.has(key)) {
+                        members.set(key, loc(el));
+                    }
+                }
+            }
+        }
+    }
+}
+
+// collects every `class Foo extends ... {...}` declaration in a file, by name,
+// so a later `$.Foo = Foo;` (declare-then-assign-by-reference, e.g. Mat3,
+// HTMLDrawer, CanvasDrawer) can be resolved back to its member list.
+function collectClassDeclarations(node, out) {
+    if (ts.isClassDeclaration(node) && node.name) {
+        out.set(node.name.text, node);
+    }
+    ts.forEachChild(node, child => collectClassDeclarations(child, out));
+}
+
 // ---------- extract from src/*.js ----------
 
 function extractSrc(root, sourceFiles) {
@@ -152,6 +188,11 @@ function extractSrc(root, sourceFiles) {
         }
         const text = fs.readFileSync(file, "utf8");
         const sf = ts.createSourceFile(file, text, ts.ScriptTarget.ES2019, true, ts.ScriptKind.JS);
+
+        // `class Foo extends ... {...}` declarations in this file, by name, so
+        // `$.Foo = Foo;` (declare-then-assign-by-reference) can be resolved.
+        const localClasses = new Map();
+        collectClassDeclarations(sf, localClasses);
 
         const loc = function(node) {
             const { line } = sf.getLineAndCharacterOfPosition(node.getStart(sf));
@@ -174,8 +215,21 @@ function extractSrc(root, sourceFiles) {
                     if (rest.length === 1) {
                         // $.Foo = ...
                         if (!isPrivateDoc(doc) && !rest[0].startsWith("_")) {
-                            if (!topLevel.has(rest[0])) {
-                                topLevel.set(rest[0], loc(node));
+                            const cls = rest[0];
+                            if (!topLevel.has(cls)) {
+                                topLevel.set(cls, loc(node));
+                            }
+                            // $.Foo = class Foo {...}, or $.Foo = Foo where Foo was
+                            // declared earlier in the file as `class Foo {...}`
+                            const rhs = bin.right;
+                            let classNode = null;
+                            if (ts.isClassExpression(rhs)) {
+                                classNode = rhs;
+                            } else if (ts.isIdentifier(rhs) && localClasses.has(rhs.text)) {
+                                classNode = localClasses.get(rhs.text);
+                            }
+                            if (classNode) {
+                                addClassMembers(sf, classNode, cls, members, loc);
                             }
                         }
                     } else if (rest.length === 3 && rest[1] === "prototype") {
@@ -194,6 +248,20 @@ function extractSrc(root, sourceFiles) {
                         const rhs = bin.right;
                         if (ts.isObjectLiteralExpression(rhs)) {
                             addObjectLiteralMembers(sf, rhs, cls, members, loc);
+                        }
+                    } else if (rest.length === 2) {
+                        // $.Foo.bar = ...  (a static member of class Foo, e.g. Rect.fromSummits).
+                        // Note: this same shape is also how a couple of nested types are declared,
+                        // e.g. $.MouseTracker.GesturePointList = function(...) {...}; those are
+                        // reconciled on the .d.ts side (see the missingMembers check in main()),
+                        // which accepts a match against any declared top-level name as well.
+                        const cls = rest[0];
+                        const member = rest[1];
+                        if (!isPrivateDoc(doc) && !member.startsWith("_")) {
+                            const key = cls + "." + member;
+                            if (!members.has(key)) {
+                                members.set(key, loc(node));
+                            }
                         }
                     }
                 }
@@ -307,7 +375,21 @@ function extractDts(root) {
                     }
                 }
             } else if (ts.isInterfaceDeclaration(stmt)) {
-                topLevel.set(stmt.name.text, "interface");
+                // TS declaration merging: `interface Viewer extends ControlDock, ... {}`
+                // alongside an earlier `class Viewer {...}` describes the *same* type, adding
+                // mixed-in members without overriding what makes it a class. Don't let this
+                // downgrade an already-recorded class to "interface" -- that would silently
+                // stop member auditing for it (the missingMembers check only runs for classes).
+                if (topLevel.get(stmt.name.text) !== "class") {
+                    topLevel.set(stmt.name.text, "interface");
+                }
+                for (const m of stmt.members) {
+                    const name = memberName(m.name);
+                    if (!name) {
+                        continue;
+                    }
+                    members.set(stmt.name.text + "." + name, "class-member");
+                }
             } else if (ts.isFunctionDeclaration(stmt) && stmt.name) {
                 topLevel.set(stmt.name.text, "function");
             } else if (ts.isEnumDeclaration(stmt)) {
@@ -371,8 +453,16 @@ function main() {
         const name = key.split(".").slice(1).join(".");
         // only flag if the class itself is declared (as class) but the member is
         // missing from it AND from every ancestor in its declared `extends` chain;
-        // if the class isn't declared at all it's already covered by missingTopLevel
-        if (dts.topLevel.get(cls) === "class" && !hasMemberInChain(dts, cls, name)) {
+        // if the class isn't declared at all it's already covered by missingTopLevel.
+        // Also accept a match against any declared top-level name: a `$.Foo.Bar = ...`
+        // assignment is ambiguous between a static member and a nested type (e.g.
+        // `$.MouseTracker.GesturePointList`), and the .d.ts side flattens the latter
+        // into a same-named top-level declaration rather than nesting it.
+        if (
+            dts.topLevel.get(cls) === "class" &&
+            !hasMemberInChain(dts, cls, name) &&
+            !dts.topLevel.has(name)
+        ) {
             missingMembers.push({ key, loc });
         }
     }
