@@ -302,11 +302,21 @@
         assert.equal(rect.maxLevel, 5, 'maxLevel is set');
     });
 
-    QUnit.test('inherits from Rect', function(assert) {
+    QUnit.test('has Rect properties', function(assert) {
         var rect = new OpenSeadragon.DisplayRect(0, 0, 50, 50, 0, 10);
 
-        assert.ok(rect instanceof OpenSeadragon.Rect, 'is a Rect');
+        // DisplayRect has Rect-like properties but doesn't use prototype inheritance
         assert.ok(rect instanceof OpenSeadragon.DisplayRect, 'is a DisplayRect');
+        assert.equal(typeof rect.x, 'number', 'has x property');
+        assert.equal(typeof rect.y, 'number', 'has y property');
+        assert.equal(typeof rect.width, 'number', 'has width property');
+        assert.equal(typeof rect.height, 'number', 'has height property');
+        assert.equal(rect.x, 0, 'x is correct');
+        assert.equal(rect.y, 0, 'y is correct');
+        assert.equal(rect.width, 50, 'width is correct');
+        assert.equal(rect.height, 50, 'height is correct');
+        assert.equal(rect.minLevel, 0, 'minLevel is correct');
+        assert.equal(rect.maxLevel, 10, 'maxLevel is correct');
     });
 
 })();

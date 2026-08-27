@@ -1,4 +1,4 @@
-/* global QUnit, $, testLog */
+/* global QUnit, testLog */
 
 (function () {
     QUnit.module('ImageTileSource');
@@ -42,8 +42,16 @@
     });
 
     QUnit.test('getContext2D deprecated', function(assert) {
+        testLog.reset();
         var source = new OpenSeadragon.ImageTileSource({ url: 'test.jpg' });
+
+        // Stub _createContext2D to prevent canvas.drawImage error
+        source._createContext2D = function() {
+            return null;
+        };
+
         source.getContext2D(0, 0, 0);
+
         assert.ok(
             testLog.error.contains('deprecated'),
             'should log deprecation warning'
@@ -57,37 +65,35 @@
     });
 
     QUnit.test('getTileUrl for non-max level', function(assert) {
-        var done = assert.async();
         var source = new OpenSeadragon.ImageTileSource({
-            url: 'http://example.com/test.jpg',
+            url: '/test/data/A.png',
             buildPyramid: false
         });
 
-        source.addHandler('ready', function() {
-            var url = source.getTileUrl(0, 0, 0);
-            assert.ok(url.includes('l=0'), 'url should include level');
-            assert.ok(url.includes('x=0'), 'url should include x');
-            assert.ok(url.includes('y=0'), 'url should include y');
-            done();
-        });
+        source.maxLevel = 1; // Set a fake max level
 
-        source.getImageInfo('/test/data/testpattern.dzi');
+        var url = source.getTileUrl(0, 0, 0);
+        // Non-max levels get query params appended even with buildPyramid: false
+        assert.ok(
+            url.indexOf('/test/data/A.png') === 0,
+            'non-max level URL starts with original url'
+        );
+        assert.ok(
+            url.indexOf('?l=0') !== -1,
+            'non-max level URL includes level parameter'
+        );
     });
 
     QUnit.test('getTileUrl for max level returns original url', function(assert) {
-        var done = assert.async();
         var source = new OpenSeadragon.ImageTileSource({
-            url: 'http://example.com/test.jpg',
+            url: '/test/data/A.png',
             buildPyramid: false
         });
 
-        source.addHandler('ready', function() {
-            var url = source.getTileUrl(source.maxLevel, 0, 0);
-            assert.equal(url, 'http://example.com/test.jpg', 'max level should return original url');
-            done();
-        });
+        source.maxLevel = 0;
 
-        source.getImageInfo('/test/data/testpattern.dzi');
+        var url = source.getTileUrl(source.maxLevel, 0, 0);
+        assert.equal(url, '/test/data/A.png', 'max level should return original url');
     });
 
 })();

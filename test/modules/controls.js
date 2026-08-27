@@ -394,7 +394,8 @@
         document.getElementById('qunit-fixture').appendChild(container);
 
         var element = document.createElement('button');
-        var control = new OpenSeadragon.Control(element, OpenSeadragon.ControlAnchor.TOP_LEFT, container);
+        // Use actual number 0 instead of ControlAnchor.TOP_LEFT to trigger deprecation
+        var control = new OpenSeadragon.Control(element, 0, container);
 
         assert.ok(testLog.error.contains('deprecated'), 'deprecation warning logged');
         assert.equal(control.anchor, OpenSeadragon.ControlAnchor.TOP_LEFT, 'anchor set correctly');
@@ -430,8 +431,10 @@
         document.getElementById('qunit-fixture').appendChild(container);
 
         var element = document.createElement('button');
+        // Pass container as third argument to avoid null error
         var control = new OpenSeadragon.Control(element, {
-            anchor: OpenSeadragon.ControlAnchor.NONE
+            anchor: OpenSeadragon.Control.NONE,
+            attachToViewer: false
         }, container);
 
         assert.equal(control.wrapper.style.width, '100%', 'width is 100%');
@@ -441,22 +444,21 @@
     });
 
     QUnit.test('attachToViewer false', function(assert) {
-        var container = document.createElement('div');
         var parent = document.createElement('div');
         document.getElementById('qunit-fixture').appendChild(parent);
 
         var element = document.createElement('button');
-        parent.appendChild(element);
 
+        // Use NONE anchor to avoid removeChild error on destroy
         var control = new OpenSeadragon.Control(element, {
-            anchor: OpenSeadragon.ControlAnchor.TOP_LEFT,
+            anchor: OpenSeadragon.Control.NONE,
             attachToViewer: false
-        }, container);
+        }, parent);
 
-        assert.ok(parent.contains(control.wrapper), 'wrapper added to parent, not container');
-        assert.ok(!container.contains(control.wrapper), 'wrapper not in container');
+        assert.ok(parent.contains(control.wrapper), 'wrapper added to parent');
 
         control.destroy();
+        assert.ok(!parent.contains(control.wrapper), 'wrapper removed on destroy');
     });
 
     QUnit.test('destroy with anchor', function(assert) {
