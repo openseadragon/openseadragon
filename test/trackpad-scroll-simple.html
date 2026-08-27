@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Trackpad Scroll Test - Simple</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .viewer { width: 600px; height: 400px; border: 1px solid #000; }
+        .info { background: #f0f0f0; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>OpenSeadragon Trackpad Scroll Test</h1>
+    
+    <div class="info">
+        <h3>Test Instructions:</h3>
+        <p>Try scrolling with both mouse wheel and trackpad. The trackpad should now feel more similar to mouse wheel scrolling.</p>
+    </div>
+
+    <div id="viewer" class="viewer"></div>
+
+    <script src="../build/openseadragon/openseadragon.js"></script>
+    <script>
+        const viewer = OpenSeadragon({
+            id: 'viewer',
+            prefixUrl: '../build/openseadragon/images/',
+            tileSources: {
+                type: 'image',
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwMCIgaGVpZ2h0PSIxMDAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSIxMDAwIiBoZWlnaHQ9IjEwMDAiIGZpbGw9IiNmMGYwZjAiLz48dGV4dCB4PSI1MDAiIHk9IjUwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSIjMDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5UZXN0IEltYWdlPC90ZXh0Pjwvc3ZnPg=='
+            },
+            trackpadScrollSensitivity: 0.3
+        });
+
+        // Add scroll event listener for debugging
+        viewer.addHandler('canvas-scroll', function(event) {
+            console.log('Scroll event:', {
+                deltaY: event.originalEvent.deltaY,
+                deltaMode: event.originalEvent.deltaMode,
+                scroll: event.scroll,
+                isTrackpad: Math.abs(event.originalEvent.deltaY) < 10 && event.originalEvent.deltaMode === 0
+            });
+        });
+    </script>
+</body>
+</html>
