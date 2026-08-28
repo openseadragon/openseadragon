@@ -3251,6 +3251,7 @@ function getOverlayObject( viewer, overlay ) {
     let location = overlay.location;
     let width = overlay.width;
     let height = overlay.height;
+    let overlayRotation = overlay.rotation; // in radians
     if (!location) {
         let x = overlay.x;
         let y = overlay.y;
@@ -3281,6 +3282,7 @@ function getOverlayObject( viewer, overlay ) {
         checkResize: overlay.checkResize,
         width: width,
         height: height,
+        rotation: overlayRotation,
         rotationMode: overlay.rotationMode
     });
 }
