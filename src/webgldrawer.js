@@ -611,15 +611,8 @@
             const gl = this._gl;
             const numTextures = this._glNumTextures;
 
-            const makeMatrixUniforms = () => {
-                return [...Array(numTextures).keys()].map(index => `uniform mat3 u${index};`).join('');
-            };
-            const makeConditionals = () => {
-                return [...Array(numTextures).keys()].map(index => `${index > 0 ? 'else ' : ''}if(c==${index}.0){m=u${index};}`).join('');
-            };
-
             const tfVertexShader = `#version 300 es
-precision highp float;in vec2 a;in vec2 b;in float c;${makeMatrixUniforms()}out vec4 p;out vec2 t;void main(){mat3 m;${makeConditionals()}vec3 v=m*vec3(a,1.0);p=vec4(v.xy,0.0,1.0);t=b;gl_Position=p;}`;
+precision highp float;in vec2 a;in vec2 b;in float c;uniform mat3 u[${numTextures}];out vec4 p;out vec2 t;void main(){vec3 v=u[int(c)]*vec3(a,1.0);p=vec4(v.xy,0.0,1.0);t=b;gl_Position=p;}`;
 
             const tfFragmentShader = `#version 300 es
 precision mediump float;out vec4 o;void main(){o=vec4(0.0);}`;
@@ -646,7 +639,7 @@ precision mediump float;out vec4 o;void main(){o=vec4(0.0);}`;
                 aOutputPosition: gl.getAttribLocation(program, 'a'),
                 aTexturePosition: gl.getAttribLocation(program, 'b'),
                 aIndex: gl.getAttribLocation(program, 'c'),
-                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u${i}`))
+                uTransformMatrices: [...Array(numTextures).keys()].map(i => gl.getUniformLocation(program, `u[${i}]`))
             };
         }
 

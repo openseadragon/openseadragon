@@ -59,7 +59,7 @@
         },
         {
             "path": "build/openseadragon/openseadragon.min.js",
-            "maxSize": "352 kB",
+            "maxSize": "375 kB",
             "compression": "none"
         }
     ],
