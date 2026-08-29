@@ -170,7 +170,9 @@
             if (this._sharedContext) {
                 this._gl = this._sharedContext.gl;
                 this._isWebGL2 = this._sharedContext.isWebGL2;
-                this._setupWebGLExtensions();
+                if (this._gl) {
+                    this._setupWebGLExtensions();
+                }
             } else {
                 // Create WebGL context
                 this._gl = this._renderingCanvas.getContext('webgl2', WEBGL_CONTEXT_ATTRIBUTES);
@@ -1088,11 +1090,9 @@
             const viewMatrix = scaleMatrix.multiply(rotMatrix).multiply(posMatrix);
 
             if (this._useSharedRenderer) {
-                gl.disable(gl.SCISSOR_TEST);
+                this._setSharedViewport(gl, false);
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                 gl.clear(gl.COLOR_BUFFER_BIT);
-                gl.enable(gl.SCISSOR_TEST);
-                this._setSharedViewport(gl, false);
             } else {
                 gl.bindFramebuffer(gl.FRAMEBUFFER, null);
                 gl.clear(gl.COLOR_BUFFER_BIT); // clear the back buffer

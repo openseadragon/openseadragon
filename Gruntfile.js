@@ -4,7 +4,7 @@
 module.exports = function(grunt) {
     /* eslint-disable no-undef */
     const dateFormat = require('dateformat');
-    const testPort = process.env.OSD_TEST_PORT || 8000;
+    const testPort = Number.parseInt(process.env.OSD_TEST_PORT, 10) || 8000;
 
     // ----------
     grunt.loadNpmTasks("grunt-contrib-compress");
