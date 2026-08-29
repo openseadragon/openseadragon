@@ -294,6 +294,12 @@ $.Viewer = function( options ) {
         _this._showMessage( msg );
     });
 
+    // Cooperative gesture handling is suspended in full-page/fullscreen, so re-apply the touch-action
+    // and tracker config whenever full-page mode changes.
+    this.addHandler( 'full-page', function () {
+        _this._updateCooperativeGestureHandling();
+    });
+
     $.ControlDock.call( this, options );
 
     //Deal with tile sources
@@ -327,7 +333,8 @@ $.Viewer = function( options ) {
         style.top      = "0px";
         style.left     = "0px";
     }(this.canvas.style));
-    $.setElementTouchActionNone( this.canvas );
+    // touch-action on the canvas (and container below) is applied by
+    // _updateCooperativeGestureHandling() once the inner tracker exists.
     if (options.tabIndex !== "") {
         this.canvas.tabIndex = (options.tabIndex === undefined ? 0 : options.tabIndex);
     }
@@ -343,7 +350,6 @@ $.Viewer = function( options ) {
         style.top       = "0px";
         style.textAlign = "left";  // needed to protect against
     }( this.container.style ));
-    $.setElementTouchActionNone( this.container );
 
     this.container.insertBefore( this.canvas, this.container.firstChild );
     this.element.appendChild( this.container );
@@ -358,6 +364,7 @@ $.Viewer = function( options ) {
     this.innerTracker = new $.MouseTracker({
         userData:                 'Viewer.innerTracker',
         element:                  this.canvas,
+        cooperativeGestureHandling: this._isCooperative,
         startDisabled:            !this.mouseNavEnabled,
         clickTimeThreshold:       this.clickTimeThreshold,
         clickDistThreshold:       this.clickDistThreshold,
@@ -382,6 +389,10 @@ $.Viewer = function( options ) {
         focusHandler:             $.delegate( this, onCanvasFocus ),
         blurHandler:              $.delegate( this, onCanvasBlur ),
     });
+
+    // Apply the initial cooperative gesture config (canvas/container touch-action + inner tracker)
+    // now that the tracker exists. Single source of truth, also used on full-page change and toggle.
+    this._updateCooperativeGestureHandling();
 
     this.outerTracker = new $.MouseTracker({
         userData:              'Viewer.outerTracker',
@@ -621,11 +632,20 @@ $.Viewer = function( options ) {
             displayRegionColor: this.navigatorDisplayRegionColor,
             crossOriginPolicy: this.crossOriginPolicy,
             animationTime:     this.animationTime,
-            drawer:            this.drawer.getType(),
+            drawer:            this.navigatorDrawer || options.drawer,
             drawerOptions:     this.drawerOptions,
             loadTilesWithAjax: this.loadTilesWithAjax,
             ajaxHeaders:       this.ajaxHeaders,
             ajaxWithCredentials: this.ajaxWithCredentials,
+        });
+
+        this.navigator.addOnceHandler('drawer-error', (event) => {
+            $.console.warn(
+                'OpenSeadragon navigator drawer error: ' + event.error +
+                ' If tiles are cross-origin, set crossOriginPolicy: "Anonymous" or ' +
+                '"use-credentials" (requires CORS headers on the tile server), or set ' +
+                'navigatorDrawer: "canvas" to use canvas explicitly.'
+            );
         });
     }
 
@@ -1061,6 +1081,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         if (this.paging) {
             this.paging.destroy();
         }
+
+        // Tear down the cooperative gesture hint overlay
+        // (the element is removed with the container below)
+        clearTimeout( this._cooperativeOverlayTimeout );
+        this.cooperativeOverlay = null;
 
         // Remove both the canvas and container elements added by OpenSeadragon
         // This will also remove its children (like the canvas)
@@ -2867,6 +2892,129 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         }
     },
 
+    // Whether cooperative gesture handling currently applies.
+    // Single source of truth for the gesture guards so the condition stays consistent across handlers.
+    // Suspended in full-page/fullscreen, where there's no surrounding page to scroll past.
+    get _isCooperative() {
+        return this.cooperativeGestures && !this.isFullPage();
+    },
+
+    /**
+     * Enable or disable cooperative gesture handling at runtime.
+     * @function
+     * @param {Boolean} enabled
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     */
+    setCooperativeGestures: function ( enabled ) {
+        this.cooperativeGestures = !!enabled;
+        this._updateCooperativeGestureHandling();
+        return this;
+    },
+
+    // Single source of truth for applying cooperative gesture config from the current state.
+    // Used during construction, on full-page change, and on runtime toggle.
+    // When active, `pan-x pan-y` lets the browser scroll the page on a one-finger touch,
+    // while two-finger gestures fall through to OSD; otherwise the viewer captures all touches (`none`).
+    // The container is an ancestor of the canvas and touch-action is intersected up the ancestor chain, so both must be set.
+    _updateCooperativeGestureHandling: function () {
+        const active = this._isCooperative;
+        const touchAction = active ? 'pan-x pan-y' : 'none';
+        $.setElementTouchAction( this.canvas, touchAction );
+        $.setElementTouchAction( this.container, touchAction );
+        this.innerTracker.setCooperativeGestureHandling( active );
+    },
+
+    // private
+    _raiseCooperativeGestureEvent: function( gesture, event ) {
+        let message;
+        if ( gesture === 'scroll' ) {
+            const modifier = /Mac/i.test( navigator.platform || navigator.userAgent || '' ) ? '⌘' : 'Ctrl';
+            message = $.getString( 'GestureHints.Scroll', modifier );
+        } else {
+            message = $.getString( 'GestureHints.Touch' );
+        }
+
+        const cooperativeGestureArgs = {
+            eventSource:          this,
+            tracker:              event.eventSource,
+            pointerType:          event.pointerType,
+            gesture:              gesture,
+            position:             event.position,
+            message:              message,
+            originalEvent:        event.originalEvent,
+            preventDefaultAction: false
+        };
+
+        /**
+         * Raised when a gesture is blocked by cooperative gesture handling.
+         *
+         * @event canvas-cooperative-gesture
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised this event.
+         * @property {OpenSeadragon.MouseTracker} tracker - A reference to the MouseTracker which originated this event.
+         * @property {String} pointerType - "mouse", "touch", "pen", etc.
+         * @property {String} gesture - The blocked gesture: "drag" (one-finger touch) or "scroll" (mouse wheel).
+         * @property {OpenSeadragon.Point} position - The position of the event relative to the tracked element.
+         * @property {String} message - The default hint text; change this to customise the built-in hint.
+         * @property {Object} originalEvent - The original DOM event.
+         * @property {Boolean} preventDefaultAction - Set to true to suppress the built-in hint. Default: false.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        this.raiseEvent( 'canvas-cooperative-gesture', cooperativeGestureArgs );
+
+        // Return args to allow modifying message and behaviour
+        return cooperativeGestureArgs;
+    },
+
+    /**
+     * Shows the cooperative gesture hint overlay with the given text, fading it back out after a
+     * short delay.
+     *
+     * The overlay is added as a sibling of the canvas with pointer-events:none, so it never
+     * interferes with the gesture it's hinting about.
+     * @function OpenSeadragon.Viewer.prototype._showCooperativeMessage
+     * @private
+     * @param {String} hintText - The hint text to display. Defaults to i18n UI strings, but users can hook into this.
+     */
+    _showCooperativeMessage: function ( hintText ) {
+        if ( !this.cooperativeOverlay ) {
+
+            this.cooperativeOverlay = $.makeNeutralElement( "div" );
+
+            // Hook for custom styles
+            this.cooperativeOverlay.className = "openseadragon-cooperative-overlay";
+
+            this.cooperativeOverlay.setAttribute( "aria-hidden", "true" );
+
+            const overlayStyle = this.cooperativeOverlay.style;
+            overlayStyle.position = "absolute";
+            overlayStyle.top = overlayStyle.left = overlayStyle.right = overlayStyle.bottom = "0";
+            overlayStyle.display = "grid";
+            overlayStyle.placeItems = "center";
+            overlayStyle.textAlign = "center";
+            overlayStyle.padding = "24px";
+            overlayStyle.color = "#fff";
+            overlayStyle.background = "rgba(0, 0, 0, 0.5)";
+            // Allow pass-thru on all pointer events
+            overlayStyle.pointerEvents = "none";
+            overlayStyle.opacity = "0";
+            overlayStyle.transition = "opacity 0.3s ease";
+
+            this.cooperativeOverlay.appendChild( $.makeNeutralElement( "div" ) );
+            this.container.appendChild( this.cooperativeOverlay );
+        }
+
+        this.cooperativeOverlay.firstChild.textContent = hintText;
+        this.cooperativeOverlay.style.opacity = "1";
+
+        // Reset fade-out timer
+        clearTimeout( this._cooperativeOverlayTimeout );
+        this._cooperativeOverlayTimeout = setTimeout( () => {
+            this.cooperativeOverlay.style.opacity = "0";
+        }, 1500 );
+    },
+
     // private
     _drawOverlays: function() {
         const length = this.currentOverlays.length;
@@ -3573,13 +3721,18 @@ function onCanvasDrag( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
+    // In cooperative gesture mode a one-finger touch drag should scroll the surrounding
+    // page rather than pan the image, so we skip the pan for single touches. Two-finger
+    // gestures are routed to the pinch handler and are left untouched.
+    const cooperativeTouchDrag = this._isCooperative && event.pointerType === 'touch';
+
     if(!canvasDragEventArgs.preventDefaultAction && this.viewport){
 
         if (gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom){
             const factor = Math.pow( this.zoomPerDblClickDrag, event.delta.y / 50);
             this.viewport.zoomBy(factor);
         }
-        else if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom) {
+        else if (gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom && !cooperativeTouchDrag) {
             if( !this.panHorizontal ){
                 event.delta.x = 0;
             }
@@ -3610,6 +3763,19 @@ function onCanvasDrag( event ) {
                 }
             }
             this.viewport.panBy( this.viewport.deltaPointsFromPixels( event.delta.negate() ), gestureSettings.flickEnabled && !this.constrainDuringPan);
+        }
+
+        // The one-finger pan was suppressed in cooperative mode; notify the app once per gesture
+        // (not on every move). The flag is reset at the start of the next gesture in onCanvasPress.
+        if ( cooperativeTouchDrag && gestureSettings.dragToPan && !THIS[ this.hash ].draggingToZoom &&
+                !THIS[ this.hash ].cooperativeGestureActive ) {
+            THIS[ this.hash ].cooperativeGestureActive = true;
+
+            // Raise the event to allow the app to modify the message or suppress it entirely
+            const cooperativeArgs = this._raiseCooperativeGestureEvent( 'drag', event );
+            if ( !cooperativeArgs.preventDefaultAction ) {
+                this._showCooperativeMessage( cooperativeArgs.message );
+            }
         }
 
     }
@@ -3650,11 +3816,15 @@ function onCanvasDragEnd( event ) {
 
     gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
 
+    // Match onCanvasDrag: in cooperative mode a one-finger touch shouldn't fling the image.
+    const cooperativeTouchDrag = this._isCooperative && event.pointerType === 'touch';
+
     if (!canvasDragEndEventArgs.preventDefaultAction && this.viewport) {
         if ( !THIS[ this.hash ].draggingToZoom &&
             gestureSettings.dragToPan &&
             gestureSettings.flickEnabled &&
-            event.speed >= gestureSettings.flickMinSpeed) {
+            event.speed >= gestureSettings.flickMinSpeed &&
+            !cooperativeTouchDrag) {
             let amplitudeX = 0;
             if (this.panHorizontal) {
                 amplitudeX = gestureSettings.flickMomentum * event.speed *
@@ -3678,7 +3848,6 @@ function onCanvasDragEnd( event ) {
     if( gestureSettings.dblClickDragToZoom && THIS[ this.hash ].draggingToZoom === true ){
         THIS[ this.hash ].draggingToZoom = false;
     }
-
 
 }
 
@@ -3764,6 +3933,10 @@ function onCanvasPress( event ) {
         originalEvent: event.originalEvent
     });
 
+    // Reset the once-per-gesture cooperative hint guard at the start of each gesture, so it shows
+    // again next time regardless of how the previous gesture ended (a one-finger drag handing off to
+    // a page scroll ends via pointer cancel, which fires neither drag-end nor release).
+    THIS[ this.hash ].cooperativeGestureActive = false;
 
     const gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
     if ( gestureSettings.dblClickDragToZoom ){
@@ -3992,6 +4165,12 @@ function onCanvasScroll( event ) {
     let gestureSettings;
     let factor;
 
+    // cooperativeGestures:
+    // Mouse wheel zooms only while Ctrl/Cmd is held; without a modifier we let the browser scroll the page past the viewer instead
+    const allowPageScroll = this._isCooperative &&
+    !event.originalEvent.ctrlKey &&
+    !event.originalEvent.metaKey;
+
     /* Certain scroll devices fire the scroll event way too fast so we are injecting a simple adjustment to keep things
      * partially normalized. If we have already fired an event within the last 'minScrollDelta' milliseconds we skip
      * this one and wait for the next event. */
@@ -4007,7 +4186,7 @@ function onCanvasScroll( event ) {
             shift: event.shift,
             originalEvent: event.originalEvent,
             preventDefaultAction: false,
-            preventDefault: true
+            preventDefault: !allowPageScroll
         };
 
         /**
@@ -4023,7 +4202,7 @@ function onCanvasScroll( event ) {
          * @property {Boolean} shift - True if the shift key was pressed during this event.
          * @property {Object} originalEvent - The original DOM event.
          * @property {Boolean} preventDefaultAction - Set to true to prevent default scroll to zoom behaviour. Default: false.
-         * @property {Boolean} preventDefault - Set to true to prevent the default user-agent's handling of the wheel event. Default: true.
+         * @property {Boolean} preventDefault - Set to true to prevent the default user-agent's handling of the wheel event. Default: true (false in cooperative mode when no Ctrl/Cmd modifier is held, so the page can scroll).
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
          this.raiseEvent('canvas-scroll', canvasScrollEventArgs );
@@ -4035,18 +4214,26 @@ function onCanvasScroll( event ) {
 
             gestureSettings = this.gestureSettingsByDeviceType( event.pointerType );
             if ( gestureSettings.scrollToZoom ) {
-                factor = Math.pow( this.zoomPerScroll, event.scroll );
-                this.viewport.zoomBy(
-                    factor,
-                    gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
-                );
-                this.viewport.applyConstraints();
+                if ( allowPageScroll ) {
+                    // Raise the event to allow the app to modify the message or suppress it entirely
+                    const cooperativeArgs = this._raiseCooperativeGestureEvent( 'scroll', event );
+                    if ( !cooperativeArgs.preventDefaultAction ) {
+                        this._showCooperativeMessage( cooperativeArgs.message );
+                    }
+                } else {
+                    factor = Math.pow( this.zoomPerScroll, event.scroll );
+                    this.viewport.zoomBy(
+                        factor,
+                        gestureSettings.zoomToRefPoint ? this.viewport.pointFromPixel( event.position, true ) : null
+                    );
+                    this.viewport.applyConstraints();
+                }
             }
         }
 
         event.preventDefault = canvasScrollEventArgs.preventDefault;
     } else {
-        event.preventDefault = true;
+        event.preventDefault = !allowPageScroll;
     }
 }
 
