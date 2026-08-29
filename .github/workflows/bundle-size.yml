@@ -15,7 +15,7 @@ jobs:
     name: Check Bundle Size
     runs-on: ubuntu-latest
     env:
-      PUPPETEER_SKIP_DOWNLOAD: true
+      PUPPETEER_SKIP_DOWNLOAD: 'true'
     permissions:
       contents: read
       pull-requests: write
@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           cache: npm
-          node-version: lts/*
+          node-version: 20 # There's a bug with puppeteer and Node 26 right now (June 23rd, 2026)
 
       - name: Install dependencies (PR branch)
         run: npm ci

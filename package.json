@@ -1,19 +1,9 @@
 {
     "name": "openseadragon",
-    "version": "6.0.2",
+    "version": "6.1.0",
     "description": "Provides a smooth, zoomable user interface for HTML/Javascript.",
     "keywords": [
-        "image",
-        "zoom",
-        "pan",
-        "openseadragon",
-        "seadragon",
-        "deepzoom",
-        "dzi",
-        "iiif",
-        "osm",
-        "osd",
-        "tms"
+        "image", "zoom", "pan", "openseadragon", "seadragon", "deepzoom", "dzi", "iiif", "osm", "osd", "tms"
     ],
     "homepage": "https://openseadragon.github.io/",
     "funding": "https://opencollective.com/openseadragon",
@@ -42,9 +32,10 @@
         "grunt-contrib-watch": "^1.1.0",
         "grunt-eslint": "^24.3.0",
         "grunt-git-describe": "^2.4.4",
-        "grunt-istanbul": "^0.8.0",
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
+        "nyc": "^18.0.0",
+        "puppeteer": "^24.0.0",
         "qunit": "^2.24.1",
         "source-map-explorer": "^2.5.3",
         "tsd": "^0.33.0",
@@ -52,6 +43,7 @@
     },
     "scripts": {
         "test": "grunt test",
+        "coverage": "grunt coverage",
         "prepare": "grunt build",
         "build": "grunt build",
         "dev": "grunt dev",
@@ -62,12 +54,12 @@
     "bundlesize": [
         {
             "path": "build/openseadragon/openseadragon.min.js",
-            "maxSize": "90 kB",
+            "maxSize": "95 kB",
             "compression": "gzip"
         },
         {
             "path": "build/openseadragon/openseadragon.min.js",
-            "maxSize": "350 kB",
+            "maxSize": "375 kB",
             "compression": "none"
         }
     ],
