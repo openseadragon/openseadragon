@@ -26,6 +26,7 @@ module.exports = function(grunt) {
         packageDirName = "openseadragon-bin-" + packageJson.version,
         packageDir = "build/" + packageDirName + "/",
         releaseRoot = "../site-build/built-openseadragon/",
+        coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
         sources = [
             "src/openseadragon.js",
             "src/matrix3.js",
