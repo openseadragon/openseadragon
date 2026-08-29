@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Cooperative Gestures Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+        body {
+            font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 2.5rem;
+        }
+
+        /* Tall page to verify viewer is scroll past-able. */
+        .filler {
+            min-height: 200vh;
+        }
+
+        .intro {
+            max-width: 50rem;
+        }
+
+        .openseadragon1 {
+            width: 50rem;
+            height: 37.5rem;
+            margin: 1.25rem 0;
+            border: 1px solid #ccc;
+        }
+
+        #log {
+            max-width: 50rem;
+            height: 8rem;
+            overflow-y: auto;
+            background: #f6f6f6;
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            white-space: pre-wrap;
+        }
+
+        .controls {
+            max-width: 50rem;
+            margin: 1.25rem 0;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            background: #fafafa;
+        }
+
+        .controls-heading {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .controls label {
+            display: block;
+            margin: 0.4rem 0;
+        }
+
+        .controls input[type="text"] {
+            width: 22rem;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>Cooperative gestures</h1>
+        <p>
+            With <code>cooperativeGestures: true</code> the viewer no longer traps the page's scroll
+            when embedded:
+        </p>
+        <ul>
+            <li><strong>Touch:</strong> one finger scrolls the page; two fingers pan and zoom the image.</li>
+            <li><strong>Desktop:</strong> the mouse wheel scrolls the page; <kbd>Ctrl</kbd> (or <kbd>⌘</kbd>) + wheel zooms.</li>
+            <li>Mouse drag still pans, and the restrictions lift automatically in full-page mode.</li>
+        </ul>
+        <p>
+            <button id="toggle" type="button">Disable cooperative gestures</button>
+        </p>
+        <div class="controls">
+            <div class="controls-heading">Consumer customisation options</div>
+            <label>
+                <input type="checkbox" id="useCustomViewerMessage" />
+                Custom message (via <code>canvas-cooperative-gesture</code> event handler; this viewer instance only)
+            </label>
+            <label>
+                <input type="checkbox" id="suppressHintOverlay" />
+                Suppress the hint overlay (via <code>canvas-cooperative-gesture</code> event handler; this viewer instance only)
+            </label>
+            <label>
+                <input type="text" id="globalScroll" placeholder="Use {0} + scroll to zoom the image" />
+                Global scroll string (via <code>OpenSeadragon.setString</code>)
+            </label>
+            <label>
+                <input type="text" id="globalDragString" placeholder="Use two fingers to pan the image" />
+                Global drag string (via <code>OpenSeadragon.setString</code>)
+            </label>
+        </div>
+        <p>Scroll down while hovering the viewer. It should <em>not</em> swallow the page scroll with cooperative gestures enabled.</p>
+    </div>
+
+    <div id="contentDiv" class="openseadragon1"></div>
+
+    <div class="intro">
+        <p>Blocked gestures raise a <code>canvas-cooperative-gesture</code> event:</p>
+        <div id="log"></div>
+    </div>
+
+    <div class="filler intro">
+        <p>keep scrolling&hellip;</p>
+    </div>
+
+    <script type="text/javascript">
+
+        let viewer = OpenSeadragon({
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: "../data/testpattern.dzi",
+            cooperativeGestures: true
+        });
+        const toggle = document.getElementById("toggle");
+        const useCustomViewerMessage = document.getElementById("useCustomViewerMessage");
+        const suppressHintOverlay = document.getElementById("suppressHintOverlay");
+        const globalScroll = document.getElementById("globalScroll");
+        const globalDragString = document.getElementById("globalDragString");
+        const log = document.getElementById("log");
+
+        // Defaults, used to restore a global string when its input is cleared.
+        const defaultScrollString = "Use {0} + scroll to zoom the image";
+        const defaultDragString = "Use two fingers to pan the image";
+
+        // Toggle cooperative gestures on/off for this viewer.
+        toggle.addEventListener("click", function () {
+            viewer.setCooperativeGestures(!viewer.cooperativeGestures);
+            toggle.textContent = viewer.cooperativeGestures ?
+                "Disable cooperative gestures" : "Enable cooperative gestures";
+        });
+
+        // Global hint strings, via the i18n table which affects every viewer instance.
+        globalScroll.addEventListener("input", function () {
+            OpenSeadragon.setString("GestureHints.Scroll", globalScroll.value || defaultScrollString);
+        });
+        globalDragString.addEventListener("input", function () {
+            OpenSeadragon.setString("GestureHints.Touch", globalDragString.value || defaultDragString);
+        });
+
+        // Per-instance customisation: rewrite or suppress the hint via the event.
+        viewer.addHandler("canvas-cooperative-gesture", function (event) {
+            if (useCustomViewerMessage.checked) {
+                event.message = `Looks like you tried to ${event.gesture} the image`;
+            }
+            if (suppressHintOverlay.checked) {
+                event.preventDefaultAction = true;
+            }
+        });
+
+        // Log every blocked gesture.
+        viewer.addHandler("canvas-cooperative-gesture", function (event) {
+            log.textContent = event.gesture + ": " + event.message + "\n" + log.textContent;
+        });
+
+
+
+
+    </script>
+</body>
+</html>
