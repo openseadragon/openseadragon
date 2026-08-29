@@ -362,8 +362,11 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         // An Image can only be built from a URL, so a Blob has to go through a temporary object URL:
         // a data: URL would base64 encode the whole tile, and createImageBitmap() - which needs no URL -
         // produces an imageBitmap instead, which is the cheaper edge registered below anyway.
-        // The URL is not released once the image has decoded: consumers may clone the element, and a
-        // clone loads from its src again. It is released by the image destructor instead.
+        // The URL is released as soon as the image has decoded: no conversion out of the image type needs
+        // the src (drawImage and createImageBitmap both work off the decoded element), copying an image
+        // hands back the same element, and the HTML drawer places that very element in the DOM rather
+        // than a clone. Deferring the release to a destructor would both keep every blob alive for the
+        // lifetime of the cache and force it to guess, from the src alone, which images it owns.
         this.learn("rasterBlob", "image", (tile, blob) => new $.Promise((resolve, reject) => {
             if (!$.supportsAsync) {
                 return reject("Not supported in sync mode!");
@@ -373,11 +376,13 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             const url = urlApi.createObjectURL(blob);
             const img = new Image();
             img.onerror = img.onabort = e => {
-                // Nothing will ever own this image, so the destructor cannot run for it: release here.
                 urlApi.revokeObjectURL(url);
                 reject(e);
             };
-            img.onload = () => resolve(img);
+            img.onload = () => {
+                urlApi.revokeObjectURL(url);
+                resolve(img);
+            };
             img.decoding = 'async';
             img.src = url;
             return undefined;
@@ -463,18 +468,6 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         this.learnDestroy("imageBitmap", bmp => {
             if (bmp && typeof bmp.close === 'function') {
                 bmp.close();
-            }
-        });
-        /**
-         * Release the object URL an image was decoded from, if any. It cannot be released earlier: an
-         * image element may be cloned by a consumer (the HTML drawer does), and the clone loads from
-         * the very same src. Copying the image type hands back the same element rather than a second
-         * one, so exactly one destructor call exists per object URL.
-         */
-        this.learnDestroy("image", image => {
-            if (image && typeof image.src === "string" && image.src.indexOf("blob:") === 0) {
-                // eslint-disable-next-line compat/compat
-                (window.URL || window.webkitURL).revokeObjectURL(image.src);
             }
         });
     }

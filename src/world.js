@@ -334,19 +334,22 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 return Promise.resolve();
             }
 
+            const originalCache = tile.getCache(tile.originalCacheKey);
+            // A tile unloaded before it finished loading keeps 'processing' set - it passes the check
+            // above - but it has dropped its tiledImage and its cache references, and records that are
+            // still reachable can be destroyed afterwards. All of this has to be settled before the
+            // tiledImage below is dereferenced.
+            if (!tile.tiledImage || !originalCache || originalCache._destroyed || !originalCache._tiles ||
+                    (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
+                return Promise.resolve();
+            }
+
             const tiledImage = tile.tiledImage;
             const drawer = tiledImage.getDrawer();
             // We call the event on the parent viewer window no matter what, nested viewers have parent viewer ref.
             //  we use the knowledge that drawerBase keeps track of parent viewer to register into, we use this ref.
             //  We could turn this into API...
             const eventTarget = drawer._parentViewer || this.viewer;
-            const originalCache = tile.getCache(tile.originalCacheKey);
-            // A tile unloaded before it finished loading keeps its cache references, and those records
-            // can be destroyed afterwards - so the record may still be reachable while being dead.
-            if (!originalCache || originalCache._destroyed || !originalCache._tiles ||
-                    (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
-                return Promise.resolve();
-            }
 
 
             let wasOutdatedRun = false;
@@ -630,7 +633,11 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     workingCache.destroy();
                     workingCache = null;
                 }
-                originalCache.__finishProcessing();
+                // A throw after the run already finished normally would find the finisher cleared: calling
+                // it then replaces the real error with 'not a function'.
+                if (originalCache.__finishProcessing) {
+                    originalCache.__finishProcessing();
+                }
             }).finally(() => {
                 // Several exits above return before reaching a disposal site - a run that was declared
                 // outdated by a newer one is the common case. Whatever the route, a working cache still

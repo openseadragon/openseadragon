@@ -134,7 +134,15 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
             }
         }
 
-        $.converter.learnDestroy(HTMLDrawer.canvasCacheType, _freeTile);
+        // The canvas is a copy this cache owns exclusively - the way back out copies again - so its
+        // bitmap can be released here. Detaching the node only makes it collectable eventually, and
+        // Safari holds canvas memory until width and height are set to zero.
+        $.converter.learnDestroy(HTMLDrawer.canvasCacheType, data => {
+            _freeTile(data);
+            data.data.width = 0;
+            data.data.height = 0;
+        });
+        // The image type holds an element owned by the 'image' cache it came from, so it is only detached.
         $.converter.learnDestroy(HTMLDrawer.imageCacheType, _freeTile);
     }
 

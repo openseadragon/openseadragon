@@ -3053,35 +3053,35 @@ function OpenSeadragon( options ){
             this.__value = undefined;
 
             try {
-                // Make sure to unwrap all nested promises!
                 handler(
-                    (value) => {
-                        while (value instanceof $.Promise) {
-                            value = value._value;
-                        }
-                        this._value = value;
-                    },
-                    (error) => {
-                        while (error instanceof $.Promise) {
-                            error = error._value;
-                        }
-                        this._value = error;
-                        this._error = true;
-                    }
+                    (value) => this._adopt(value, false),
+                    (error) => this._adopt(error, true)
                 );
             } catch (e) {
-                this._value = e;
-                this._error = true;
+                this._adopt(e, true);
             }
+        }
+
+        /**
+         * Unwrap all nested promises and take over both the value and the rejected state: a handler
+         * returning a rejected promise has to reject the chain, as it does natively.
+         * @private
+         */
+        _adopt(value, isError) {
+            while (value instanceof $.Promise) {
+                isError = isError || value._error;
+                value = value.__value;
+            }
+            this.__value = value;
+            this._error = !!isError;
         }
 
         then(handler) {
             if (!this._error) {
                 try {
-                    this._value = handler(this._value);
+                    this._adopt(handler(this._value), false);
                 } catch (e) {
-                    this._value = e;
-                    this._error = true;
+                    this._adopt(e, true);
                 }
             }
             return this;
@@ -3090,24 +3090,25 @@ function OpenSeadragon( options ){
         catch(handler) {
             if (this._error) {
                 try {
-                    this._value = handler(this._value);
-                    this._error = false;
+                    this._adopt(handler(this._value), false);
                 } catch (e) {
-                    this._value = e;
-                    this._error = true;
+                    this._adopt(e, true);
                 }
             }
             return this;
         }
 
         finally(handler) {
-            // Runs whichever way the chain went, and passes the outcome through untouched: only a
-            // throw from the handler itself replaces it, as with the native implementation.
+            // Runs whichever way the chain went, and passes the outcome through untouched: only a throw
+            // from the handler, or a rejected promise it returns, replaces it - as natively. A fulfilled
+            // result is discarded.
             try {
-                handler();
+                const result = handler();
+                if (result instanceof $.Promise && result._error) {
+                    this._adopt(result, true);
+                }
             } catch (e) {
-                this._value = e;
-                this._error = true;
+                this._adopt(e, true);
             }
             return this;
         }
@@ -3116,10 +3117,7 @@ function OpenSeadragon( options ){
             return this.__value;
         }
         set _value(val) {
-            if (val && val.constructor === this.constructor) {
-                val = val._value; //unwrap
-            }
-            this.__value = val;
+            this._adopt(val, this._error);
         }
 
         static resolve(value) {

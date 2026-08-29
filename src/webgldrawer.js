@@ -190,18 +190,21 @@
         }
 
         /**
-         * Apply anisotropic filtering to the currently bound texture if available
+         * Apply anisotropic filtering to the currently bound texture if available. Always writes the
+         * parameter, never skips: the render target is created once and updated in place, so leaving a
+         * previous value behind would keep averaging samples under minification with smoothing off,
+         * which is exactly what NEAREST is asked to avoid.
          * @private
          */
         _applyAnisotropy() {
-            if (!this._imageSmoothingEnabled || !this._extTextureFilterAnisotropic || this._maxAnisotropy <= 0) {
+            if (!this._extTextureFilterAnisotropic || !(this._maxAnisotropy > 0)) {
                 return;
             }
             const gl = this._gl;
             gl.texParameterf(
                 gl.TEXTURE_2D,
                 this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
-                Math.min(4, this._maxAnisotropy)
+                this._imageSmoothingEnabled ? Math.min(4, this._maxAnisotropy) : 1
             );
         }
 

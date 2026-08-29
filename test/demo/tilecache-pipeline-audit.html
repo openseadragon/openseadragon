@@ -29,6 +29,12 @@
           font-weight: bold;
       }
 
+      .note {
+          max-width: 46em;
+          margin-top: 6px;
+          color: #555;
+      }
+
     </style>
 </head>
 <body>
@@ -55,6 +61,14 @@
         <label><input type="checkbox" id="cycleDrawers"> cycle drawers (webgl/canvas/html)</label><br>
         <label>restore original every <input type="number" id="restoreEvery" min="0" max="50" step="1" value="7"> rounds
             (0 = never)</label>
+        <div class="note">
+            Leave drawer cycling off when hunting real defects. Switching drawers logs
+            <code>unsupported type ... for the target drawer</code> per tile, by design: a cache is
+            converted for the drawer that was active when it was built, and nothing re-prepares
+            existing caches on a switch - the viewer converts and recovers on the next frame.
+            Browsers also cap the number of live WebGL contexts, so repeated switching may drop the
+            oldest one. Neither is a cache fault.
+        </div>
     </fieldset>
 
     <fieldset>
@@ -287,9 +301,12 @@
         }
 
         function resetCounters() {
-            probesCreated = 0;
+            // Records and probes that are alive right now will still report their destruction, so keep
+            // them as the new created baseline - zeroing both totals would drive the live counts,
+            // reported as created - destroyed, negative as soon as the viewer releases anything.
+            probesCreated -= probesDestroyed;
             probesDestroyed = 0;
-            recordsCreated = 0;
+            recordsCreated -= recordsDestroyed;
             recordsDestroyed = 0;
             recordsFailed = 0;
             stress.pluginErrors = 0;
