@@ -162,10 +162,10 @@ $.Control.prototype = {
      * @function
      */
     destroy: function() {
-        this.wrapper.removeChild( this.element );
-        if (this.anchor !== $.ControlAnchor.NONE) {
-            this.container.removeChild(this.wrapper);
-        }
+    this.wrapper.removeChild( this.element );
+    if (this.wrapper.parentNode) {
+        this.wrapper.parentNode.removeChild(this.wrapper);
+    }
     },
 
     /**

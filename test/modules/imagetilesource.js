@@ -42,21 +42,27 @@
     });
 
     QUnit.test('getContext2D deprecated', function(assert) {
-        testLog.reset();
-        var source = new OpenSeadragon.ImageTileSource({ url: 'test.jpg' });
+    var source = new OpenSeadragon.ImageTileSource({ url: 'test.jpg' });
 
-        // Stub _createContext2D to prevent canvas.drawImage error
-        source._createContext2D = function() {
-            return null;
-        };
+    source._createContext2D = function() {
+        return null;
+    };
 
-        source.getContext2D(0, 0, 0);
+    var originalError = OpenSeadragon.console.error;
+    var errorLogged = false;
+    OpenSeadragon.console.error = function(msg) {
+        if (msg && msg.indexOf('deprecated') !== -1) {
+            errorLogged = true;
+        }
+        originalError.apply(this, arguments);
+    };
 
-        assert.ok(
-            testLog.error.contains('deprecated'),
-            'should log deprecation warning'
-        );
-    });
+    source.getContext2D(0, 0, 0);
+
+    OpenSeadragon.console.error = originalError;
+
+    assert.ok(errorLogged, 'should log deprecation warning');
+});
 
     QUnit.test('downloadTileAbort', function(assert) {
         var source = new OpenSeadragon.ImageTileSource({ url: 'test.jpg' });
