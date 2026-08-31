@@ -1,9 +1,18 @@
 /* eslint-disable no-redeclare */
 /* global module */
 
+function formatCoverageDate(date) {
+    const pad = value => String(value).padStart(2, '0');
+    return date.getFullYear() +
+        pad(date.getMonth() + 1) +
+        pad(date.getDate()) + '-' +
+        pad(date.getHours()) +
+        pad(date.getMinutes()) +
+        pad(date.getSeconds());
+}
+
 module.exports = function(grunt) {
     /* eslint-disable no-undef */
-    const dateFormat = require('dateformat');
     const testPort = Number.parseInt(process.env.OSD_TEST_PORT, 10) || 8000;
 
     // ----------
@@ -26,7 +35,7 @@ module.exports = function(grunt) {
         packageDirName = "openseadragon-bin-" + packageJson.version,
         packageDir = "build/" + packageDirName + "/",
         releaseRoot = "../site-build/built-openseadragon/",
-        coverageDir = 'coverage/' + dateFormat(new Date(), 'yyyymmdd-HHMMss'),
+        coverageDir = 'coverage/' + formatCoverageDate(new Date()),
         sources = [
             "src/openseadragon.js",
             "src/matrix3.js",

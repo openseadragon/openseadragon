@@ -2,6 +2,7 @@
 
 (function() {
     let viewer;
+    let secondaryViewer;
     OpenSeadragon.getBuiltInDrawersForTest().forEach(runDrawerTests);
 
     function runDrawerTests(drawerType){
@@ -26,7 +27,11 @@
                 if (viewer){
                     viewer.destroy();
                 }
+                if (secondaryViewer) {
+                    secondaryViewer.destroy();
+                }
                 viewer = null;
+                secondaryViewer = null;
             }
         });
 
@@ -92,28 +97,133 @@
         });
 
         // ----------
-        QUnit.test('shared renderer explicit opt in', function(assert) {
+        QUnit.test('shared renderer renders different viewer sizes and survives one viewer being destroyed', function(assert) {
             if (drawerType !== 'webgl') {
                 assert.expect(0);
                 return;
             }
 
-            $('<div></div>').attr('id', 'example-shared-explicit').appendTo('#qunit-fixture');
-            // eslint-disable-next-line new-cap
-            const explicitViewer = OpenSeadragon({
-                id: 'example-shared-explicit',
-                prefixUrl: '/build/openseadragon/images/',
-                springStiffness: 100,
-                drawer: 'webgl',
-                drawerOptions: {
-                    webgl: {
-                        useSharedRenderer: true
+            const timeout = Util.timeWatcher(assert, 5000);
+            const createTileSource = function() {
+                return {
+                    width: 24,
+                    height: 24,
+                    tileSize: 24,
+                    minLevel: 1,
+                    getTileUrl: function() {
+                        return '';
+                    },
+                    downloadTileStart: function(context) {
+                        const canvas = document.createElement('canvas');
+                        const canvasContext = canvas.getContext('2d');
+                        canvas.width = context.tile.size.x;
+                        canvas.height = context.tile.size.y;
+                        canvasContext.fillStyle = 'rgb(32, 96, 160)';
+                        canvasContext.fillRect(0, 0, canvas.width, canvas.height);
+                        context.finish(canvas, null, 'context2d');
                     }
-                }
-            });
+                };
+            };
+            const createSharedViewer = function(id) {
+                // eslint-disable-next-line new-cap
+                return OpenSeadragon({
+                    id: id,
+                    prefixUrl: '/build/openseadragon/images/',
+                    springStiffness: 100,
+                    drawer: 'webgl',
+                    drawerOptions: {
+                        webgl: {
+                            useSharedRenderer: true
+                        }
+                    },
+                    tileSources: createTileSource()
+                });
+            };
+            const waitForRenderedFrame = function(targetViewer, callback) {
+                const handler = function() {
+                    const canvas = targetViewer.drawer.canvas;
+                    const pixel = targetViewer.drawer.context.getImageData(
+                        Math.floor(canvas.width / 2),
+                        Math.floor(canvas.height / 2),
+                        1,
+                        1
+                    ).data;
 
-            assert.ok(explicitViewer.drawer._useSharedRenderer, 'explicit opt in uses the shared renderer immediately');
-            explicitViewer.destroy();
+                    if (pixel[3] === 0) {
+                        return;
+                    }
+
+                    targetViewer.removeHandler('update-viewport', handler);
+                    callback(pixel);
+                };
+                targetViewer.addHandler('update-viewport', handler);
+                targetViewer.forceRedraw();
+            };
+
+            $('#example').css({ width: '320px', height: '180px' });
+            $('<div></div>')
+                .attr('id', 'example-shared-secondary')
+                .css({ width: '160px', height: '100px' })
+                .appendTo('#qunit-fixture');
+
+            viewer = createSharedViewer('example');
+            secondaryViewer = createSharedViewer('example-shared-secondary');
+
+            assert.ok(viewer.drawer._useSharedRenderer, 'the first viewer opts into shared rendering');
+            assert.ok(secondaryViewer.drawer._useSharedRenderer, 'the second viewer opts into shared rendering');
+            assert.strictEqual(
+                viewer.drawer._glContext.getContext(),
+                secondaryViewer.drawer._glContext.getContext(),
+                'both viewers use the same WebGL context'
+            );
+            assert.notEqual(
+                viewer.drawer.canvas.width + 'x' + viewer.drawer.canvas.height,
+                secondaryViewer.drawer.canvas.width + 'x' + secondaryViewer.drawer.canvas.height,
+                'the viewers render at different output sizes'
+            );
+
+            let renderedViewers = 0;
+            const onInitialFrame = function(pixel) {
+                assert.ok(
+                    pixel[0] > 0 && pixel[1] > 0 && pixel[2] > 0 && pixel[3] > 0,
+                    'the shared renderer copies a visible frame to the output canvas'
+                );
+                renderedViewers++;
+
+                if (renderedViewers < 2) {
+                    return;
+                }
+
+                const sharedGl = secondaryViewer.drawer._glContext.getContext();
+                viewer.destroy();
+                viewer = null;
+
+                assert.strictEqual(
+                    secondaryViewer.drawer._glContext.getContext(),
+                    sharedGl,
+                    'destroying one viewer preserves the shared context for the other'
+                );
+
+                secondaryViewer.addOnceHandler('update-viewport', function() {
+                    const canvas = secondaryViewer.drawer.canvas;
+                    const remainingPixel = secondaryViewer.drawer.context.getImageData(
+                        Math.floor(canvas.width / 2),
+                        Math.floor(canvas.height / 2),
+                        1,
+                        1
+                    ).data;
+                    assert.ok(
+                        remainingPixel[0] > 0 && remainingPixel[1] > 0 && remainingPixel[2] > 0 && remainingPixel[3] > 0,
+                        'the remaining viewer continues to render after its peer is destroyed'
+                    );
+                    timeout.done();
+                });
+                secondaryViewer.viewport.zoomBy(1.01);
+                secondaryViewer.forceRedraw();
+            };
+
+            waitForRenderedFrame(viewer, onInitialFrame);
+            waitForRenderedFrame(secondaryViewer, onInitialFrame);
         });
 
         // ----------
@@ -231,7 +341,13 @@
                 const timeout = Util.timeWatcher(assert, 5000);
 
                 // Create viewer without tileSources so we can setup testing before we open and draw an image
-                createViewer();
+                createViewer({
+                    drawerOptions: {
+                        webgl: {
+                            useSharedRenderer: true
+                        }
+                    }
+                });
 
                 if (viewer.drawer.getType() !== 'webgl') {
                     assert.expect(0);
@@ -246,6 +362,12 @@
                 const oldGlContext = oldDrawer._glContext;
                 const gl = oldDrawer._glContext.getContext();
                 const originalGetParameter = gl.getParameter;
+                const outputWidth = oldDrawer._outputCanvas.width;
+                const outputHeight = oldDrawer._outputCanvas.height;
+
+                // Simulate another, larger viewer having grown the shared canvas.
+                oldDrawer._renderingCanvas.width = outputWidth + 100;
+                oldDrawer._renderingCanvas.height = outputHeight + 50;
 
                 gl.getParameter = function(param) {
                     if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
@@ -266,6 +388,8 @@
                     assert.notStrictEqual(viewer.drawer._glContext, oldGlContext, 'glContext is a new instance');
                     assert.ok(viewer.drawer._glContext.getContext(), 'new glContext has valid context');
                     assert.equal(viewer.drawer.getType(), 'webgl', 'viewer.drawer remains WebGL after recovery');
+                    assert.equal(viewer.drawer._renderingCanvas.width, outputWidth, 'recovery uses this drawer\'s output width');
+                    assert.equal(viewer.drawer._renderingCanvas.height, outputHeight, 'recovery uses this drawer\'s output height');
                     done();
                 });
 

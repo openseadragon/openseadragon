@@ -1524,7 +1524,6 @@
             if (this._useSharedRenderer) {
                 const width = this._outputCanvas.width;
                 const height = this._outputCanvas.height;
-                this._glContext.getContext().finish();
                 destContext.drawImage(this._renderingCanvas, 0, 0, width, height, 0, 0, width, height);
             } else {
                 destContext.drawImage(this._renderingCanvas, 0, 0);
@@ -1586,6 +1585,7 @@
             const width = this._outputCanvas.width;
             const height = this._outputCanvas.height;
             const yOffset = framebufferBound ? 0 : this._renderingCanvas.height - height;
+            gl.enable(gl.SCISSOR_TEST);
             gl.viewport(0, yOffset, width, height);
             gl.scissor(0, yOffset, width, height);
         }
@@ -1681,11 +1681,6 @@
             }
 
             try {
-                // Store old canvas properties
-                const oldCanvas = this._renderingCanvas;
-                const oldWidth = oldCanvas.width;
-                const oldHeight = oldCanvas.height;
-
                 // Destroy internal cache FIRST (while old context still exists)
                 // This ensures textures are freed using the old context before it's destroyed
                 this.destroyInternalCache();
@@ -1700,8 +1695,8 @@
                 // and glContext references via internalCacheFree() callbacks
 
                 this._fallbackToDedicatedContext(
-                    oldWidth,
-                    oldHeight
+                    this._outputCanvas.width,
+                    this._outputCanvas.height
                 );
 
                 if (!this._hasValidGlContext()) {
