@@ -467,6 +467,15 @@ function main() {
         }
     }
 
+    // the unqualified tail of every src member key, e.g. "MouseTracker.GesturePointList"
+    // contributes "GesturePointList" -- mirrors the same nested-type reconciliation used
+    // for missingMembers above, so a nested type flattened to a top-level declaration in
+    // the .d.ts isn't misread as stale just because src only has it under a qualified key.
+    const srcMemberTailNames = new Set();
+    for (const key of src.members.keys()) {
+        srcMemberTailNames.add(key.split(".").slice(1).join("."));
+    }
+
     // declared in .d.ts but never found in src -- candidates for removal, or just
     // missed by these heuristics (see the notes at the top of this file)
     const staleTopLevel = [];
@@ -474,7 +483,7 @@ function main() {
         if (kind === "interface") {
             continue; // interfaces are pure types, no src equivalent expected
         }
-        if (!src.topLevel.has(name)) {
+        if (!src.topLevel.has(name) && !srcMemberTailNames.has(name)) {
             staleTopLevel.push({ name, kind });
         }
     }
