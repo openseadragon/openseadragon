@@ -107,17 +107,17 @@
     });
 
     QUnit.test('IrisTileSource throws without serverUrl', function(assert) {
-    assert.throws(function() {
-        new OpenSeadragon.IrisTileSource({
-            slideId: "12345",
-            metadata: mockMetadata
-        });
-    }, /requires serverUrl and slideId/, 'should throw error');
-});
+        assert.throws(function() {
+            return new OpenSeadragon.IrisTileSource({
+                slideId: "12345",
+                metadata: mockMetadata
+            });
+        }, /requires serverUrl and slideId/, 'should throw error');
+    });
 
     QUnit.test('IrisTileSource throws without slideId', function(assert) {
         assert.throws(function() {
-            new OpenSeadragon.IrisTileSource({
+            return new OpenSeadragon.IrisTileSource({
                 serverUrl: "http://localhost",
                 metadata: mockMetadata
             });
@@ -125,37 +125,42 @@
     });
 
     QUnit.test('IrisTileSource supports', function(assert) {
-        assert.ok(
+        assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports({
                 type: "iris",
                 serverUrl: "http://localhost",
                 slideId: "12345"
             }),
-            'should return true for valid iris data'
+            true,
+            'should return true (boolean) for valid iris data'
         );
 
-        assert.notOk(
+        assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports({
                 type: "dzi"
             }),
-            'should return false for non-iris type'
+            false,
+            'should return false (boolean) for non-iris type'
         );
 
-        assert.notOk(
+        assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports(null),
-            'should return false for null'
+            false,
+            'should return false (boolean) for null'
         );
 
-        assert.notOk(
+        assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports({}),
-            'should return false for empty object'
+            false,
+            'should return false (boolean) for empty object'
         );
 
-        assert.notOk(
+        assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports({
                 type: "iris"
             }),
-            'should return false without serverUrl'
+            false,
+            'should return false (boolean) without serverUrl'
         );
     });
 

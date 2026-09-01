@@ -1,103 +1,103 @@
 (function() {
 
-    const test = new OpenSeadragon.IIPTileSource();
+    const metadata = `Max-size:8272 1712\r\nTile-size:256 256\r\nResolution-number:7\r\nResolutions:129 26,258 53,517 107,1034 214,2068 428,4136 856,8272 1712\r\n`;
 
-    // Set options
-    test.iipsrv = "http://localhost/fcgi-bin/iipsrv.fcgi";
-    test.image = "test.tif";
+    let test;
 
-
-    QUnit.module('IIP');
-
-
-    QUnit.test('IIPTileSource metadata URL', function(assert) {
-
-	const url = test.iipsrv + '?FIF=' + test.image + '&obj=IIP,1.0&obj=Max-size&obj=Tile-size&obj=Resolution-number&obj=Resolutions';
-	assert.equal( test.getMetadataUrl(), url, "Info URL" );
-
+    QUnit.module('IIP', {
+        beforeEach: function() {
+            // Fresh, fully-initialized instance for every test so no test
+            // depends on another test having run (works with QUnit filtering)
+            test = new OpenSeadragon.IIPTileSource();
+            test.iipsrv = "http://localhost/fcgi-bin/iipsrv.fcgi";
+            test.image = "test.tif";
+            test.parseIIP(metadata);
+        }
     });
 
+    QUnit.test('IIPTileSource metadata URL', function(assert) {
+        const url = test.iipsrv + '?FIF=' + test.image + '&obj=IIP,1.0&obj=Max-size&obj=Tile-size&obj=Resolution-number&obj=Resolutions';
+        assert.equal( test.getMetadataUrl(), url, "Info URL" );
+    });
 
     QUnit.test('IIPTileSource metadata parsing', function(assert) {
 
-	// Parse metadata
-	const metadata = `Max-size:8272 1712\r\nTile-size:256 256\r\nResolution-number:7\r\nResolutions:129 26,258 53,517 107,1034 214,2068 428,4136 856,8272 1712\r\n`;
-	test.parseIIP( metadata );
+        // Re-parse here since this test is specifically about parsing
+        test.parseIIP( metadata );
 
-	// Check dimensions
-	assert.ok( test.width, "Width exists" );
-	assert.equal( test.width, 8272, "Parsing width");
-	assert.equal( test.height, 1712, "Parsing height");
+        // Check dimensions
+        assert.ok( test.width, "Width exists" );
+        assert.equal( test.width, 8272, "Parsing width");
+        assert.equal( test.height, 1712, "Parsing height");
 
-	// Check tile size
-	assert.ok( test._tileWidth, "Tile width provided" );
-	assert.equal( test._tileWidth, 256, "Parsing tile width" );
+        // Check tile size
+        assert.ok( test._tileWidth, "Tile width provided" );
+        assert.equal( test._tileWidth, 256, "Parsing tile width" );
 
-	// Check resolution levels
-	assert.ok( test.levelSizes, "Resolution levels exist" );
-	assert.equal( typeof test.levelSizes, "object", "Resolution sizes array" );
-	assert.equal( test.levelSizes.length, 7, "Number of resolution sizes" );
-	assert.equal( test.maxLevel, test.levelSizes.length-1, "Max levels equals number of resolution sizes" );
+        // Check resolution levels
+        assert.ok( test.levelSizes, "Resolution levels exist" );
+        assert.equal( typeof test.levelSizes, "object", "Resolution sizes array" );
+        assert.equal( test.levelSizes.length, 7, "Number of resolution sizes" );
+        assert.equal( test.maxLevel, test.levelSizes.length-1, "Max levels equals number of resolution sizes" );
 
     });
 
-
     QUnit.test('IIPTileSource tile URLs', function(assert) {
 
-	// Basic tile URLs
-	assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&JTL=0,0` );
-	assert.equal( test.getTileUrl(1,1,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&JTL=1,1` );
-	assert.equal( test.getTileUrl(4,1,1), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&JTL=4,10` );
+        // Basic tile URLs
+        assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&JTL=0,0` );
+        assert.equal( test.getTileUrl(1,1,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&JTL=1,1` );
+        assert.equal( test.getTileUrl(4,1,1), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&JTL=4,10` );
 
-	// Test format change
-	test.format = "webp";
-	assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&WTL=0,0` );
+        // Test format change
+        test.format = "webp";
+        assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&WTL=0,0` );
 
-	// Test example transforms
-	test.transform = { invert: true };
-	assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&INV&WTL=0,0` );
+        // Test example transforms
+        test.transform = { invert: true };
+        assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&INV&WTL=0,0` );
 
-	test.transform = { contrast: 1.5 };
-	assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&CNT=1.5&WTL=0,0` );
+        test.transform = { contrast: 1.5 };
+        assert.equal( test.getTileUrl(0,0,0), `http://localhost/fcgi-bin/iipsrv.fcgi?FIF=test.tif&CNT=1.5&WTL=0,0` );
 
     });
 
     QUnit.test('IIPTileSource supports', function(assert) {
-    assert.ok(
-        OpenSeadragon.IIPTileSource.prototype.supports({
-            iipsrv: "http://localhost/fcgi-bin/iipsrv.fcgi",
-            image: "test.tif"
-        }),
-        'should return true for valid IIP data'
-    );
+        assert.ok(
+            OpenSeadragon.IIPTileSource.prototype.supports({
+                iipsrv: "http://localhost/fcgi-bin/iipsrv.fcgi",
+                image: "test.tif"
+            }),
+            'should return true for valid IIP data'
+        );
 
-    assert.notOk(
-        OpenSeadragon.IIPTileSource.prototype.supports({
-            type: "dzi"
-        }),
-        'should return false for non-IIP data'
-    );
+        assert.notOk(
+            OpenSeadragon.IIPTileSource.prototype.supports({
+                type: "dzi"
+            }),
+            'should return false for non-IIP data'
+        );
 
-    assert.notOk(
-        OpenSeadragon.IIPTileSource.prototype.supports(null),
-        'should return false for null'
-    );
+        assert.notOk(
+            OpenSeadragon.IIPTileSource.prototype.supports(null),
+            'should return false for null'
+        );
 
-    assert.notOk(
-        OpenSeadragon.IIPTileSource.prototype.supports({}),
-        'should return false for empty object'
-    );
+        assert.notOk(
+            OpenSeadragon.IIPTileSource.prototype.supports({}),
+            'should return false for empty object'
+        );
 
-    assert.notOk(
-        OpenSeadragon.IIPTileSource.prototype.supports({ iipsrv: "http://test" }),
-        'should return false without image'
-    );
+        assert.notOk(
+            OpenSeadragon.IIPTileSource.prototype.supports({ iipsrv: "http://test" }),
+            'should return false without image'
+        );
 
-    assert.notOk(
-        OpenSeadragon.IIPTileSource.prototype.supports({ image: "test.tif" }),
-        'should return false without iipsrv'
-    );
-});
+        assert.notOk(
+            OpenSeadragon.IIPTileSource.prototype.supports({ image: "test.tif" }),
+            'should return false without iipsrv'
+        );
+    });
 
     QUnit.test('IIPTileSource parseIIP errors', function(assert) {
         // No Max-size
@@ -118,9 +118,7 @@
     });
 
     QUnit.test('IIPTileSource getNumTiles', function(assert) {
-        // Re-parse metadata to ensure levelSizes is set
-        const metadata = `Max-size:8272 1712\r\nTile-size:256 256\r\nResolution-number:7\r\nResolutions:129 26,258 53,517 107,1034 214,2068 428,4136 856,8272 1712\r\n`;
-        test.parseIIP(metadata);
+        // levelSizes is initialized in beforeEach; no dependency on other tests
 
         // Level 0: 129x26 image, 256x256 tiles = 1x1 tiles
         var tiles0 = test.getNumTiles(0);
@@ -163,9 +161,6 @@
         assert.ok(url.includes('MINMAX=0,255'), 'includes minmax transform');
         assert.ok(url.includes('SHD=azimuth=315,elevation=45'), 'includes hillshade transform');
         assert.ok(url.includes('JTL=0,0'), 'includes tile coordinates');
-
-        // Reset
-        test.transform = null;
     });
 
     QUnit.test('IIPTileSource getTileUrl with png format', function(assert) {

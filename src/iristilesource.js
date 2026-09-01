@@ -90,8 +90,8 @@
      * @param {Object} data - The raw metadata object to check
      * @returns {Boolean} - True if supported, false otherwise
      */
-    supports: function(data) {
-      return (data && data.type === "iris" && data.serverUrl && data.slideId);
+    supports: function (data) {
+    return !!(data && data.type === "iris" && data.serverUrl && data.slideId);
     },
 
     /**

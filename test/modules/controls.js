@@ -390,30 +390,30 @@
     QUnit.module('Control');
 
     QUnit.test('deprecated number anchor', function(assert) {
-    var container = document.createElement('div');
-    document.getElementById('qunit-fixture').appendChild(container);
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
 
-    var element = document.createElement('button');
+        var element = document.createElement('button');
 
-    var originalError = OpenSeadragon.console.error;
-    var errorLogged = false;
-    OpenSeadragon.console.error = function(msg) {
-        if (msg && msg.indexOf('deprecated') !== -1) {
-            errorLogged = true;
-        }
-        originalError.apply(this, arguments);
-    };
+        var originalError = OpenSeadragon.console.error;
+        var errorLogged = false;
+        OpenSeadragon.console.error = function(msg) {
+            if (msg && msg.indexOf('deprecated') !== -1) {
+                errorLogged = true;
+            }
+            originalError.apply(this, arguments);
+        };
 
-    // Pass the raw number 1 (TOP_LEFT value) to trigger the deprecated path
-    var control = new OpenSeadragon.Control(element, 1, container);
+        // Pass the raw number 1 (TOP_LEFT value) to trigger the deprecated path
+        var control = new OpenSeadragon.Control(element, 1, container);
 
-    OpenSeadragon.console.error = originalError;
+        OpenSeadragon.console.error = originalError;
 
-    assert.ok(errorLogged, 'deprecation warning logged');
-    assert.equal(control.anchor, OpenSeadragon.ControlAnchor.TOP_LEFT, 'anchor set correctly');
+        assert.ok(errorLogged, 'deprecation warning logged');
+        assert.equal(control.anchor, OpenSeadragon.ControlAnchor.TOP_LEFT, 'anchor set correctly');
 
-    control.destroy();
-});
+        control.destroy();
+    });
 
     QUnit.test('ABSOLUTE anchor', function(assert) {
         var container = document.createElement('div');
@@ -439,42 +439,42 @@
     });
 
     QUnit.test('NONE anchor', function(assert) {
-    var container = document.createElement('div');
-    document.getElementById('qunit-fixture').appendChild(container);
+        var container = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(container);
 
-    var element = document.createElement('button');
-    // element must be in the DOM so parentNode isn't null when attachToViewer: false
-    container.appendChild(element);
+        var element = document.createElement('button');
+        // element must be in the DOM so parentNode isn't null when attachToViewer: false
+        container.appendChild(element);
 
-    var control = new OpenSeadragon.Control(element, {
-        anchor: OpenSeadragon.ControlAnchor.NONE,
-        attachToViewer: false
-    }, container);
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.NONE,
+            attachToViewer: false
+        }, container);
 
-    assert.equal(control.wrapper.style.width, '100%', 'width is 100%');
-    assert.equal(control.wrapper.style.height, '100%', 'height is 100%');
+        assert.equal(control.wrapper.style.width, '100%', 'width is 100%');
+        assert.equal(control.wrapper.style.height, '100%', 'height is 100%');
 
-    control.destroy();
-});
+        control.destroy();
+    });
 
     QUnit.test('attachToViewer false', function(assert) {
-    var parent = document.createElement('div');
-    document.getElementById('qunit-fixture').appendChild(parent);
+        var parent = document.createElement('div');
+        document.getElementById('qunit-fixture').appendChild(parent);
 
-    var element = document.createElement('button');
-    // element must be a child of parent so parentNode is valid when attachToViewer: false
-    parent.appendChild(element);
+        var element = document.createElement('button');
+        // element must be a child of parent so parentNode is valid when attachToViewer: false
+        parent.appendChild(element);
 
-    var control = new OpenSeadragon.Control(element, {
-        anchor: OpenSeadragon.ControlAnchor.NONE,
-        attachToViewer: false
-    }, parent);
+        var control = new OpenSeadragon.Control(element, {
+            anchor: OpenSeadragon.ControlAnchor.NONE,
+            attachToViewer: false
+        }, parent);
 
-    assert.ok(parent.contains(control.wrapper), 'wrapper added to parent');
+        assert.ok(parent.contains(control.wrapper), 'wrapper added to parent');
 
-    control.destroy();
-    assert.ok(!parent.contains(control.wrapper), 'wrapper removed on destroy');
-});
+        control.destroy();
+        assert.ok(!parent.contains(control.wrapper), 'wrapper removed on destroy');
+    });
 
     QUnit.test('destroy with anchor', function(assert) {
         var container = document.createElement('div');
@@ -521,7 +521,7 @@
         }, container);
 
         control.setOpacity(0.5);
-        assert.ok(true, 'setOpacity did not throw');
+        assert.equal(control.wrapper.style.opacity, '0.5', 'opacity is set');
 
         control.destroy();
     });
