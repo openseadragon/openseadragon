@@ -91,7 +91,7 @@
      * @returns {Boolean} - True if supported, false otherwise
      */
     supports: function (data) {
-    return !!(data && data.type === "iris" && data.serverUrl && data.slideId);
+      return !!(data && data.type === "iris" && data.serverUrl && data.slideId);
     },
 
     /**
