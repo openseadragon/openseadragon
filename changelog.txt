@@ -8,6 +8,7 @@ OPENSEADRAGON CHANGELOG
 * Additional TypeScript and documentation cleanup (#2961 @iangilman)
 * Improved unit tests (#2951 @lucifer2661)
 * Updated our unit test code coverage tool from istanbul to nyc (#2947 @Zaidzezo)
+* Expanded unit tests and made minor bug fixes (#2958 @Zaidzezo)
 
 6.1.0:
 
