@@ -247,26 +247,36 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
         }
         _pendingConversions.set(id, entry);
 
-        if (op === 'decodeFromBytes') {
-            if (__hasSAB) {
-                const u8 = payload.u8;
-                // eslint-disable-next-line no-undef
-                const sab = new SharedArrayBuffer(u8.byteLength);
-                new Uint8Array(sab).set(u8);
-                worker.postMessage({ id, op, bytes: sab, mime: payload.mime });
-            } else {
-                if (!__warnedNoSAB) {
-                    __warnedNoSAB = true;
-                    console.warn('[Converter] SharedArrayBuffer unavailable; falling back to ArrayBuffer.');
+        // postMessage() throws synchronously on a payload it cannot clone. Without this the entry would
+        // sit in the pending map until the timeout above fires, stalling the tile for the full timeout.
+        try {
+            if (op === 'decodeFromBytes') {
+                if (__hasSAB) {
+                    const u8 = payload.u8;
+                    // eslint-disable-next-line no-undef
+                    const sab = new SharedArrayBuffer(u8.byteLength);
+                    new Uint8Array(sab).set(u8);
+                    worker.postMessage({ id, op, bytes: sab, mime: payload.mime });
+                } else {
+                    if (!__warnedNoSAB) {
+                        __warnedNoSAB = true;
+                        console.warn('[Converter] SharedArrayBuffer unavailable; falling back to ArrayBuffer.');
+                    }
+                    const u8 = payload.u8;
+                    const tight = (u8.byteOffset === 0 && u8.byteLength === u8.buffer.byteLength) ? u8 : u8.slice();
+                    worker.postMessage({ id, op, bytes: tight.buffer, mime: payload.mime }, [tight.buffer]);
                 }
-                const u8 = payload.u8;
-                const tight = (u8.byteOffset === 0 && u8.byteLength === u8.buffer.byteLength) ? u8 : u8.slice();
-                worker.postMessage({ id, op, bytes: tight.buffer, mime: payload.mime }, [tight.buffer]);
+            } else {
+                worker.postMessage(payload);
             }
-            return;
+        } catch (e) {
+            if (entry.timer) {
+                clearTimeout(entry.timer);
+                entry.timer = null;
+            }
+            _pendingConversions.delete(id);
+            reject(e);
         }
-
-        worker.postMessage(payload);
     });
 }
 
@@ -340,19 +350,6 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         this.copyings = {};
 
         // Teaching OpenSeadragon built-in conversions:
-        const imageCreator = (tile, url) => new $.Promise((resolve, reject) => {
-            if (!$.supportsAsync) {
-                return reject("Not supported in sync mode!");
-            }
-            const img = new Image();
-            img.onerror = img.onabort = e => reject(`Failed to load image: ${url}`);
-            img.onload = () => resolve(img);
-            if (tile.tiledImage && tile.tiledImage.crossOriginPolicy) {
-                img.crossOrigin = tile.tiledImage.crossOriginPolicy;
-            }
-            img.src = url;
-            return undefined;
-        });
         const canvasContextCreator = (tile, imageData) => {
             const canvas = document.createElement('canvas');
             canvas.width = imageData.width;
@@ -362,33 +359,48 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             return context;
         };
 
+        // An Image can only be built from a URL, so a Blob has to go through a temporary object URL:
+        // a data: URL would base64 encode the whole tile, and createImageBitmap() - which needs no URL -
+        // produces an imageBitmap instead, which is the cheaper edge registered below anyway.
+        // The URL is released as soon as the image has decoded: no conversion out of the image type needs
+        // the src (drawImage and createImageBitmap both work off the decoded element), copying an image
+        // hands back the same element, and the HTML drawer places that very element in the DOM rather
+        // than a clone. Deferring the release to a destructor would both keep every blob alive for the
+        // lifetime of the cache and force it to guess, from the src alone, which images it owns.
         this.learn("rasterBlob", "image", (tile, blob) => new $.Promise((resolve, reject) => {
-            // eslint-disable-next-line compat/compat
-            const url = (window.URL || window.webkitURL).createObjectURL(blob);
             if (!$.supportsAsync) {
                 return reject("Not supported in sync mode!");
             }
+            // eslint-disable-next-line compat/compat
+            const urlApi = window.URL || window.webkitURL;
+            const url = urlApi.createObjectURL(blob);
             const img = new Image();
             img.onerror = img.onabort = e => {
-                // eslint-disable-next-line compat/compat
-                (window.URL || window.webkitURL).revokeObjectURL(blob);
+                urlApi.revokeObjectURL(url);
                 reject(e);
             };
             img.onload = () => {
-                // eslint-disable-next-line compat/compat
-                (window.URL || window.webkitURL).revokeObjectURL(blob);
+                urlApi.revokeObjectURL(url);
                 resolve(img);
             };
             img.decoding = 'async';
             img.src = url;
             return undefined;
-        }), 1, 2);
+        }), 1, 3);
 
         this.learn("context2d", "rasterBlob", (tile, ctx) => new $.Promise((resolve, reject) => {
             if (!$.supportsAsync) {
                 return reject("Not supported in sync mode!");
             }
-            ctx.canvas.toBlob(resolve);
+            // toBlob() reports failure by passing null, which would otherwise be resolved as if it were
+            // valid data and only fail further down the conversion path.
+            ctx.canvas.toBlob(blob => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error("Canvas toBlob() failed to encode the canvas!"));
+                }
+            });
             return undefined;
         }), 1, 2);
 
@@ -421,35 +433,24 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         this.learn("image", "context2d", canvasContextCreator, 1, 2);
 
         //Copies
-        this.learn("image", "image", (tile, image) => imageCreator(tile, image.src), 1, 1);
+        //there is no API to write pixels into an Image, nothing to protect by copying
+        this.learn("image", "image", (tile, image) => image, 0, 1);
         this.learn("context2d", "context2d", (tile, ctx) => canvasContextCreator(tile, ctx.canvas));
         this.learn("rasterBlob", "rasterBlob", (tile, blob) => blob, 0, 1); //blobs are immutable, no need to copy
-        this.learn("imageBitmap", "imageBitmap", (tile, bmp) => new $.Promise((resolve, reject) => {
-            try {
-                if (!$.supportsAsync) {
-                    return reject("Not supported in sync mode!");
-                }
-                if (!bmp) {
-                    return reject(new Error("No ImageBitmap to copy"));
-                }
-
-                if (typeof OffscreenCanvas !== 'undefined' && bmp.width && bmp.height) {
-                    const oc = new OffscreenCanvas(bmp.width, bmp.height);
-                    const ctx = oc.getContext('2d', { willReadFrequently: false });
-                    ctx.drawImage(bmp, 0, 0);
-
-                    if (typeof oc.transferToImageBitmap === 'function') {
-                        const copy = oc.transferToImageBitmap();
-                        return resolve(copy);
-                    }
-                    return createImageBitmap(oc, { colorSpaceConversion: 'none' }).then(resolve);
-                }
-                // Fallback
-                return createImageBitmap(bmp, { colorSpaceConversion: 'none' }).then(resolve);
-            } catch (e) {
-                return reject(e);
+        // createImageBitmap() on an ImageBitmap already yields an independent handle: closing the source
+        // does not close the copy, which is the only property the cache ownership model needs. Rasterizing
+        // through an OffscreenCanvas to achieve the same thing costs a GPU->CPU->GPU round trip per copy.
+        this.learn("imageBitmap", "imageBitmap", (tile, bmp) => {
+            if (!$.supportsAsync) {
+                return $.Promise.reject("Not supported in sync mode!");
             }
-        }), 1, 1);
+            // A closed ImageBitmap reports zero dimensions, and createImageBitmap() rejects on a zero-sized
+            // source: check here so the failure names the actual cause.
+            if (!bmp || !bmp.width || !bmp.height) {
+                return $.Promise.reject(new Error("Cannot copy a closed or empty ImageBitmap!"));
+            }
+            return createImageBitmap(bmp, { colorSpaceConversion: 'none' });
+        }, 1, 1);
         /**
          * Free up canvas memory
          * (iOS 12 or higher on 2GB RAM device has only 224MB canvas memory,
@@ -458,6 +459,16 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         this.learnDestroy("context2d", ctx => {
             ctx.canvas.width = 0;
             ctx.canvas.height = 0;
+        });
+        /**
+         * Release the decoded pixels immediately instead of waiting for the collector. An ImageBitmap can
+         * hold several MB, and the cache evicts far more often than the collector runs. Copying the type
+         * produces an independent handle, so closing one can never affect another.
+         */
+        this.learnDestroy("imageBitmap", bmp => {
+            if (bmp && typeof bmp.close === 'function') {
+                bmp.close();
+            }
         });
     }
 
@@ -571,6 +582,9 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
     convert(tile, data, from, ...to) {
         const conversionPath = this.getConversionPath(from, to);
         if (!conversionPath) {
+            // A missing path is a static property of the graph, so rejecting here would report it once per
+            // tile and, through the cache error handling, take every one of those tiles down permanently.
+            // Report it and let the caller keep whatever data it already had, as CacheRecord._convert does.
             $.console.error(`[OpenSeadragon.converter.convert] Conversion ${from} ---> ${to} cannot be done!`);
             return $.Promise.resolve();
         }
@@ -618,7 +632,14 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
     copy(tile, data, type) {
         const copyTransform = this.copyings[type];
         if (copyTransform) {
-            const y = copyTransform(tile, data);
+            let y;
+            try {
+                y = copyTransform(tile, data);
+            } catch (e) {
+                // Callers treat this as a promise-returning function: a synchronous throw would otherwise
+                // escape past them, e.g. out of CacheRecord.getDataAs() itself.
+                return $.Promise.reject(e);
+            }
             return $.type(y) === "promise" ? y : $.Promise.resolve(y);
         }
         $.console.warn(`[OpenSeadragon.converter.copy] is not supported with type %s`, type);
