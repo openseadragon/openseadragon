@@ -371,12 +371,11 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             const img = new Image();
             img.onerror = img.onabort = e => {
                 // eslint-disable-next-line compat/compat
-                (window.URL || window.webkitURL).revokeObjectURL(blob);
+                (window.URL || window.webkitURL).revokeObjectURL(url);
                 reject(e);
             };
             img.onload = () => {
-                // eslint-disable-next-line compat/compat
-                (window.URL || window.webkitURL).revokeObjectURL(blob);
+                img.__osdObjectUrl = url;
                 resolve(img);
             };
             img.decoding = 'async';
@@ -458,6 +457,16 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
         this.learnDestroy("context2d", ctx => {
             ctx.canvas.width = 0;
             ctx.canvas.height = 0;
+        });
+        /**
+         * Free up image object URL if this image was created from a Blob URL.
+         */
+        this.learnDestroy("image", img => {
+            if (img && img.__osdObjectUrl) {
+                // eslint-disable-next-line compat/compat
+                (window.URL || window.webkitURL).revokeObjectURL(img.__osdObjectUrl);
+                delete img.__osdObjectUrl;
+            }
         });
     }
 

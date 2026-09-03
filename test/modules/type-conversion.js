@@ -440,4 +440,50 @@
 
         return { passed, diffPct, rmse, width: w, height: h };
     }
+
+    QUnit.test('rasterBlob -> image lifecycle: copy then destroy original revokes object URL', async function (test) {
+        const done = test.async();
+
+        const base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        const byteCharacters = atob(base64Png);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/png" });
+
+        // 1. Convert rasterBlob -> image
+        const img = await OpenSeadragon.converter.convert({}, blob, "rasterBlob", "image");
+        test.ok(img instanceof HTMLImageElement, "Converted to HTMLImageElement.");
+        test.ok(img.__osdObjectUrl, "Object URL stashed on image as __osdObjectUrl.");
+        const stashedUrl = img.__osdObjectUrl;
+        test.ok(stashedUrl.startsWith("blob:"), "Stashed URL is a blob URL.");
+
+        // Verify the object URL is fetchable before destroy
+        const fetchBefore = await fetch(stashedUrl);
+        test.ok(fetchBefore.ok, "Object URL is live and fetchable prior to destroy.");
+
+        // 2. Copy the image ("image" -> "image")
+        const imgCopy = await OpenSeadragon.converter.copy({}, img, "image");
+        test.ok(imgCopy instanceof HTMLImageElement, "Image copy succeeded.");
+        test.equal(imgCopy.src, img.src, "Image copy shares the same src URL.");
+
+        // 3. Destroy the original image
+        await OpenSeadragon.converter.destroy(img, "image");
+        test.equal(img.__osdObjectUrl, undefined, "__osdObjectUrl cleared after destroy.");
+
+        // 4. Verify the copy is still functional and has dimensions
+        test.ok(imgCopy.naturalWidth > 0, "Copied image retains valid dimensions.");
+
+        // 5. Verify the object URL was actually revoked by checking that fetching it now fails
+        try {
+            await fetch(stashedUrl);
+            test.ok(false, "Fetch of revoked object URL should have failed.");
+        } catch (err) {
+            test.ok(true, "Fetch of revoked object URL threw network error as expected.");
+        }
+
+        done();
+    });
 })();
