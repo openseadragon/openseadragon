@@ -2034,6 +2034,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 wrapHorizontal: this.wrapHorizontal,
                 wrapVertical: this.wrapVertical,
                 maxTilesPerFrame: this.maxTilesPerFrame,
+                tileLoadingConcurrency: this.tileLoadingConcurrency,
                 loadDestinationTilesOnAnimation: this.loadDestinationTilesOnAnimation,
                 immediateRender: this.immediateRender,
                 blendTime: this.blendTime,
@@ -4473,7 +4474,7 @@ function updateOnce( viewer ) {
     }
 
     if ( animated || isAnimationFinished || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
-        drawWorld( viewer );
+        drawWorld( viewer, animated );
         viewer._drawOverlays();
         if( viewer.navigator ){
           viewer.navigator.update( viewer.viewport );
@@ -4518,8 +4519,14 @@ function updateOnce( viewer ) {
     //viewer.profiler.endUpdate();
 }
 
-function drawWorld( viewer ) {
-    viewer.imageLoader.clear();
+function drawWorld( viewer, tileSelectionChanged ) {
+    // Queued jobs are tiles that were selected for the view as it was when they were queued, so they only go
+    // stale when that view changes - either the viewport moved or an item's own transform did. Clearing
+    // unconditionally aborts jobs that are still wanted, and they can then only be re-selected at the
+    // per-frame rate, which starves the loader whenever imageLoaderLimit is set.
+    if ( tileSelectionChanged ) {
+        viewer.imageLoader.clear();
+    }
     viewer.world.draw();
 
     /**
