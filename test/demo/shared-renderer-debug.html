@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Shared Renderer Debug</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        .controls {
+            align-items: center;
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .viewer-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .viewer-container {
+            border: 1px solid #ccc;
+            height: 320px;
+            width: 320px;
+        }
+
+        #debug {
+            background: #f5f5f5;
+            font-family: monospace;
+            margin-top: 20px;
+            min-height: 160px;
+            padding: 12px;
+            white-space: pre-wrap;
+        }
+    </style>
+    <script src="../../build/openseadragon/openseadragon.js"></script>
+</head>
+<body>
+    <h1>Shared Renderer Debug</h1>
+    <p>Use this page to compare private and shared WebGL rendering with multiple viewers.</p>
+
+    <div class="controls">
+        <label>
+            Viewers:
+            <input id="viewerCount" type="number" min="1" max="6" value="3">
+        </label>
+        <label>
+            <input id="forceShared" type="checkbox">
+            Force shared renderer for every viewer
+        </label>
+        <button id="run">Create viewers</button>
+    </div>
+
+    <div id="viewers" class="viewer-row"></div>
+    <div id="debug"></div>
+
+    <script>
+        const debug = document.getElementById('debug');
+        const viewersRoot = document.getElementById('viewers');
+        let viewers = [];
+
+        function log(message) {
+            debug.textContent += message + '\n';
+            console.log(message);
+        }
+
+        function destroyViewers() {
+            viewers.forEach(function(viewer) {
+                viewer.destroy();
+            });
+            viewers = [];
+            viewersRoot.innerHTML = '';
+            debug.textContent = '';
+        }
+
+        function makeViewerOptions(index, forceShared) {
+            const options = {
+                id: 'viewer-' + index,
+                prefixUrl: '../../build/openseadragon/images/',
+                tileSources: '../data/testpattern.dzi',
+                drawer: 'webgl'
+            };
+
+            if (forceShared) {
+                options.drawerOptions = {
+                    webgl: {
+                        useSharedRenderer: true
+                    }
+                };
+            }
+
+            return options;
+        }
+
+        function createViewers() {
+            destroyViewers();
+
+            const viewerCount = Math.max(1, Math.min(6, Number(document.getElementById('viewerCount').value) || 3));
+            const forceShared = document.getElementById('forceShared').checked;
+
+            for (let i = 0; i < viewerCount; i++) {
+                const container = document.createElement('div');
+                container.id = 'viewer-' + i;
+                container.className = 'viewer-container';
+                viewersRoot.appendChild(container);
+
+                const viewer = OpenSeadragon(makeViewerOptions(i, forceShared));
+                viewers.push(viewer);
+
+                viewer.addOnceHandler('open', function() {
+                    log(
+                        'viewer ' + i +
+                        ': type=' + viewer.drawer.getType() +
+                        ', shared=' + !!viewer.drawer._useSharedRenderer +
+                        ', canvas=' + viewer.drawer._renderingCanvas.width + 'x' + viewer.drawer._renderingCanvas.height
+                    );
+                });
+            }
+        }
+
+        document.getElementById('run').addEventListener('click', createViewers);
+        createViewers();
+    </script>
+</body>
+</html>
