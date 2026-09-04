@@ -197,7 +197,8 @@
   *     limitations with the webgl drawer. On all other platforms it becomes ['webgl', 'canvas']
   *     meaning that webgl is tried first, and canvas is available as a fallback if webgl is not supported.
   *
-  *     The 'webgl' drawer automatically uses WebGL2 when available, falling back to WebGL1.
+  *     The 'webgl' drawer uses WebGL when supported by the browser. Behavior may vary
+  *     based on the available WebGL version and enabled extensions.
   *
   *     External drawer plugins can register additional drawer types as strings.
   *     Valid drawer implementations are constructors of classes that extend OpenSeadragon.DrawerBase.
@@ -1465,7 +1466,7 @@ function OpenSeadragon( options ){
             compositeOperation:                null, // to be passed into each TiledImage
 
             // DRAWER SETTINGS
-            drawer:                            ['auto', 'webgl', 'canvas', 'html'], // prefer using auto, then webgl (with WebGL2 if available), then canvas (i.e. context2d), then fallback to html
+            drawer:                            ['auto', 'webgl', 'canvas', 'html'], // prefer using auto, then webgl, then canvas (i.e. context2d), then fallback to html
             // DRAWER CONFIGURATIONS
             drawerOptions: {
                 // [drawer-id]: {options} map
