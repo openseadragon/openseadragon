@@ -456,6 +456,70 @@
                 assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when WebGL readback fails');
                 done();
             });
+
+            // ----------
+            QUnit.test('Falls back to canvas when WebGL reports invalid MAX_TEXTURE_IMAGE_UNITS during support check', function(assert) {
+                const done = assert.async();
+                const originalGetContext = HTMLCanvasElement.prototype.getContext;
+                getContextPrototypeRestore = function() {
+                    HTMLCanvasElement.prototype.getContext = originalGetContext;
+                    getContextPrototypeRestore = null;
+                };
+                HTMLCanvasElement.prototype.getContext = function(type) {
+                    const gl = originalGetContext.apply(this, arguments);
+                    if (gl && (type === 'webgl2' || type === 'webgl' || type === 'experimental-webgl') &&
+                        typeof gl.getParameter === 'function' && gl.MAX_TEXTURE_IMAGE_UNITS !== undefined) {
+                        const originalGetParameter = gl.getParameter.bind(gl);
+                        gl.getParameter = function(param) {
+                            if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
+                                return 0;
+                            }
+                            return originalGetParameter(param);
+                        };
+                    }
+                    return gl;
+                };
+
+                assert.notOk(
+                    OpenSeadragon.WebGLDrawer.isSupported(),
+                    'WebGL functional support check rejects invalid MAX_TEXTURE_IMAGE_UNITS'
+                );
+
+                createViewer({ drawer: ['webgl', 'canvas'] });
+                assert.ok(viewer.drawer, 'viewer has a drawer');
+                assert.equal(viewer.drawer.getType(), 'canvas', 'viewer uses canvas when invalid MAX_TEXTURE_IMAGE_UNITS is reported');
+                done();
+            });
+
+            // ----------
+            QUnit.test('Invalid MAX_TEXTURE_IMAGE_UNITS during setupRenderer invalidates the context', function(assert) {
+                const done = assert.async();
+
+                createViewer();
+
+                if (viewer.drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                const gl = viewer.drawer._glContext.getContext();
+                const originalGetParameter = gl.getParameter;
+                gl.getParameter = function(param) {
+                    if (param === gl.MAX_TEXTURE_IMAGE_UNITS) {
+                        return 0;
+                    }
+                    return originalGetParameter.call(this, param);
+                };
+
+                viewer.drawer._setupRenderer();
+
+                assert.notOk(viewer.drawer._glContext.getContext(), 'WebGL context is invalidated when setupRenderer sees an invalid MAX_TEXTURE_IMAGE_UNITS value');
+                assert.strictEqual(viewer.drawer._glContext.getFirstPass(), null, 'first pass state is cleared');
+                assert.strictEqual(viewer.drawer._glContext.getSecondPass(), null, 'second pass state is cleared');
+
+                done();
+            });
         }
     }
 
