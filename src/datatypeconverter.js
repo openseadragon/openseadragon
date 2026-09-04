@@ -196,6 +196,8 @@ self.onmessage = async (e) => {
     // eslint-disable-next-line compat/compat
     const url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' }));
     _imageConversionWorker = new Worker(url);
+    // eslint-disable-next-line compat/compat
+    URL.revokeObjectURL(url);
 
     _imageConversionWorker.onmessage = (e) => {
         const { id, ok, bmp, err } = e.data || {};
