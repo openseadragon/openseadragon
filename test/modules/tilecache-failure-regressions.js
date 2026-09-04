@@ -293,6 +293,61 @@
         v.open([{ isFailTestSource: "1" }, { isFailTestSource: "2" }]);
     });
 
+    QUnit.test('completion-phase failure still resolves tile processing promise', function (assert) {
+        const done = assert.async();
+        const v = makeViewer();
+        const drawer = v.drawer;
+
+        v.addHandler('open', async () => {
+            withGlobalErrorCapture(async () => {
+                await awaitWithTimeout(v.waitForFinishedJobsForTest(), 8000, 'waitForFinishedJobsForTest');
+                await pumpDraw(v, 250);
+                assert.ok(await waitForAnyTileDraw(v, drawer, 5000), "Baseline: tiles draw");
+
+                const tile = v.tileCache._tilesLoaded[0];
+                const originalPrepareForRendering = OpenSeadragon.CacheRecord.prototype.prepareForRendering;
+                let failOnce = true;
+
+                OpenSeadragon.CacheRecord.prototype.prepareForRendering = function (drawerInstance) {
+                    if (failOnce) {
+                        failOnce = false;
+                        return OpenSeadragon.Promise.reject(new Error("Injected prepareForRendering failure"));
+                    }
+                    return originalPrepareForRendering.call(this, drawerInstance);
+                };
+
+                const handler = async (e) => {
+                    await e.getData(T_B);
+                };
+                v.addHandler('tile-invalidated', handler);
+
+                try {
+                    const requestPromise = v.world.requestInvalidate(false);
+                    await sleep(0);
+                    const processingPromise = tile.processingPromise;
+
+                    await awaitWithTimeout(requestPromise, 8000, 'world.requestInvalidate(false)');
+                    assert.notOk(failOnce, "Completion-phase prepareForRendering failure triggered");
+                    await awaitWithTimeout(processingPromise, 2000, 'tile.processingPromise');
+                } finally {
+                    OpenSeadragon.CacheRecord.prototype.prepareForRendering = originalPrepareForRendering;
+                    v.removeHandler('tile-invalidated', handler);
+                }
+
+                v.world.requestInvalidate();
+                v.world.needsDraw();
+                v.world.draw();
+                assert.ok(await waitForAnyTileDraw(v, drawer), "After completion-phase failure: tiles still draw");
+
+                v.destroy();
+            }).then(({state}) => {
+                assert.equal(state.unhandledRejections, 0, 'No unhandled promise rejections');
+                assert.equal(state.errors, 0, 'No uncaught errors');
+            }).finally(done);
+        });
+
+        v.open([{ isFailTestSource: "1" }, { isFailTestSource: "2" }]);
+
     QUnit.test('throwing/null internal cache free does not crash or corrupt cache bookkeeping', function (assert) {
         const throwingFree = () => { throw new TypeError("deleteTexture: parameter 1 is not of type 'WebGLTexture'"); };
         const rec = new OpenSeadragon.InternalCacheRecord({ texture: {} }, "drawer-unit", throwingFree);
