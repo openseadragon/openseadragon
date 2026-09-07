@@ -2134,7 +2134,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     tileSource.addHandler('open-failed', function (event) {
                         reject({
                             message: event.message,
-                            source: originalTileSource
+                            source: originalTileSource,
+                            status: event.status,
                         });
                     });
                 }

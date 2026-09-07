@@ -539,6 +539,7 @@ $.TileSource.prototype = {
                 },
                 error: function ( xhr, exc ) {
                     let msg;
+                    let status;
 
                     /*
                         IE < 10 will block XHR requests to different origins. Any property access on the request
@@ -546,7 +547,8 @@ $.TileSource.prototype = {
                         exception rather than the second one raised when we try to access xhr.status
                      */
                     try {
-                        msg = "HTTP " + xhr.status + " attempting to load TileSource: " + url;
+                        status = xhr.status;
+                        msg = "HTTP " + status + " attempting to load TileSource: " + url;
                     } catch ( e ) {
                         let formattedExc;
                         if ( typeof ( exc ) === "undefined" || !exc.toString ) {
@@ -571,12 +573,14 @@ $.TileSource.prototype = {
                      * @property {String} source
                      * @property {String} postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
                      *      see TileSource::getTilePostData) or null
+                     * @property {?Number} status - HTTP status code, if available.
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', {
                         message: msg,
                         source: url,
-                        postData: postData
+                        postData: postData,
+                        status: status
                     });
                 }
             });
