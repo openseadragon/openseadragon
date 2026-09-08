@@ -831,6 +831,11 @@
  * @memberof OpenSeadragon
  * @property {Boolean} [unpackWithPremultipliedAlpha=false]
  *  Whether to enable gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL when uploading textures.
+ * @property {Boolean} [useSharedRenderer]
+ *  Controls whether WebGL drawers use a shared offscreen WebGL context/canvas or keep a
+ *  dedicated one per drawer.
+ *  `true` enables the shared context immediately, even for the first WebGL drawer.
+ *  `false` keeps this drawer on a dedicated context.
  */
 
 /**
