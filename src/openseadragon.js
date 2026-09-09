@@ -572,7 +572,27 @@
   *     sharper data as they navigate, since during zoom we have already one level
   *     up loaded. If you experience high network traffic/latency, you might want
   *     to set this value to 1.0 (~fetch at most identical pixel size) or higher
-  *     to force upsampling.
+  *     to force upsampling.<br><br>
+  *     This option is what sets the range of scale factors tiles are drawn at.
+  *     A level is rejected once it falls below minPixelRatio, and on a pyramid
+  *     halving each level the next finer one sits at half the ratio, so the
+  *     sharpest level being drawn always lands in
+  *     <code>[minPixelRatio, 2 * minPixelRatio)</code>:
+  *     <ul>
+  *       <li><code>0.5</code> (default) gives <code>[0.5, 1.0)</code>: always
+  *         minified, never drawn pixel for pixel, favouring one level of
+  *         preloading over sharpness.</li>
+  *       <li><code>1 / Math.SQRT2</code> (~0.707) gives
+  *         <code>[0.707, 1.414)</code>, centred on 1.0 - the least total
+  *         resampling, and the least aliasing on detailed images.</li>
+  *       <li><code>1.0</code> gives <code>[1.0, 2.0)</code>: never minified,
+  *         always magnified, at the lowest bandwidth of the three.</li>
+  *     </ul>
+  *     The ratio is measured in <b>device</b> pixels, not CSS pixels:
+  *     $.pixelDensityRatio is part of it, so the same setting fetches a finer
+  *     level on a high density display than on a standard one. The two levels
+  *     bypassing this gate are the minimum level and the cut-off level, which
+  *     are always drawn so that something covers the viewport.
   *
   * @property {Number} [discardLevelsBelowDownsampleRatio=1]
   *     You can force the viewer to skip levels that have smaller pixel ratio
@@ -3033,35 +3053,35 @@ function OpenSeadragon( options ){
             this.__value = undefined;
 
             try {
-                // Make sure to unwrap all nested promises!
                 handler(
-                    (value) => {
-                        while (value instanceof $.Promise) {
-                            value = value._value;
-                        }
-                        this._value = value;
-                    },
-                    (error) => {
-                        while (error instanceof $.Promise) {
-                            error = error._value;
-                        }
-                        this._value = error;
-                        this._error = true;
-                    }
+                    (value) => this._adopt(value, false),
+                    (error) => this._adopt(error, true)
                 );
             } catch (e) {
-                this._value = e;
-                this._error = true;
+                this._adopt(e, true);
             }
+        }
+
+        /**
+         * Unwrap all nested promises and take over both the value and the rejected state: a handler
+         * returning a rejected promise has to reject the chain, as it does natively.
+         * @private
+         */
+        _adopt(value, isError) {
+            while (value instanceof $.Promise) {
+                isError = isError || value._error;
+                value = value.__value;
+            }
+            this.__value = value;
+            this._error = !!isError;
         }
 
         then(handler) {
             if (!this._error) {
                 try {
-                    this._value = handler(this._value);
+                    this._adopt(handler(this._value), false);
                 } catch (e) {
-                    this._value = e;
-                    this._error = true;
+                    this._adopt(e, true);
                 }
             }
             return this;
@@ -3070,12 +3090,25 @@ function OpenSeadragon( options ){
         catch(handler) {
             if (this._error) {
                 try {
-                    this._value = handler(this._value);
-                    this._error = false;
+                    this._adopt(handler(this._value), false);
                 } catch (e) {
-                    this._value = e;
-                    this._error = true;
+                    this._adopt(e, true);
                 }
+            }
+            return this;
+        }
+
+        finally(handler) {
+            // Runs whichever way the chain went, and passes the outcome through untouched: only a throw
+            // from the handler, or a rejected promise it returns, replaces it - as natively. A fulfilled
+            // result is discarded.
+            try {
+                const result = handler();
+                if (result instanceof $.Promise && result._error) {
+                    this._adopt(result, true);
+                }
+            } catch (e) {
+                this._adopt(e, true);
             }
             return this;
         }
@@ -3084,10 +3117,7 @@ function OpenSeadragon( options ){
             return this.__value;
         }
         set _value(val) {
-            if (val && val.constructor === this.constructor) {
-                val = val._value; //unwrap
-            }
-            this.__value = val;
+            this._adopt(val, this._error);
         }
 
         static resolve(value) {

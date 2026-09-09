@@ -1569,7 +1569,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 false
             ).x * this._scaleSpring.current.value;
 
-            const levelOpacity = Math.min(1, (currentRenderPixelRatio - 0.5) / 0.5);
+            const levelOpacity = this._getLevelOpacity(currentRenderPixelRatio);
             const levelVisibility = optimalRatio / Math.abs(
                 optimalRatio - targetRenderPixelRatio
             );
@@ -1624,7 +1624,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 ).x * this._scaleSpring.current.value;
 
             const optimalRatio = this.immediateRender ? 1 : targetZeroRatio;
-            const levelOpacity = Math.min(1, (currentRenderPixelRatio - 0.5) / 0.5);
+            const levelOpacity = this._getLevelOpacity(currentRenderPixelRatio);
             const levelVisibility = optimalRatio / Math.abs(
                 optimalRatio - targetRenderPixelRatio
             );
@@ -1713,6 +1713,23 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
             }
         }
+    },
+
+    /**
+     * Opacity ramp applied to a level when alwaysBlend is set: a level fades in across the scale range it
+     * is actually drawn at. Level selection keeps that range at [minPixelRatio, 2 * minPixelRatio), so the
+     * ramp is derived from minPixelRatio rather than assuming its default value. Levels drawn outside that
+     * range - the minimum level and the cut-off level, which bypass the selection gate - are clamped.
+     * @param {Number} currentRenderPixelRatio device pixels per source pixel at the level being drawn
+     * @returns {Number} opacity in [0, 1]
+     * @private
+     */
+    _getLevelOpacity: function( currentRenderPixelRatio ) {
+        const minRatio = this.minPixelRatio;
+        if ( minRatio <= 0 ) {
+            return 1;
+        }
+        return Math.max( 0, Math.min( 1, ( currentRenderPixelRatio - minRatio ) / minRatio ) );
     },
 
     /**

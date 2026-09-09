@@ -175,6 +175,66 @@
         });
 
         // ----------
+        QUnit.test('imageSmoothingEnabled applies to the sketch canvas', function(assert) {
+            const done = assert.async();
+
+            createViewer({
+                tileSources: '/test/data/testpattern.dzi',
+            });
+            const drawer = viewer.drawer;
+
+            // this test only makes sense for canvas drawer, which is the only one with a sketch canvas
+            if(drawer.getType() !== 'canvas'){
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            let tiledImage;
+            viewer.addHandler('open', function openHandler() {
+                viewer.removeHandler('open', openHandler);
+                // a decimal opacity forces the drawer to render through the sketch canvas
+                viewer.addTiledImage({
+                    tileSource: '/test/data/testpattern.dzi',
+                    opacity: 0.5,
+                    success: function(event) {
+                        tiledImage = event.item;
+                    }
+                });
+            });
+
+            viewer.addHandler('tile-drawn', function drawnHandler(event) {
+                if (tiledImage !== event.tiledImage) {
+                    return;
+                }
+                viewer.removeHandler('tile-drawn', drawnHandler);
+
+                assert.notEqual(drawer.sketchContext, null,
+                    'The sketch context exists once a decimal opacity has been used.');
+
+                drawer.setImageSmoothingEnabled(false);
+                assert.equal(drawer.context.imageSmoothingEnabled, false,
+                    'Disabling smoothing applies to the main context.');
+                assert.equal(drawer.sketchContext.imageSmoothingEnabled, false,
+                    'Disabling smoothing applies to the sketch context as well.');
+
+                // resizing a canvas resets its 2d context state, so the rotation-triggered
+                // resize of the sketch canvas must re-apply the setting
+                viewer.viewport.setRotation(30, true);
+                assert.equal(drawer.sketchContext.imageSmoothingEnabled, false,
+                    'Resizing the sketch canvas on rotation preserves the smoothing setting.');
+
+                drawer.setImageSmoothingEnabled(true);
+                assert.equal(drawer.context.imageSmoothingEnabled, true,
+                    'Enabling smoothing applies to the main context.');
+                assert.equal(drawer.sketchContext.imageSmoothingEnabled, true,
+                    'Enabling smoothing applies to the sketch context as well.');
+
+                done();
+            });
+        });
+
+        // ----------
         QUnit.test('deprecations', function(assert) {
             const done = assert.async();
 
