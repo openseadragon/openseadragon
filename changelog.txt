@@ -1,6 +1,8 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
+6.2.0: (in progress...)
+
 6.1.1:
 
 * Added missing TypeScript declarations for cooperative gesture handling (#2949 @superbland)
