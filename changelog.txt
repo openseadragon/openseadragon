@@ -1,7 +1,7 @@
 OPENSEADRAGON CHANGELOG
 =======================
 
-6.1.1: (in progress...)
+6.1.1:
 
 * Added missing TypeScript declarations for cooperative gesture handling (#2949 @superbland)
 * Fixed: IIIF files with empty sizes array would fail to load (#2963 @firatciftci)
