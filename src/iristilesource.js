@@ -157,7 +157,11 @@
         error: function(xhr, exc) {
           const msg = "IrisTileSource: Unable to get metadata from " + url;
           $.console.error(msg);
-          _this.raiseEvent('open-failed', { message: msg, source: url });
+          _this.raiseEvent('open-failed', {
+            message: msg,
+            source: url,
+            status: xhr.status
+          });
         }
       });
     },

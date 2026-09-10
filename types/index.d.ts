@@ -2256,6 +2256,7 @@ declare namespace OpenSeadragon {
         message: string;
         source: string;
         postData?: string;
+        status?: number;
     }
 
     interface ReadyTileSourceEvent extends TileSourceEvent {
@@ -2477,6 +2478,7 @@ declare namespace OpenSeadragon {
 
     interface OpenFailedEvent extends OpenEvent {
         message: string;
+        status?: number;
     }
 
     interface PageEvent extends ViewerEvent {

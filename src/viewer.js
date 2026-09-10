@@ -868,6 +868,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                      * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
                      * @property {String} message - Information about what failed.
                      * @property {String} source - The tile source that failed.
+                     * @property {?Number} status - HTTP status code, if available.
                      * @property {?Object} userData - Arbitrary subscriber-defined object.
                      */
                     _this.raiseEvent( 'open-failed', failEvent );
@@ -2134,7 +2135,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     tileSource.addHandler('open-failed', function (event) {
                         reject({
                             message: event.message,
-                            source: originalTileSource
+                            source: originalTileSource,
+                            status: event.status,
                         });
                     });
                 }
