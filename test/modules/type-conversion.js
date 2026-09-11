@@ -515,4 +515,52 @@
 
         return { passed, diffPct, rmse, width: w, height: h };
     }
+
+    QUnit.test('imageBitmap lifecycle: destroy closes bitmap and zero-dimensions it, copies are independent', async function (test) {
+        const done = test.async();
+
+        if (typeof createImageBitmap === 'undefined') {
+            test.expect(0);
+            done();
+            return;
+        }
+
+        const base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        const byteCharacters = atob(base64Png);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/png" });
+
+        // 1. Convert rasterBlob -> imageBitmap
+        const bmp = await OpenSeadragon.converter.convert({}, blob, "rasterBlob", "imageBitmap");
+        test.ok(bmp instanceof ImageBitmap, "Got ImageBitmap instance from conversion.");
+        test.equal(bmp.width, 1, "ImageBitmap width is positive before destroy.");
+        test.equal(bmp.height, 1, "ImageBitmap height is positive before destroy.");
+
+        // 2. Copy the ImageBitmap
+        const bmpCopy = await OpenSeadragon.converter.copy({}, bmp, "imageBitmap");
+        test.ok(bmpCopy instanceof ImageBitmap, "Copy returned an ImageBitmap instance.");
+        test.notEqual(bmp, bmpCopy, "Copy is an independent instance.");
+        test.equal(bmpCopy.width, 1, "Copied ImageBitmap width is valid.");
+        test.equal(bmpCopy.height, 1, "Copied ImageBitmap height is valid.");
+
+        // 3. Destroy original ImageBitmap
+        await OpenSeadragon.converter.destroy(bmp, "imageBitmap");
+        test.equal(bmp.width, 0, "Original ImageBitmap width is 0 after destroy (bmp.close() called).");
+        test.equal(bmp.height, 0, "Original ImageBitmap height is 0 after destroy (bmp.close() called).");
+
+        // 4. Verify the copy remains open and independent
+        test.equal(bmpCopy.width, 1, "Copied ImageBitmap width remains 1 after original was destroyed.");
+        test.equal(bmpCopy.height, 1, "Copied ImageBitmap height remains 1 after original was destroyed.");
+
+        // 5. Destroy the copy
+        await OpenSeadragon.converter.destroy(bmpCopy, "imageBitmap");
+        test.equal(bmpCopy.width, 0, "Copied ImageBitmap width is 0 after destroy (bmp.close() called).");
+        test.equal(bmpCopy.height, 0, "Copied ImageBitmap height is 0 after destroy (bmp.close() called).");
+
+        done();
+    });
 })();
