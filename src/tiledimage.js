@@ -199,7 +199,6 @@ $.TiledImage = function( options ) {
         _needsUpdate:   true,  // Does the tiledImage need to update the viewport again?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
-        _tilesInFlight: 0,     // Downloads this image has dispatched and not yet seen finish, fail or abort.
         _zombieCache:   false, // Allow cache to stay in memory upon deletion.
         _tilesToDraw:   [],    // info about the tiles currently in the viewport, two deep: array[level][tile]
         _lastDrawn:     [],    // array of tiles that were last fetched by the drawer
@@ -2244,18 +2243,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const _this = this;
         tile.loading = true;
         tile.tiledImage = this;
-
-        // Counted per image, not per loader: the loader is shared by the whole world, but the concurrency
-        // target is documented (and useful) per tiled image. An aborted job reports both abort and failure,
-        // so the release must happen exactly once.
-        this._tilesInFlight++;
-        let counted = true;
-        const release = function() {
-            if (counted) {
-                counted = false;
-                _this._tilesInFlight--;
-            }
-        };
 
         if (!this._imageLoader.addJob({
             src: tile.getUrl(),

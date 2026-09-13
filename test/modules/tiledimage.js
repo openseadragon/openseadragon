@@ -314,44 +314,6 @@
     });
 
     // ----------
-    QUnit.test('in-flight tile count is released exactly once', function(assert) {
-        const done = assert.async();
-
-        viewer.addHandler('open', function() {
-            const image = viewer.world.getItemAt(0);
-            const tile = MockSeadragon.getTile('/test/data/A.png', image);
-
-            let jobOptions = null;
-            image._imageLoader = {
-                addJob: function(options) {
-                    jobOptions = options;
-                    return true;
-                }
-            };
-            // The release is what this test is about; what happens with the tile afterwards is not.
-            image._onTileLoad = function() {};
-
-            image._tilesInFlight = 0;
-            image._loadTile(tile, OpenSeadragon.now());
-            assert.equal(image._tilesInFlight, 1, 'Dispatching a tile counts it as in flight.');
-
-            // An aborted job reports the abort and then fails, so both paths run for the same tile. Counting
-            // both would drift the counter negative and hand out an unbounded budget forever after.
-            jobOptions.abort();
-            assert.equal(image._tilesInFlight, 0, 'Aborting releases the tile.');
-
-            jobOptions.callback(null, 'Image load aborted.', null, undefined, 1);
-            assert.equal(image._tilesInFlight, 0, 'The failure that follows the abort does not release it twice.');
-
-            done();
-        });
-
-        viewer.open({
-            tileSource: '/test/data/testpattern.dzi'
-        });
-    });
-
-    // ----------
     QUnit.test('clip-change event', function(assert) {
         const done = assert.async();
         assert.expect(0);
