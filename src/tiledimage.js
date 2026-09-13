@@ -229,12 +229,8 @@ $.TiledImage = function( options ) {
         compositeOperation:                $.DEFAULT_SETTINGS.compositeOperation,
         subPixelRoundingForTransparency:   $.DEFAULT_SETTINGS.subPixelRoundingForTransparency,
         maxTilesPerFrame:                  $.DEFAULT_SETTINGS.maxTilesPerFrame,
-        tileLoadingConcurrency:            $.DEFAULT_SETTINGS.tileLoadingConcurrency,
         originalDataType:                  undefined,
-        _currentMaxTilesPerFrame:          (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10,
-        // Number of tile downloads allowed to start in the current frame; recomputed by
-        // _updateLevelsForViewport() from _currentMaxTilesPerFrame and the number of requests in flight.
-        _tileLoadBudget:                   (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10
+        _currentMaxTilesPerFrame:          (options.maxTilesPerFrame || $.DEFAULT_SETTINGS.maxTilesPerFrame) * 10
     }, options );
 
     this._preload = this.preload;
@@ -1503,15 +1499,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._tilesLoading = 0;
         this.loadingCoverage = {};
 
-        // How many downloads may start this frame. The per-frame allowance is a floor, not a ceiling: when the
-        // download pipeline has drained we top it back up to tileLoadingConcurrency, so the request rate follows
-        // network latency rather than the client's frame rate. The budget is read by _updateLevel(), which is
-        // called once per level with the candidate list threaded through, so this must be set before that loop.
-        this._tileLoadBudget = Math.max(
-            this._currentMaxTilesPerFrame,
-            this.tileLoadingConcurrency - this._tilesInFlight
-        );
-
         if (!drawArea){
             this._needsDraw = false;
             return this._fullyLoaded;
@@ -1903,7 +1890,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     this._tilesLoading++;
                 } else if (!loadingCoverage) {
                     // add tile to best tiles to load only when not loaded already
-                    bestLoadTileCandidates = this._compareTiles( bestLoadTileCandidates, tile, this._tileLoadBudget);
+                    bestLoadTileCandidates = this._compareTiles( bestLoadTileCandidates, tile, this._currentMaxTilesPerFrame);
                 }
             }
         });

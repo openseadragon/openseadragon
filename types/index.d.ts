@@ -386,7 +386,6 @@ declare namespace OpenSeadragon {
         minScrollDeltaTime?: number;
         rotationIncrement?: number;
         maxTilesPerFrame?: number;
-        tileLoadingConcurrency?: number;
         pixelsPerWheelLine?: number;
         pixelsPerArrowPress?: number;
         visibilityRatio?: number;
