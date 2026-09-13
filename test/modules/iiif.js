@@ -96,6 +96,14 @@
             "height": 1000,
             "profile": ["http://iiif.io/api/image/2/level1.json"]
         },
+        infoJson2level1EmptySizes = {
+            "@context": "http://iiif.io/api/image/2/context.json",
+            "@id": id,
+            "width": 2000,
+            "height": 1000,
+            "sizes": [],
+            "profile": ["http://iiif.io/api/image/2/level1.json"]
+        },
         infoJson3level0 = {
             "@context": "http://iiif.io/api/image/3/context.json",
             "id": id,
@@ -286,6 +294,19 @@
         assert.equal(source3DescendingSizeOrder.getTileUrl(0, 0, 0), "http://example.com/identifier/full/500,250/0/default.jpg");
         assert.equal(source3DescendingSizeOrder.getTileUrl(1, 1, 0), "http://example.com/identifier/1024,0,976,1000/488,500/0/default.jpg");
         assert.equal(source3DescendingSizeOrder.getTileUrl(2, 0, 0), "http://example.com/identifier/0,0,512,512/512,512/0/default.jpg");
+    });
+
+    QUnit.test('IIIFTileSource ignores an empty sizes array', function( assert ) {
+        const source = getSource(infoJson2level1EmptySizes);
+        const reference = getSource(infoJson2level1);
+
+        assert.equal(source.levelSizes, undefined, 'No resolution levels are derived from an empty sizes array');
+        assert.notOk(source.emulateLegacyImagePyramid, 'An empty sizes array does not trigger a legacy pyramid');
+        assert.equal(source.maxLevel, reference.maxLevel, 'Max level matches a source with no sizes array');
+        assert.equal(source.getTileWidth(source.maxLevel), reference.getTileWidth(reference.maxLevel),
+            'Tile width matches a source with no sizes array');
+        assert.equal(source.getTileUrl(8, 0, 0), reference.getTileUrl(8, 0, 0),
+            'Tile URLs match a source with no sizes array');
     });
 
     QUnit.test('IIIFTileSource.getTileUrl honours tileQuality option', function( assert ) {

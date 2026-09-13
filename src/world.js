@@ -334,18 +334,22 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                 return Promise.resolve();
             }
 
+            const originalCache = tile.getCache(tile.originalCacheKey);
+            // A tile unloaded before it finished loading keeps 'processing' set - it passes the check
+            // above - but it has dropped its tiledImage and its cache references, and records that are
+            // still reachable can be destroyed afterwards. All of this has to be settled before the
+            // tiledImage below is dereferenced.
+            if (!tile.tiledImage || !originalCache || originalCache._destroyed || !originalCache._tiles ||
+                    (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
+                return Promise.resolve();
+            }
+
             const tiledImage = tile.tiledImage;
             const drawer = tiledImage.getDrawer();
             // We call the event on the parent viewer window no matter what, nested viewers have parent viewer ref.
             //  we use the knowledge that drawerBase keeps track of parent viewer to register into, we use this ref.
             //  We could turn this into API...
             const eventTarget = drawer._parentViewer || this.viewer;
-            const originalCache = tile.getCache(tile.originalCacheKey);
-            const tileCache = tile.getCache(tile.originalCacheKey);
-            if (tileCache.__invStamp && tileCache.__invStamp >= tStamp) {
-                // OpenSeadragon.trace(`Ignoring tile - old,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
-                return Promise.resolve();
-            }
 
 
             let wasOutdatedRun = false;
@@ -423,13 +427,19 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
             const atomicCacheSwap = () => {
                 if (workingCache) {
                     const newCacheKey = tile.buildDistinctMainCacheKey();
-                    tiledImage._tileCache.injectCache({
+                    const injected = tiledImage._tileCache.injectCache({
                         tile: tile,
                         cache: workingCache,
                         targetKey: newCacheKey,
                         setAsMainCache: true,
                         tileAllowNotLoaded: tile.loading
                     });
+                    if (injected) {
+                        // The cache belongs to the tile cache now: release our claim so that the cleanup
+                        // below cannot destroy a record that has just been installed. A refused cache
+                        // stays ours, and the cleanup is what frees it.
+                        workingCache = null;
+                    }
                 } else if (restoreTiles) {
                     // If we requested restore, perform now
                     tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, tile.getCache(tile.originalCacheKey), true);
@@ -623,7 +633,19 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
                     workingCache.destroy();
                     workingCache = null;
                 }
-                originalCache.__finishProcessing();
+                // A throw after the run already finished normally would find the finisher cleared: calling
+                // it then replaces the real error with 'not a function'.
+                if (originalCache.__finishProcessing) {
+                    originalCache.__finishProcessing();
+                }
+            }).finally(() => {
+                // Several exits above return before reaching a disposal site - a run that was declared
+                // outdated by a newer one is the common case. Whatever the route, a working cache still
+                // held here was never installed, and it owns data nobody else will release.
+                if (workingCache) {
+                    workingCache.destroy();
+                    workingCache = null;
+                }
             });
         });
 

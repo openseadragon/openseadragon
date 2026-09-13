@@ -455,7 +455,7 @@
     });
 
     //Version numbers are injected by the build process, so skip version tests if we are only running code coverage
-    if(!window.isCoverageTest ){
+    if(!window.COVERAGE_RUN){
         QUnit.test('version object', function(assert) {
             assert.equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
             assert.ok(OpenSeadragon.version.major >= 0, "major should be a positive number");

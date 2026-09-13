@@ -113,12 +113,6 @@ declare namespace OpenSeadragon {
 
     function capitalizeFirstLetter(value: string): string;
 
-    function createCallback(
-        object: object,
-        method: (...args: any[]) => void,
-        ...args: any[]
-    ): (...args: any[]) => void;
-
     function delegate(
         object: object,
         method: (...args: any[]) => void,

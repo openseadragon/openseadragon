@@ -103,7 +103,7 @@ You can also get a report of the tests' code coverage:
 
     grunt coverage
 
-The report shows up at `coverage/html/index.html` viewable in a browser.
+The report shows up at `coverage/index.html` viewable in a browser.
 
 ### Building and Testing Documentation
 

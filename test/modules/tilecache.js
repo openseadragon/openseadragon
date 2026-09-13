@@ -315,6 +315,79 @@
     });
 
     // ----------
+    QUnit.test('clear', function (assert) {
+        const done = assert.async();
+        const fakeViewer = MockSeadragon.getViewer(
+            MockSeadragon.getDrawer({
+                getSupportedDataFormats() {
+                    return [T_A, T_B, T_C, T_D, T_E];
+                }
+            })
+        );
+        const fakeTiledImage = MockSeadragon.getTiledImage(fakeViewer);
+
+        const tileA = MockSeadragon.getTile('a.jpg', fakeTiledImage);
+        const tileB = MockSeadragon.getTile('b.jpg', fakeTiledImage);
+        const zombieTile = MockSeadragon.getTile('zombie.jpg', fakeTiledImage);
+        const orphanTile = MockSeadragon.getTile('orphan.jpg', fakeTiledImage);
+
+        const cache = new OpenSeadragon.TileCache();
+
+        // cache size must be increased only after caching: the tile is registered in _tilesLoaded
+        // only while it still reports no caches
+        const cacheFor = (tile, data, dataType) => {
+            tile._caches[tile.cacheKey] = cache.cacheTile({
+                tile: tile,
+                tiledImage: fakeTiledImage,
+                data: data,
+                dataType: dataType
+            });
+            tile._cacheSize++;
+        };
+
+        // two ordinary records, each reachable through its tile
+        cacheFor(tileA, 1, T_A);
+        cacheFor(tileB, 2, T_B);
+
+        // a zombie: its only tile released it without destroying the record
+        cacheFor(zombieTile, 3, T_C);
+        cache.unloadCacheForTile(zombieTile, zombieTile.cacheKey, false, false);
+        delete zombieTile._caches[zombieTile.cacheKey];
+
+        // an orphan: a record still listed in _cachesLoaded that no tile points at anymore, so the
+        // tile loop cannot reach it and only the _cachesLoaded sweep can free its data
+        cacheFor(orphanTile, 4, T_D);
+        const orphanRecord = orphanTile._caches[orphanTile.cacheKey];
+        orphanRecord.removeTile(orphanTile);
+        delete orphanTile._caches[orphanTile.cacheKey];
+
+        assert.equal(cache.numTilesLoaded(), 4, 'four tiles registered');
+        assert.equal(cache.numCachesLoaded(), 4, 'three records plus one zombie');
+
+        let unloadedTiles = 0;
+        fakeViewer.addHandler('tile-unloaded', () => unloadedTiles++);
+
+        cache.clear();
+
+        // A for..in over _tilesLoaded hands out index strings instead of tiles, so no tile is touched:
+        // the records get freed by the _cachesLoaded sweep, but the tiles keep their data references.
+        assert.equal(unloadedTiles, 4, 'every registered tile was unloaded');
+        assert.equal(tileA.loaded, false, 'tile was marked as unloaded');
+        assert.equal(tileA.tiledImage, null, 'tile released its tiled image');
+        assert.equal(Object.keys(tileA._caches).length, 0, 'tile released its cache references');
+
+        assert.equal(destroyA, 1, 'ordinary record destroyed exactly once');
+        assert.equal(destroyB, 1, 'second ordinary record destroyed exactly once');
+        assert.equal(destroyC, 1, 'zombie record destroyed exactly once');
+        assert.equal(destroyD, 1, 'orphan record destroyed exactly once');
+
+        assert.equal(cache.numTilesLoaded(), 0, 'no tiles left');
+        assert.equal(cache.numCachesLoaded(), 0, 'no records left');
+
+        done();
+    });
+
+    // ----------
     QUnit.test('maxImageCacheCount', function (assert) {
         const done = assert.async();
         const fakeViewer = MockSeadragon.getViewer(

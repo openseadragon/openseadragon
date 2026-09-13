@@ -4,6 +4,7 @@ build/
 sftp-config.json
 coverage/
 instrumented/
+.nyc_output/
 .idea
 /nbproject/private/
 .directory
