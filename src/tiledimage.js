@@ -2254,11 +2254,9 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             crossOriginPolicy: this.crossOriginPolicy,
             ajaxWithCredentials: this.ajaxWithCredentials,
             callback: function( data, errorMsg, tileRequest, dataType, tries ){
-                release();
                 _this._onTileLoad( tile, time, data, errorMsg, tileRequest, dataType, tries );
             },
             abort: function() {
-                release();
                 tile.loading = false;
             }
         })) {

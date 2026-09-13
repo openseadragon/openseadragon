@@ -38,6 +38,27 @@
 
     const DRAWER_INTERNAL_CACHE = Symbol("DRAWER_INTERNAL_CACHE");
 
+    // Cool-off before a failed internal cache build is attempted again. A drawer that fails
+    // deterministically (e.g. a WebGL context that never comes back) must not restart the build
+    // on every single frame, but a transient failure must still heal without waiting for the
+    // next invalidation routine.
+    const INTERNAL_CACHE_RETRY_INTERVAL = 1000;
+
+    /**
+     * Duck-typed promise test. Deliberately broader than either idiom used elsewhere in the
+     * library: $.type(x) === "promise" matches native promises but not the $.Promise fallback
+     * class (a plain class, so it stringifies as [object Object]), while instanceof $.Promise
+     * matches whichever of the two $.Promise currently is but not the other. A drawer may hand
+     * us either, or a thenable from a third-party promise library, and a missed detection is
+     * silent and severe - the promise object itself would be handed to the drawer as its data.
+     * @param {*} x
+     * @return {boolean}
+     * @private
+     */
+    function isThenable(x) {
+        return !!x && typeof x.then === "function";
+    }
+
     /**
      * @class OpenSeadragon.CacheRecord
      * @memberof OpenSeadragon
@@ -218,9 +239,11 @@
 
             // If we support internal cache
             if (drawer.options.usePrivateCache) {
-                // let sync preparation handle data if no preloading desired
+                // let sync preparation handle data if no preloading desired: such a drawer must not
+                // perform async work at all, which prepareInternalCacheSync() asserts
                 if (!drawer.options.preloadCache) {
-                    return this.prepareInternalCacheSync(drawer);
+                    const record = this.prepareInternalCacheSync(drawer);
+                    return record && record.loaded ? record : undefined;
                 }
                 // or check internal cache state before returning
                 const internalCache = this._getInternalCacheRef(drawer);
@@ -229,9 +252,13 @@
                     // or the drawer invalidated its internal caches outside of the invalidation routine
                     // (setInternalCacheNeedsRefresh, e.g. on context recreation or a smoothing change).
                     // Build it now rather than dropping the tile for an unbounded number of frames.
-                    // Synchronous creators (e.g. a GL texture upload) are drawable immediately; async
-                    // creators return a promise and simply become drawable in a later frame.
-                    const fresh = this.prepareInternalCacheSync(drawer);
+                    // Preloading drawers may create asynchronously, and the drawing loop must never
+                    // own a pending build: hand it to the async path, which stores the record
+                    // synchronously, absorbs failures and forces a redraw once it settles. A cheap
+                    // synchronous creator (e.g. a GL texture upload) is therefore still drawable in
+                    // this very frame; an async one becomes drawable in a later one.
+                    this.prepareInternalCacheAsync(drawer);
+                    const fresh = this._getInternalCacheRef(drawer);
                     return fresh && fresh.loaded ? fresh : undefined;
                 }
                 // up to date, but an async build may still be in flight
@@ -305,8 +332,10 @@
         /**
          * Internal cache is defined by a Drawer. Async preparation happens as the last step in the
          * invalidation routine.
-         * Must not be called if drawer.options.usePrivateCache == false. Called inside prepareForRenderine
-         * by cache itself if preloadCache == true (supports async behavior).
+         * Must not be called if drawer.options.usePrivateCache == false. Called inside prepareForRendering
+         * by cache itself if preloadCache == true, and from getDataForRendering when preloading has
+         * not caught up: this is the only route allowed to start an asynchronous build, so that the
+         * drawing loop never owns a pending one.
          *
          * @private
          * @param {OpenSeadragon.DrawerBase} drawer
@@ -327,17 +356,20 @@
                 delete this[DRAWER_INTERNAL_CACHE][drawerID];
             }
 
-            $.console.assert(this._tRef, "Data Create called from invalidation routine needs tile reference!");
-            const transformedData = drawer.internalCacheCreate(this, this._tRef);
-            $.console.assert(transformedData !== undefined, "[DrawerBase.internalCacheCreate] must return a value if usePrivateCache is enabled!");
-            if (transformedData === undefined || transformedData === null) {
-                // do not store in the internal cache which would later hand undefined/null to the drawer destructor
+            internalCache = this._safeInternalCacheCreate(drawer, drawerID);
+            if (!internalCache) {
                 return $.Promise.resolve(undefined);
             }
-            internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
-                drawerID, (data) => drawer.internalCacheFree(data));
-            internalCache._drawer = drawer; // kept so in-place data overwrite can rebuild via same drawer
-            return internalCache.await();
+            if (internalCache.loaded) {
+                // built synchronously: the caller is either mid-frame or about to draw anyway
+                return internalCache.await();
+            }
+            // The build is in flight. Nothing else will schedule a frame for it - the invalidation
+            // routine is already done, and an idle viewer never draws on its own - so ask for one.
+            return internalCache.await().then(data => {
+                this._triggerNeedsDraw();
+                return data;
+            });
         }
 
         /**
@@ -346,7 +378,8 @@
          * by cache itself if preloadCache == false (without support for async behavior).
          * @private
          * @param {OpenSeadragon.DrawerBase} drawer
-         * @return {OpenSeadragon.InternalCacheRecord} reference to the cache
+         * @return {OpenSeadragon.InternalCacheRecord|undefined} reference to the cache, or undefined
+         *   if the drawer declined to build it (returned null/undefined) or threw
          */
         prepareInternalCacheSync(drawer) {
             let internalCache = this._getInternalCacheRef(drawer);
@@ -361,15 +394,49 @@
                 delete this[DRAWER_INTERNAL_CACHE][drawerID];
             }
 
-            $.console.assert(this._tRef, "Data Create called from drawing loop needs tile reference!");
-            const transformedData = drawer.internalCacheCreate(this, this._tRef);
+            return this._safeInternalCacheCreate(drawer, drawerID);
+        }
+
+        /**
+         * Build and register an internal cache record for the given drawer. Shared by every build
+         * site so that a faulty drawer behaves identically no matter who asked for the data.
+         *
+         * The drawer hook may return a value or, when preloadCache is enabled, a thenable; it may
+         * also throw. A synchronous throw must never unwind into the drawing loop
+         * (CacheRecord.getDataForRendering -> DrawerBase.getDataToDraw -> the drawer's draw pass),
+         * where it would abort the frame mid-batch, so it is caught here and reported - the same
+         * treatment $.converter.copy() gives a throwing copy handler.
+         *
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @param {string} drawerID
+         * @return {OpenSeadragon.InternalCacheRecord|undefined} undefined if the drawer declined
+         *   (returned null/undefined) or threw
+         * @private
+         */
+        _safeInternalCacheCreate(drawer, drawerID) {
+            $.console.assert(this._tRef, "Data Create needs tile reference!");
+
+            let transformedData;
+            try {
+                transformedData = drawer.internalCacheCreate(this, this._tRef);
+            } catch (e) {
+                $.console.error("[CacheRecord] internalCacheCreate threw:", e);
+                return undefined;
+            }
+
             $.console.assert(transformedData !== undefined, "[DrawerBase.internalCacheCreate] must return a value if usePrivateCache is enabled!");
             if (transformedData === undefined || transformedData === null) {
                 // do not store in the internal cache which would later hand undefined/null to the drawer destructor
                 return undefined;
             }
 
-            internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
+            // Only preloading drawers are allowed to create asynchronously. Without preloading the
+            // record is consumed by the drawing loop in the very same frame, so a pending build
+            // would simply hand the drawer no data at all.
+            $.console.assert(drawer.options.preloadCache || !isThenable(transformedData),
+                "[DrawerBase.internalCacheCreate] must be synchronous when preloadCache is false!");
+
+            const internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
                 drawerID, (data) => drawer.internalCacheFree(data));
             internalCache._drawer = drawer; // kept so in-place data overwrite can rebuild via same drawer
             return internalCache;
@@ -406,7 +473,16 @@
         _checkInternalCacheUpToDate(internalCache, drawer) {
             // We respect existing records, unless they are outdated. Invalidation routine by its nature
             // destroys internal cache, therefore we do not need to check if internal cache is consistent with its parent.
-            return internalCache && internalCache.tstamp >= drawer._dataNeedsRefresh;
+            if (!internalCache || internalCache.tstamp < drawer._dataNeedsRefresh) {
+                return false;
+            }
+            if (internalCache.failed) {
+                // A failed build must not sit in the slot forever: it is 'up to date' only for a
+                // cool-off period, after which the usual stale handling destroys and rebuilds it.
+                // tstamp was reset to the moment of failure, so this measures time since failure.
+                return $.now() - internalCache.tstamp < INTERNAL_CACHE_RETRY_INTERVAL;
+            }
+            return true;
         }
 
         /**
@@ -534,22 +610,16 @@
                 return;
             }
 
-            let transformedData;
-            try {
-                transformedData = drawer.internalCacheCreate(this, this._tRef);
-            } catch (e) {
-                $.console.error("[CacheRecord._rebuildInternalCache] internalCacheCreate threw:", e);
-                transformedData = undefined;
-            }
-            if (transformedData === undefined || transformedData === null) {
+            // Build into a detached slot: _safeInternalCacheCreate registers the record under
+            // drawerID, but the whole point here is to keep the old one visible until the
+            // replacement is ready, so put the old one straight back and swap explicitly below.
+            const fresh = this._safeInternalCacheCreate(drawer, drawerID);
+            internal[drawerID] = old;
+            if (!fresh) {
                 this._safeDestroyInternal(old);
                 delete internal[drawerID];
                 return;
             }
-
-            const fresh = new $.InternalCacheRecord(transformedData, drawerID,
-                (data) => drawer.internalCacheFree(data));
-            fresh._drawer = drawer;
 
             const swap = () => {
                 const currentMap = this[DRAWER_INTERNAL_CACHE];
@@ -565,7 +635,16 @@
             if (fresh.loaded) {
                 swap(); // sync (non-preload) drawer: replace immediately, no blink
             } else {
-                fresh.await().then(swap).catch(e => {
+                // await() resolves even when the build failed, so the outcome must be tested here:
+                // swapping a failed record in would free the old, still working data and blank the
+                // tile. Keeping the old record instead degrades to 'refresh did not happen'.
+                fresh.await().then(() => {
+                    if (fresh.failed) {
+                        this._safeDestroyInternal(fresh);
+                        return;
+                    }
+                    swap();
+                }).catch(e => {
                     $.console.error("[CacheRecord._rebuildInternalCache] internal cache refresh failed:", e);
                     this._safeDestroyInternal(fresh);
                 });
@@ -951,18 +1030,54 @@
             this.tstamp = $.now();
             this._ondestroy = onDestroy;
             this._type = type;
+            this.loaded = false;
+            this.failed = false;
+            this._data = undefined;
 
-            if (data instanceof $.Promise) {
-                this._promise = data;
-                data.then(data => {
-                    this.loaded = true;
-                    this._data = data;
-                });
-            } else {
+            if (!isThenable(data)) {
                 this._promise = null;
                 this.loaded = true;
                 this._data = data;
+                return;
             }
+
+            if (!$.supportsAsync) {
+                // The $.Promise fallback used in sync mode is not a real promise and cannot adopt
+                // one, so there is no way to ever read this value out.
+                $.console.error("[InternalCacheRecord] asynchronous internal cache is not supported " +
+                    "when $.supportsAsync is false!");
+                this.failed = true;
+                this._promise = $.Promise.resolve(undefined);
+                return;
+            }
+
+            // Adopt foreign thenables explicitly. $.Promise.resolve() is not usable for this: the
+            // fallback implementation stores whatever it is given as the value instead of unwrapping it.
+            const promise = (data instanceof $.Promise || $.type(data) === "promise") ? data :
+                new $.Promise((resolve, reject) => data.then(resolve, reject));
+
+            // IMPORTANT: a failed build must not poison the record with a permanently rejected
+            // promise - await() is used by the destroy and drawing paths, which cannot handle a
+            // rejection, and an unobserved rejection would additionally surface as an unhandled
+            // one in the console. Settle into an explicit 'failed' state instead; the record then
+            // goes stale on its own (see CacheRecord._checkInternalCacheUpToDate) and is rebuilt.
+            // Note the two separate calls: the $.Promise fallback's then() accepts one handler only.
+            this._promise = promise.then(result => {
+                if (result === undefined || result === null) {
+                    // nothing to draw, and nothing to hand to the drawer destructor later
+                    this.failed = true;
+                    this.tstamp = $.now();
+                    return undefined;
+                }
+                this.loaded = true;
+                this._data = result;
+                return result;
+            }).catch(e => {
+                $.console.error("[InternalCacheRecord] internal cache creation failed:", e);
+                this.failed = true;
+                this.tstamp = $.now();
+                return undefined;
+            });
         }
 
         /**
@@ -983,6 +1098,8 @@
 
         /**
          * Await ongoing process so that we get cache ready on callback.
+         * Never rejects: a failed build resolves with undefined and sets 'failed', so callers must
+         * test loaded/failed rather than relying on a catch handler.
          * @returns {OpenSeadragon.Promise<?>}
          */
         await() {
