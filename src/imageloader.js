@@ -172,27 +172,25 @@ $.ImageJob.prototype = {
         const self = this;
         const selfAbort = this.abort;
 
-        this.jobId = window.setTimeout(function () {
-            // Tear the request down as well, otherwise it keeps occupying a browser connection (or an HTTP/2
-            // stream) until the server gives up, long after we stopped caring about the result.
-            self.source.downloadTileAbort(self);
-            self.fail("Image load exceeded timeout (" + self.timeout + " ms)", null);
-        }, this.timeout);
-
         /**
          * Called automatically when the job times out.
          *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
          * @member {function} abort
          * @memberof OpenSeadragon.ImageJob#
+         * @param {string} abortMessage description of reason
          */
-        this.abort = function() {
+        this.abort = function(abortMessage) {
             // this should call finish or fail
             self.source.downloadTileAbort(self);
             if (typeof selfAbort === "function") {
                 selfAbort();
             }
-            self.fail("Image load aborted.", null);
+            self.fail(abortMessage || "Image load aborted.", null);
         };
+
+        this.jobId = window.setTimeout(function () {
+            self.abort("Image load exceeded timeout (" + self.timeout + " ms)");
+        }, this.timeout);
 
         this.source.downloadTileStart(this);
     },
@@ -289,27 +287,41 @@ $.BatchImageJob = function(options) {
 $.BatchImageJob.prototype = {
     /**
      * Starts the batch job.
+     * @method
+     * @private
+     * @memberof OpenSeadragon.BatchImageJob#
      */
     start: function() {
         this._finishedJobs = 0;
         const self = this;
 
-        // Set timeout for the whole batch
-        this.jobId = window.setTimeout(function () {
-            self.fail("Batch image load exceeded timeout (" + self.timeout + " ms)", null);
-        }, this.timeout);
-
-        this.abort = function() {
+        /**
+         * Called automatically when the job times out.
+         *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
+         * @member {function} abort
+         * @memberof OpenSeadragon.ImageJob#
+         * @param {string} abortMessage description of reason
+         */
+        this.abort = function(abortMessage) {
             // we don't call job.start() for each job, so abort is callable here
             self.source.downloadTileBatchAbort(self);
             for (let j of this.jobs) {
                 // Abort only running jobs by checking jobId. In theory, all should finish at once,
-                // but we cannot enforce the logic executed by each batch job.
+                // but we cannot enforce the logic executed by each batch job. Note that this
+                // 'abort' is not the same as ImageJob.abort() method -- the job was not executed
+                // via ImageJob.start() and the abort here is an optional callback passed externally.
                 if (j.jobId && j.abort) {
                     j.abort();
                 }
             }
+            self.fail(abortMessage || "Batch image aborted.", null);
         };
+
+        // Set timeout for the whole batch
+        this.jobId = window.setTimeout(function () {
+            self.jobId = null;
+            self.abort("Batch image load exceeded timeout (" + self.timeout + " ms)");
+        }, this.timeout);
 
         const wrap = (fn, job) => {
             return (...args) => {

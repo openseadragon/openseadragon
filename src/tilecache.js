@@ -368,6 +368,9 @@
             // routine is already done, and an idle viewer never draws on its own - so ask for one.
             return internalCache.await().then(data => {
                 this._triggerNeedsDraw();
+                if (internalCache.failed) {
+                    setTimeout(() => this._triggerNeedsDraw(), INTERNAL_CACHE_RETRY_INTERVAL);
+                }
                 return data;
             });
         }
