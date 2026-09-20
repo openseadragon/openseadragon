@@ -197,6 +197,8 @@ $.TiledImage = function( options ) {
         lastResetTime:  0,     // Last time for which the tiledImage was reset.
         _needsDraw:     true,  // Does the tiledImage need to be drawn again?
         _needsUpdate:   true,  // Does the tiledImage need to update the viewport again?
+        _tilesInvalidated: false, // Were the tiles wiped (reset()) since the last update?
+        _tileSelectionChanged: true, // Could the set of wanted tiles have changed in the last update?
         _hasOpaqueTile: false,  // Do we have even one fully opaque tile?
         _tilesLoading:  0,     // The number of pending tile requests.
         _zombieCache:   false, // Allow cache to stay in memory upon deletion.
@@ -374,6 +376,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.lastResetTime = $.now();
         this._needsDraw = true;
         this._fullyLoaded = false;
+        this._tilesInvalidated = true;
     },
 
     /**
@@ -405,6 +408,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._setFullyLoaded(fullyLoadedFlag);
         }
 
+        // Queued jobs go stale when the wanted tile set moves. That happens when the view or the item's own
+        // transform changed, but also when the cache was wiped (reset()) with nothing animating.
+        this._tileSelectionChanged = updated || viewportChanged || this._tilesInvalidated;
+        this._tilesInvalidated = false;
         this._needsUpdate = false;
 
         if (updated) {
