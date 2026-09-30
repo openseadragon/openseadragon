@@ -17,6 +17,16 @@
         #drawer{
             height:800px;
         }
+        #load-time{
+            margin: 6px 0;
+            font-family: monospace;
+            min-height: 1.2em;
+        }
+        #load-time-hint{
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -31,7 +41,10 @@
             <label>Num images: </label>
             <input id="input-number" type="number" value="1" min="1" step="1">
             <button id="create-drawer">Create drawer</button>
+            <button id="run-benchmark" title="Recreates the viewer without the panning loop and times how long all images take to finish loading">Measure load time</button>
         </div>
+        <div id="load-time"></div>
+        <div id="load-time-hint">Load time is measured from the moment all images are in the world and the viewport is at home, with the panning loop switched off. Turn the browser cache off (DevTools &rarr; Network &rarr; Disable cache) or the second measurement will only time the cache.</div>
         <div id="drawer"></div>
 
 
