@@ -165,7 +165,7 @@ $.IIIFTileSource = function( options ){
     }
 
     // Create an array with precise resolution sizes if these have been supplied through the 'sizes' object
-    if( this.sizes ) {
+    if( this.sizes && this.sizes.length > 0 ) {
         let sizeLength = this.sizes.length;
 
         // Create a copy of the sizes list and sort in ascending order
