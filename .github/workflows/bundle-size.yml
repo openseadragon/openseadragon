@@ -20,6 +20,8 @@ jobs:
       contents: read
       pull-requests: write
       issues: write
+    env:
+      PUPPETEER_SKIP_DOWNLOAD: true
     steps:
       - uses: actions/checkout@v4
         with:
