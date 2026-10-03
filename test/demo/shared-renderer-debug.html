@@ -18,8 +18,15 @@
 
         .viewer-row {
             display: flex;
+            flex-wrap: wrap;
             gap: 16px;
         }
+
+        .viewer-pair { border: 1px solid #ccc; padding: 12px; }
+        .pair-controls { display: flex; gap: 12px; margin-bottom: 12px; }
+        .pair-canvases { display: flex; gap: 12px; }
+        h2 { font-size: 16px; }
+        h3 { font-size: 14px; }
 
         .viewer-container {
             border: 1px solid #ccc;
@@ -40,7 +47,7 @@
 </head>
 <body>
     <h1>Shared Renderer Debug</h1>
-    <p>Use this page to compare private and shared WebGL rendering with multiple viewers.</p>
+    <p>Compare shared or dedicated WebGL rendering against a Canvas reference. Each comparison can use its own image, smoothing, and rotation.</p>
 
     <div class="controls">
         <label>
@@ -48,10 +55,11 @@
             <input id="viewerCount" type="number" min="1" max="6" value="3">
         </label>
         <label>
-            <input id="forceShared" type="checkbox">
-            Force shared renderer for every viewer
+            <input id="forceShared" type="checkbox" checked>
+            Use shared WebGL for every comparison
         </label>
         <button id="run">Create viewers</button>
+        <button id="loseContext">Lose WebGL context</button>
     </div>
 
     <div id="viewers" class="viewer-row"></div>
@@ -76,23 +84,66 @@
             debug.textContent = '';
         }
 
-        function makeViewerOptions(index, forceShared) {
-            const options = {
-                id: 'viewer-' + index,
+        function makeViewerOptions(id, drawer, tileSource, forceShared) {
+            return {
+                id: id,
                 prefixUrl: '../../build/openseadragon/images/',
-                tileSources: '../data/testpattern.dzi',
-                drawer: 'webgl'
+                tileSources: tileSource,
+                drawer: drawer,
+                showNavigationControl: false,
+                drawerOptions: { webgl: { useSharedRenderer: forceShared } }
             };
+        }
 
-            if (forceShared) {
-                options.drawerOptions = {
-                    webgl: {
-                        useSharedRenderer: true
-                    }
-                };
-            }
+        function createPair(index, forceShared) {
+            const pair = document.createElement('section');
+            pair.className = 'viewer-pair';
+            const width = [320, 240, 180][index % 3];
+            const height = [240, 180, 260][index % 3];
+            pair.innerHTML = '<h2>Comparison ' + (index + 1) + '</h2>' +
+                '<div class="pair-controls"><label>Image <select>' +
+                '<option value="../data/testpattern.dzi">Test pattern</option>' +
+                '<option value="../data/wide.dzi">Wide</option>' +
+                '<option value="../data/tall.dzi">Tall</option></select></label>' +
+                '<label><input type="checkbox" checked> Smoothing</label>' +
+                '<button>Rotate 90°</button></div><div class="pair-canvases">' +
+                '<div><h3>Canvas reference</h3><div id="reference-' + index + '" class="viewer-container"></div></div>' +
+                '<div><h3>' + (forceShared ? 'Shared' : 'Dedicated') + ' WebGL</h3><div id="viewer-' + index + '" class="viewer-container"></div></div></div>';
+            viewersRoot.appendChild(pair);
+            pair.querySelectorAll('.viewer-container').forEach(container => {
+                container.style.width = width + 'px';
+                container.style.height = height + 'px';
+            });
+            const imageSelect = pair.querySelector('select');
+            imageSelect.selectedIndex = index % 3;
+            const reference = OpenSeadragon(makeViewerOptions('reference-' + index, 'canvas', imageSelect.value, false));
+            const webgl = OpenSeadragon(makeViewerOptions('viewer-' + index, 'webgl', imageSelect.value, forceShared));
+            viewers.push(reference, webgl);
 
-            return options;
+            // Each pair shares navigation/settings; different pairs remain independent.
+            let synchronizing = false;
+            const viewersForPair = [reference, webgl];
+            [reference, webgl].forEach((viewer, viewerIndex) => {
+                viewer.addHandler('viewport-change', () => {
+                    if (synchronizing) { return; }
+                    synchronizing = true;
+                    viewersForPair[1 - viewerIndex].viewport.fitBounds(viewer.viewport.getBoundsNoRotate(), true);
+                    synchronizing = false;
+                });
+            });
+            imageSelect.addEventListener('change', () => viewersForPair.forEach(viewer => viewer.open(imageSelect.value)));
+            pair.querySelector('input').addEventListener('change', event => {
+                viewersForPair.forEach(viewer => viewer.drawer.setImageSmoothingEnabled(event.target.checked));
+            });
+            pair.querySelector('button').addEventListener('click', () => {
+                viewersForPair.forEach(viewer => viewer.viewport.setRotation(viewer.viewport.getRotation() + 90));
+            });
+            webgl.addOnceHandler('open', () => log(
+                'viewer ' + index + ': shared=' + !!webgl.drawer._useSharedRenderer +
+                ', output=' + webgl.drawer.canvas.width + 'x' + webgl.drawer.canvas.height +
+                ', WebGL canvas=' + webgl.drawer._renderingCanvas.width + 'x' + webgl.drawer._renderingCanvas.height));
+            webgl.addHandler('webgl-context-recovered', () => log('viewer ' + index + ': context recovered, shared=' + !!webgl.drawer._useSharedRenderer));
+            webgl.addHandler('webgl-context-recovery-failed', () => log('viewer ' + index + ': context recovery failed'));
         }
 
         function createViewers() {
@@ -102,26 +153,19 @@
             const forceShared = document.getElementById('forceShared').checked;
 
             for (let i = 0; i < viewerCount; i++) {
-                const container = document.createElement('div');
-                container.id = 'viewer-' + i;
-                container.className = 'viewer-container';
-                viewersRoot.appendChild(container);
-
-                const viewer = OpenSeadragon(makeViewerOptions(i, forceShared));
-                viewers.push(viewer);
-
-                viewer.addOnceHandler('open', function() {
-                    log(
-                        'viewer ' + i +
-                        ': type=' + viewer.drawer.getType() +
-                        ', shared=' + !!viewer.drawer._useSharedRenderer +
-                        ', canvas=' + viewer.drawer._renderingCanvas.width + 'x' + viewer.drawer._renderingCanvas.height
-                    );
-                });
+                createPair(i, forceShared);
             }
         }
 
         document.getElementById('run').addEventListener('click', createViewers);
+        document.getElementById('loseContext').addEventListener('click', () => {
+            const viewer = viewers.find(item => item.drawer.getType() === 'webgl');
+            const extension = viewer && viewer.drawer._glContext.getContext().getExtension('WEBGL_lose_context');
+            if (extension) {
+                extension.loseContext();
+                log('Requested WebGL context loss');
+            }
+        });
         createViewers();
     </script>
 </body>

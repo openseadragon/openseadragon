@@ -448,6 +448,7 @@
                     assert.notStrictEqual(viewer.drawer._glContext, oldGlContext, 'glContext is a new instance');
                     assert.ok(viewer.drawer._glContext.getContext(), 'new glContext has valid context');
                     assert.equal(viewer.drawer.getType(), 'webgl', 'viewer.drawer remains WebGL after recovery');
+                    assert.ok(viewer.drawer._useSharedRenderer, 'recovery preserves shared rendering');
                     assert.equal(viewer.drawer._renderingCanvas.width, outputWidth, 'recovery uses this drawer\'s output width');
                     assert.equal(viewer.drawer._renderingCanvas.height, outputHeight, 'recovery uses this drawer\'s output height');
                     done();
