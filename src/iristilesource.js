@@ -90,8 +90,8 @@
      * @param {Object} data - The raw metadata object to check
      * @returns {Boolean} - True if supported, false otherwise
      */
-    supports: function(data) {
-      return (data && data.type === "iris" && data.serverUrl && data.slideId);
+    supports: function (data) {
+      return !!(data && data.type === "iris" && data.serverUrl && data.slideId);
     },
 
     /**
@@ -157,7 +157,11 @@
         error: function(xhr, exc) {
           const msg = "IrisTileSource: Unable to get metadata from " + url;
           $.console.error(msg);
-          _this.raiseEvent('open-failed', { message: msg, source: url });
+          _this.raiseEvent('open-failed', {
+            message: msg,
+            source: url,
+            status: xhr.status
+          });
         }
       });
     },

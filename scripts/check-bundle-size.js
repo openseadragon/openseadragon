@@ -1,4 +1,5 @@
 /* eslint-env node */
+/* eslint-disable no-implicit-globals */
 
 const fs = require('fs');
 const path = require('path');

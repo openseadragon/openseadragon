@@ -113,12 +113,6 @@ declare namespace OpenSeadragon {
 
     function capitalizeFirstLetter(value: string): string;
 
-    function createCallback(
-        object: object,
-        method: (...args: any[]) => void,
-        ...args: any[]
-    ): (...args: any[]) => void;
-
     function delegate(
         object: object,
         method: (...args: any[]) => void,
@@ -2267,6 +2261,7 @@ declare namespace OpenSeadragon {
         message: string;
         source: string;
         postData?: string;
+        status?: number;
     }
 
     interface ReadyTileSourceEvent extends TileSourceEvent {
@@ -2488,6 +2483,7 @@ declare namespace OpenSeadragon {
 
     interface OpenFailedEvent extends OpenEvent {
         message: string;
+        status?: number;
     }
 
     interface PageEvent extends ViewerEvent {
