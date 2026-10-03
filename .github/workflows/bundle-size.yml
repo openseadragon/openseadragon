@@ -65,7 +65,6 @@ jobs:
 
       - name: Clean and rebuild base branch
         run: |
-          rm -rf "$HOME/.cache/puppeteer"
           npm ci
           npm run build
 
