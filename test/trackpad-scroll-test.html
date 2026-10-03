@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon Trackpad Scroll Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-container {
+            border: 1px solid #ccc;
+            margin: 20px 0;
+            padding: 20px;
+        }
+        .viewer {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #000;
+        }
+        .info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .controls {
+            margin: 10px 0;
+        }
+        .controls label {
+            display: inline-block;
+            width: 200px;
+        }
+        .controls input {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpenSeadragon Trackpad Scroll Speed Test</h1>
+    
+    <div class="info">
+        <h3>Test Instructions:</h3>
+        <ol>
+            <li>Try scrolling with a mouse wheel - note the zoom speed</li>
+            <li>Try scrolling with a trackpad - note the zoom speed</li>
+            <li>Adjust the trackpad sensitivity slider and test again</li>
+            <li>The trackpad should feel more similar to mouse wheel scrolling with the fix</li>
+        </ol>
+    </div>
+
+    <div class="controls">
+        <label for="trackpadSensitivity">Trackpad Sensitivity:</label>
+        <input type="range" id="trackpadSensitivity" min="0.1" max="1.0" step="0.1" value="0.3">
+        <span id="sensitivityValue">0.3</span>
+        <button onclick="updateSensitivity()">Update</button>
+    </div>
+
+    <div class="test-container">
+        <h3>Test Viewer (with trackpad scroll fix)</h3>
+        <div id="viewer1" class="viewer"></div>
+    </div>
+
+    <div class="test-container">
+        <h3>Reference Viewer (original behavior)</h3>
+        <div id="viewer2" class="viewer"></div>
+    </div>
+
+    <div class="info">
+        <h3>Scroll Event Debug Info:</h3>
+        <div id="debugInfo">
+            <p>Scroll events will appear here...</p>
+        </div>
+    </div>
+
+    <script src="../build/openseadragon/openseadragon.js"></script>
+    <script>
+        let viewer1, viewer2;
+        let scrollEventCount = 0;
+
+        // Initialize viewers
+        function initViewers() {
+            // Viewer with trackpad scroll fix (default behavior)
+            viewer1 = OpenSeadragon({
+                id: 'viewer1',
+                prefixUrl: '../build/openseadragon/images/',
+                tileSources: {
+                    type: 'image',
+                    url: '../test/data/A.png'
+                },
+                trackpadScrollSensitivity: 0.3
+            });
+
+            // Reference viewer (simulating original behavior)
+            viewer2 = OpenSeadragon({
+                id: 'viewer2',
+                prefixUrl: '../build/openseadragon/images/',
+                tileSources: {
+                    type: 'image',
+                    url: '../test/data/A.png'
+                }
+            });
+
+            // Add scroll event listeners for debugging
+            viewer1.addHandler('canvas-scroll', function(event) {
+                logScrollEvent('Viewer 1 (Fixed)', event);
+            });
+
+            viewer2.addHandler('canvas-scroll', function(event) {
+                logScrollEvent('Viewer 2 (Original)', event);
+            });
+        }
+
+        function logScrollEvent(viewerName, event) {
+            scrollEventCount++;
+            const debugDiv = document.getElementById('debugInfo');
+            const timestamp = new Date().toLocaleTimeString();
+            const deltaY = event.originalEvent.deltaY;
+            const deltaMode = event.originalEvent.deltaMode;
+            const isTrackpad = Math.abs(deltaY) < 10 && deltaMode === 0;
+            
+            debugDiv.innerHTML += `
+                <p><strong>${viewerName}</strong> [${timestamp}] - 
+                deltaY: ${deltaY}, deltaMode: ${deltaMode}, 
+                isTrackpad: ${isTrackpad}, scroll: ${event.scroll}</p>
+            `;
+            
+            // Keep only last 10 events
+            const events = debugDiv.querySelectorAll('p');
+            if (events.length > 10) {
+                events[0].remove();
+            }
+        }
+
+        function updateSensitivity() {
+            const sensitivity = parseFloat(document.getElementById('trackpadSensitivity').value);
+            document.getElementById('sensitivityValue').textContent = sensitivity;
+            
+            if (viewer1) {
+                // Update the trackpad sensitivity for the canvas tracker
+                if (viewer1.canvasTracker) {
+                    viewer1.canvasTracker.trackpadScrollSensitivity = sensitivity;
+                }
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initViewers();
+            
+            // Update sensitivity display when slider changes
+            document.getElementById('trackpadSensitivity').addEventListener('input', function() {
+                document.getElementById('sensitivityValue').textContent = this.value;
+            });
+        });
+    </script>
+</body>
+</html>
