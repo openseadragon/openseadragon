@@ -347,6 +347,7 @@
         });
 
         v.open([{ isFailTestSource: "1" }, { isFailTestSource: "2" }]);
+    });
 
     QUnit.test('throwing/null internal cache free does not crash or corrupt cache bookkeeping', function (assert) {
         const throwingFree = () => { throw new TypeError("deleteTexture: parameter 1 is not of type 'WebGLTexture'"); };

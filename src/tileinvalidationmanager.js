@@ -112,16 +112,18 @@ $.TileInvalidationManager = class {
             return Promise.resolve();
         }
 
+        const originalCache = tile.getCache(tile.originalCacheKey);
+        // Unloaded tiles can retain a processing stamp after dropping their image
+        // and cache references. Validate those references before using them.
+        if (!tile.tiledImage || !originalCache || originalCache._destroyed || !originalCache._tiles ||
+                (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
+            return Promise.resolve();
+        }
+
         const tiledImage = tile.tiledImage;
         const drawer = tiledImage.getDrawer();
         // Get event target - use parent viewer for nested viewers
         const eventTarget = drawer._parentViewer || this._viewer;
-        const originalCache = tile.getCache(tile.originalCacheKey);
-
-        // Skip if already processed with same or newer timestamp
-        if (originalCache.__invStamp && originalCache.__invStamp >= tStamp) {
-            return Promise.resolve();
-        }
 
         // Handle interrupted processing
         const state = {
@@ -199,13 +201,18 @@ $.TileInvalidationManager = class {
         const atomicCacheSwap = () => {
             if (state.workingCache) {
                 const newCacheKey = tile.buildDistinctMainCacheKey();
-                tiledImage._tileCache.injectCache({
+                const injected = tiledImage._tileCache.injectCache({
                     tile: tile,
                     cache: state.workingCache,
                     targetKey: newCacheKey,
                     setAsMainCache: true,
                     tileAllowNotLoaded: tile.loading
                 });
+                if (injected) {
+                    // Ownership moved to the tile cache; only uninstalled caches
+                    // should be disposed by this processing run.
+                    state.workingCache = null;
+                }
             } else if (restoreTiles) {
                 tiledImage._tileCache.restoreTilesThatShareOriginalCache(
                     tile,
@@ -279,6 +286,13 @@ $.TileInvalidationManager = class {
             }
             if (originalCache.__finishProcessing) {
                 originalCache.__finishProcessing();
+            }
+        }).finally(() => {
+            // Outdated runs and refused injections can exit before the usual
+            // disposal sites. Release any working cache still owned by this run.
+            if (state.workingCache) {
+                state.workingCache.destroy();
+                state.workingCache = null;
             }
         });
     }
