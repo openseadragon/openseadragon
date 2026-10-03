@@ -56,6 +56,8 @@
         viewer.addHandler('open-failed', function(event) {
             assert.ok(true, "The open-failed event should be fired when the source 404s");
 
+            assert.equal(event.status, 404, "The open-failed event should expose the HTTP status");
+
             assert.equal($(".openseadragon-message").length, 1, "Open failures should display a message");
 
             assert.ok(testLog.error.contains('["HTTP 404 attempting to load TileSource: /test/data/not-a-real-file"]'),

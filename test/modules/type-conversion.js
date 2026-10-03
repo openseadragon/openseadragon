@@ -151,10 +151,9 @@
             test.equal(typeof context, typeof context2, "Type of copies equals.");
             test.equal(context.canvas.toDataURL(), context2.canvas.toDataURL(), "Data is equal.");
 
-            //copy image
+            //copy image: an Image has no API to write pixels into it, so the copy is the original
             const image2 = await Converter.copy({}, image, "image");
-            test.notEqual(image, image2, "Copy is not the same as original image.");
-            test.equal(typeof image, typeof image2, "Type of copies equals.");
+            test.equal(image, image2, "Copy of an image is the original, images are immutable.");
             test.equal(image.src, image2.src, "Data is equal.");
 
             done();
@@ -399,6 +398,82 @@
 
         const test2 = await compareImages(image1, image3);
         test.ok(test2.passed, "Images 1-3 are equal.");
+        done();
+    });
+
+    QUnit.test('Conversion failures reject instead of resolving or hanging', async function (test) {
+        const done = test.async();
+
+        // A conversion that cannot be routed must NOT reject: a missing path is a static property of the
+        // conversion graph, so rejecting would report it per tile and take each of those tiles down for
+        // good. It reports the problem and resolves with nothing, leaving the caller its existing data.
+        let noPathRejected = false;
+        let noPathResult = "not resolved";
+        try {
+            noPathResult = await Converter.convert({}, "whatever", "__TEST__url", "context2d");
+        } catch (e) {
+            noPathRejected = true;
+        }
+        test.notOk(noPathRejected, "Conversion without a known path does not reject.");
+        test.equal(noPathResult, undefined, "Conversion without a known path resolves with nothing.");
+
+        // Copying a closed ImageBitmap used to leave the promise pending forever: the copy went through
+        // createImageBitmap() without a rejection handler, and a closed bitmap reports zero dimensions.
+        const imageUrl = "data/A.png";
+        const bitmap = await Converter.convert({}, imageUrl, "__private__imageUrl", "imageBitmap");
+        const bitmapCopy = await Converter.copy({}, bitmap, "imageBitmap");
+        test.notEqual(bitmap, bitmapCopy, "Copy of an ImageBitmap is a new object.");
+        test.equal(bitmapCopy.width, bitmap.width, "Copy of an ImageBitmap keeps its width.");
+        test.equal(bitmapCopy.height, bitmap.height, "Copy of an ImageBitmap keeps its height.");
+
+        // The copy must be independent of the original: closing one must not close the other.
+        bitmap.close();
+        test.equal(bitmapCopy.width > 0, true, "Copy survives closing the original.");
+
+        let closedRejected = false;
+        await Promise.race([
+            Converter.copy({}, bitmap, "imageBitmap").catch(() => {
+                closedRejected = true;
+            }),
+            new Promise(resolve => setTimeout(resolve, 2000))
+        ]);
+        test.ok(closedRejected, "Copy of a closed ImageBitmap rejects rather than never settling.");
+        bitmapCopy.close();
+
+        // toBlob() reports failure by passing null, which used to be resolved as if it were valid data.
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const context = canvas.getContext('2d');
+        const originalToBlob = canvas.toBlob;
+        canvas.toBlob = function (callback) {
+            callback(null);
+        };
+        let toBlobRejected = false;
+        try {
+            await Converter.convert({}, context, "context2d", "rasterBlob");
+        } catch (e) {
+            toBlobRejected = true;
+        }
+        canvas.toBlob = originalToBlob;
+        test.ok(toBlobRejected, "Failing canvas.toBlob() rejects rather than resolving with null.");
+
+        done();
+    });
+
+    QUnit.test('Copy of an image never re-decodes or re-downloads', async function (test) {
+        const done = test.async();
+
+        const response = await fetch("data/A.png");
+        const blob = await response.blob();
+        const image = await Converter.convert({}, blob, "rasterBlob", "image");
+        test.ok(image.naturalWidth > 0, "Blob decoded into a usable image.");
+
+        // The object URL is revoked once the image has decoded, so a copy going through image.src would
+        // have nothing to load from. It does not need to: copying an image hands back the same element.
+        const copy = await Converter.copy({}, image, "image");
+        test.equal(copy, image, "Copy of a blob-backed image is the original element.");
+        test.ok(copy.naturalWidth > 0, "Copy is still usable after the object URL was revoked.");
+
         done();
     });
 
@@ -701,6 +776,54 @@
         test.ok(path, "Weighted path exists");
         test.equal(path.length, 2, "Weighted path uses two steps");
         test.equal(path[0].target.value, lowPowerType, "Lower power class outranks multiplier differences");
+
+        done();
+    });
+
+    QUnit.test('imageBitmap lifecycle: destroy closes bitmap and zero-dimensions it, copies are independent', async function (test) {
+        const done = test.async();
+
+        if (typeof createImageBitmap === 'undefined') {
+            test.expect(0);
+            done();
+            return;
+        }
+
+        const base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        const byteCharacters = atob(base64Png);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: "image/png" });
+
+        // 1. Convert rasterBlob -> imageBitmap
+        const bmp = await OpenSeadragon.converter.convert({}, blob, "rasterBlob", "imageBitmap");
+        test.ok(bmp instanceof ImageBitmap, "Got ImageBitmap instance from conversion.");
+        test.equal(bmp.width, 1, "ImageBitmap width is positive before destroy.");
+        test.equal(bmp.height, 1, "ImageBitmap height is positive before destroy.");
+
+        // 2. Copy the ImageBitmap
+        const bmpCopy = await OpenSeadragon.converter.copy({}, bmp, "imageBitmap");
+        test.ok(bmpCopy instanceof ImageBitmap, "Copy returned an ImageBitmap instance.");
+        test.notEqual(bmp, bmpCopy, "Copy is an independent instance.");
+        test.equal(bmpCopy.width, 1, "Copied ImageBitmap width is valid.");
+        test.equal(bmpCopy.height, 1, "Copied ImageBitmap height is valid.");
+
+        // 3. Destroy original ImageBitmap
+        await OpenSeadragon.converter.destroy(bmp, "imageBitmap");
+        test.equal(bmp.width, 0, "Original ImageBitmap width is 0 after destroy (bmp.close() called).");
+        test.equal(bmp.height, 0, "Original ImageBitmap height is 0 after destroy (bmp.close() called).");
+
+        // 4. Verify the copy remains open and independent
+        test.equal(bmpCopy.width, 1, "Copied ImageBitmap width remains 1 after original was destroyed.");
+        test.equal(bmpCopy.height, 1, "Copied ImageBitmap height remains 1 after original was destroyed.");
+
+        // 5. Destroy the copy
+        await OpenSeadragon.converter.destroy(bmpCopy, "imageBitmap");
+        test.equal(bmpCopy.width, 0, "Copied ImageBitmap width is 0 after destroy (bmp.close() called).");
+        test.equal(bmpCopy.height, 0, "Copied ImageBitmap height is 0 after destroy (bmp.close() called).");
 
         done();
     });

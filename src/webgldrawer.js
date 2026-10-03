@@ -190,19 +190,50 @@
         }
 
         /**
-         * Apply anisotropic filtering to the currently bound texture if available
+         * Apply anisotropic filtering to the currently bound texture if available. Always writes the
+         * parameter, never skips: the render target is created once and updated in place, so leaving a
+         * previous value behind would keep averaging samples under minification with smoothing off,
+         * which is exactly what NEAREST is asked to avoid.
          * @private
          */
         _applyAnisotropy() {
-            if (!this._imageSmoothingEnabled || !this._extTextureFilterAnisotropic || this._maxAnisotropy <= 0) {
+            if (!this._extTextureFilterAnisotropic || !(this._maxAnisotropy > 0)) {
                 return;
             }
             const gl = this._gl;
             gl.texParameterf(
                 gl.TEXTURE_2D,
                 this._extTextureFilterAnisotropic.TEXTURE_MAX_ANISOTROPY_EXT,
-                Math.min(4, this._maxAnisotropy)
+                this._imageSmoothingEnabled ? Math.min(4, this._maxAnisotropy) : 1
             );
+        }
+
+        /**
+         * Apply the current filter to the texture the caller has already bound, magnification included.
+         * Tile textures and the render-to-texture target must agree, since the second rendering pass
+         * samples the target rather than the tiles.
+         * @private
+         */
+        _applyTextureFilter() {
+            const gl = this._gl;
+            const filter = this.getTextureFilter();
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+            this._applyAnisotropy();
+        }
+
+        /**
+         * Same, for the paths that do not already have the render target bound.
+         * @private
+         */
+        _applyRenderTargetFilter() {
+            const gl = this._gl;
+            if (!gl || !this._renderToTexture) {
+                return;
+            }
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
+            this._applyTextureFilter();
         }
 
         /**
@@ -228,8 +259,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.getTextureFilter());
-            this._applyAnisotropy();
+            this._applyTextureFilter();
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -267,8 +297,7 @@
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, this._renderToTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.getTextureFilter());
-            this._applyAnisotropy();
+            this._applyTextureFilter();
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -295,9 +324,9 @@
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, this.getTextureFilter());
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.getTextureFilter());
-            this._applyAnisotropy();
+            // The texture is bound right above, so this is the params-only variant - and it runs for
+            // every tile, which is why the filter is read once rather than twice.
+            this._applyTextureFilter();
 
             try {
                 const unpackPremultipliedAlpha = options.unpackWithPremultipliedAlpha !== undefined ?
@@ -327,7 +356,16 @@
          * @param {Boolean} enabled - Whether image smoothing is enabled
          */
         setImageSmoothingEnabled(enabled) {
-            this._imageSmoothingEnabled = !!enabled;
+            enabled = !!enabled;
+            if (this._imageSmoothingEnabled === enabled) {
+                // Nothing to do, and the render target already carries this filter: never touch GL state
+                // for a setting that did not change, however often this is called.
+                return;
+            }
+            this._imageSmoothingEnabled = enabled;
+            // Tile textures are rebuilt by the caller, but the render target is created once at setup time,
+            // before the viewer gets to pass the option in, so its filter has to be updated in place.
+            this._applyRenderTargetFilter();
         }
 
         /**
@@ -913,6 +951,8 @@
         _getBackupCanvasDrawer(){
             if(!this._backupCanvasDrawer){
                 this._backupCanvasDrawer = this.viewer.requestDrawer('canvas', {mainDrawer: false});
+                // Only the main drawer is handed the viewer option, so pass it on to the fallback as well.
+                this._backupCanvasDrawer.setImageSmoothingEnabled(this._imageSmoothingEnabled);
                 this._backupCanvasDrawer.canvas.style.setProperty('visibility', 'hidden');
                 this._backupCanvasDrawer.getSupportedDataFormats = () => this._supportedFormats;
                 this._backupCanvasDrawer.getDataToDraw = this.getDataToDraw.bind(this);
@@ -1218,16 +1258,38 @@
         // Public API required by all Drawer implementations
         /**
         * Sets whether image smoothing is enabled or disabled
-        * @param {Boolean} enabled If true, uses gl.LINEAR as the TEXTURE_MIN_FILTER and TEXTURE_MAX_FILTER, otherwise gl.NEAREST.
+        * @param {Boolean} enabled If true, uses gl.LINEAR as the TEXTURE_MIN_FILTER and TEXTURE_MAG_FILTER,
+        *   otherwise gl.NEAREST. Applies to the tile textures, to the render-to-texture target sampled by
+        *   the second rendering pass, to the 2d contexts used for compositing, and to the fallback drawer.
         */
         setImageSmoothingEnabled(enabled){
+            enabled = !!enabled;
             if( this._imageSmoothingEnabled !== enabled ){
                 this._imageSmoothingEnabled = enabled;
                 if (this._glContext) {
                     this._glContext.setImageSmoothingEnabled(enabled);
                 }
+                this._applyOutputSmoothing();
+                if (this._backupCanvasDrawer) {
+                    this._backupCanvasDrawer.setImageSmoothingEnabled(enabled);
+                }
                 this.setInternalCacheNeedsRefresh();
                 this.viewer.forceRedraw();
+            }
+        }
+
+        /**
+         * Mirror the smoothing setting onto the 2d contexts this drawer composites through, so that they
+         * behave like the CanvasDrawer contexts do.
+         * @private
+         */
+        _applyOutputSmoothing(){
+            const contexts = [this._outputContext, this._clippingContext];
+            for (const context of contexts) {
+                if (context) {
+                    context.msImageSmoothingEnabled = this._imageSmoothingEnabled;
+                    context.imageSmoothingEnabled = this._imageSmoothingEnabled;
+                }
             }
         }
 
@@ -1378,6 +1440,7 @@
             this._clippingContext = this._clippingCanvas.getContext('2d');
             this._renderingCanvas.width = this._clippingCanvas.width = this._outputCanvas.width;
             this._renderingCanvas.height = this._clippingCanvas.height = this._outputCanvas.height;
+            this._applyOutputSmoothing();
 
             // Create WebGL context manager
             this._glContext = new WebglContextManager({
@@ -1405,6 +1468,8 @@
                 _this._renderingCanvas.style.height = _this._outputCanvas.clientHeight + 'px';
                 _this._renderingCanvas.width = _this._clippingCanvas.width = _this._outputCanvas.width;
                 _this._renderingCanvas.height = _this._clippingCanvas.height = _this._outputCanvas.height;
+                // resizing a canvas resets its 2d context state, smoothing included
+                _this._applyOutputSmoothing();
 
                 // important - update the size of the rendering viewport!
                 _this._resizeRenderer();
