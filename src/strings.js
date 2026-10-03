@@ -59,6 +59,11 @@ const I18N = {
         RotateLeft:     "Rotate left",
         RotateRight:    "Rotate right",
         Flip:           "Flip Horizontally"
+    },
+
+    GestureHints: {
+        Touch:          "Use two fingers to pan the image",
+        Scroll:         "Use {0} + scroll to zoom the image"
     }
 };
 

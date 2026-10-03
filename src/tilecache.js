@@ -312,17 +312,24 @@
                 return internalCache.await();
             }
 
-            // Force reset
-            if (internalCache && !internalCache.loaded) {
-                internalCache.await().then(() => internalCache.destroy());
+            const drawerID = drawer.getId();
+
+            // always destroy the outdated record so we do not leak its resources
+            if (internalCache) {
+                this._safeDestroyInternal(internalCache);
+                delete this[DRAWER_INTERNAL_CACHE][drawerID];
             }
 
             $.console.assert(this._tRef, "Data Create called from invalidation routine needs tile reference!");
             const transformedData = drawer.internalCacheCreate(this, this._tRef);
             $.console.assert(transformedData !== undefined, "[DrawerBase.internalCacheCreate] must return a value if usePrivateCache is enabled!");
-            const drawerID = drawer.getId();
+            if (transformedData === undefined || transformedData === null) {
+                // do not store in the internal cache which would later hand undefined/null to the drawer destructor
+                return $.Promise.resolve(undefined);
+            }
             internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
                 drawerID, (data) => drawer.internalCacheFree(data));
+            internalCache._drawer = drawer; // kept so in-place data overwrite can rebuild via same drawer
             return internalCache.await();
         }
 
@@ -340,18 +347,24 @@
                 return internalCache;
             }
 
-            // Force reset
+            const drawerID = drawer.getId();
+
             if (internalCache) {
-                internalCache.destroy();
+                this._safeDestroyInternal(internalCache);
+                delete this[DRAWER_INTERNAL_CACHE][drawerID];
             }
 
             $.console.assert(this._tRef, "Data Create called from drawing loop needs tile reference!");
             const transformedData = drawer.internalCacheCreate(this, this._tRef);
             $.console.assert(transformedData !== undefined, "[DrawerBase.internalCacheCreate] must return a value if usePrivateCache is enabled!");
+            if (transformedData === undefined || transformedData === null) {
+                // do not store in the internal cache which would later hand undefined/null to the drawer destructor
+                return undefined;
+            }
 
-            const drawerID = drawer.getId();
             internalCache = this[DRAWER_INTERNAL_CACHE][drawerID] = new $.InternalCacheRecord(transformedData,
                 drawerID, (data) => drawer.internalCacheFree(data));
+            internalCache._drawer = drawer; // kept so in-place data overwrite can rebuild via same drawer
             return internalCache;
         }
 
@@ -445,15 +458,110 @@
                 if (drawerId) {
                     const cache = internal[drawerId];
                     if (cache) {
-                        cache.destroy();
+                        this._safeDestroyInternal(cache);
                         delete internal[drawerId];
                     }
                 } else {
                     for (const iCache in internal) {
-                        internal[iCache].destroy();
+                        this._safeDestroyInternal(internal[iCache]);
                     }
                     delete this[DRAWER_INTERNAL_CACHE];
                 }
+            }
+        }
+
+        /**
+         * Destroy a single internal cache record without letting a faulty drawer
+         * destructor abort the surrounding cleanup loop. If the record is still loading
+         * (async/preload build in flight), defer the destroy until it resolves, otherwise
+         * InternalCacheRecord.destroy() is a no-op (guarded by 'loaded') and the resource
+         * would leak once the pending build completes on an already-orphaned record.
+         * @param {OpenSeadragon.InternalCacheRecord} cache
+         * @private
+         */
+        _safeDestroyInternal(cache) {
+            if (cache.loaded) {
+                try {
+                    cache.destroy();
+                } catch (e) {
+                    $.console.error("[CacheRecord] internal cache destroy threw:", e);
+                }
+            } else {
+                cache.await().then(() => cache.destroy())
+                    .catch((e) => $.console.error("[CacheRecord] internal cache destroy threw:", e));
+            }
+        }
+
+        /**
+         * Rebuild every drawer's internal (derived) cache from the current main data after an
+         * in-place overwrite. Double-buffered. Preload/async drawers therefore keep
+         * drawing the previous texture until the replacement is loaded (no blink).
+         * @private
+         */
+        _refreshInternalCaches() {
+            const internal = this[DRAWER_INTERNAL_CACHE];
+            if (!internal) {
+                return;
+            }
+            for (const drawerID in internal) {
+                this._rebuildInternalCache(drawerID, internal[drawerID]);
+            }
+        }
+
+        /**
+         * @param {string} drawerID
+         * @param {OpenSeadragon.InternalCacheRecord} old the record being replaced
+         * @private
+         */
+        _rebuildInternalCache(drawerID, old) {
+            const internal = this[DRAWER_INTERNAL_CACHE];
+            const drawer = old && old._drawer;
+
+            if (!internal || !drawer || !this._tRef) {
+                if (old) {
+                    this._safeDestroyInternal(old);
+                }
+                if (internal) {
+                    delete internal[drawerID];
+                }
+                return;
+            }
+
+            let transformedData;
+            try {
+                transformedData = drawer.internalCacheCreate(this, this._tRef);
+            } catch (e) {
+                $.console.error("[CacheRecord._rebuildInternalCache] internalCacheCreate threw:", e);
+                transformedData = undefined;
+            }
+            if (transformedData === undefined || transformedData === null) {
+                this._safeDestroyInternal(old);
+                delete internal[drawerID];
+                return;
+            }
+
+            const fresh = new $.InternalCacheRecord(transformedData, drawerID,
+                (data) => drawer.internalCacheFree(data));
+            fresh._drawer = drawer;
+
+            const swap = () => {
+                const currentMap = this[DRAWER_INTERNAL_CACHE];
+                if (this._destroyed || !currentMap || currentMap[drawerID] !== old) {
+                    this._safeDestroyInternal(fresh);
+                    return;
+                }
+                currentMap[drawerID] = fresh;
+                this._safeDestroyInternal(old);
+                this._triggerNeedsDraw();
+            };
+
+            if (fresh.loaded) {
+                swap(); // sync (non-preload) drawer: replace immediately, no blink
+            } else {
+                fresh.await().then(swap).catch(e => {
+                    $.console.error("[CacheRecord._rebuildInternalCache] internal cache refresh failed:", e);
+                    this._safeDestroyInternal(fresh);
+                });
             }
         }
 
@@ -483,7 +591,7 @@
          * Must not be called on active cache, e.g. first call destroy().
          */
         revive() {
-            $.console.assert(!this.loaded && !this._type, "[CacheRecord::revive] must not be called when loaded!");
+            $.console.assert(!this.loaded && !this._type, "[CacheRecord.revive] must not be called when loaded!");
             this._tiles = [];
             this._data = null;
             this._type = null;
@@ -510,15 +618,21 @@
                     this._destroySelfUnsafe(this._data, this._type);
                 } else if (this._promise) {
                     const oldType = this._type;
-                    this._promise.then(x => this._destroySelfUnsafe(x, oldType)).catch($.console.error);
+                    this._promise.then(x => this._destroySelfUnsafe(x, oldType))
+                        .catch((e) => $.console.error("[CacheRecord.destroy] async threw:", e));
                 }
             }
 
         }
 
         _destroySelfUnsafe(data, type) {
-            // ensure old data destroyed
-            $.converter.destroy(data, type);
+            // ensure old data destroyed - never let a data/internal destructor throw abort the
+            // bookkeeping reset below, or the cache system is left in an inconsistent state.
+            try {
+                $.converter.destroy(data, type);
+            } catch (e) {
+                $.console.error("[CacheRecord._destroySelfUnsafe] data destroy threw:", e);
+            }
             this.destroyInternalCache();
             // might've got revived in meanwhile if async ...
             if (!this._destroyed) {
@@ -614,8 +728,9 @@
                 if (this._tiles[i] === tile) {
                     this._tiles.splice(i, 1);
                     if (this._tRef === tile) {
-                        // keep fresh ref
-                        this._tRef = this._tiles[i - 1];
+                        // keep a valid fresh ref: pick any remaining tile (splice already shifted
+                        // later tiles down into index i), or null when none remain
+                        this._tRef = this._tiles.length ? this._tiles[Math.min(i, this._tiles.length - 1)] : null;
                     }
                     return true;
                 }
@@ -657,8 +772,15 @@
         }
 
         _triggerNeedsDraw() {
-            if (this._tiles.length > 0) {
-                this._tiles[0].tiledImage.viewer.forceRedraw();
+            // A tile unloaded while an asynchronous plugin was still working keeps referencing this
+            // record, but its tiledImage is gone by then - so look for one that can still draw rather
+            // than assuming the first one can.
+            for (const tile of this._tiles || []) {
+                const tiledImage = tile.tiledImage;
+                if (tiledImage && tiledImage.viewer) {
+                    tiledImage.viewer.forceRedraw();
+                    return;
+                }
             }
         }
 
@@ -681,12 +803,10 @@
                 this._type = type;
                 this._data = data;
                 this._promise = $.Promise.resolve(data);
-                const internal = this[DRAWER_INTERNAL_CACHE];
-                if (internal) {
-                    for (const iCache in internal) {
-                        internal[iCache].setDataAs(data, type);
-                    }
-                }
+                // main data changed: rebuild each drawer's internal (derived) cache from the new
+                // data. Double-buffered so preload/async drawers keep showing the old texture
+                // until the replacement is ready (no blink); the old one is freed after the swap.
+                this._refreshInternalCaches();
                 this._triggerNeedsDraw();
                 return this._promise;
             }
@@ -701,9 +821,11 @@
                 this._promise = $.Promise.resolve(data);
                 const internal = this[DRAWER_INTERNAL_CACHE];
                 if (internal) {
+                    // same as above - force regenerate
                     for (const iCache in internal) {
-                        internal[iCache].setDataAs(data, type);
+                        this._safeDestroyInternal(internal[iCache]);
                     }
+                    delete this[DRAWER_INTERNAL_CACHE];
                 }
                 this._triggerNeedsDraw();
                 return this._data;
@@ -772,6 +894,19 @@
          */
         _handleConversionError(e) {
             $.console.error("[CacheRecord] Conversion/preparation error:", e);
+
+            // Release what the record still holds before losing the reference to it: destroy() is a no-op
+            // once _destroyed is set, so this is the last chance to run the destructors. Read paths such
+            // as getDataAs() do not consume their input, so the data here is often still the live one.
+            if (this._data !== null && this._data !== undefined) {
+                try {
+                    $.converter.destroy(this._data, this._type);
+                } catch (destroyError) {
+                    $.console.error("[CacheRecord] data destroy threw while handling a conversion error:",
+                        destroyError);
+                }
+            }
+            this.destroyInternalCache();
 
             this._destroyed = true;
             this.loaded = false;
@@ -866,8 +1001,13 @@
          */
         destroy() {
             if (this.loaded) {
-                if (this._ondestroy) {
-                    this._ondestroy(this._data);
+                // only invoke destroy on real data, otherwise skip
+                if (this._ondestroy && this._data !== null && this._data !== undefined) {
+                    try {
+                        this._ondestroy(this._data);
+                    } catch (e) {
+                        $.console.error("[InternalCacheRecord.destroy] drawer internal cache free threw:", e);
+                    }
                 }
                 this._data = null;
                 this.loaded = false;
@@ -1032,6 +1172,8 @@
                     oldKey, newKey);
                 return null; // do not remove, we perform additional fixes on caches later on when swap occurred
             } else {
+                // As in injectCache: a zombie under the target key is superseded by this record.
+                this._discardZombie(newKey);
                 this._cachesLoaded[newKey] = originalCache;
                 delete this._cachesLoaded[oldKey];
             }
@@ -1089,6 +1231,8 @@
          * @param {Boolean} options.tileAllowNotLoaded - if true, tile that is not loaded is also processed,
          *   this is internal parameter used in tile-loaded completion routine, as we need to prepare tile but
          *   it is not yet loaded and cannot be marked as so (otherwise the system would think it is ready)
+         * @return {Boolean} true if the cache was installed, false if it was refused - the caller keeps
+         *   ownership of a refused cache and is responsible for destroying it
          * @private
          */
         injectCache(options) {
@@ -1096,7 +1240,7 @@
                 tile = options.tile;
             if (!options.tileAllowNotLoaded && !tile.loaded && !tile.loading) {
                 $.console.warn("Attempt to inject cache on tile in invalid state: this is probably a bug!");
-                return;
+                return false;
             }
             const consumer = this._cachesLoaded[targetKey];
             if (consumer) {
@@ -1111,6 +1255,14 @@
             }
 
             const cache = options.cache;
+            // A zombie may still hold the previous data under this key; it is superseded by what we
+            // are about to install, and keeping it would leave two records competing for one key.
+            this._discardZombie(targetKey);
+            // The unload above already decremented for the consumer it removed, so the replacement has
+            // to be counted here. Guarded, so that the error path above cannot count the same key twice.
+            if (!this._cachesLoaded[targetKey]) {
+                this._cachesLoadedCount++;
+            }
             this._cachesLoaded[targetKey] = cache;
             cache._ownerTileCache = this;
             cache.cacheKey = targetKey;
@@ -1119,6 +1271,7 @@
             for (const t of tile.getCache(tile.originalCacheKey)._tiles) {  // grab all cache-equal tiles
                 t.setCache(targetKey, cache, options.setAsMainCache, false);
             }
+            return true;
         }
 
         /**
@@ -1328,8 +1481,15 @@
             for (const zombie in this._zombiesLoaded) {
                 this._zombiesLoaded[zombie].destroy();
             }
-            for (const tile in this._tilesLoaded) {
+            // _tilesLoaded is a real array: for..in would hand out index strings instead of tiles, and
+            // every tile would be skipped without unloading a single cache.
+            for (const tile of this._tilesLoaded) {
                 this._unloadTile(tile, true);
+            }
+            // Records holding no tiles are not reachable through the loop above, and dropping the map
+            // without destroying them would strand their data - canvases, bitmaps, GPU textures.
+            for (const key in this._cachesLoaded) {
+                this._cachesLoaded[key].destroy();
             }
             this._tilesLoaded = [];
             this._zombiesLoaded = [];
@@ -1344,12 +1504,14 @@
          */
         clearDrawerInternalCache(drawer) {
             const drawerId = drawer.getId();
-            for (const zombie of this._zombiesLoaded) {
+            for (const key in this._zombiesLoaded) {
+                const zombie = this._zombiesLoaded[key];
                 if (zombie) {
                     zombie.destroyInternalCache(drawerId);
                 }
             }
-            for (const cache of this._cachesLoaded) {
+            for (const key in this._cachesLoaded) {
+                const cache = this._cachesLoaded[key];
                 if (cache) {
                     cache.destroyInternalCache(drawerId);
                 }
@@ -1380,6 +1542,21 @@
         }
 
         /**
+         * Release a zombie parked under a key that a live record is about to take over. Leaving it
+         * behind leaks the record, and makes two entries compete for a single key.
+         * @param {string} key
+         * @private
+         */
+        _discardZombie(key) {
+            const zombie = this._zombiesLoaded[key];
+            if (zombie) {
+                delete this._zombiesLoaded[key];
+                this._zombiesLoadedCount--;
+                zombie.destroy();
+            }
+        }
+
+        /**
          * Delete cache safely from the system if it is not needed
          * @param {OpenSeadragon.CacheRecord} cache
          */
@@ -1389,6 +1566,7 @@
                     const c = this._zombiesLoaded[i];
                     if (c === cache) {
                         delete this._zombiesLoaded[i];
+                        this._zombiesLoadedCount--;
                         c.destroy();
                         return;
                     }
@@ -1417,8 +1595,17 @@
                             cacheRecord.destroy();
                         } else {
                             // #2 Tile is a zombie. Do not delete record, reuse.
-                            this._zombiesLoaded[key] = cacheRecord;
-                            this._zombiesLoadedCount++;
+                            // Count only a genuinely new entry, and never silently drop a zombie
+                            // already parked here - that would leak it and inflate the counter.
+                            const previous = this._zombiesLoaded[key];
+                            if (previous !== cacheRecord) {
+                                if (previous) {
+                                    previous.destroy();
+                                } else {
+                                    this._zombiesLoadedCount++;
+                                }
+                                this._zombiesLoaded[key] = cacheRecord;
+                            }
                         }
                         // Either way clear cache
                         delete this._cachesLoaded[key];

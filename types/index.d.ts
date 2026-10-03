@@ -113,12 +113,6 @@ declare namespace OpenSeadragon {
 
     function capitalizeFirstLetter(value: string): string;
 
-    function createCallback(
-        object: object,
-        method: (...args: any[]) => void,
-        ...args: any[]
-    ): (...args: any[]) => void;
-
     function delegate(
         object: object,
         method: (...args: any[]) => void,
@@ -217,6 +211,11 @@ declare namespace OpenSeadragon {
     ): void;
 
     function setElementPointerEventsNone(element: Element | string): void;
+
+    function setElementTouchAction(
+        element: Element | string,
+        value: string,
+    ): void;
 
     function setElementTouchActionNone(element: Element | string): void;
 
@@ -393,6 +392,7 @@ declare namespace OpenSeadragon {
         springStiffness?: number;
         animationTime?: number;
         loadDestinationTilesOnAnimation?: boolean;
+        cooperativeGestures?: boolean;
         gestureSettingsMouse?: GestureSettings;
         gestureSettingsTouch?: GestureSettings;
         gestureSettingsPen?: GestureSettings;
@@ -422,6 +422,7 @@ declare namespace OpenSeadragon {
         navigatorOpacity?: number;
         navigatorBorderColor?: string;
         navigatorDisplayRegionColor?: string;
+        navigatorDrawer?: string | string[];
         controlsFadeDelay?: number;
         controlsFadeLength?: number;
         maxImageCacheCount?: number;
@@ -1118,6 +1119,7 @@ declare namespace OpenSeadragon {
         dblClickDistThreshold?: number;
         stopDelay?: number;
         userData?: unknown;
+        cooperativeGestureHandling?: boolean;
 
         preProcessEventHandler?: EventHandler<PreProcessMouseTrackerEvent>;
         keyDownHandler?: EventHandler<KeyMouseTrackerEvent>;
@@ -1154,10 +1156,12 @@ declare namespace OpenSeadragon {
         dblClickDistThreshold: number;
         stopDelay: number;
         userData: unknown;
+        cooperativeGestureHandling: boolean;
 
         destroy(): void;
         /** @deprecated use `this.tracking` */
         isTracking(): boolean;
+        setCooperativeGestureHandling(enabled: boolean): MouseTracker;
         setTracking(track: boolean): MouseTracker;
         getActivePointersListByType(type: string): GesturePointList;
         getActivePointerCount(): number;
@@ -1866,6 +1870,7 @@ declare namespace OpenSeadragon {
         ): object | boolean;
         requestInvalidate(restoreTiles?: boolean): Promise<any>;
         setAjaxHeaders(ajaxHeaders: object, propagate?: boolean): void;
+        setCooperativeGestures(enabled: boolean): Viewer;
         setDebugMode(debug: boolean): Viewer;
         setFullPage(fullScreen: boolean): Viewer;
         setFullScreen(fullScreen: boolean): Viewer;
@@ -2150,6 +2155,7 @@ declare namespace OpenSeadragon {
         "canvas-blur": CanvasTrackerEvent;
         "canvas-click": CanvasClickEvent;
         "canvas-contextmenu": CanvasContextMenuEvent;
+        "canvas-cooperative-gesture": CanvasCooperativeGestureEvent;
         "canvas-double-click": CanvasDoubleClickEvent;
         "canvas-drag": CanvasDragEvent;
         "canvas-drag-end": Omit<CanvasDragEvent, "delta">;
@@ -2250,6 +2256,7 @@ declare namespace OpenSeadragon {
         message: string;
         source: string;
         postData?: string;
+        status?: number;
     }
 
     interface ReadyTileSourceEvent extends TileSourceEvent {
@@ -2305,6 +2312,13 @@ declare namespace OpenSeadragon {
 
     interface CanvasContextMenuEvent extends CanvasEvent {
         preventDefault: boolean;
+    }
+
+    interface CanvasCooperativeGestureEvent extends CanvasEvent {
+        pointerType: PointerType;
+        gesture: "drag" | "scroll";
+        message: string;
+        preventDefaultAction: boolean;
     }
 
     interface CanvasDoubleClickEvent extends CanvasEvent {
@@ -2464,6 +2478,7 @@ declare namespace OpenSeadragon {
 
     interface OpenFailedEvent extends OpenEvent {
         message: string;
+        status?: number;
     }
 
     interface PageEvent extends ViewerEvent {
