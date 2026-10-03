@@ -32,6 +32,8 @@ jobs:
           node-version: 20 # There's a bug with puppeteer and Node 26 right now (June 23rd, 2026)
 
       - name: Install dependencies (PR branch)
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
         run: npm ci
 
       - name: Build PR branch
@@ -64,6 +66,8 @@ jobs:
           git checkout ${{ github.base_ref }}
 
       - name: Clean and rebuild base branch
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
         run: |
           npm ci
           npm run build
