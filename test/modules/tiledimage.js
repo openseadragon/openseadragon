@@ -347,6 +347,34 @@
     });
 
     // ----------
+    QUnit.test('level opacity ramp', function(assert) {
+        // Pure function of minPixelRatio: call it directly rather than driving a viewer to a scale.
+        const opacityAt = (minPixelRatio, renderPixelRatio) =>
+            OpenSeadragon.TiledImage.prototype._getLevelOpacity.call(
+                { minPixelRatio: minPixelRatio }, renderPixelRatio);
+
+        // Default ratio: the ramp spans [minPixelRatio, 2 * minPixelRatio), which is the range level
+        // selection actually draws a level at.
+        assert.strictEqual(opacityAt(0.5, 0.5), 0, 'default: transparent at minPixelRatio');
+        assert.strictEqual(opacityAt(0.5, 0.75), 0.5, 'default: half way up the ramp');
+        assert.strictEqual(opacityAt(0.5, 1), 1, 'default: opaque at twice minPixelRatio');
+        assert.strictEqual(opacityAt(0.5, 2), 1, 'default: clamped above the ramp');
+        assert.strictEqual(opacityAt(0.5, 0.25), 0,
+            'default: clamped below the ramp, where the minimum level bypasses the selection gate');
+
+        // A non-default minPixelRatio must move the ramp with it: a hard-coded 0.5 would report 0.41
+        // instead of 0 at minRatio here, and reach full opacity before the level is done fading in.
+        const minRatio = 1 / Math.SQRT2;
+        assert.strictEqual(opacityAt(minRatio, minRatio), 0, 'custom: transparent at minPixelRatio');
+        assert.strictEqual(opacityAt(minRatio, 1.5 * minRatio), 0.5, 'custom: half way up the ramp');
+        assert.strictEqual(opacityAt(minRatio, 2 * minRatio), 1, 'custom: opaque at twice minPixelRatio');
+
+        // No ramp without a positive ratio - the division would be meaningless.
+        assert.strictEqual(opacityAt(0, 0), 1, 'zero minPixelRatio disables the ramp');
+        assert.strictEqual(opacityAt(-1, 0.5), 1, 'negative minPixelRatio disables the ramp');
+    });
+
+    // ----------
     QUnit.test('rotation', function(assert) {
         const done = assert.async();
         function testDefaultRotation() {
