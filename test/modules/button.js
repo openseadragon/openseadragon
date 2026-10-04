@@ -87,4 +87,56 @@
             'Enter and Space activate, other keys do not');
     });
 
+    QUnit.test('creates a non-submitting button with an accessible name', function (assert) {
+        const form = document.createElement('form');
+        let submitted = false;
+        form.addEventListener('submit', function (event) {
+            submitted = true;
+            event.preventDefault();
+        });
+        document.getElementById('qunit-fixture').appendChild(form);
+        makeButton();
+        form.appendChild(button.element);
+
+        assert.equal(button.element.tagName, 'BUTTON', 'element is a button');
+        assert.equal(button.element.type, 'button', 'type is button');
+        assert.equal(button.element.getAttribute('aria-label'), 'Zoom in', 'aria-label from tooltip');
+        assert.equal(button.element.title, 'Zoom in', 'title kept');
+
+        button.element.click();
+        assert.notOk(submitted, 'click does not submit the form');
+    });
+
+    QUnit.test('page button styles do not reach the button', function (assert) {
+        const style = document.createElement('style');
+        style.textContent = 'button { padding: 20px; margin: 8px; background: red; ' +
+            'border: 3px solid blue; border-radius: 9px; min-width: 80px; }';
+        document.head.appendChild(style);
+        makeButton();
+
+        const computed = getComputedStyle(button.element);
+        assert.equal(computed.paddingTop, '0px', 'padding reset');
+        assert.equal(computed.marginTop, '0px', 'margin reset');
+        assert.equal(computed.borderTopWidth, '0px', 'border reset');
+        assert.equal(computed.borderTopLeftRadius, '0px', 'radius reset');
+        assert.equal(computed.minWidth, '0px', 'min-width reset');
+        assert.equal(computed.backgroundColor, 'rgba(0, 0, 0, 0)', 'background reset');
+
+        document.head.removeChild(style);
+    });
+
+    QUnit.test('disabled button stays focusable', function (assert) {
+        makeButton();
+        button.disable();
+        button.element.focus();
+        assert.equal(document.activeElement, button.element, 'focus kept while disabled');
+    });
+
+    QUnit.test('page-supplied element is left as it is', function (assert) {
+        const element = document.createElement('div');
+        makeButton({ element: element });
+        assert.equal(button.element, element, 'element used as given');
+        assert.notOk(element.hasAttribute('aria-label'), 'no aria-label added');
+    });
+
 })();

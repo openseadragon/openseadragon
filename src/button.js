@@ -61,7 +61,7 @@ $.ButtonState = {
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
- * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;div&gt; element is created.
+ * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;button&gt; element is created.
  * @param {String} [options.tooltip=null] Provides context help for the button when the
  *  user hovers over it.
  * @param {String} [options.srcRest=null] URL of image to use in 'rest' state.
@@ -122,7 +122,7 @@ $.Button = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Button#
      */
-    this.element = options.element || $.makeNeutralElement("div");
+    this.element = options.element || makeButtonElement();
 
     this._isCustomElement = !!options.element;
     this._disabled = false;
@@ -150,6 +150,11 @@ $.Button = function( options ) {
 
         this.element.style.position = "relative";
         $.setElementTouchActionNone( this.element );
+
+        // The images all carry alt text, which would repeat in the button's name.
+        if ( this.tooltip ) {
+            this.element.setAttribute( "aria-label", this.tooltip );
+        }
 
         this.imgGroup.style.position =
         this.imgHover.style.position =
@@ -450,6 +455,24 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
 
 });
 
+
+// Inline styles override page-level button rules, except !important ones.
+function makeButtonElement() {
+    const element = $.makeNeutralElement( "button" );
+    element.type = "button";
+    $.extend( element.style, {
+        font:         "inherit",
+        color:        "inherit",
+        textAlign:    "inherit",
+        borderRadius: "0",
+        boxShadow:    "none",
+        minWidth:     "0",
+        minHeight:    "0",
+        width:        "auto",
+        height:       "auto"
+    });
+    return element;
+}
 
 function scheduleFade( button ) {
     $.requestAnimationFrame(function(){
