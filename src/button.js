@@ -395,7 +395,7 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     },
 
     /**
-     * Disables the button. A button OSD created stays focusable; a page-supplied element is natively disabled.
+     * Disables the button. Default buttons stay focusable; a page-supplied element also gets native disabled.
      * @function
      */
     disable: function(){
@@ -425,6 +425,8 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     },
 
     /**
+     * Whether the button is disabled. Use this rather than element.disabled,
+     * which is only set on page-supplied elements.
      * @function
      * @returns {Boolean}
      */
