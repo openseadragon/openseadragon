@@ -1043,6 +1043,7 @@ declare namespace OpenSeadragon {
         buildPyramid?: boolean;
         crossOriginPolicy?: string | boolean;
         ajaxWithCredentials?: string | boolean;
+        /** @deprecated Ignored; use buildPyramid: false to skip the pyramid. */
         useCanvas?: boolean;
     }
 
@@ -1050,6 +1051,7 @@ declare namespace OpenSeadragon {
         buildPyramid: boolean;
         crossOriginPolicy: string | boolean;
         ajaxWithCredentials: string | boolean;
+        /** @deprecated Ignored; use buildPyramid: false to skip the pyramid. */
         useCanvas: boolean;
         image: HTMLImageElement | null;
         levels: Array<{ url?: string; width: number; height: number }>;

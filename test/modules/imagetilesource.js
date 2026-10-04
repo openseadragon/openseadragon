@@ -1,4 +1,4 @@
-/* global QUnit, testLog */
+/* global QUnit, $, testLog */
 
 (function () {
     QUnit.module('ImageTileSource');
@@ -98,6 +98,31 @@
             assert.equal(source.maxLevel, source.levels.length - 1, 'maxLevel should be the top level');
             done();
         });
+    });
+
+    QUnit.test('buildPyramid: false keeps a single level', function(assert) {
+        var done = assert.async();
+        var source = new OpenSeadragon.ImageTileSource({ url: '/test/data/A.png', buildPyramid: false });
+        source.addHandler('ready', function() {
+            assert.equal(source.levels.length, 1, 'should only have the full-size level');
+            done();
+        });
+    });
+
+    QUnit.test('builds a pyramid when opened by the viewer', function(assert) {
+        var done = assert.async();
+        $('<div id="imageTileSourceViewer"></div>').appendTo('#qunit-fixture');
+        var viewer = OpenSeadragon({
+            id: 'imageTileSourceViewer',
+            prefixUrl: '/build/openseadragon/images/'
+        });
+        viewer.addHandler('open', function() {
+            var source = viewer.world.getItemAt(0).source;
+            assert.ok(source.levels.length > 1, 'should build lower levels');
+            viewer.destroy();
+            done();
+        });
+        viewer.open({ type: 'image', url: '/test/data/A.png' });
     });
 
     QUnit.test('getTileUrl for max level returns original url', function(assert) {
