@@ -334,6 +334,11 @@ $.Button = function( options ) {
 
         keyHandler: function( event ){
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
+            // A held Space activates once, as on a native button.
+            if( 32 === event.keyCode && event.originalEvent.repeat ){
+                event.preventDefault = true;
+                return;
+            }
             if( 13 === event.keyCode || 32 === event.keyCode ){
                 /***
                  * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.

@@ -87,6 +87,26 @@
             'Enter and Space activate, other keys do not');
     });
 
+    QUnit.test('held Space activates once', function (assert) {
+        makeButton();
+        let clicks = 0;
+        button.addHandler('click', function () {
+            clicks++;
+        });
+
+        [false, true, true].forEach(function (repeat) {
+            button.element.dispatchEvent(new KeyboardEvent('keypress', {
+                keyCode: 32,
+                charCode: 32,
+                repeat: repeat,
+                bubbles: true,
+                cancelable: true
+            }));
+        });
+
+        assert.equal(clicks, 1, 'repeats are ignored');
+    });
+
     QUnit.test('creates a non-submitting button named by its title', function (assert) {
         const form = document.createElement('form');
         let submitted = false;
