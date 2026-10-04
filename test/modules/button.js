@@ -87,7 +87,7 @@
             'Enter and Space activate, other keys do not');
     });
 
-    QUnit.test('creates a non-submitting button with an accessible name', function (assert) {
+    QUnit.test('creates a non-submitting button named by its title', function (assert) {
         const form = document.createElement('form');
         let submitted = false;
         form.addEventListener('submit', function (event) {
@@ -100,7 +100,10 @@
 
         assert.equal(button.element.tagName, 'BUTTON', 'element is a button');
         assert.equal(button.element.type, 'button', 'type is button');
-        assert.equal(button.element.getAttribute('aria-label'), 'Zoom in', 'aria-label from tooltip');
+        assert.deepEqual(
+            [button.imgRest.alt, button.imgGroup.alt, button.imgHover.alt, button.imgDown.alt],
+            ['', '', '', ''],
+            'images leave title as the name');
         assert.equal(button.element.title, 'Zoom in', 'title kept');
 
         button.element.click();

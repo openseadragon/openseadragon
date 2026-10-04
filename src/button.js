@@ -135,11 +135,12 @@ $.Button = function( options ) {
         this.imgHover     = $.makeTransparentImage( this.srcHover );
         this.imgDown      = $.makeTransparentImage( this.srcDown );
 
+        // Empty alt leaves title as the button's name, so updating title relabels it.
         this.imgRest.alt  =
         this.imgGroup.alt =
         this.imgHover.alt =
         this.imgDown.alt  =
-            this.tooltip;
+            "";
 
         // Allow pointer events to pass through the img elements so implicit
         //   pointer capture works on touch devices
@@ -150,11 +151,6 @@ $.Button = function( options ) {
 
         this.element.style.position = "relative";
         $.setElementTouchActionNone( this.element );
-
-        // The images all carry alt text, which would repeat in the button's name.
-        if ( this.tooltip ) {
-            this.element.setAttribute( "aria-label", this.tooltip );
-        }
 
         this.imgGroup.style.position =
         this.imgHover.style.position =
