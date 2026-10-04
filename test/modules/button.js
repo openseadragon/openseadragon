@@ -3,6 +3,7 @@
 (function () {
     const imageBase = '/build/openseadragon/images/zoomin_';
     let button;
+    let pageStyle;
 
     function makeButton(options) {
         button = new OpenSeadragon.Button(Object.assign({
@@ -22,6 +23,10 @@
                 button.destroy();
             }
             button = null;
+            if (pageStyle) {
+                pageStyle.remove();
+                pageStyle = null;
+            }
         }
     });
 
@@ -107,6 +112,20 @@
         assert.equal(clicks, 1, 'repeats are ignored');
     });
 
+    QUnit.test('native click does not raise Button events', function (assert) {
+        makeButton();
+        let raised = 0;
+        button.addHandler('click', function () {
+            raised++;
+        });
+        button.addHandler('release', function () {
+            raised++;
+        });
+
+        button.element.click();
+        assert.equal(raised, 0, 'no click or release from a DOM click');
+    });
+
     QUnit.test('creates a non-submitting button named by its title', function (assert) {
         const form = document.createElement('form');
         let submitted = false;
@@ -131,11 +150,11 @@
     });
 
     QUnit.test('page button styles do not reach the button', function (assert) {
-        const style = document.createElement('style');
-        style.textContent = 'button { padding: 20px; margin: 8px; background: red; ' +
+        pageStyle = document.createElement('style');
+        pageStyle.textContent = 'button { padding: 20px; margin: 8px; background: red; ' +
             'border: 3px solid blue; border-radius: 9px; min-width: 80px; ' +
             'transform: scale(2); transition: opacity 1s; }';
-        document.head.appendChild(style);
+        document.head.appendChild(pageStyle);
         makeButton();
 
         const computed = getComputedStyle(button.element);
@@ -147,8 +166,6 @@
         assert.equal(computed.backgroundColor, 'rgba(0, 0, 0, 0)', 'background reset');
         assert.equal(computed.transform, 'none', 'transform reset');
         assert.equal(computed.transitionDuration, '0s', 'transition reset');
-
-        document.head.removeChild(style);
     });
 
     QUnit.test('disabled button stays focusable', function (assert) {
