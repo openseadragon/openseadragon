@@ -387,14 +387,18 @@
         viewer.addHandler('open', openHandler);
     });
 
-    QUnit.test('controls-fade event', function (assert) {
-        const done = assert.async();
-        viewer = OpenSeadragon({
+    function createFadeViewer(options) {
+        viewer = OpenSeadragon($.extend({
             id:                 'controlsTests',
             prefixUrl:          '/build/openseadragon/images/',
             controlsFadeDelay:  0,
             controlsFadeLength: 50
-        });
+        }, options));
+    }
+
+    QUnit.test('controls-fade event', function (assert) {
+        const done = assert.async();
+        createFadeViewer();
 
         let lastOpacity = 1;
         const fadeHandler = function (event) {
@@ -402,15 +406,70 @@
             lastOpacity = event.opacity;
             if (event.opacity === 0) {
                 viewer.removeHandler('controls-fade', fadeHandler);
+                const shown = [];
                 viewer.addHandler('controls-fade', function (showEvent) {
-                    assert.equal(showEvent.opacity, 1, 'showing the controls should report full opacity');
-                    done();
+                    shown.push(showEvent.opacity);
                 });
                 viewer.setControlsEnabled(true);
+                viewer.setControlsEnabled(true);
+                setTimeout(function () {
+                    assert.deepEqual(shown, [1], 'showing the controls should report full opacity once');
+                    done();
+                }, 100);
             }
         };
         viewer.addHandler('controls-fade', fadeHandler);
         viewer.setControlsEnabled(false);
+    });
+
+    QUnit.test('controls-fade runs one fade after a restart', function (assert) {
+        const done = assert.async();
+        createFadeViewer({ controlsFadeLength: 10000 });
+
+        let events = 0;
+        let frames = 0;
+        let counting = true;
+        const countFrames = function () {
+            if (counting) {
+                frames++;
+                requestAnimationFrame(countFrames);
+            }
+        };
+
+        const firstHandler = function () {
+            viewer.removeHandler('controls-fade', firstHandler);
+            viewer.setControlsEnabled(true);
+            viewer.setControlsEnabled(false);
+            viewer.addHandler('controls-fade', function () {
+                events++;
+            });
+            requestAnimationFrame(countFrames);
+            setTimeout(function () {
+                counting = false;
+                assert.ok(frames > 0, 'frames should have been drawn');
+                assert.ok(events <= frames + 1,
+                    'should raise at most one event per frame (' + events + ' events, ' + frames + ' frames)');
+                done();
+            }, 200);
+        };
+        viewer.addHandler('controls-fade', firstHandler);
+        viewer.setControlsEnabled(false);
+    });
+
+    QUnit.test('controls-fade not raised when autoHideControls is off', function (assert) {
+        const done = assert.async();
+        createFadeViewer({ autoHideControls: false });
+
+        let events = 0;
+        viewer.addHandler('controls-fade', function () {
+            events++;
+        });
+        viewer.setControlsEnabled(false);
+        viewer.setControlsEnabled(true);
+        setTimeout(function () {
+            assert.equal(events, 0, 'no fade events should be raised');
+            done();
+        }, 100);
     });
 
     QUnit.module('Control');

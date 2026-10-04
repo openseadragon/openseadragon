@@ -1300,6 +1300,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} true to show, false to hide.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:controls-enabled
+     * @fires OpenSeadragon.Viewer.event:controls-fade
      */
     setControlsEnabled: function( enabled ) {
         if( enabled ){
@@ -3317,16 +3318,16 @@ function scheduleUpdate( viewer, updateFunc ){
 
 
 //provides a sequence in the fade animation
-function scheduleControlsFade( viewer ) {
+function scheduleControlsFade( viewer, fadeId ) {
     $.requestAnimationFrame( function(){
-        updateControlsFade( viewer );
+        updateControlsFade( viewer, fadeId );
     });
 }
 
 
 //initiates an animation to hide the controls
 function beginControlsAutoHide( viewer ) {
-    if ( !viewer.autoHideControls ) {
+    if ( !viewer.autoHideControls || viewer.controlsShouldFade ) {
         return;
     }
     viewer.controlsShouldFade = true;
@@ -3334,15 +3335,18 @@ function beginControlsAutoHide( viewer ) {
         $.now() +
         viewer.controlsFadeDelay;
 
+    // An abort followed by a new begin can leave the previous timer or frame
+    // loop pending; the id lets it see it has been superseded.
+    const fadeId = viewer._controlsFadeId = ( viewer._controlsFadeId || 0 ) + 1;
     window.setTimeout( function(){
-        scheduleControlsFade( viewer );
+        scheduleControlsFade( viewer, fadeId );
     }, viewer.controlsFadeDelay );
 }
 
 
 //determines if fade animation is done or continues the animation
-function updateControlsFade( viewer ) {
-    if ( viewer.controlsShouldFade ) {
+function updateControlsFade( viewer, fadeId ) {
+    if ( viewer.controlsShouldFade && fadeId === viewer._controlsFadeId ) {
         let currentTime = $.now();
         let deltaTime = currentTime - viewer.controlsFadeBeginTime;
         let opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
@@ -3372,7 +3376,7 @@ function updateControlsFade( viewer ) {
 
         if ( opacity > 0 ) {
             // fade again
-            scheduleControlsFade( viewer );
+            scheduleControlsFade( viewer, fadeId );
         }
     }
 }
