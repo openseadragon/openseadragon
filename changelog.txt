@@ -5,6 +5,7 @@ OPENSEADRAGON CHANGELOG
 
 * We now expose the HTTP status code in open-failed events when possible (#2972 @a-sayed123)
 * Improved unit tests (#2976 @animesh68)
+* Fixed: ImageTileSource ignored buildPyramid and always drew the full-size image (#2990 @lukew-cogapp)
 
 6.1.1:
 
