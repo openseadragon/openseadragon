@@ -1613,7 +1613,6 @@
         } else {
             // Emulate mouse capture by hanging listeners on the document object.
             //    (Note we listen on the capture phase so the captured handlers will get called first)
-            // eslint-disable-next-line no-use-before-define
             //$.console.log('Emulated mouse capture set');
             const eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
             // https://github.com/openseadragon/openseadragon/pull/790

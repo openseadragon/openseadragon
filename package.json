@@ -21,7 +21,9 @@
         "url": "https://github.com/openseadragon/openseadragon.git"
     },
     "devDependencies": {
-        "eslint-plugin-compat": "^6.0.2",
+        "@eslint/js": "^10.0.1",
+        "eslint-plugin-compat": "^7.0.2",
+        "globals": "^17.13.0",
         "grunt": "^1.6.1",
         "grunt-contrib-clean": "^2.0.1",
         "grunt-contrib-compress": "^2.0.0",
@@ -30,7 +32,7 @@
         "grunt-contrib-qunit": "^10.2.0",
         "grunt-contrib-uglify": "^5.0.1",
         "grunt-contrib-watch": "^1.1.0",
-        "grunt-eslint": "^24.3.0",
+        "grunt-eslint": "^27.0.0",
         "grunt-git-describe": "^2.4.4",
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
