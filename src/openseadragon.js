@@ -2689,11 +2689,8 @@ function OpenSeadragon( options ){
             if ( window.DOMParser ) {
 
                 $.parseXml = function( string ) {
-                    let xmlDoc = null;
-
                     const parser = new DOMParser();
-                    xmlDoc = parser.parseFromString( string, "text/xml" );
-                    return xmlDoc;
+                    return parser.parseFromString( string, "text/xml" );
                 };
 
             } else {

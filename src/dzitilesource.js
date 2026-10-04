@@ -238,7 +238,7 @@ function configureFromXML( tileSource, xmlDoc ){
     const root           = xmlDoc.documentElement;
     const rootName       = root.localName || root.tagName;
     const ns             = xmlDoc.documentElement.namespaceURI;
-    let configuration  = null;
+    let configuration;
     const displayRects   = [];
     let dispRectNodes;
     let dispRectNode;

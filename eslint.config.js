@@ -105,7 +105,6 @@ module.exports = [
             // Dropped from recommended in ESLint 9.
             "no-inner-declarations": ["error"],
             // Added to recommended in ESLint 10; existing code needs fixes first.
-            "no-useless-assignment": ["off"],
             "preserve-caught-error": ["off"]
         }
     }

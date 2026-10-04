@@ -3230,7 +3230,7 @@ function getOverlayObject( viewer, overlay ) {
         return overlay;
     }
 
-    let element = null;
+    let element;
     if ( overlay.element ) {
         element = $.getElement( overlay.element );
     } else {

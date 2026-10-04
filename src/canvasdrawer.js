@@ -389,7 +389,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
                 placeholderRect = placeholderRect.translate(sketchTranslate);
             }
 
-            let fillStyle = null;
+            let fillStyle;
             if ( typeof tiledImage.placeholderFillStyle === "function" ) {
                 fillStyle = tiledImage.placeholderFillStyle(tiledImage, this.context);
             }

@@ -96,7 +96,7 @@
          */
         addControl: function ( element, controlOptions ) {
             element = $.getElement( element );
-            let div = null;
+            let div;
 
             if ( getControlIndex( this, element ) >= 0 ) {
                 return;     // they're trying to add a duplicate control

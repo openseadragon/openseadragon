@@ -688,7 +688,7 @@ $.extend( $.IIIFTileSource.prototype, $.TileSource.prototype, /** @lends OpenSea
 
         const root            = xmlDoc.documentElement;
         const rootName        = root.tagName;
-        let configuration   = null;
+        let configuration;
 
         if ( rootName === "info" ) {
             try {
