@@ -18,7 +18,7 @@ If you're new to open source in general, check out [GitHub's open source intro g
 
 All command-line operations for building and testing OpenSeadragon are scripted using [Grunt](https://gruntjs.com/) which is based on [Node.js](https://nodejs.org/). To get set up:
 
-1. Install Node, if you haven't already (available at the link above)
+1. Install Node 22 or newer, if you haven't already (available at the link above)
 1. Install the Grunt command line runner (if you haven't already); on the command line, run `npm install -g grunt-cli`
 1. Clone the openseadragon repository
 1. On the command line, go in to the openseadragon folder
