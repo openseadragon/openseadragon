@@ -3356,6 +3356,20 @@ function updateControlsFade( viewer ) {
             }
         }
 
+        /**
+         * Raised on each step of the controls fade animation, and with an opacity
+         * of 1 when the controls are shown again. Use it to fade custom controls
+         * in step with the built-in ones.
+         *
+         * @event controls-fade
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Number} opacity - The opacity applied to the controls, from 0 to 1.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        viewer.raiseEvent( 'controls-fade', { opacity: opacity } );
+
         if ( opacity > 0 ) {
             // fade again
             scheduleControlsFade( viewer );
@@ -3366,9 +3380,14 @@ function updateControlsFade( viewer ) {
 
 //stop the fade animation on the controls and show them
 function abortControlsAutoHide( viewer ) {
+    const wasFading = viewer.controlsShouldFade;
     viewer.controlsShouldFade = false;
     for ( let i = viewer.controls.length - 1; i >= 0; i-- ) {
         viewer.controls[ i ].setOpacity( 1.0 );
+    }
+    // Pointer moves call this constantly, so only report a change.
+    if ( wasFading ) {
+        viewer.raiseEvent( 'controls-fade', { opacity: 1.0 } );
     }
 }
 

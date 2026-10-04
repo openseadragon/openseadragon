@@ -387,6 +387,32 @@
         viewer.addHandler('open', openHandler);
     });
 
+    QUnit.test('controls-fade event', function (assert) {
+        const done = assert.async();
+        viewer = OpenSeadragon({
+            id:                 'controlsTests',
+            prefixUrl:          '/build/openseadragon/images/',
+            controlsFadeDelay:  0,
+            controlsFadeLength: 50
+        });
+
+        let lastOpacity = 1;
+        const fadeHandler = function (event) {
+            assert.ok(event.opacity <= lastOpacity, 'opacity should only decrease while fading');
+            lastOpacity = event.opacity;
+            if (event.opacity === 0) {
+                viewer.removeHandler('controls-fade', fadeHandler);
+                viewer.addHandler('controls-fade', function (showEvent) {
+                    assert.equal(showEvent.opacity, 1, 'showing the controls should report full opacity');
+                    done();
+                });
+                viewer.setControlsEnabled(true);
+            }
+        };
+        viewer.addHandler('controls-fade', fadeHandler);
+        viewer.setControlsEnabled(false);
+    });
+
     QUnit.module('Control');
 
     QUnit.test('deprecated number anchor', function(assert) {
