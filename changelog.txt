@@ -6,8 +6,8 @@ OPENSEADRAGON CHANGELOG
 * We now expose the HTTP status code in open-failed events when possible (#2972 @a-sayed123)
 * Improved unit tests (#2976 @animesh68)
 * Fixed: ImageTileSource did not build its downsampling pyramid by default, causing aliasing when zoomed out (#2990 @lukew-cogapp)
-* The default control buttons are now <button type="button"> elements, so keyboard and screen reader users can reach them; Space activates them as well as Enter (#2987 @lukew-cogapp)
-* BREAKING: CSS selectors that target the default controls as divs (e.g. div[title="Zoom in"]) no longer match; use button[title="Zoom in"] or [title="Zoom in"]. The buttons are now in the tab order. A disabled default button has aria-disabled="true" instead of element.disabled; use the new Button.isDisabled() to check. Buttons passed in via zoomInButton etc. are unchanged (#2987 @lukew-cogapp)
+* The default control buttons are now <button type="button"> elements, so keyboard and screen reader users can reach them; Space activates them as well as Enter (#2989 @lukew-cogapp)
+* BREAKING CHANGE: The default control buttons are now <button> elements in the tab order. CSS selectors that target them as divs (e.g. div[title="Zoom in"]) no longer match; use [title="Zoom in"]. Page-level button styles not covered by the inline reset (or marked !important) now apply to them. A disabled default button has aria-disabled="true" instead of element.disabled; use the new Button.isDisabled() to check, and call disable()/enable() rather than setting element.disabled. Buttons passed in via zoomInButton etc. are unchanged (#2989 @lukew-cogapp)
 
 6.1.1:
 
