@@ -64,4 +64,27 @@
         assert.equal(button.currentState, state, 'state unchanged while disabled');
     });
 
+    QUnit.test('Enter and Space raise click and release', function (assert) {
+        makeButton();
+        const events = [];
+        button.addHandler('click', function () {
+            events.push('click');
+        });
+        button.addHandler('release', function () {
+            events.push('release');
+        });
+
+        [13, 32, 65].forEach(function (keyCode) {
+            button.element.dispatchEvent(new KeyboardEvent('keypress', {
+                keyCode: keyCode,
+                charCode: keyCode,
+                bubbles: true,
+                cancelable: true
+            }));
+        });
+
+        assert.deepEqual(events, ['click', 'release', 'click', 'release'],
+            'Enter and Space activate, other keys do not');
+    });
+
 })();
