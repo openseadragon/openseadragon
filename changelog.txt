@@ -7,6 +7,7 @@ OPENSEADRAGON CHANGELOG
 * Improved unit tests (#2976 @animesh68)
 * Fixed: ImageTileSource did not build its downsampling pyramid by default, causing aliasing when zoomed out (#2990 @lukew-cogapp)
 * CI now runs on Node 24 with current GitHub Actions versions (#2992 @lukew-cogapp)
+* Upgraded ESLint to v10 (#2993 @lukew-cogapp)
 
 6.1.1:
 
