@@ -889,7 +889,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         throw new Error();
                     }
                 } catch(e) {
-                    throw new Error('A Provided cropping polygon point is not supported');
+                    throw new Error('A Provided cropping polygon point is not supported', { cause: e });
                 }
             });
         };
