@@ -289,30 +289,30 @@
                 "The next button should be present");
 
             assert.equal(viewer.currentPage(), 0, "OSD should open on first page.");
-            assert.ok(viewer.previousButton.element.disabled,
+            assert.ok(viewer.previousButton.isDisabled(),
                 "Previous should be disabled on first page.");
-            assert.ok(!viewer.nextButton.element.disabled,
+            assert.ok(!viewer.nextButton.isDisabled(),
                 "Next should be enabled on first page.");
 
             viewer.nextButton.onRelease();
             assert.equal(viewer.currentPage(), 1, "OSD should be on second page.");
-            assert.ok(!viewer.previousButton.element.disabled,
+            assert.ok(!viewer.previousButton.isDisabled(),
                 "Previous should be enabled on second page.");
-            assert.ok(!viewer.nextButton.element.disabled,
+            assert.ok(!viewer.nextButton.isDisabled(),
                 "Next should be enabled on second page.");
 
             viewer.nextButton.onRelease();
             assert.equal(viewer.currentPage(), 2, "OSD should be on third page.");
-            assert.ok(!viewer.previousButton.element.disabled,
+            assert.ok(!viewer.previousButton.isDisabled(),
                 "Previous should be enabled on third page.");
-            assert.ok(viewer.nextButton.element.disabled,
+            assert.ok(viewer.nextButton.isDisabled(),
                 "Next should be disabled on third page.");
 
             viewer.previousButton.onRelease();
             assert.equal(viewer.currentPage(), 1, "OSD should be on second page.");
-            assert.ok(!viewer.previousButton.element.disabled,
+            assert.ok(!viewer.previousButton.isDisabled(),
                 "Previous should be enabled on second page.");
-            assert.ok(!viewer.nextButton.element.disabled,
+            assert.ok(!viewer.nextButton.isDisabled(),
                 "Next should be enabled on second page.");
 
             viewer.close();
@@ -348,23 +348,23 @@
                 "The next button should be present");
 
             assert.equal(viewer.currentPage(), 0, "OSD should open on first page.");
-            assert.ok(!viewer.previousButton.element.disabled,
+            assert.ok(!viewer.previousButton.isDisabled(),
                 "Previous should be enabled on first page.");
-            assert.ok(!viewer.nextButton.element.disabled,
+            assert.ok(!viewer.nextButton.isDisabled(),
                 "Next should be enabled on first page.");
 
             viewer.previousButton.onRelease();
             assert.equal(viewer.currentPage(), 2, "OSD should be on third page.");
-            assert.ok(!viewer.previousButton.element.disabled,
+            assert.ok(!viewer.previousButton.isDisabled(),
                 "Previous should be enabled on third page.");
-            assert.ok(!viewer.nextButton.element.disabled,
+            assert.ok(!viewer.nextButton.isDisabled(),
                 "Next should be enabled on third page.");
 
             viewer.nextButton.onRelease();
             assert.equal(viewer.currentPage(), 0, "OSD should be on first page.");
-            assert.ok(!viewer.previousButton.element.disabled,
+            assert.ok(!viewer.previousButton.isDisabled(),
                 "Previous should be enabled on first page.");
-            assert.ok(!viewer.nextButton.element.disabled,
+            assert.ok(!viewer.nextButton.isDisabled(),
                 "Next should be enabled on first page.");
 
             viewer.close();

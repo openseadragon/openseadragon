@@ -124,6 +124,9 @@ $.Button = function( options ) {
      */
     this.element = options.element || $.makeNeutralElement("div");
 
+    this._isCustomElement = !!options.element;
+    this._disabled = false;
+
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
     if ( !options.element ) {
@@ -386,11 +389,17 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     },
 
     /**
+     * Disables the button. A button OSD created stays focusable; a page-supplied element is natively disabled.
      * @function
      */
     disable: function(){
         this.notifyGroupExit();
-        this.element.disabled = true;
+        this._disabled = true;
+        this.element.setAttribute( "aria-disabled", "true" );
+        // Keeps :disabled styles on page-supplied elements working.
+        if ( this._isCustomElement ) {
+            this.element.disabled = true;
+        }
         this.tracker.setTracking(false);
         $.setElementOpacity( this.element, 0.2, true );
     },
@@ -399,10 +408,22 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
      * @function
      */
     enable: function(){
-        this.element.disabled = false;
+        this._disabled = false;
+        this.element.removeAttribute( "aria-disabled" );
+        if ( this._isCustomElement ) {
+            this.element.disabled = false;
+        }
         this.tracker.setTracking(true);
         $.setElementOpacity( this.element, 1.0, true );
         this.notifyGroupEnter();
+    },
+
+    /**
+     * @function
+     * @returns {Boolean}
+     */
+    isDisabled: function(){
+        return this._disabled;
     },
 
     destroy: function() {
@@ -475,7 +496,7 @@ function stopFading( button ) {
 
 function inTo( button, newState ) {
 
-    if( button.element.disabled ){
+    if( button._disabled ){
         return;
     }
 
@@ -505,7 +526,7 @@ function inTo( button, newState ) {
 
 function outTo( button, newState ) {
 
-    if( button.element.disabled ){
+    if( button._disabled ){
         return;
     }
 

@@ -548,6 +548,7 @@ declare namespace OpenSeadragon {
         constructor(options: ButtonOptions);
         disable(): void;
         enable(): void;
+        isDisabled(): boolean;
         notifyGroupEnter(): void;
         notifyGroupExit(): void;
         destroy(): void;
