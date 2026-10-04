@@ -113,7 +113,8 @@
     QUnit.test('page button styles do not reach the button', function (assert) {
         const style = document.createElement('style');
         style.textContent = 'button { padding: 20px; margin: 8px; background: red; ' +
-            'border: 3px solid blue; border-radius: 9px; min-width: 80px; }';
+            'border: 3px solid blue; border-radius: 9px; min-width: 80px; ' +
+            'transform: scale(2); transition: opacity 1s; }';
         document.head.appendChild(style);
         makeButton();
 
@@ -124,6 +125,8 @@
         assert.equal(computed.borderTopLeftRadius, '0px', 'radius reset');
         assert.equal(computed.minWidth, '0px', 'min-width reset');
         assert.equal(computed.backgroundColor, 'rgba(0, 0, 0, 0)', 'background reset');
+        assert.equal(computed.transform, 'none', 'transform reset');
+        assert.equal(computed.transitionDuration, '0s', 'transition reset');
 
         document.head.removeChild(style);
     });

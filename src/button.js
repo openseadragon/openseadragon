@@ -457,15 +457,20 @@ function makeButtonElement() {
     const element = $.makeNeutralElement( "button" );
     element.type = "button";
     $.extend( element.style, {
-        font:         "inherit",
-        color:        "inherit",
-        textAlign:    "inherit",
-        borderRadius: "0",
-        boxShadow:    "none",
-        minWidth:     "0",
-        minHeight:    "0",
-        width:        "auto",
-        height:       "auto"
+        font:          "inherit",
+        color:         "inherit",
+        textAlign:     "inherit",
+        borderRadius:  "0",
+        boxShadow:     "none",
+        minWidth:      "0",
+        minHeight:     "0",
+        width:         "auto",
+        height:        "auto",
+        appearance:    "none",
+        transform:     "none",
+        transition:    "none",
+        textShadow:    "none",
+        verticalAlign: "baseline"
     });
     return element;
 }
