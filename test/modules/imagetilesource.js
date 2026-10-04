@@ -90,6 +90,16 @@
         );
     });
 
+    QUnit.test('builds a pyramid by default', function(assert) {
+        var done = assert.async();
+        var source = new OpenSeadragon.ImageTileSource({ url: '/test/data/A.png' });
+        source.addHandler('ready', function() {
+            assert.ok(source.levels.length > 1, 'should build lower levels');
+            assert.equal(source.maxLevel, source.levels.length - 1, 'maxLevel should be the top level');
+            done();
+        });
+    });
+
     QUnit.test('getTileUrl for max level returns original url', function(assert) {
         var source = new OpenSeadragon.ImageTileSource({
             url: '/test/data/A.png',

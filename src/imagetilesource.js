@@ -64,6 +64,7 @@ $.ImageTileSource = class extends $.TileSource {
     constructor(props) {
         super($.extend({
             buildPyramid: true,
+            useCanvas: true,
             crossOriginPolicy: false,
             ajaxWithCredentials: false,
         }, props));
