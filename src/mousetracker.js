@@ -170,7 +170,7 @@
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
-        /*eslint-disable no-multi-spaces*/
+        /*eslint-disable @stylistic/no-multi-spaces*/
         this.userData              = options.userData          || null;
         this.stopDelay             = options.stopDelay         || 50;
 
@@ -198,7 +198,7 @@
         this.keyHandler               = options.keyHandler               || null;
         this.focusHandler             = options.focusHandler             || null;
         this.blurHandler              = options.blurHandler              || null;
-        /*eslint-enable no-multi-spaces*/
+        /*eslint-enable @stylistic/no-multi-spaces*/
 
         /**
          * If true, a single touch contact is left to the browser (not captured / preventDefault'd)

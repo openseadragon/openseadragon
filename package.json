@@ -22,6 +22,7 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
+        "@stylistic/eslint-plugin": "^5.10.0",
         "eslint-plugin-compat": "^7.0.2",
         "globals": "^17.13.0",
         "grunt": "^1.6.1",

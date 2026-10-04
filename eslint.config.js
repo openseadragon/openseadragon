@@ -1,5 +1,6 @@
 const js = require("@eslint/js");
 const compat = require("eslint-plugin-compat");
+const stylistic = require("@stylistic/eslint-plugin");
 const globals = require("globals");
 
 module.exports = [
@@ -15,6 +16,9 @@ module.exports = [
     js.configs.recommended,
     compat.configs["flat/recommended"],
     {
+        plugins: {
+            "@stylistic": stylistic
+        },
         languageOptions: {
             ecmaVersion: 2015,
             sourceType: "script",
@@ -26,9 +30,7 @@ module.exports = [
         },
         rules: {
             "no-unused-vars": ["error", {"args": "none", "caughtErrors": "none"}],
-            "indent": ["off", 4],
-            "quotes": ["off", "double"],
-            "semi": ["error", "always"],
+            "@stylistic/semi": ["error", "always"],
             "block-scoped-var": ["error"],
             "consistent-return": ["error"],
             "curly": ["error", "all"],
@@ -37,7 +39,7 @@ module.exports = [
             "no-implicit-globals": ["error"],
             "no-implied-eval": ["error"],
             "no-invalid-this": ["error"],
-            "no-multi-spaces": ["error", {
+            "@stylistic/no-multi-spaces": ["error", {
                 "ignoreEOLComments": true,
                 "exceptions": {"Property": true, "VariableDeclarator": true, "AssignmentExpression": true}
             }],
@@ -56,25 +58,19 @@ module.exports = [
             "yoda": ["off"],
             "no-undef-init": ["error"],
             "no-use-before-define": ["error", {"functions": false, "classes": true, "variables": true}],
-            "array-bracket-spacing": ["off", "never"],
-            "block-spacing": ["off"],
-            "brace-style": ["off"],
             "camelcase": ["error"],
-            "comma-spacing": ["error"],
-            "comma-style": ["error"],
-            "computed-property-spacing": ["off"],
+            "@stylistic/comma-spacing": ["error"],
+            "@stylistic/comma-style": ["error"],
             "consistent-this": ["off", "self"],
-            "eol-last": ["error"],
-            "func-call-spacing": ["error"],
+            "@stylistic/eol-last": ["error"],
+            "@stylistic/function-call-spacing": ["error"],
             "func-name-matching": ["error"],
-            "key-spacing": ["error", {"mode": "minimum"}],
-            "keyword-spacing": ["off"],
-            "max-len": ["off", 80],
-            "max-statements-per-line": ["error", {"max": 1}],
+            "@stylistic/key-spacing": ["error", {"mode": "minimum"}],
+            "@stylistic/max-statements-per-line": ["error", {"max": 1}],
             "new-cap": ["error"],
-            "new-parens": ["error"],
+            "@stylistic/new-parens": ["error"],
             "no-array-constructor": ["error"],
-            "no-mixed-operators": ["error", {
+            "@stylistic/no-mixed-operators": ["error", {
                 "groups": [
                     ["&", "|", "^", "~", "<<", ">>", ">>>"],
                     ["==", "!=", "===", "!==", ">", ">=", "<", "<="],
@@ -82,22 +78,18 @@ module.exports = [
                     ["in", "instanceof"]
                 ]
             }],
-            "no-tabs": ["error"],
-            "no-trailing-spaces": ["error"],
+            "@stylistic/no-tabs": ["error"],
+            "@stylistic/no-trailing-spaces": ["error"],
             "no-unneeded-ternary": ["error"],
-            "no-whitespace-before-property": ["error"],
-            "object-curly-spacing": ["off", "always"],
-            "one-var-declaration-per-line": ["error"],
+            "@stylistic/no-whitespace-before-property": ["error"],
+            "@stylistic/one-var-declaration-per-line": ["error"],
             "one-var": ["off", "never"],
             "operator-assignment": ["error"],
-            "operator-linebreak": ["error", "after"],
-            "quote-props": ["error", "as-needed"],
-            "semi-spacing": ["error"],
-            "space-before-blocks": ["off"],
-            "space-before-function-paren": ["off", "never"],
-            "space-in-parens": ["off", "never"],
-            "space-infix-ops": ["error"],
-            "space-unary-ops": ["error", {"words": true, "nonwords": false}],
+            "@stylistic/operator-linebreak": ["error", "after"],
+            "@stylistic/quote-props": ["error", "as-needed"],
+            "@stylistic/semi-spacing": ["error"],
+            "@stylistic/space-infix-ops": ["error"],
+            "@stylistic/space-unary-ops": ["error", {"words": true, "nonwords": false}],
             "unicode-bom": ["error"],
             "no-caller": ["error"],
             "no-loop-func": ["error"],
