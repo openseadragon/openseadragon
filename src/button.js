@@ -215,6 +215,9 @@ $.Button = function( options ) {
         clickDistThreshold: this.clickDistThreshold,
 
         enterHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
                 /**
@@ -249,6 +252,9 @@ $.Button = function( options ) {
         },
 
         leaveHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
                 /**
@@ -281,6 +287,9 @@ $.Button = function( options ) {
         },
 
         pressHandler: function ( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             inTo( _this, $.ButtonState.DOWN );
             /**
              * Raised when a mouse button is pressed or touch occurs in the Button element.
@@ -296,6 +305,9 @@ $.Button = function( options ) {
         },
 
         releaseHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             if ( event.insideElementPressed && event.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
                 /**
@@ -317,6 +329,9 @@ $.Button = function( options ) {
         },
 
         clickHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             if ( event.quick ) {
                 /**
                  * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.
@@ -334,6 +349,10 @@ $.Button = function( options ) {
 
         keyHandler: function( event ){
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
+            if( _this._disabled ){
+                event.preventDefault = 13 === event.keyCode || 32 === event.keyCode;
+                return;
+            }
             // A held Space activates once, as on a native button.
             if( 32 === event.keyCode && event.originalEvent.repeat ){
                 event.preventDefault = true;
@@ -406,7 +425,6 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
         if ( this._isCustomElement ) {
             this.element.disabled = true;
         }
-        this.tracker.setTracking(false);
         $.setElementOpacity( this.element, 0.2, true );
     },
 
@@ -419,7 +437,6 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
         if ( this._isCustomElement ) {
             this.element.disabled = false;
         }
-        this.tracker.setTracking(true);
         $.setElementOpacity( this.element, 1.0, true );
         this.notifyGroupEnter();
     },

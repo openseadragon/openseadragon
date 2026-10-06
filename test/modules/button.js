@@ -40,12 +40,10 @@
         assert.ok(button.isDisabled(), 'isDisabled after disable()');
         assert.equal(button.element.getAttribute('aria-disabled'), 'true', 'aria-disabled set');
         assert.notOk(button.element.disabled, 'native disabled not set on an OSD-created element');
-        assert.notOk(button.tracker.isTracking(), 'tracking stops');
 
         button.enable();
         assert.notOk(button.isDisabled(), 'isDisabled false after enable()');
         assert.notOk(button.element.hasAttribute('aria-disabled'), 'aria-disabled removed');
-        assert.ok(button.tracker.isTracking(), 'tracking resumes');
     });
 
     QUnit.test('disable keeps native disabled on a page-supplied element', function (assert) {
@@ -180,6 +178,26 @@
         button.disable();
         button.element.focus();
         assert.equal(document.activeElement, button.element, 'focus kept while disabled');
+    });
+
+    QUnit.test('disabled button raises focus but not click', function (assert) {
+        makeButton();
+        button.disable();
+        const events = [];
+        ['focus', 'click', 'release'].forEach(function (name) {
+            button.addHandler(name, function () {
+                events.push(name);
+            });
+        });
+
+        button.element.focus();
+        button.element.dispatchEvent(new KeyboardEvent('keypress', {
+            keyCode: 13,
+            charCode: 13,
+            bubbles: true,
+            cancelable: true
+        }));
+        assert.deepEqual(events, ['focus'], 'only focus raised');
     });
 
     QUnit.test('page-supplied element is left as it is', function (assert) {
