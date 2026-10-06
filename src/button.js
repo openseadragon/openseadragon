@@ -125,7 +125,7 @@ $.Button = function( options ) {
     this.element = options.element || makeButtonElement();
 
     this._isCustomElement = !!options.element;
-    this._disabled = false;
+    this._disabled = !!( options.element && options.element.disabled );
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images

@@ -60,6 +60,13 @@
         assert.notOk(element.disabled, 'native disabled cleared');
     });
 
+    QUnit.test('page-supplied element that starts disabled reports disabled', function (assert) {
+        const element = document.createElement('button');
+        element.disabled = true;
+        makeButton({ element: element });
+        assert.ok(button.isDisabled(), 'isDisabled true');
+    });
+
     QUnit.test('disabled button ignores state changes', function (assert) {
         makeButton();
         button.disable();
