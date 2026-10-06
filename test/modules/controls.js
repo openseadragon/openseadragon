@@ -456,6 +456,22 @@
         viewer.setControlsEnabled(false);
     });
 
+    QUnit.test('controls-fade not raised when shown before the fade starts', function (assert) {
+        const done = assert.async();
+        createFadeViewer({ controlsFadeDelay: 1000 });
+
+        let events = 0;
+        viewer.addHandler('controls-fade', function () {
+            events++;
+        });
+        viewer.setControlsEnabled(false);
+        viewer.setControlsEnabled(true);
+        setTimeout(function () {
+            assert.equal(events, 0, 'no fade events should be raised');
+            done();
+        }, 100);
+    });
+
     QUnit.test('controls-fade not raised when autoHideControls is off', function (assert) {
         const done = assert.async();
         createFadeViewer({ autoHideControls: false });

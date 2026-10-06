@@ -3372,6 +3372,7 @@ function updateControlsFade( viewer, fadeId ) {
          * @property {Number} opacity - The opacity applied to the controls, from 0 to 1.
          * @property {?Object} userData - Arbitrary subscriber-defined object.
          */
+        viewer._controlsOpacity = opacity;
         viewer.raiseEvent( 'controls-fade', { opacity: opacity } );
 
         if ( opacity > 0 ) {
@@ -3384,13 +3385,14 @@ function updateControlsFade( viewer, fadeId ) {
 
 //stop the fade animation on the controls and show them
 function abortControlsAutoHide( viewer ) {
-    const wasFading = viewer.controlsShouldFade;
     viewer.controlsShouldFade = false;
     for ( let i = viewer.controls.length - 1; i >= 0; i-- ) {
         viewer.controls[ i ].setOpacity( 1.0 );
     }
-    // Pointer moves call this constantly, so only report a change.
-    if ( wasFading ) {
+    // Tracked on the viewer rather than read from the controls: custom buttons
+    // are not in viewer.controls, so there may be none to ask.
+    if ( viewer._controlsOpacity < 1 ) {
+        viewer._controlsOpacity = 1;
         viewer.raiseEvent( 'controls-fade', { opacity: 1.0 } );
     }
 }
