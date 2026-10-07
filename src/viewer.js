@@ -3382,8 +3382,10 @@ function onFocus(){
 }
 
 function onBlur(){
-    beginControlsAutoHide( this );
-
+    // Clicking from a focused button to the canvas blurs it with the pointer still inside.
+    if ( !THIS[ this.hash ].mouseInside ) {
+        beginControlsAutoHide( this );
+    }
 }
 
 function onCanvasContextMenu( event ) {

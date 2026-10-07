@@ -61,7 +61,7 @@ $.ButtonState = {
  * @memberof OpenSeadragon
  * @extends OpenSeadragon.EventSource
  * @param {Object} options
- * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;div&gt; element is created.
+ * @param {Element} [options.element=null] Element to use as the button. If not specified, an HTML &lt;button&gt; element is created.
  * @param {String} [options.tooltip=null] Provides context help for the button when the
  *  user hovers over it.
  * @param {String} [options.srcRest=null] URL of image to use in 'rest' state.
@@ -122,7 +122,10 @@ $.Button = function( options ) {
      * @member {Element} element
      * @memberof OpenSeadragon.Button#
      */
-    this.element = options.element || $.makeNeutralElement("div");
+    this.element = options.element || makeButtonElement();
+
+    this._isCustomElement = !!options.element;
+    this._disabled = !!( options.element && options.element.disabled );
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
@@ -132,11 +135,12 @@ $.Button = function( options ) {
         this.imgHover     = $.makeTransparentImage( this.srcHover );
         this.imgDown      = $.makeTransparentImage( this.srcDown );
 
+        // Empty alt leaves title as the button's name, so updating title relabels it.
         this.imgRest.alt  =
         this.imgGroup.alt =
         this.imgHover.alt =
         this.imgDown.alt  =
-            this.tooltip;
+            "";
 
         // Allow pointer events to pass through the img elements so implicit
         //   pointer capture works on touch devices
@@ -211,6 +215,9 @@ $.Button = function( options ) {
         clickDistThreshold: this.clickDistThreshold,
 
         enterHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             if ( event.insideElementPressed ) {
                 inTo( _this, $.ButtonState.DOWN );
                 /**
@@ -245,6 +252,9 @@ $.Button = function( options ) {
         },
 
         leaveHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             outTo( _this, $.ButtonState.GROUP );
             if ( event.insideElementPressed ) {
                 /**
@@ -277,6 +287,9 @@ $.Button = function( options ) {
         },
 
         pressHandler: function ( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             inTo( _this, $.ButtonState.DOWN );
             /**
              * Raised when a mouse button is pressed or touch occurs in the Button element.
@@ -292,6 +305,9 @@ $.Button = function( options ) {
         },
 
         releaseHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             if ( event.insideElementPressed && event.insideElementReleased ) {
                 outTo( _this, $.ButtonState.HOVER );
                 /**
@@ -313,6 +329,9 @@ $.Button = function( options ) {
         },
 
         clickHandler: function( event ) {
+            if ( _this._disabled ) {
+                return;
+            }
             if ( event.quick ) {
                 /**
                  * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.
@@ -330,7 +349,16 @@ $.Button = function( options ) {
 
         keyHandler: function( event ){
             //console.log( "%s : handling key %s!", _this.tooltip, event.keyCode);
-            if( 13 === event.keyCode ){
+            if( _this._disabled ){
+                event.preventDefault = 13 === event.keyCode || 32 === event.keyCode;
+                return;
+            }
+            // A held Space activates once, as on a native button.
+            if( 32 === event.keyCode && event.originalEvent.repeat ){
+                event.preventDefault = true;
+                return;
+            }
+            if( 13 === event.keyCode || 32 === event.keyCode ){
                 /***
                  * Raised when a mouse button is pressed and released or touch is initiated and ended in the Button element within the time and distance threshold.
                  *
@@ -386,12 +414,17 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     },
 
     /**
+     * Disables the button. Default buttons stay focusable; a page-supplied element also gets native disabled.
      * @function
      */
     disable: function(){
         this.notifyGroupExit();
-        this.element.disabled = true;
-        this.tracker.setTracking(false);
+        this._disabled = true;
+        this.element.setAttribute( "aria-disabled", "true" );
+        // Keeps :disabled styles on page-supplied elements working.
+        if ( this._isCustomElement ) {
+            this.element.disabled = true;
+        }
         $.setElementOpacity( this.element, 0.2, true );
     },
 
@@ -399,10 +432,23 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
      * @function
      */
     enable: function(){
-        this.element.disabled = false;
-        this.tracker.setTracking(true);
+        this._disabled = false;
+        this.element.removeAttribute( "aria-disabled" );
+        if ( this._isCustomElement ) {
+            this.element.disabled = false;
+        }
         $.setElementOpacity( this.element, 1.0, true );
         this.notifyGroupEnter();
+    },
+
+    /**
+     * Whether the button is disabled. Use this rather than element.disabled,
+     * which is only set on page-supplied elements.
+     * @function
+     * @returns {Boolean}
+     */
+    isDisabled: function(){
+        return this._disabled;
     },
 
     destroy: function() {
@@ -429,6 +475,29 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
 
 });
 
+
+// Inline styles override page-level button rules, except !important ones.
+function makeButtonElement() {
+    const element = $.makeNeutralElement( "button" );
+    element.type = "button";
+    $.extend( element.style, {
+        font:          "inherit",
+        color:         "inherit",
+        textAlign:     "inherit",
+        borderRadius:  "0",
+        boxShadow:     "none",
+        minWidth:      "0",
+        minHeight:     "0",
+        width:         "auto",
+        height:        "auto",
+        appearance:    "none",
+        transform:     "none",
+        transition:    "none",
+        textShadow:    "none",
+        verticalAlign: "baseline"
+    });
+    return element;
+}
 
 function scheduleFade( button ) {
     $.requestAnimationFrame(function(){
@@ -475,7 +544,7 @@ function stopFading( button ) {
 
 function inTo( button, newState ) {
 
-    if( button.element.disabled ){
+    if( button._disabled ){
         return;
     }
 
@@ -505,7 +574,7 @@ function inTo( button, newState ) {
 
 function outTo( button, newState ) {
 
-    if( button.element.disabled ){
+    if( button._disabled ){
         return;
     }
 
