@@ -1300,6 +1300,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} true to show, false to hide.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:controls-enabled
+     * @fires OpenSeadragon.Viewer.event:controls-fade
      */
     setControlsEnabled: function( enabled ) {
         if( enabled ){
@@ -3317,16 +3318,16 @@ function scheduleUpdate( viewer, updateFunc ){
 
 
 //provides a sequence in the fade animation
-function scheduleControlsFade( viewer ) {
+function scheduleControlsFade( viewer, fadeId ) {
     $.requestAnimationFrame( function(){
-        updateControlsFade( viewer );
+        updateControlsFade( viewer, fadeId );
     });
 }
 
 
 //initiates an animation to hide the controls
 function beginControlsAutoHide( viewer ) {
-    if ( !viewer.autoHideControls ) {
+    if ( !viewer.autoHideControls || viewer.controlsShouldFade ) {
         return;
     }
     viewer.controlsShouldFade = true;
@@ -3334,15 +3335,18 @@ function beginControlsAutoHide( viewer ) {
         $.now() +
         viewer.controlsFadeDelay;
 
+    // An abort followed by a new begin can leave the previous timer or frame
+    // loop pending; the id lets it see it has been superseded.
+    const fadeId = viewer._controlsFadeId = ( viewer._controlsFadeId || 0 ) + 1;
     window.setTimeout( function(){
-        scheduleControlsFade( viewer );
+        scheduleControlsFade( viewer, fadeId );
     }, viewer.controlsFadeDelay );
 }
 
 
 //determines if fade animation is done or continues the animation
-function updateControlsFade( viewer ) {
-    if ( viewer.controlsShouldFade ) {
+function updateControlsFade( viewer, fadeId ) {
+    if ( viewer.controlsShouldFade && fadeId === viewer._controlsFadeId ) {
         let currentTime = $.now();
         let deltaTime = currentTime - viewer.controlsFadeBeginTime;
         let opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
@@ -3356,9 +3360,24 @@ function updateControlsFade( viewer ) {
             }
         }
 
+        /**
+         * Raised on each step of the controls fade animation, and with an opacity
+         * of 1 when the controls are shown again. Use it to fade custom controls
+         * in step with the built-in ones.
+         *
+         * @event controls-fade
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Number} opacity - The opacity applied to the controls, from 0 to 1.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        viewer._controlsOpacity = opacity;
+        viewer.raiseEvent( 'controls-fade', { opacity: opacity } );
+
         if ( opacity > 0 ) {
             // fade again
-            scheduleControlsFade( viewer );
+            scheduleControlsFade( viewer, fadeId );
         }
     }
 }
@@ -3369,6 +3388,12 @@ function abortControlsAutoHide( viewer ) {
     viewer.controlsShouldFade = false;
     for ( let i = viewer.controls.length - 1; i >= 0; i-- ) {
         viewer.controls[ i ].setOpacity( 1.0 );
+    }
+    // Tracked on the viewer rather than read from the controls: custom buttons
+    // are not in viewer.controls, so there may be none to ask.
+    if ( viewer._controlsOpacity < 1 ) {
+        viewer._controlsOpacity = 1;
+        viewer.raiseEvent( 'controls-fade', { opacity: 1.0 } );
     }
 }
 

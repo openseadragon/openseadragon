@@ -2179,6 +2179,7 @@ declare namespace OpenSeadragon {
         "container-enter": ContainerEvent;
         "container-exit": ContainerEvent;
         "controls-enabled": ControlsEnabledEvent;
+        "controls-fade": ControlsFadeEvent;
         destroy: ViewerEvent;
         "drawer-error": DrawerErrorEvent;
         flip: FlipEvent;
@@ -2411,6 +2412,10 @@ declare namespace OpenSeadragon {
 
     interface ControlsEnabledEvent extends ViewerEvent {
         enabled: boolean;
+    }
+
+    interface ControlsFadeEvent extends ViewerEvent {
+        opacity: number;
     }
 
     interface DrawerErrorEvent extends ViewerEvent {
