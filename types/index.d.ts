@@ -220,12 +220,15 @@ declare namespace OpenSeadragon {
     function setElementTouchActionNone(element: Element | string): void;
 
     function setImageFormatsSupported(formats: {
+        avif?: boolean;
         bmp?: boolean;
         jpeg?: boolean;
         jpg?: boolean;
+        jxl?: boolean;
         png?: boolean;
         tif?: boolean;
         wdp?: boolean;
+        webp?: boolean;
     }): void;
 
     function setPageScroll(point: Point): void;
