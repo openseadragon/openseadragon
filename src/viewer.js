@@ -2449,6 +2449,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     onFocus:    onFocusHandler,
                     onBlur:     onBlurHandler
                 }));
+
+                const updateZoomButtonsHandler = $.delegate( this, this._updateZoomButtons );
+                this.addHandler( 'open', updateZoomButtonsHandler );
+                this.addHandler( 'viewport-change', updateZoomButtonsHandler );
             }
 
             if ( this.showHomeControl ) {
@@ -2843,6 +2847,20 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
             }
       },
+
+    /**
+     * Disables the zoom buttons once the target zoom reaches the viewport's limits.
+     * @function OpenSeadragon.Viewer.prototype._updateZoomButtons
+     * @private
+     */
+    _updateZoomButtons: function() {
+        if ( !this.viewport ) {
+            return;
+        }
+        const zoom = this.viewport.getZoom();
+        setButtonEnabled( this, this.zoomInButton, zoom < this.viewport.getMaxZoom() );
+        setButtonEnabled( this, this.zoomOutButton, zoom > this.viewport.getMinZoom() );
+    },
 
     /**
      * Display a message in the viewport
@@ -4568,6 +4586,20 @@ function drawWorld( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 function resolveUrl( prefix, url ) {
     return prefix ? prefix + url : url;
+}
+
+
+function setButtonEnabled( viewer, button, enabled ) {
+    if ( !button || button.isDisabled() !== enabled ) {
+        return;
+    }
+    if ( enabled ) {
+        button.enable();
+    } else {
+        // A disabled button ignores pointer release, so a press-and-hold zoom would never end.
+        viewer.endZoomAction();
+        button.disable();
+    }
 }
 
 

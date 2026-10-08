@@ -81,6 +81,39 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    QUnit.test('ZoomControlDisabledAtLimits', function (assert) {
+        const done = assert.async();
+        const zoomAndWait = function (zoom, callback) {
+            viewer.addOnceHandler('viewport-change', callback);
+            viewer.viewport.zoomTo(zoom, null, true);
+        };
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            assert.ok(!viewer.zoomInButton.isDisabled(), "zoomIn button should start enabled");
+            assert.ok(!viewer.zoomOutButton.isDisabled(), "zoomOut button should start enabled");
+
+            zoomAndWait(viewer.viewport.getMaxZoom(), function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "zoomIn button should be disabled at max zoom");
+                assert.ok(!viewer.zoomOutButton.isDisabled(), "zoomOut button should be enabled at max zoom");
+
+                zoomAndWait(viewer.viewport.getMinZoom(), function () {
+                    assert.ok(!viewer.zoomInButton.isDisabled(), "zoomIn button should be enabled at min zoom");
+                    assert.ok(viewer.zoomOutButton.isDisabled(), "zoomOut button should be disabled at min zoom");
+                    done();
+                });
+            });
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     QUnit.test('HomeControlOff', function (assert) {
         const done = assert.async();
         const openHandler = function () {
