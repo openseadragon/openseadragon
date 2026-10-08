@@ -31,6 +31,7 @@ module.exports = [
         rules: {
             "no-unused-vars": ["error", {"args": "none", "caughtErrors": "none"}],
             "@stylistic/semi": ["error", "always"],
+            "@stylistic/no-extra-semi": ["error"],
             "block-scoped-var": ["error"],
             "consistent-return": ["error"],
             "curly": ["error", "all"],
@@ -95,7 +96,9 @@ module.exports = [
             "no-loop-func": ["error"],
             "no-object-constructor": ["error"],
             // Dropped from recommended in ESLint 9.
-            "no-inner-declarations": ["error"]
+            "no-inner-declarations": ["error"],
+            // Defensive initialisations signal intent, so they are allowed.
+            "no-useless-assignment": ["off"]
         }
     }
 ];
