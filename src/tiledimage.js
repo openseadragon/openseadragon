@@ -326,6 +326,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         this._fullyLoaded = flag;
 
+        if (!flag) {
+            // We have just discovered that tiles are missing for the current view - typically right after a
+            // pan or zoom. Boost the per-frame download allowance so the first frames dispatch a burst instead
+            // of trickling one batch per frame; _updateLevelsForViewport decays it back down.
+            this._boostTileLoadingRate();
+        }
+
         /**
          * Fired when the TiledImage's "fully loaded" flag (whether all tiles necessary for this TiledImage
          * to draw at the current view have been loaded) changes.
@@ -363,10 +370,20 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      */
     reset: function() {
         this._tileCache.clearTilesFor(this);
-        this._currentMaxTilesPerFrame = this.maxTilesPerFrame * 10;
+        this._boostTileLoadingRate();
         this.lastResetTime = $.now();
         this._needsDraw = true;
         this._fullyLoaded = false;
+    },
+
+    /**
+     * Temporarily raise the number of tile downloads started per frame, so that a view which just became
+     * incomplete refills quickly instead of at the steady-state rate. Decays back to maxTilesPerFrame in
+     * _updateLevelsForViewport(), one halving per frame.
+     * @private
+     */
+    _boostTileLoadingRate: function() {
+        this._currentMaxTilesPerFrame = this.maxTilesPerFrame * 10;
     },
 
     /**
@@ -1647,6 +1664,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
 
+        // _currentMaxTilesPerFrame is temporarily boosted whenever new tiles become needed; bring it down once
+        // per frame if necessary. This must not live in _updateLevel(), which runs once per pyramid level and
+        // would collapse the whole boost within a single frame.
+        if (this._currentMaxTilesPerFrame > this.maxTilesPerFrame) {
+            this._currentMaxTilesPerFrame = Math.max(Math.ceil(this._currentMaxTilesPerFrame / 2), this.maxTilesPerFrame);
+        }
+
         // Load the new 'best' n tiles
         if (bestLoadTileCandidates && bestLoadTileCandidates.length > 0) {
             // We need to set loading state immediatelly, if we need setTimeout() here,
@@ -1932,11 +1956,6 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 }
             }
         });
-
-        // _currentMaxTilesPerFrame can be temporarily boosted, bring it down after each usage if necessary
-        if (this._currentMaxTilesPerFrame > this.maxTilesPerFrame) {
-            this._currentMaxTilesPerFrame = Math.max(Math.ceil(this._currentMaxTilesPerFrame / 2), this.maxTilesPerFrame);
-        }
 
         if (tilesToDraw) {
             tilesToDraw.length = tileIndex;
@@ -2224,6 +2243,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         const _this = this;
         tile.loading = true;
         tile.tiledImage = this;
+
         if (!this._imageLoader.addJob({
             src: tile.getUrl(),
             tile: tile,

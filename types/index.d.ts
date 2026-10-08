@@ -576,6 +576,7 @@ declare namespace OpenSeadragon {
 
         tstamp: number;
         loaded: boolean;
+        failed: boolean;
         readonly data: any;
         readonly type: string;
 
@@ -603,7 +604,7 @@ declare namespace OpenSeadragon {
         isUsableForDrawer(drawer: DrawerBase): boolean;
         prepareForRendering(drawer: DrawerBase): Promise<any>;
         prepareInternalCacheAsync(drawer: DrawerBase): Promise<any>;
-        prepareInternalCacheSync(drawer: DrawerBase): InternalCacheRecord;
+        prepareInternalCacheSync(drawer: DrawerBase): InternalCacheRecord | undefined;
         transformTo(type?: string | string[]): Promise<any>;
         destroyInternalCache(drawerId?: string): void;
         withTileReference(ref: Tile): CacheRecord;

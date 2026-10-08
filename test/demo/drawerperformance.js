@@ -911,7 +911,7 @@ Stats.Panel = function ( name, fg, bg ) {
 
 // })();
 
-function run(drawerType, num) {
+function run(drawerType, num, benchmark) {
     rS('other').start();
 
     if(viewer){
@@ -920,7 +920,7 @@ function run(drawerType, num) {
     viewer = window.viewer = makeViewer(drawerType);
     const tileSources = makeTileSources(num);
 
-
+    measureLoadTime(viewer, num, benchmark);
 
     tileSources.forEach((ts, i) => {
         viewer.addTiledImage({
@@ -931,6 +931,16 @@ function run(drawerType, num) {
             opacity: (i % 3) === 0 ? 0.4 : 1
         });
     });
+
+    if (benchmark) {
+        // The pan loop below keeps invalidating the view, which is what we want when looking at the frame
+        // rate but not when timing how long a view takes to finish loading.
+        if (window.interval) {
+            window.clearInterval(window.interval);
+        }
+        return;
+    }
+
     window.setTimeout(()=>viewer.viewport.goHome(), 500);
 
     let movingLeft = false;
@@ -944,6 +954,64 @@ function run(drawerType, num) {
         viewer.viewport.panBy(new OpenSeadragon.Point( dist * m/40, 0));
 
     }, 1000);
+}
+
+/**
+ * Times how long the viewer needs to go from nothing loaded to every image fully loaded, so drawers and
+ * settings can be compared numerically instead of by watching the network tab. The clock starts once all
+ * images are in the world and the viewport sits at home, so it measures loading rather than setup.
+ */
+function measureLoadTime(viewer, num, benchmark){
+    const report = $('#load-time');
+    report.text(benchmark ? 'Benchmark: waiting for images...' : '');
+
+    let started = null,
+        tilesLoaded = 0,
+        tilesFailed = 0,
+        finished = false;
+
+    viewer.addHandler('tile-loaded', () => {
+        tilesLoaded++;
+        // An image that was already fully loaded (everything served from cache) never fires
+        // fully-loaded-change, so do not rely on that event alone to notice the end.
+        checkFinished();
+    });
+    viewer.addHandler('tile-load-failed', () => {
+        tilesFailed++;
+        checkFinished();
+    });
+
+    const checkFinished = () => {
+        if (finished || started === null) {
+            return;
+        }
+        const count = viewer.world.getItemCount();
+        for (let i = 0; i < count; i++){
+            if (!viewer.world.getItemAt(i).getFullyLoaded()) {
+                return;
+            }
+        }
+        finished = true;
+        const elapsed = Math.round(window.performance.now() - started);
+        report.text(`${elapsed} ms to load ${tilesLoaded} tiles` +
+            (tilesFailed ? ` (${tilesFailed} failed)` : '') +
+            ` - ${num} image(s), ${viewer.drawer.getType()} drawer`);
+    };
+
+    viewer.world.addHandler('add-item', event => {
+        event.item.addHandler('fully-loaded-change', checkFinished);
+
+        if (viewer.world.getItemCount() < num) {
+            return;
+        }
+        // Everything is in the world: settle the viewport, then start the clock and forget whatever was
+        // loaded on the way here.
+        viewer.viewport.goHome(true);
+        tilesLoaded = 0;
+        tilesFailed = 0;
+        started = window.performance.now();
+        report.text('Loading...');
+    });
 }
 
 function makeViewer(drawerType){
@@ -989,6 +1057,18 @@ $('#create-drawer').on('click',function(){
         history.replaceState(null, window.location.title, url.toString());
     }
     run(drawer, num);
+});
+
+$('#run-benchmark').on('click',function(){
+    const drawer = $('#select-drawer').val();
+    const num = Math.floor($('#input-number').val());
+
+    url.searchParams.set("drawer", drawer);
+    url.searchParams.set("sources", num);
+    if ("undefined" !== typeof history.replaceState) {
+        history.replaceState(null, window.location.title, url.toString());
+    }
+    run(drawer, num, true);
 });
 
 $('#input-number').val(numberOfSources);
