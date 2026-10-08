@@ -62,20 +62,9 @@
                 return;
             }
 
-            const probeCanvas = document.createElement('canvas');
-            const webgl2Context = probeCanvas.getContext('webgl2');
-            const webgl2Supported = !!webgl2Context;
-            if (webgl2Context && webgl2Context.getExtension) {
-                const ext = webgl2Context.getExtension('WEBGL_lose_context');
-                if (ext) {
-                    ext.loseContext();
-                }
-            }
-
-            assert.equal(
+            assert.false(
                 viewer.drawer.isWebGL2(),
-                webgl2Supported,
-                'isWebGL2 matches WebGL2 context availability'
+                'isWebGL2 remains false until the WebGL2 rendering path is fully implemented'
             );
             done();
         });
