@@ -2850,7 +2850,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
       },
 
     /**
-     * Disables the zoom buttons once the target zoom reaches the viewport's limits.
+     * Disables each zoom button while the target zoom is at that button's limit.
      * @function OpenSeadragon.Viewer.prototype._updateZoomButtons
      * @private
      */
