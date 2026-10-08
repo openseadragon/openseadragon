@@ -488,6 +488,7 @@ $.Viewer = function( options ) {
     this.world.addHandler('metrics-change', function(event) {
         if (_this.viewport) {
             _this.viewport._setContentBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+            _this._updateZoomButtons();
         }
     });
 
@@ -4590,7 +4591,7 @@ function resolveUrl( prefix, url ) {
 
 
 function setButtonEnabled( viewer, button, enabled ) {
-    if ( !button || button.isDisabled() !== enabled ) {
+    if ( !button || button.isDisabled() === !enabled ) {
         return;
     }
     if ( enabled ) {
