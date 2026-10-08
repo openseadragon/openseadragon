@@ -170,7 +170,7 @@
          * @memberof OpenSeadragon.MouseTracker#
          */
         this.dblClickDistThreshold = options.dblClickDistThreshold || $.DEFAULT_SETTINGS.dblClickDistThreshold;
-        /*eslint-disable no-multi-spaces*/
+        /*eslint-disable @stylistic/no-multi-spaces*/
         this.userData              = options.userData          || null;
         this.stopDelay             = options.stopDelay         || 50;
 
@@ -198,7 +198,7 @@
         this.keyHandler               = options.keyHandler               || null;
         this.focusHandler             = options.focusHandler             || null;
         this.blurHandler              = options.blurHandler              || null;
-        /*eslint-enable no-multi-spaces*/
+        /*eslint-enable @stylistic/no-multi-spaces*/
 
         /**
          * If true, a single touch contact is left to the browser (not captured / preventDefault'd)
@@ -1613,7 +1613,6 @@
         } else {
             // Emulate mouse capture by hanging listeners on the document object.
             //    (Note we listen on the capture phase so the captured handlers will get called first)
-            // eslint-disable-next-line no-use-before-define
             //$.console.log('Emulated mouse capture set');
             const eventParams = getCaptureEventParams( tracker, $.MouseTracker.havePointerEvents ? 'pointerevent' : gPoint.type );
             // https://github.com/openseadragon/openseadragon/pull/790
@@ -2109,7 +2108,6 @@
      * @inner
      */
     function handleWheelEvent( tracker, event, originalEvent ) {
-        let nDelta = 0;
         let eventInfo;
 
         let eventArgs = null;
@@ -2119,7 +2117,7 @@
         //   y-index scrolling.
         // event.deltaMode: 0=pixel, 1=line, 2=page
         // TODO: Deltas in pixel mode should be accumulated then a scroll value computed after $.DEFAULT_SETTINGS.pixelsPerWheelLine threshold reached
-        nDelta = event.deltaY ? (event.deltaY < 0 ? 1 : -1) : 0;
+        const nDelta = event.deltaY ? (event.deltaY < 0 ? 1 : -1) : 0;
 
         eventInfo = {
             originalEvent: event,

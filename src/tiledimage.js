@@ -889,7 +889,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                         throw new Error();
                     }
                 } catch(e) {
-                    throw new Error('A Provided cropping polygon point is not supported');
+                    throw new Error('A Provided cropping polygon point is not supported', { cause: e });
                 }
             });
         };
@@ -1983,7 +1983,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
 
         for (let x = drawTopLeftTile.x; x <= drawBottomRightTile.x; x++) {
             for (let y = drawTopLeftTile.y; y <= drawBottomRightTile.y; y++) {
-                let flippedX = x;
+                let flippedX;
                 if (this.getFlip()) {
                     const xMod = ( numberOfTiles.x + ( x % numberOfTiles.x ) ) % numberOfTiles.x;
                     flippedX = x + numberOfTiles.x - xMod - xMod - 1;

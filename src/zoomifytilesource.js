@@ -93,7 +93,7 @@
         //private
         _calculateAbsoluteTileNumber: function(level, x, y) {
             let num = 0;
-            let size = {};
+            let size;
 
             //Sum up all tiles below the level we want the number of tiles
             for (let z = 0; z < level; z++) {
@@ -138,9 +138,8 @@
          */
         getTileUrl: function(level, x, y) {
             //console.log(level);
-            let result = 0;
             const num = this._calculateAbsoluteTileNumber(level, x, y);
-            result = Math.floor(num / 256);
+            const result = Math.floor(num / 256);
             return this.tilesUrl + 'TileGroup' + result + '/' + level + '-' + x + '-' + y + '.' + this.fileFormat;
 
         },

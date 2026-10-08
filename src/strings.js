@@ -76,7 +76,7 @@ $.extend( $, /** @lends OpenSeadragon */{
     getString: function( prop ) {
 
         const props   = prop.split('.');
-        let string  = null;
+        let string;
         const args    = arguments;
         let container = I18N;
         let i;

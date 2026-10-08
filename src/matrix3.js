@@ -1,4 +1,4 @@
-/* eslint-disable one-var-declaration-per-line */
+/* eslint-disable @stylistic/one-var-declaration-per-line */
 
 /*
  * OpenSeadragon - Mat3

@@ -206,7 +206,6 @@ $.TileSource = function( options ) {
 
     if( 'string' === $.type( options ) ){
         this.url = options;
-        options = undefined;
     } else {
         //we allow options to override anything we don't treat as
         //required via idiomatic options or which is functionally
@@ -1028,7 +1027,7 @@ $.extend( true, $.TileSource.prototype, $.EventSource.prototype );
  */
 function processResponse( xhr ){
     const responseText = xhr.responseText;
-    let status       = xhr.status;
+    let status;
     let statusText;
     let data;
 
