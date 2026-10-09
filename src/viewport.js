@@ -1830,6 +1830,10 @@ $.Viewport.prototype = {
                 this.applyConstraints(immediately);
             }
         }
+
+        if (this.viewer) {
+            this.viewer._updateZoomButtons();
+        }
     },
 
 };
