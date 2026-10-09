@@ -138,4 +138,16 @@
         OpenSeadragon.cancelAnimationFrame(frameId);
     });
 
+    // ----------
+    QUnit.test("imageFormatSupported", function(assert) {
+        ["avif", "jpeg", "jpg", "jxl", "png", "webp"].forEach(function(format) {
+            assert.ok(OpenSeadragon.imageFormatSupported(format), format + ' is supported');
+        });
+        assert.ok(OpenSeadragon.imageFormatSupported("JXL"), 'format check is case-insensitive');
+        ["bmp", "tif", "wdp"].forEach(function(format) {
+            assert.notOk(OpenSeadragon.imageFormatSupported(format), format + ' is not supported');
+        });
+        assert.notOk(OpenSeadragon.imageFormatSupported(), 'missing format is not supported');
+    });
+
 })();
