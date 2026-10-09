@@ -4591,15 +4591,20 @@ function resolveUrl( prefix, url ) {
 
 
 function setButtonEnabled( viewer, button, enabled ) {
-    if ( !button || button.isDisabled() === !enabled ) {
+    if ( !button ) {
         return;
     }
+    // Only re-enable buttons disabled here, so a manual disable() survives.
     if ( enabled ) {
-        button.enable();
-    } else {
+        if ( button._disabledAtZoomLimit ) {
+            button._disabledAtZoomLimit = false;
+            button.enable();
+        }
+    } else if ( !button.isDisabled() ) {
         // A disabled button ignores pointer release, so a press-and-hold zoom would never end.
         viewer.endZoomAction();
         button.disable();
+        button._disabledAtZoomLimit = true;
     }
 }
 

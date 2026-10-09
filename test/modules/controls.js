@@ -167,6 +167,29 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    QUnit.test('ZoomControlKeepsManualDisable', function (assert) {
+        const done = assert.async();
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            viewer.zoomInButton.disable();
+            viewer.addOnceHandler('viewport-change', function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "manually disabled zoomIn button should stay disabled");
+                done();
+            });
+            const viewport = viewer.viewport;
+            viewport.zoomTo((viewport.getMinZoom() + viewport.getMaxZoom()) / 2, null, true);
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     QUnit.test('HomeControlOff', function (assert) {
         const done = assert.async();
         const openHandler = function () {
