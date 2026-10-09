@@ -488,6 +488,7 @@ $.Viewer = function( options ) {
     this.world.addHandler('metrics-change', function(event) {
         if (_this.viewport) {
             _this.viewport._setContentBounds(_this.world.getHomeBounds(), _this.world.getContentFactor());
+            _this._updateZoomButtons();
         }
     });
 
@@ -2449,6 +2450,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     onFocus:    onFocusHandler,
                     onBlur:     onBlurHandler
                 }));
+
+                const updateZoomButtonsHandler = $.delegate( this, this._updateZoomButtons );
+                this.addHandler( 'open', updateZoomButtonsHandler );
+                this.addHandler( 'viewport-change', updateZoomButtonsHandler );
             }
 
             if ( this.showHomeControl ) {
@@ -2843,6 +2848,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
             }
       },
+
+    /**
+     * Disables each zoom button while the target zoom is at that button's limit.
+     * @function OpenSeadragon.Viewer.prototype._updateZoomButtons
+     * @private
+     */
+    _updateZoomButtons: function() {
+        if ( !this.viewport ) {
+            return;
+        }
+        const zoom = this.viewport.getZoom();
+        const maxZoom = this.viewport.getMaxZoom();
+        const minZoom = this.viewport.getMinZoom();
+        setButtonEnabled( this, this.zoomInButton, zoom < maxZoom && !isAtZoomLimit( zoom, maxZoom ) );
+        setButtonEnabled( this, this.zoomOutButton, zoom > minZoom && !isAtZoomLimit( zoom, minZoom ) );
+    },
 
     /**
      * Display a message in the viewport
@@ -4568,6 +4589,31 @@ function drawWorld( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 function resolveUrl( prefix, url ) {
     return prefix ? prefix + url : url;
+}
+
+
+// Constrained zooms recompute zoom from bounds width, so they can stop an ulp short of the limit.
+function isAtZoomLimit( zoom, limit ) {
+    return Math.abs( zoom / limit - 1 ) < 1e-8;
+}
+
+
+function setButtonEnabled( viewer, button, enabled ) {
+    if ( !button ) {
+        return;
+    }
+    // Only re-enable buttons disabled here, so a manual disable() survives.
+    if ( enabled ) {
+        if ( button._disabledAtZoomLimit ) {
+            button._disabledAtZoomLimit = false;
+            button.enable();
+        }
+    } else if ( !button.isDisabled() ) {
+        // A disabled button ignores pointer release, so a press-and-hold zoom would never end.
+        viewer.endZoomAction();
+        button.disable();
+        button._disabledAtZoomLimit = true;
+    }
 }
 
 

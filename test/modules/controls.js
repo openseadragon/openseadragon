@@ -81,6 +81,148 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    QUnit.test('ZoomControlDisabledAtLimits', function (assert) {
+        const done = assert.async();
+        const zoomAndWait = function (zoom, callback) {
+            viewer.addOnceHandler('viewport-change', callback);
+            viewer.viewport.zoomTo(zoom, null, true);
+        };
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            assert.ok(!viewer.zoomInButton.isDisabled(), "zoomIn button should start enabled");
+            assert.ok(!viewer.zoomOutButton.isDisabled(), "zoomOut button should start enabled");
+
+            zoomAndWait(viewer.viewport.getMaxZoom(), function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "zoomIn button should be disabled at max zoom");
+                assert.ok(!viewer.zoomOutButton.isDisabled(), "zoomOut button should be enabled at max zoom");
+
+                zoomAndWait(viewer.viewport.getMinZoom(), function () {
+                    assert.ok(!viewer.zoomInButton.isDisabled(), "zoomIn button should be enabled at min zoom");
+                    assert.ok(viewer.zoomOutButton.isDisabled(), "zoomOut button should be disabled at min zoom");
+                    done();
+                });
+            });
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    QUnit.test('ZoomControlDisabledAtConstrainedLimits', function (assert) {
+        const done = assert.async();
+        // An off-centre pivot makes the constrained zoom drift an ulp off the limit.
+        const zoomRepeatedlyAndWait = function (factor, callback) {
+            const pivot = new OpenSeadragon.Point(1, 1);
+            for (let i = 0; i < 40; i++) {
+                viewer.viewport.zoomBy(factor, pivot, true);
+                viewer.viewport.applyConstraints(true);
+            }
+            viewer.addOnceHandler('viewport-change', callback);
+        };
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            zoomRepeatedlyAndWait(2, function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "zoomIn button should be disabled at max zoom");
+
+                zoomRepeatedlyAndWait(0.5, function () {
+                    assert.ok(viewer.zoomOutButton.isDisabled(), "zoomOut button should be disabled at min zoom");
+                    done();
+                });
+            });
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    QUnit.test('ZoomControlUpdatesWhenWorldChanges', function (assert) {
+        const done = assert.async();
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            viewer.addOnceHandler('viewport-change', function () {
+                assert.ok(viewer.zoomOutButton.isDisabled(), "zoomOut button should be disabled at min zoom");
+
+                // Widening the world lowers the min zoom without moving the viewport.
+                viewer.addTiledImage({
+                    tileSource: '/test/data/testpattern.dzi',
+                    x: 10,
+                    success: function () {
+                        assert.ok(!viewer.zoomOutButton.isDisabled(), "zoomOut button should be enabled once the world grows");
+                        done();
+                    }
+                });
+            });
+            viewer.viewport.zoomTo(viewer.viewport.getMinZoom(), null, true);
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    QUnit.test('ZoomControlUpdatesWhenMaxZoomPixelRatioChanges', function (assert) {
+        const done = assert.async();
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            viewer.addOnceHandler('viewport-change', function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "zoomIn button should be disabled at max zoom");
+                viewer.viewport.setMaxZoomPixelRatio(viewer.viewport.getMaxZoomPixelRatio() * 2);
+                assert.ok(!viewer.zoomInButton.isDisabled(), "zoomIn button should be enabled once max zoom rises");
+                done();
+            });
+            viewer.viewport.zoomTo(viewer.viewport.getMaxZoom(), null, true);
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
+    QUnit.test('ZoomControlKeepsManualDisable', function (assert) {
+        const done = assert.async();
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            viewer.zoomInButton.disable();
+            viewer.addOnceHandler('viewport-change', function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "manually disabled zoomIn button should stay disabled");
+                done();
+            });
+            const viewport = viewer.viewport;
+            viewport.zoomTo((viewport.getMinZoom() + viewport.getMaxZoom()) / 2, null, true);
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     QUnit.test('HomeControlOff', function (assert) {
         const done = assert.async();
         const openHandler = function () {
