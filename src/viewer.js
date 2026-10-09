@@ -2859,8 +2859,10 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
             return;
         }
         const zoom = this.viewport.getZoom();
-        setButtonEnabled( this, this.zoomInButton, zoom < this.viewport.getMaxZoom() );
-        setButtonEnabled( this, this.zoomOutButton, zoom > this.viewport.getMinZoom() );
+        const maxZoom = this.viewport.getMaxZoom();
+        const minZoom = this.viewport.getMinZoom();
+        setButtonEnabled( this, this.zoomInButton, zoom < maxZoom && !isAtZoomLimit( zoom, maxZoom ) );
+        setButtonEnabled( this, this.zoomOutButton, zoom > minZoom && !isAtZoomLimit( zoom, minZoom ) );
     },
 
     /**
@@ -4587,6 +4589,12 @@ function drawWorld( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 function resolveUrl( prefix, url ) {
     return prefix ? prefix + url : url;
+}
+
+
+// Constrained zooms recompute zoom from bounds width, so they can stop an ulp short of the limit.
+function isAtZoomLimit( zoom, limit ) {
+    return Math.abs( zoom / limit - 1 ) < 1e-8;
 }
 
 

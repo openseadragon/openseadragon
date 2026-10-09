@@ -114,6 +114,39 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    QUnit.test('ZoomControlDisabledAtConstrainedLimits', function (assert) {
+        const done = assert.async();
+        // An off-centre pivot makes the constrained zoom drift an ulp off the limit.
+        const zoomRepeatedlyAndWait = function (factor, callback) {
+            const pivot = new OpenSeadragon.Point(1, 1);
+            for (let i = 0; i < 40; i++) {
+                viewer.viewport.zoomBy(factor, pivot, true);
+                viewer.viewport.applyConstraints(true);
+            }
+            viewer.addOnceHandler('viewport-change', callback);
+        };
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            zoomRepeatedlyAndWait(2, function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "zoomIn button should be disabled at max zoom");
+
+                zoomRepeatedlyAndWait(0.5, function () {
+                    assert.ok(viewer.zoomOutButton.isDisabled(), "zoomOut button should be disabled at min zoom");
+                    done();
+                });
+            });
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     QUnit.test('ZoomControlUpdatesWhenWorldChanges', function (assert) {
         const done = assert.async();
         const openHandler = function () {
