@@ -157,6 +157,18 @@ $.ImageJob = function(options) {
         jobId: null,
         tries: 0,
     }, options);
+
+    /**
+     * Private supplied abort callback, captured before start() replaces
+     * this.abort with its own closure. start() runs again for every retry, so reading this.abort there
+     * would chain the previous attempt's closure into the new one, and a single abort() would then fail
+     * the job once per attempt already made - calling back (and decrementing
+     * ImageLoader.jobsInProgress) several times for one job.
+     * @member {function} _callerAbort
+     * @memberof OpenSeadragon.ImageJob#
+     * @private
+     */
+    this._callerAbort = typeof this.abort === "function" ? this.abort : null;
 };
 
 $.ImageJob.prototype = {
@@ -170,7 +182,9 @@ $.ImageJob.prototype = {
         this.tries++;
 
         const self = this;
-        const selfAbort = this.abort;
+        // Captured at construction: see ImageJob#_callerAbort. Must not be re-read from this.abort,
+        // which on a retry is the closure installed by the previous start().
+        const selfAbort = this._callerAbort;
 
         /**
          * Called automatically when the job times out.
@@ -246,15 +260,21 @@ $.ImageJob.prototype = {
      * @param {XMLHttpRequest} request reference to the request if used
      */
     fail: function(errorMessage, request) {
+        // Same guard as finish(): a job completes exactly once. A tile source can report a failure the
+        // job already knows about - aborting an XHR, for instance, fires its error handler synchronously
+        // from inside downloadTileAbort() - and calling back twice would decrement
+        // ImageLoader.jobsInProgress twice and queue the tile for retry twice.
+        if (!this.jobId) {
+            return;
+        }
+
         this.data = null;
         this.request = request;
         this.errorMsg = errorMessage;
         this.dataType = null;
 
-        if (this.jobId) {
-            window.clearTimeout(this.jobId);
-            this.jobId = null;
-        }
+        window.clearTimeout(this.jobId);
+        this.jobId = null;
 
         this.callback(this);
     }

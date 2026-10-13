@@ -282,6 +282,92 @@
 
     // ----------
 
+    QUnit.test('Retrying a job completes it once per attempt', function(assert) {
+        const done = assert.async();
+
+        const source = MockSeadragon.getTileSource();
+        let aborts = 0;
+        // Never finish/fail, so every attempt can only end in the timeout.
+        source.downloadTileStart = function() {};
+        source.downloadTileAbort = function() { aborts++; };
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {
+            timeout: 10,
+            tileRetryMax: 2,
+            tileRetryDelay: 1
+        }));
+        const imageLoader = viewer.imageLoader;
+
+        let callbacks = 0, lastTries = 0, releases = 0;
+        imageLoader.addJob({
+            src: 'test',
+            source: source,
+            loadWithAjax: false,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            // This is the callback TiledImage uses to reset tile.loading.
+            abort: function() { releases++; },
+            callback: function(data, errorMsg, request, dataType, jobTries) {
+                callbacks++;
+                lastTries = jobTries;
+            }
+        });
+
+        // 3 attempts (the first plus tileRetryMax retries), each timing out after 10ms and waiting 1ms.
+        setTimeout(function() {
+            // start() used to re-read this.abort, so attempt 2 wrapped attempt 1's closure and attempt 3
+            // wrapped them both: one timeout then called fail() once per attempt already made, giving
+            // 1 + 2 + 3 = 6 callbacks and leaving jobsInProgress at -3.
+            assert.equal(callbacks, 3, 'One completion per attempt.');
+            assert.equal(lastTries, 3, 'The job stops after tileRetryMax retries.');
+            assert.equal(aborts, 3, 'The tile source is told to abort once per attempt.');
+            assert.equal(releases, 3, 'The tile is released once per attempt.');
+            assert.equal(imageLoader.jobsInProgress, 0,
+                'Every reserved slot is given back exactly once, was ' + imageLoader.jobsInProgress);
+            assert.equal(imageLoader.failedTiles.length, 0, 'The job is not queued for retry twice.');
+            done();
+        }, 300);
+    });
+
+    // ----------
+
+    QUnit.test('A tile source reporting a failure twice completes the job once', function(assert) {
+        const done = assert.async();
+
+        const source = MockSeadragon.getTileSource();
+        source.downloadTileStart = function(context) {
+            context.fail('first report', null);
+            // An aborted XHR fires its error handler from inside downloadTileAbort(), so a source can
+            // report the same failure a second time.
+            context.fail('second report', null);
+        };
+        source.downloadTileAbort = function() {};
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, { tileRetryMax: 1, tileRetryDelay: 1 }));
+        const imageLoader = viewer.imageLoader;
+
+        let callbacks = 0;
+        imageLoader.addJob({
+            src: 'test',
+            source: source,
+            loadWithAjax: false,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            abort: function() {},
+            callback: function() { callbacks++; }
+        });
+
+        setTimeout(function() {
+            // 2 attempts (the first plus tileRetryMax), one completion each.
+            assert.equal(callbacks, 2, 'The duplicate report is ignored.');
+            assert.equal(imageLoader.jobsInProgress, 0,
+                'jobsInProgress is balanced, was ' + imageLoader.jobsInProgress);
+            done();
+        }, 100);
+    });
+
+    // ----------
+
     // Fails one plain job so it lands in failedTiles and _pumpQueue schedules its retry. All of that is
     // synchronous, because downloadTileStart fails immediately.
     function failOneJob(assert, options, onCallback) {
