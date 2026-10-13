@@ -1698,8 +1698,11 @@
             const gl = this._glContext ? this._glContext.getContext() : null;
             if (!gl) {
                 $.console.error('WebGL context not available in internalCacheCreate');
-                // Returning null means nothing is stored, so the texture is retried once a context
-                // exists again, instead of caching an empty record the tile can never recover from.
+                // Returning null means no usable record is stored, so the texture is retried once
+                // a context exists again, instead of caching an empty record the tile can never
+                // recover from. The cache parks a failed marker to throttle the retry to once per
+                // second; context recovery calls setInternalCacheNeedsRefresh(), which outdates the
+                // marker right away, so healing is not delayed by that cool-off.
                 return null;
             }
             let texture;

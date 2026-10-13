@@ -477,6 +477,77 @@
         done();
     });
 
+    // A main-thread stall makes every in-flight conversion's 15 s timer fire in the same tick. Counting each
+    // of them as a separate strike retired a perfectly healthy worker for the rest of the session, after
+    // which every tile decoded on the main thread.
+    QUnit.test('Simultaneous worker timeouts do not retire the worker', async function (test) {
+        const done = test.async();
+
+        const originalFetch = window.fetch;
+        const originalSetTimeout = window.setTimeout;
+        const originalNow = OpenSeadragon.now;
+        let fetchCount = 0;
+        window.fetch = function () {
+            fetchCount++;
+            return originalFetch.apply(window, arguments);
+        };
+
+        // Probe: the worker fetches on its own thread, so a main-thread fetch means there is no worker here
+        // (no createImageBitmap, a CSP that blocks blob: workers, ...) and there is nothing to test.
+        await OpenSeadragon.converter.convert({}, "data/A.png", "__private__imageUrl", "imageBitmap");
+        if (fetchCount > 0) {
+            window.fetch = originalFetch;
+            test.ok(true, "No decoding worker in this environment, nothing to retire.");
+            done();
+            return;
+        }
+
+        // Conversion reaches postWorker() synchronously (converter.convert calls the first edge's transform
+        // directly), so the three timers below are all captured in one turn - no worker reply can land in
+        // between and reset the strike count.
+        const captured = [];
+        window.setTimeout = function (fn, delay) {
+            if (delay === 15000) {
+                captured.push(fn);
+                return -1;
+            }
+            return originalSetTimeout.apply(window, arguments);
+        };
+
+        const pending = [];
+        for (let i = 0; i < 3; i++) {
+            pending.push(OpenSeadragon.converter.convert(
+                {}, "data/A.png", "__private__imageUrl", "imageBitmap").catch(() => undefined));
+        }
+        window.setTimeout = originalSetTimeout;
+        test.equal(captured.length, 3, "Three conversions are waiting on the worker.");
+
+        // Freeze the clock so all three timeouts are indistinguishable in time, which is exactly the stall
+        // case: they say nothing about the worker's health and must collapse into a single strike.
+        const frozen = originalNow.call(OpenSeadragon);
+        OpenSeadragon.now = function () { return frozen; };
+        try {
+            for (let i = 0; i < captured.length; i++) {
+                captured[i]();
+            }
+        } finally {
+            OpenSeadragon.now = originalNow;
+        }
+        await Promise.all(pending);
+
+        fetchCount = 0;
+        const bitmap = await OpenSeadragon.converter.convert(
+            {}, "data/A.png", "__private__imageUrl", "imageBitmap");
+        window.fetch = originalFetch;
+
+        test.ok(bitmap && bitmap.width > 0, "Conversion still works after the burst of timeouts.");
+        test.equal(fetchCount, 0,
+            "The worker survived: decoding did not fall back to the main thread, fetches was " + fetchCount + ".");
+
+        OpenSeadragon.converter.destroy(bitmap, "imageBitmap");
+        done();
+    });
+
     QUnit.test('Real types conversion', async function (test) {
         const done = test.async();
 

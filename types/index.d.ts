@@ -1036,7 +1036,7 @@ declare namespace OpenSeadragon {
 
         addJob(options: TImageJobOptions): boolean;
         canAcceptNewJob(): boolean;
-        clear(): void;
+        clear(cancelRetries: boolean): void;
     }
 
     interface ImageTileSourceOptions extends TileSourceOptions {

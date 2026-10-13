@@ -280,4 +280,101 @@
         });
     });
 
+    // ----------
+
+    // Fails one plain job so it lands in failedTiles and _pumpQueue schedules its retry. All of that is
+    // synchronous, because downloadTileStart fails immediately.
+    function failOneJob(assert, options, onCallback) {
+        const source = MockSeadragon.getTileSource();
+        const calls = { aborts: 0, callbacks: 0 };
+        source.downloadTileStart = function(context) {
+            context.fail('always fails', null);
+        };
+        source.downloadTileAbort = function() {
+            calls.aborts++;
+        };
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, options));
+        const imageLoader = viewer.imageLoader;
+
+        imageLoader.addJob({
+            src: 'test',
+            source: source,
+            loadWithAjax: false,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            abort: function() {},
+            callback: function(data, errorMsg, request, dataType, jobTries) {
+                calls.callbacks++;
+                if (onCallback) {
+                    onCallback(jobTries);
+                }
+            }
+        });
+
+        assert.equal(imageLoader._retryTimers.length, 1, 'The failed tile has a retry scheduled.');
+        assert.equal(imageLoader.failedTiles.length, 0, 'It was already taken out of failedTiles.');
+        return { imageLoader: imageLoader, calls: calls };
+    }
+
+    // ----------
+
+    QUnit.test('Per-frame clear keeps pending tile retries', function(assert) {
+        const done = assert.async();
+
+        const fixture = failOneJob(assert, { tileRetryMax: 1, tileRetryDelay: 1 }, function(jobTries) {
+            if (jobTries > 1) {
+                assert.ok(true, 'The retry still ran after a per-frame clear.');
+                done();
+            }
+        });
+
+        // drawWorld() calls this on every frame the wanted tile set changes. A failed tile is marked
+        // tile.exists = false, and tile selection skips such tiles, so the retry queue is its only way
+        // back - dropping it here would leave the tile blank until TiledImage#reset().
+        fixture.imageLoader.clear();
+
+        assert.equal(fixture.imageLoader._retryTimers.length, 1, 'The pending retry survives clear().');
+    });
+
+    // ----------
+
+    QUnit.test('Teardown clear cancels pending tile retries', function(assert) {
+        const done = assert.async();
+
+        // Long enough that the retry is certainly still pending when we clear.
+        const fixture = failOneJob(assert, { tileRetryMax: 1, tileRetryDelay: 10000 });
+        const imageLoader = fixture.imageLoader;
+        const slotsBefore = imageLoader.jobsInProgress;
+
+        imageLoader.clear(true);
+
+        assert.equal(imageLoader._retryTimers.length, 0, 'The pending retry timer is cancelled.');
+        assert.equal(imageLoader.failedTiles.length, 0, 'Tiles waiting for a retry are dropped.');
+        assert.equal(imageLoader.jobsInProgress, slotsBefore - 1,
+            'The slot the retry had reserved is given back exactly once.');
+        // Aborting would route the job through fail() -> completeJob(), which re-queues it and decrements
+        // jobsInProgress for a job that was never counted as in progress.
+        assert.equal(fixture.calls.aborts, 0, 'Dropped retries are not aborted.');
+
+        const callbacksBefore = fixture.calls.callbacks;
+        setTimeout(function() {
+            assert.equal(fixture.calls.callbacks, callbacksBefore, 'The cancelled retry never runs.');
+            done();
+        }, 50);
+    });
+
+    // ----------
+
+    QUnit.test('Closing the viewer cancels pending tile retries', function(assert) {
+        const fixture = failOneJob(assert, { tileRetryMax: 1, tileRetryDelay: 10000 });
+        const imageLoader = fixture.imageLoader;
+
+        // close() tears down the world the retry would load into, so it must pass the teardown flag.
+        viewer.close();
+
+        assert.equal(imageLoader._retryTimers.length, 0, 'close() cancels pending retry timers.');
+        assert.equal(imageLoader.failedTiles.length, 0, 'close() drops tiles waiting for a retry.');
+    });
+
 })();

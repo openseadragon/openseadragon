@@ -413,7 +413,8 @@
          * @param {OpenSeadragon.DrawerBase} drawer
          * @param {string} drawerID
          * @return {OpenSeadragon.InternalCacheRecord|undefined} undefined if the drawer declined
-         *   (returned null/undefined) or threw
+         *   (returned null/undefined) or threw; a failed marker record is registered in the drawer
+         *   slot in that case, see _storeFailedInternal()
          * @private
          */
         _safeInternalCacheCreate(drawer, drawerID) {
@@ -424,12 +425,14 @@
                 transformedData = drawer.internalCacheCreate(this, this._tRef);
             } catch (e) {
                 $.console.error("[CacheRecord] internalCacheCreate threw:", e);
+                this._storeFailedInternal(drawer, drawerID);
                 return undefined;
             }
 
             $.console.assert(transformedData !== undefined, "[DrawerBase.internalCacheCreate] must return a value if usePrivateCache is enabled!");
             if (transformedData === undefined || transformedData === null) {
-                // do not store in the internal cache which would later hand undefined/null to the drawer destructor
+                // do not store the value itself, it would later be handed to the drawer destructor
+                this._storeFailedInternal(drawer, drawerID);
                 return undefined;
             }
 
@@ -446,6 +449,26 @@
         }
 
         /**
+         * Park a failed-build marker in the drawer slot. The cool-off in _checkInternalCacheUpToDate()
+         * throttles rebuilds only for a record that exists and is marked failed - an empty slot reads
+         * as plain 'not up to date', so a drawer that declines (returns null/undefined) or throws
+         * would be re-invoked from every single frame, which is exactly what the cool-off exists to
+         * prevent (e.g. the WebGL drawer declining while its context is lost).
+         *
+         * The marker holds no data: destroying it is a no-op and internalCacheFree() is never called
+         * with it. It does not delay recovery either - setInternalCacheNeedsRefresh() outdates it
+         * immediately, since _dataNeedsRefresh is tested before the cool-off.
+         * @param {OpenSeadragon.DrawerBase} drawer
+         * @param {string} drawerID
+         * @private
+         */
+        _storeFailedInternal(drawer, drawerID) {
+            const marker = new $.InternalCacheRecord(undefined, drawerID, (data) => drawer.internalCacheFree(data));
+            marker._drawer = drawer; // as in the success path: lets an in-place overwrite retry the build
+            this[DRAWER_INTERNAL_CACHE][drawerID] = marker._markFailed();
+        }
+
+        /**
          * Get an internal cache reference for given drawer
          * @param {OpenSeadragon.DrawerBase} drawer
          * @return {OpenSeadragon.InternalCacheRecord|undefined}
@@ -454,7 +477,7 @@
         _getInternalCacheRef(drawer) {
             const options = drawer.options;
             if (!options.usePrivateCache) {
-                $.console.error("[CacheRecord.prepareInternalCacheSync] must not be called when usePrivateCache is false.");
+                $.console.error("[CacheRecord._getInternalCacheRef] must not be called when usePrivateCache is false.");
                 return undefined;
             }
 
@@ -613,14 +636,22 @@
                 return;
             }
 
-            // Build into a detached slot: _safeInternalCacheCreate registers the record under
-            // drawerID, but the whole point here is to keep the old one visible until the
-            // replacement is ready, so put the old one straight back and swap explicitly below.
+            // Build into a detached slot: _safeInternalCacheCreate registers whatever it produced (a
+            // record, or a failed marker) under drawerID, but the whole point here is to keep the old one
+            // visible until the replacement is ready, so take it back out, put the old one straight back
+            // and swap explicitly below.
             const fresh = this._safeInternalCacheCreate(drawer, drawerID);
+            const marker = fresh ? undefined : internal[drawerID];
             internal[drawerID] = old;
             if (!fresh) {
                 this._safeDestroyInternal(old);
-                delete internal[drawerID];
+                // Keep the failed marker so the draw path honours the retry cool-off instead of calling
+                // the failing drawer again on the very next frame.
+                if (marker && marker !== old) {
+                    internal[drawerID] = marker;
+                } else {
+                    delete internal[drawerID];
+                }
                 return;
             }
 
@@ -1049,7 +1080,7 @@
                 // one, so there is no way to ever read this value out.
                 $.console.error("[InternalCacheRecord] asynchronous internal cache is not supported " +
                     "when $.supportsAsync is false!");
-                this.failed = true;
+                this._markFailed();
                 this._promise = $.Promise.resolve(undefined);
                 return;
             }
@@ -1068,17 +1099,19 @@
             this._promise = promise.then(result => {
                 if (result === undefined || result === null) {
                     // nothing to draw, and nothing to hand to the drawer destructor later
-                    this.failed = true;
-                    this.tstamp = $.now();
+                    this._markFailed();
                     return undefined;
                 }
+                // tstamp deliberately stays at the build START time: a build that began before the drawer
+                // called setInternalCacheNeedsRefresh() read pre-invalidation source data, so
+                // _checkInternalCacheUpToDate() is right to discard it. Refreshing it here would publish
+                // a texture built from outdated data.
                 this.loaded = true;
                 this._data = result;
                 return result;
             }).catch(e => {
                 $.console.error("[InternalCacheRecord] internal cache creation failed:", e);
-                this.failed = true;
-                this.tstamp = $.now();
+                this._markFailed();
                 return undefined;
             });
         }
@@ -1110,6 +1143,20 @@
                 return $.Promise.resolve(this._data);
             }
             return this._promise;
+        }
+
+        /**
+         * Enter the 'failed build' state: no data, not loaded, and the timestamp reset to the
+         * moment of failure so that CacheRecord's cool-off measures time since the failure.
+         * @return {OpenSeadragon.InternalCacheRecord} self reference for builder pattern
+         * @private
+         */
+        _markFailed() {
+            this.failed = true;
+            this.loaded = false;
+            this._data = undefined;
+            this.tstamp = $.now();
+            return this;
         }
 
         /**

@@ -985,7 +985,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.world.removeAll();
         this.tileCache.clear();
-        this.imageLoader.clear();
+        // Teardown: also cancel tiles waiting out tileRetryDelay, their world is going away.
+        this.imageLoader.clear(true);
         /**
          * Raised when the viewer is closed (see {@link OpenSeadragon.Viewer#close}).
          *
@@ -4521,11 +4522,10 @@ function updateOnce( viewer ) {
 }
 
 function drawWorld( viewer, tileSelectionChanged ) {
-    // Queued jobs are tiles that were selected for the view as it was when they were queued, so they only go
-    // stale when that view changes - the viewport moved, an item's own transform did, or an item dropped its
-    // tiles via reset(). Clearing
-    // unconditionally aborts jobs that are still wanted, and they can then only be re-selected at the
-    // per-frame rate, which starves the loader whenever imageLoaderLimit is set.
+    // Queued jobs are tiles that were selected for the view as it was when they were queued, so they only
+    // go stale when that view changes - the viewport moved, an item's own transform did, or an item dropped
+    // its tiles via reset(). Clearing unconditionally aborts jobs that are still wanted, and they can then
+    // only be re-selected at the per-frame rate, which starves the loader whenever imageLoaderLimit is set.
     if ( tileSelectionChanged ) {
         viewer.imageLoader.clear();
     }

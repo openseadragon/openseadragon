@@ -157,6 +157,10 @@ let _conversionId = 0;
 // How many worker operations timed out in a row. A single timeout is treated as a slow request (the tile
 // retries like any other), but a worker that stops answering altogether must not swallow every tile.
 let _consecutiveWorkerTimeouts = 0;
+// $.now() of the timeout that last counted as a strike. Several conversions can be in flight at once, and a
+// stalled main thread makes all of their timers fire in the same tick - without this, three unrelated
+// timeouts from one stall would retire a healthy worker permanently. Strikes only count when spread out.
+let _lastWorkerTimeoutStrike = 0;
 const MAX_CONSECUTIVE_WORKER_TIMEOUTS = 3;
 // id -> { resolve, reject, timer? }
 const _pendingConversions = new Map();
@@ -284,6 +288,7 @@ self.onmessage = async (e) => {
     _imageConversionWorker.onmessage = (e) => {
         const { id, ok, bmp, err } = e.data || {};
         _consecutiveWorkerTimeouts = 0;
+        _lastWorkerTimeoutStrike = 0;
         const entry = _pendingConversions.get(id);
         if (!entry) {
             if (bmp && typeof bmp.close === 'function') {
@@ -333,7 +338,14 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
             entry.timer = setTimeout(() => {
                 entry.timer = null;
                 _pendingConversions.delete(id);
-                _consecutiveWorkerTimeouts++;
+                // Count a strike only if the previous one is at least a full timeout old. Timers that fire
+                // together came from one main-thread stall, not from a worker that stopped answering, so
+                // they collapse into a single strike.
+                const now = $.now();
+                if (now - _lastWorkerTimeoutStrike >= timeoutMs) {
+                    _lastWorkerTimeoutStrike = now;
+                    _consecutiveWorkerTimeouts++;
+                }
                 if (_consecutiveWorkerTimeouts >= MAX_CONSECUTIVE_WORKER_TIMEOUTS) {
                     disableWorker(`Worker timeout (${op})`);
                     reject(workerFatalError(`Worker timeout (${op})`));

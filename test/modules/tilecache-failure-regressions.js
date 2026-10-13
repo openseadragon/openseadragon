@@ -307,8 +307,9 @@
         assert.equal(rec.data, null, "record data cleared after destroy");
 
         // null-resolved data never reaches the drawer destructor. A null resolution counts as
-        // 'the drawer declined', matching what a synchronous null return already does (nothing is
-        // stored and the build is retried) rather than parking a loaded-but-empty record in the slot.
+        // 'the drawer declined', matching what a synchronous null return already does (a failed marker
+        // is parked in the slot and the build is retried after a cool-off) rather than parking a
+        // loaded-but-empty record in the slot.
         let freeCalled = false;
         const nullRec = new OpenSeadragon.InternalCacheRecord(
             OpenSeadragon.Promise.resolve(null), "drawer-unit", () => { freeCalled = true; });
@@ -519,12 +520,25 @@
             }
             assert.notOk(escaped, "preloadCache=" + preloadCache + ": the throw is contained");
             assert.strictEqual(result, undefined, "preloadCache=" + preloadCache + ": tile is skipped this frame");
-            assert.notOk(cache._getInternalCacheRef(drawer), "preloadCache=" + preloadCache + ": nothing stored for a failed build");
 
-            // nothing was stored, so the very next frame retries rather than stalling
+            // a failed marker occupies the slot: a drawer that throws deterministically must not be
+            // re-invoked on every single frame
+            const marker = cache._getInternalCacheRef(drawer);
+            assert.ok(marker, "preloadCache=" + preloadCache + ": a failed marker is stored");
+            assert.ok(marker.failed, "preloadCache=" + preloadCache + ": the marker is marked failed");
+            assert.notOk(marker.loaded, "preloadCache=" + preloadCache + ": the marker is not drawable");
+
             fail = false;
+            for (let i = 0; i < 5; i++) {
+                assert.strictEqual(cache.getDataForRendering(drawer, tile), undefined,
+                    "preloadCache=" + preloadCache + ": tile stays skipped during the cool-off");
+            }
+            assert.equal(created, 1, "preloadCache=" + preloadCache + ": no rebuild while the marker cools off");
+
+            // age the marker deterministically rather than sleeping out the real interval
+            marker.tstamp -= 60000;
             const second = cache.getDataForRendering(drawer, tile);
-            assert.equal(created, 2, "preloadCache=" + preloadCache + ": the build is retried");
+            assert.equal(created, 2, "preloadCache=" + preloadCache + ": the build is retried once the cool-off elapsed");
             assert.deepEqual(second && second.data, { tex: 1 }, "preloadCache=" + preloadCache + ": recovers once the drawer stops throwing");
 
             cache.destroy();
@@ -627,6 +641,71 @@
         }).then(({ state }) => {
             assert.equal(state.unhandledRejections, 0, 'No unhandled promise rejections');
         });
+    });
+
+    // A drawer may decline to build (return null/undefined) without throwing - the WebGL drawer does
+    // exactly that while its GL context is lost. Nothing is drawable then either, so the build must be
+    // throttled just like a failed one, yet must heal at once when the drawer says it is ready again.
+    QUnit.test('internalCacheCreate: a declining drawer is not re-invoked on every frame', function (assert) {
+        for (const preloadCache of [false, true]) {
+            let created = 0, decline = true;
+            const drawer = stubInternalDrawer({
+                options: { usePrivateCache: true, preloadCache: preloadCache },
+                internalCacheCreate() {
+                    created++;
+                    return decline ? null : { tex: 1 };
+                }
+            });
+            const tile = stubTileFor();
+            const cache = makeCache(tile);
+
+            for (let i = 0; i < 5; i++) {
+                assert.strictEqual(cache.getDataForRendering(drawer, tile), undefined,
+                    "preloadCache=" + preloadCache + ": nothing drawable while the drawer declines");
+            }
+            assert.equal(created, 1, "preloadCache=" + preloadCache + ": the declined build is not retried every frame");
+
+            const marker = cache._getInternalCacheRef(drawer);
+            assert.ok(marker && marker.failed, "preloadCache=" + preloadCache + ": a failed marker holds the slot");
+            assert.notOk(marker.loaded, "preloadCache=" + preloadCache + ": the marker is not drawable");
+            assert.strictEqual(marker.data, undefined, "preloadCache=" + preloadCache + ": the marker holds no data");
+
+            // the drawer announces it is ready again (context recovered, ...): no cool-off wait
+            decline = false;
+            drawer._dataNeedsRefresh = OpenSeadragon.now() + 1;
+            const recovered = cache.getDataForRendering(drawer, tile);
+            assert.equal(created, 2, "preloadCache=" + preloadCache + ": setInternalCacheNeedsRefresh retries at once");
+            assert.deepEqual(recovered && recovered.data, { tex: 1 },
+                "preloadCache=" + preloadCache + ": the tile recovers once the drawer stops declining");
+
+            cache.destroy();
+        }
+    });
+
+    // The same, without an explicit refresh signal: the marker must go stale on its own.
+    QUnit.test('internalCacheCreate: a declined build is retried after the cool-off', function (assert) {
+        let created = 0, decline = true;
+        const drawer = stubInternalDrawer({
+            options: { usePrivateCache: true, preloadCache: false },
+            internalCacheCreate() {
+                created++;
+                return decline ? undefined : { tex: 2 };
+            }
+        });
+        const tile = stubTileFor();
+        const cache = makeCache(tile);
+
+        assert.strictEqual(cache.getDataForRendering(drawer, tile), undefined, "nothing drawable while declined");
+        const marker = cache._getInternalCacheRef(drawer);
+        assert.ok(marker && marker.failed, "a failed marker holds the slot");
+
+        decline = false;
+        marker.tstamp -= 60000; // age it rather than sleeping out the real interval
+        const good = cache.getDataForRendering(drawer, tile);
+        assert.equal(created, 2, "the build is retried once the cool-off has elapsed");
+        assert.deepEqual(good && good.data, { tex: 2 }, "the tile recovers");
+
+        cache.destroy();
     });
 
     QUnit.test('internalCacheCreate: a failed refresh keeps the previous working record', function (assert) {

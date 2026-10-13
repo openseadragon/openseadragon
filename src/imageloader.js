@@ -430,6 +430,9 @@ $.ImageLoader = function(options) {
     }, options);
 
     this._batchBuckets = [];
+    // setTimeout handles for failedTiles entries waiting out tileRetryDelay. Kept so teardown can cancel
+    // them: a retry that fires after Viewer#close() downloads into a world that no longer has the tile.
+    this._retryTimers = [];
 };
 
 /** @lends OpenSeadragon.ImageLoader.prototype */
@@ -578,8 +581,11 @@ $.ImageLoader.prototype = {
     /**
      * Clear any unstarted image loading jobs from the queue.
      * @method
+     * @param {Boolean} [cancelRetries=false] Also drop tiles waiting to be retried and cancel their pending
+     *      retry timers. For teardown only ({@link OpenSeadragon.Viewer#close}); the per-frame caller must
+     *      never set it, see the comment below.
      */
-    clear: function() {
+    clear: function(cancelRetries) {
         for( let i = 0; i < this.jobQueue.length; i++ ) {
             const job = this.jobQueue[i];
             if ( typeof job.abort === "function" ) {
@@ -605,6 +611,28 @@ $.ImageLoader.prototype = {
                 bucket.jobs.length = 0;
             }
             this._batchBuckets = [];
+        }
+
+        // Without cancelRetries, failedTiles and the pending retry timers are left strictly alone. This
+        // method runs once per frame whenever the wanted tile set changes, and the retry queue is the ONLY
+        // route back for a tile that already failed: TiledImage#_onTileLoad sets tile.exists = false on
+        // every failure and _updateTile() returns early on !tile.exists, so normal tile selection never
+        // picks that tile up again. Dropping the queue per frame would leave those tiles blank until
+        // TiledImage#reset().
+        if (cancelRetries && this._retryTimers) {
+            for (let i = 0; i < this._retryTimers.length; i++) {
+                clearTimeout(this._retryTimers[i]);
+            }
+            // _pumpQueue() incremented jobsInProgress once per timer it scheduled, so give back exactly that
+            // many slots - the jobs those timers would have started never ran.
+            this.jobsInProgress -= this._retryTimers.length;
+            this._retryTimers = [];
+            // Dropped without abort()/fail() on purpose. Once a job has been through start(), its abort is
+            // the closure that calls fail() -> completeJob(), which would re-push the job into failedTiles
+            // (the retry condition still holds) and decrement jobsInProgress for a job that was never
+            // counted as in progress. There is also nothing to release: these tiles already have
+            // loading === false, cleared by TiledImage#_onTileLoad when they failed.
+            this.failedTiles = [];
         }
     }
 };
@@ -675,9 +703,14 @@ function _pumpQueue(loader) {
     if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
         if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
             let nextJob = loader.failedTiles.shift();
-            setTimeout(function () {
+            const timer = setTimeout(function () {
+                const index = loader._retryTimers.indexOf(timer);
+                if (index > -1) {
+                    loader._retryTimers.splice(index, 1);
+                }
                 nextJob.start();
             }, loader.tileRetryDelay);
+            loader._retryTimers.push(timer);
             loader.jobsInProgress++;
         }
     }
