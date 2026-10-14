@@ -1221,7 +1221,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Boolean}
      */
     isMouseNavEnabled: function () {
-        return this.innerTracker.tracking;
+        return this.innerTracker.isTracking();
     },
 
     /**
