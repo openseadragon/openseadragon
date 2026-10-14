@@ -383,6 +383,7 @@ $.Viewport.prototype = {
         this._updateContainerInnerSize();
         if (this.viewer) {
             this.viewer.forceRedraw();
+            this.viewer._updateZoomButtons();
         }
     },
 
