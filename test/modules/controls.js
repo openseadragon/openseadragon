@@ -204,13 +204,17 @@
         const done = assert.async();
         const openHandler = function () {
             viewer.removeHandler('open', openHandler);
-            viewer.zoomInButton.disable();
-            viewer.addOnceHandler('viewport-change', function () {
-                assert.ok(viewer.zoomInButton.isDisabled(), "manually disabled zoomIn button should stay disabled");
-                done();
-            });
             const viewport = viewer.viewport;
-            viewport.zoomTo((viewport.getMinZoom() + viewport.getMaxZoom()) / 2, null, true);
+            viewer.addOnceHandler('viewport-change', function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "zoomIn button should be disabled at max zoom");
+                viewer.zoomInButton.disable();
+                viewer.addOnceHandler('viewport-change', function () {
+                    assert.ok(viewer.zoomInButton.isDisabled(), "manually disabled zoomIn button should stay disabled");
+                    done();
+                });
+                viewport.zoomTo((viewport.getMinZoom() + viewport.getMaxZoom()) / 2, null, true);
+            });
+            viewport.zoomTo(viewport.getMaxZoom(), null, true);
         };
 
         viewer = OpenSeadragon({

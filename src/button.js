@@ -420,6 +420,8 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
     disable: function(){
         this.notifyGroupExit();
         this._disabled = true;
+        // The viewer sets this after its own call, so a manual disable() takes over the button.
+        this._disabledAtZoomLimit = false;
         this.element.setAttribute( "aria-disabled", "true" );
         // Keeps :disabled styles on page-supplied elements working.
         if ( this._isCustomElement ) {
