@@ -4591,7 +4591,7 @@ function resolveUrl( prefix, url ) {
 }
 
 
-// Constrained zooms recompute zoom from bounds width, so they can stop an ulp short of the limit.
+// Constrained zooms recompute zoom from bounds width, so they can stop one ULP (unit in the last place) short of the limit.
 function isAtZoomLimit( zoom, limit ) {
     return Math.abs( zoom / limit - 1 ) < 1e-8;
 }
