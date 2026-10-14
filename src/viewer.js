@@ -4598,7 +4598,8 @@ function isAtZoomLimit( zoom, limit ) {
 
 
 function setButtonAtZoomLimit( viewer, button, atZoomLimit ) {
-    if ( !button ) {
+    // Without the zoom control, zoomInButton/zoomOutButton keep the raw id or element from the options.
+    if ( !( button instanceof $.Button ) ) {
         return;
     }
     if ( atZoomLimit && !button.isDisabled() ) {
