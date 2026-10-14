@@ -126,6 +126,8 @@ $.Button = function( options ) {
 
     this._isCustomElement = !!options.element;
     this._disabled = !!( options.element && options.element.disabled );
+    this._manuallyDisabled = this._disabled;
+    this._atZoomLimit = false;
 
     //if the user has specified the element to bind the control to explicitly
     //then do not add the default control images
@@ -418,29 +420,57 @@ $.extend( $.Button.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.
      * @function
      */
     disable: function(){
-        this.notifyGroupExit();
-        this._disabled = true;
-        // The viewer sets this after its own call, so a manual disable() takes over the button.
-        this._disabledAtZoomLimit = false;
-        this.element.setAttribute( "aria-disabled", "true" );
-        // Keeps :disabled styles on page-supplied elements working.
-        if ( this._isCustomElement ) {
-            this.element.disabled = true;
-        }
-        $.setElementOpacity( this.element, 0.2, true );
+        this._manuallyDisabled = true;
+        this._updateDisabled();
+    },
+
+    /**
+     * Enables the button, unless the viewer has disabled it at a zoom limit.
+     * @function
+     */
+    enable: function(){
+        this._manuallyDisabled = false;
+        this._updateDisabled();
     },
 
     /**
      * @function
+     * @private
+     * @param {Boolean} atZoomLimit
      */
-    enable: function(){
-        this._disabled = false;
-        this.element.removeAttribute( "aria-disabled" );
-        if ( this._isCustomElement ) {
-            this.element.disabled = false;
+    _setAtZoomLimit: function( atZoomLimit ) {
+        // The viewer calls this on every viewport change; re-applying an enabled state would fade in the group each time.
+        if ( this._atZoomLimit === atZoomLimit ) {
+            return;
         }
-        $.setElementOpacity( this.element, 1.0, true );
-        this.notifyGroupEnter();
+        this._atZoomLimit = atZoomLimit;
+        this._updateDisabled();
+    },
+
+    /**
+     * @function
+     * @private
+     */
+    _updateDisabled: function() {
+        if ( this._manuallyDisabled || this._atZoomLimit ) {
+            // Exit the group first: outTo() does nothing once _disabled is set.
+            this.notifyGroupExit();
+            this._disabled = true;
+            this.element.setAttribute( "aria-disabled", "true" );
+            // Keeps :disabled styles on page-supplied elements working.
+            if ( this._isCustomElement ) {
+                this.element.disabled = true;
+            }
+            $.setElementOpacity( this.element, 0.2, true );
+        } else {
+            this._disabled = false;
+            this.element.removeAttribute( "aria-disabled" );
+            if ( this._isCustomElement ) {
+                this.element.disabled = false;
+            }
+            $.setElementOpacity( this.element, 1.0, true );
+            this.notifyGroupEnter();
+        }
     },
 
     /**

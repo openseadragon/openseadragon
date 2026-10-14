@@ -2860,8 +2860,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         const zoom = this.viewport.getZoom();
         const maxZoom = this.viewport.getMaxZoom();
         const minZoom = this.viewport.getMinZoom();
-        setButtonEnabled( this, this.zoomInButton, zoom < maxZoom && !isAtZoomLimit( zoom, maxZoom ) );
-        setButtonEnabled( this, this.zoomOutButton, zoom > minZoom && !isAtZoomLimit( zoom, minZoom ) );
+        setButtonAtZoomLimit( this, this.zoomInButton, zoom >= maxZoom || isAtZoomLimit( zoom, maxZoom ) );
+        setButtonAtZoomLimit( this, this.zoomOutButton, zoom <= minZoom || isAtZoomLimit( zoom, minZoom ) );
     },
 
     /**
@@ -4597,22 +4597,15 @@ function isAtZoomLimit( zoom, limit ) {
 }
 
 
-function setButtonEnabled( viewer, button, enabled ) {
+function setButtonAtZoomLimit( viewer, button, atZoomLimit ) {
     if ( !button ) {
         return;
     }
-    // Only re-enable buttons disabled here, so a manual disable() survives.
-    if ( enabled ) {
-        if ( button._disabledAtZoomLimit ) {
-            button._disabledAtZoomLimit = false;
-            button.enable();
-        }
-    } else if ( !button.isDisabled() ) {
+    if ( atZoomLimit && !button.isDisabled() ) {
         // A disabled button ignores pointer release, so a press-and-hold zoom would never end.
         viewer.endZoomAction();
-        button.disable();
-        button._disabledAtZoomLimit = true;
     }
+    button._setAtZoomLimit( atZoomLimit );
 }
 
 
