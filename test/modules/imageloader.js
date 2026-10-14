@@ -452,6 +452,91 @@
 
     // ----------
 
+    QUnit.test('Teardown stops in-flight jobs from queueing fresh retries', function(assert) {
+        const done = assert.async();
+
+        const source = MockSeadragon.getTileSource();
+        // Never finish/fail, so the attempt is still in flight when we tear down and only its timeout
+        // completes it - afterwards.
+        source.downloadTileStart = function() {};
+        source.downloadTileAbort = function() {};
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {
+            timeout: 20,
+            tileRetryMax: 3,
+            tileRetryDelay: 5
+        }));
+        const imageLoader = viewer.imageLoader;
+
+        let callbacks = 0;
+        imageLoader.addJob({
+            src: 'test',
+            source: source,
+            loadWithAjax: false,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            abort: function() {},
+            callback: function() { callbacks++; }
+        });
+
+        assert.equal(imageLoader._retryTimers.length, 0, 'The attempt is in flight, not waiting to retry.');
+
+        // Cancelling the pending timers is not enough on its own: a job that is already running lands
+        // later and used to queue a brand new retry, so the loader kept working after close().
+        imageLoader.clear(true);
+
+        setTimeout(function() {
+            assert.equal(callbacks, 1, 'The in-flight attempt completes exactly once and stops there.');
+            assert.equal(imageLoader._retryTimers.length, 0, 'No retry is scheduled after teardown.');
+            assert.equal(imageLoader.failedTiles.length, 0, 'The torn-down job is not queued for retry.');
+            assert.equal(imageLoader.jobsInProgress, 0,
+                'jobsInProgress settles at zero, was ' + imageLoader.jobsInProgress);
+            done();
+        }, 200);
+    });
+
+    // ----------
+
+    QUnit.test('Retries still work for jobs added after a teardown', function(assert) {
+        const done = assert.async();
+
+        const source = MockSeadragon.getTileSource();
+        source.downloadTileStart = function(context) {
+            context.fail('always fails', null);
+        };
+        source.downloadTileAbort = function() {};
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {
+            tileRetryMax: 1,
+            tileRetryDelay: 1
+        }));
+        const imageLoader = viewer.imageLoader;
+
+        // A viewer can be reopened on the same loader, so the generation bump must not disable retries
+        // for everything queued afterwards.
+        imageLoader.clear(true);
+
+        let callbacks = 0;
+        imageLoader.addJob({
+            src: 'test',
+            source: source,
+            loadWithAjax: false,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            abort: function() {},
+            callback: function() { callbacks++; }
+        });
+
+        setTimeout(function() {
+            assert.equal(callbacks, 2, 'The new job is retried tileRetryMax times.');
+            assert.equal(imageLoader.jobsInProgress, 0,
+                'jobsInProgress is balanced, was ' + imageLoader.jobsInProgress);
+            done();
+        }, 100);
+    });
+
+    // ----------
+
     QUnit.test('Closing the viewer cancels pending tile retries', function(assert) {
         const fixture = failOneJob(assert, { tileRetryMax: 1, tileRetryDelay: 10000 });
         const imageLoader = fixture.imageLoader;

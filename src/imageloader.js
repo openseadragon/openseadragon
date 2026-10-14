@@ -453,6 +453,10 @@ $.ImageLoader = function(options) {
     // setTimeout handles for failedTiles entries waiting out tileRetryDelay. Kept so teardown can cancel
     // them: a retry that fires after Viewer#close() downloads into a world that no longer has the tile.
     this._retryTimers = [];
+    // Bumped by clear(cancelRetries). Jobs carry the generation they were created in, so a job that was
+    // still in flight when the viewer was torn down can finish without queueing a fresh retry: cancelling
+    // the timers alone does not help, because such a job creates a brand new one when it completes.
+    this._generation = 0;
 };
 
 /** @lends OpenSeadragon.ImageLoader.prototype */
@@ -498,6 +502,7 @@ $.ImageLoader.prototype = {
                 timeout: this.timeout
             },
             newJob = new $.ImageJob(jobOptions);
+        newJob._generation = this._generation;
 
         const sourceWantsBatching = options.source && options.source.batchEnabled();
         if (sourceWantsBatching) {
@@ -640,6 +645,9 @@ $.ImageLoader.prototype = {
         // picks that tile up again. Dropping the queue per frame would leave those tiles blank until
         // TiledImage#reset().
         if (cancelRetries && this._retryTimers) {
+            // Jobs already in flight outlive this call - their timeout or response lands later. The bump
+            // tells completeJob() not to queue a retry for them, which would undo the cancellation below.
+            this._generation++;
             for (let i = 0; i < this._retryTimers.length; i++) {
                 clearTimeout(this._retryTimers[i]);
             }
@@ -671,7 +679,10 @@ function completeJob(loader, job, callback) {
     // BatchImageJob, never for its children, so deciding on the post-retry value would decrement it twice.
     const wasBatched = job.isBatched;
 
-    if (job.errorMsg && job.data === null && job.tries < 1 + loader.tileRetryMax) {
+    // A job from an earlier generation belongs to a view that has been torn down (see clear()), so it is
+    // allowed to finish, but not to queue more work.
+    if (job.errorMsg && job.data === null && job.tries < 1 + loader.tileRetryMax &&
+            job._generation === loader._generation) {
         // Retries are ran separately.
         job.isBatched = false;
         if (typeof job.unbatch === "function") {
