@@ -2093,6 +2093,7 @@ declare namespace OpenSeadragon {
             _allowTileUnloaded?: boolean,
             _isFromTileLoad?: boolean,
         ): Promise<any>;
+        tileSelectionChanged(): boolean;
         ensureTilesUpToDate(tileList: Tile[]): void;
         resetItems(): void;
         setAutoRefigureSizes(value?: boolean): void;

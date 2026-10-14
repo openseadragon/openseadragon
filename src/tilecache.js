@@ -358,6 +358,7 @@
 
             internalCache = this._safeInternalCacheCreate(drawer, drawerID);
             if (!internalCache) {
+                setTimeout(() => this._triggerNeedsDraw(), INTERNAL_CACHE_RETRY_INTERVAL);
                 return $.Promise.resolve(undefined);
             }
             if (internalCache.loaded) {

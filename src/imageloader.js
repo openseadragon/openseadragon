@@ -297,7 +297,8 @@ $.BatchImageJob = function(options) {
         jobId: null,
         data: null,
         dataType: null,
-        errorMsg: null
+        errorMsg: null,
+        _completed: false
     }, options);
 
     this.jobs = options.jobs || [];
@@ -313,6 +314,7 @@ $.BatchImageJob.prototype = {
      */
     start: function() {
         this._finishedJobs = 0;
+        this._completed = false;
         const self = this;
 
         /**
@@ -338,8 +340,10 @@ $.BatchImageJob.prototype = {
         };
 
         // Set timeout for the whole batch
+        // The batch stays active (jobId set) while abort() fails its children: the wrapped fail below
+        // is a noop once jobId is cleared, so clearing it here would release the tiles without ever
+        // invoking their callbacks - no tile failure events and no configured retries.
         this.jobId = window.setTimeout(function () {
-            self.jobId = null;
             self.abort("Batch image load exceeded timeout (" + self.timeout + " ms)");
         }, this.timeout);
 
@@ -351,11 +355,7 @@ $.BatchImageJob.prototype = {
                 this._finishedJobs++;
                 fn.call(job, ...args);
                 if (this._finishedJobs === this.jobs.length) {
-                    window.clearTimeout(this.jobId);
-                    this.jobId = null;
-                    if (this.callback) {
-                        this.callback(this);
-                    }
+                    this._complete();
                 }
             };
         };
@@ -407,6 +407,10 @@ $.BatchImageJob.prototype = {
      * @param {XMLHttpRequest} request reference to the request if used
      */
     fail: function(errorMessage, request) {
+        if (this._completed) {
+            return;
+        }
+
         this.data = null;
         this.request = request;
         this.errorMsg = errorMessage;
@@ -419,10 +423,27 @@ $.BatchImageJob.prototype = {
             }
         }
 
+        // Failing the last child already completed the parent through the wrapper; _complete() is
+        // idempotent so the parent callback (and its jobsInProgress decrement) happens exactly once.
+        this._complete();
+    },
+
+    /**
+     * Completes the batch exactly once: stops the timeout, deactivates the job and notifies the owner.
+     * @method
+     * @private
+     * @memberof OpenSeadragon.BatchImageJob#
+     */
+    _complete: function() {
+        if (this._completed) {
+            return;
+        }
+        this._completed = true;
+
         if (this.jobId) {
             window.clearTimeout(this.jobId);
-            this.jobId = null;
         }
+        this.jobId = null;
 
         if (this.callback) {
             this.callback(this);

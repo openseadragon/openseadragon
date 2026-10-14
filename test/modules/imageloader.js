@@ -161,6 +161,58 @@
 
     // ----------
 
+    QUnit.test('A batch job timing out fails and retries its children', function(assert) {
+        const done = assert.async();
+
+        // The batch never completes its children, so the batch timeout is the only way out. A timed out
+        // batch must still report the failure to each child (tile-load-failed, retries), not just release
+        // the tiles through their abort callbacks.
+        const source = MockSeadragon.getTileSource();
+        source.batchEnabled = function() { return true; };
+        source.batchCompatible = function() { return true; };
+        source.batchMaxJobs = function() { return 1; };
+        source.batchTimeout = function() { return 0; };
+        source.downloadTileBatchStart = function() {};
+        source.downloadTileBatchAbort = function() {};
+        source.downloadTileStart = function(context) {
+            context.fail('retry also fails', null);
+        };
+        source.downloadTileAbort = function() {};
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {
+            timeout: 20,
+            tileRetryMax: 1,
+            tileRetryDelay: 1
+        }));
+        const imageLoader = viewer.imageLoader;
+        let calls = 0;
+
+        imageLoader.addJob({
+            src: 'test',
+            source: source,
+            loadWithAjax: false,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            abort: function() {},
+            callback: function(data, errorMsg, request, dataType, tries) {
+                calls++;
+                assert.ok(errorMsg, 'Child of a timed out batch reports an error.');
+                if (calls === 1) {
+                    assert.equal(tries, 1, 'The batch timeout completes the child once.');
+                } else {
+                    assert.equal(tries, 2, 'The child of a timed out batch is retried.');
+                    // The slot is accounted for the parent batch and for the standalone retry, exactly once
+                    // each; a second parent callback would push this negative.
+                    assert.ok(imageLoader.jobsInProgress >= 0,
+                        'jobsInProgress stays non-negative, was ' + imageLoader.jobsInProgress);
+                    done();
+                }
+            }
+        });
+    });
+
+    // ----------
+
     QUnit.test('Clearing the loader releases staged batch jobs', function(assert) {
         const source = MockSeadragon.getTileSource();
         source.batchEnabled = function() { return true; };
