@@ -254,6 +254,31 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    QUnit.test('ZoomControlUpdatesWhenReopenedAtLimit', function (assert) {
+        const done = assert.async();
+        const openHandler = function () {
+            viewer.removeHandler('open', openHandler);
+            viewer.addOnceHandler('viewport-change', function () {
+                assert.ok(viewer.zoomInButton.isDisabled(), "zoomIn button should be disabled at max zoom");
+                viewer.addOnceHandler('open', function () {
+                    assert.ok(!viewer.zoomInButton.isDisabled(), "zoomIn button should be enabled after reopening at home zoom");
+                    done();
+                });
+                viewer.open('/test/data/testpattern.dzi');
+            });
+            viewer.viewport.zoomTo(viewer.viewport.getMaxZoom(), null, true);
+        };
+
+        viewer = OpenSeadragon({
+            id:             'controlsTests',
+            prefixUrl:      '/build/openseadragon/images/',
+            springStiffness: 100, // Faster animation = faster tests
+            showZoomControl: true
+        });
+        viewer.addHandler('open', openHandler);
+        viewer.open('/test/data/testpattern.dzi');
+    });
+
     QUnit.test('HomeControlOff', function (assert) {
         const done = assert.async();
         const openHandler = function () {

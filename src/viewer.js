@@ -2451,6 +2451,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }));
 
                 const updateZoomButtonsHandler = $.delegate( this, this._updateZoomButtons );
+                this.addHandler( 'open', updateZoomButtonsHandler );
                 this.addHandler( 'reset-size', updateZoomButtonsHandler );
                 this.addHandler( 'viewport-change', updateZoomButtonsHandler );
             }
