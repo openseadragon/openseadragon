@@ -2449,6 +2449,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     onFocus:    onFocusHandler,
                     onBlur:     onBlurHandler
                 }));
+
+                const updateZoomButtonsHandler = $.delegate( this, this._updateZoomButtons );
+                this.addHandler( 'open', updateZoomButtonsHandler );
+                this.addHandler( 'reset-size', updateZoomButtonsHandler );
+                this.addHandler( 'viewport-change', updateZoomButtonsHandler );
             }
 
             if ( this.showHomeControl ) {
@@ -2843,6 +2848,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 }
             }
       },
+
+    /**
+     * Disables each zoom button while the target zoom is at that button's limit.
+     * @function OpenSeadragon.Viewer.prototype._updateZoomButtons
+     * @private
+     */
+    _updateZoomButtons: function() {
+        if ( !this.viewport ) {
+            return;
+        }
+        const zoom = this.viewport.getZoom();
+        const maxZoom = this.viewport.getMaxZoom();
+        const minZoom = this.viewport.getMinZoom();
+        setButtonAtZoomLimit( this, this.zoomInButton, zoom >= maxZoom || isAtZoomLimit( zoom, maxZoom ) );
+        setButtonAtZoomLimit( this, this.zoomOutButton, zoom <= minZoom || isAtZoomLimit( zoom, minZoom ) );
+    },
 
     /**
      * Display a message in the viewport
@@ -4568,6 +4589,25 @@ function drawWorld( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 function resolveUrl( prefix, url ) {
     return prefix ? prefix + url : url;
+}
+
+
+// Constrained zooms recompute zoom from bounds width, so they can stop one ULP (unit in the last place) short of the limit.
+function isAtZoomLimit( zoom, limit ) {
+    return Math.abs( zoom / limit - 1 ) < 1e-8;
+}
+
+
+function setButtonAtZoomLimit( viewer, button, atZoomLimit ) {
+    // Without the zoom control, zoomInButton/zoomOutButton keep the raw id or element from the options.
+    if ( !( button instanceof $.Button ) ) {
+        return;
+    }
+    if ( atZoomLimit && !button.isDisabled() ) {
+        // A disabled button ignores pointer release, so a press-and-hold zoom would never end.
+        viewer.endZoomAction();
+    }
+    button._setAtZoomLimit( atZoomLimit );
 }
 
 
