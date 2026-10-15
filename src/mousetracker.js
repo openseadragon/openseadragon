@@ -323,7 +323,6 @@
 
         /**
          * Are we currently tracking events on this element.
-         * @deprecated Just use this.tracking
          * @function
          * @returns {Boolean} Are we currently tracking events on this element.
          */

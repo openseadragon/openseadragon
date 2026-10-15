@@ -1162,7 +1162,6 @@ declare namespace OpenSeadragon {
         cooperativeGestureHandling: boolean;
 
         destroy(): void;
-        /** @deprecated use `this.tracking` */
         isTracking(): boolean;
         setCooperativeGestureHandling(enabled: boolean): MouseTracker;
         setTracking(track: boolean): MouseTracker;
