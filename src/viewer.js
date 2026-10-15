@@ -1221,7 +1221,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Boolean}
      */
     isMouseNavEnabled: function () {
-        return this.innerTracker.tracking;
+        return this.innerTracker.isTracking();
     },
 
     /**
@@ -3252,7 +3252,7 @@ function getOverlayObject( viewer, overlay ) {
         return overlay;
     }
 
-    let element = null;
+    let element;
     if ( overlay.element ) {
         element = $.getElement( overlay.element );
     } else {
