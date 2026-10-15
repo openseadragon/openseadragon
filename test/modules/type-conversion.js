@@ -111,6 +111,59 @@
     });
 
 
+    // ----------
+    // Names the types visited by a conversion path, e.g. "rasterBlob -> imageBitmap -> context2d".
+    function describePath(from, to) {
+        const path = Converter.getConversionPath(from, to);
+        if (!path) {
+            return undefined;
+        }
+        return [from].concat(path.map(edge => edge.target.value)).join(" -> ");
+    }
+
+    QUnit.test('Edge weights order conversions by declared cost', function (test) {
+        const done = test.async();
+
+        // 'learn' used to build weights with '^', which is XOR in JS and not exponentiation, so a cheaper
+        // costPower could produce a heavier edge. Weights must be monotonic in costPower for Dijkstra to
+        // mean anything.
+        Converter.learn("__COST__a", "__COST__b", (tile, x) => x, 1, 1);
+        Converter.learn("__COST__a", "__COST__c", (tile, x) => x, 3, 1);
+        Converter.learn("__COST__b", "__COST__d", (tile, x) => x, 1, 1);
+        Converter.learn("__COST__c", "__COST__d", (tile, x) => x, 1, 1);
+        // Cheap two-hop route must beat the expensive one, despite having the same number of steps.
+        test.equal(describePath("__COST__a", "__COST__d"), "__COST__a -> __COST__b -> __COST__d",
+            "Cheaper costPower wins over an equally long but more expensive path.");
+
+        // Also monotonic within a single power class, via costMultiplier.
+        Converter.learn("__COST__e", "__COST__f", (tile, x) => x, 1, 1);
+        Converter.learn("__COST__e", "__COST__g", (tile, x) => x, 1, 50);
+        Converter.learn("__COST__f", "__COST__h", (tile, x) => x, 1, 1);
+        Converter.learn("__COST__g", "__COST__h", (tile, x) => x, 1, 1);
+        test.equal(describePath("__COST__e", "__COST__h"), "__COST__e -> __COST__f -> __COST__h",
+            "Smaller costMultiplier wins within the same cost class.");
+
+        done();
+    });
+
+    QUnit.test('Built-in conversion routes prefer imageBitmap decoding', function (test) {
+        const done = test.async();
+
+        // What the WebGL drawer asks for. A blob must be decoded straight to an ImageBitmap: that is the only
+        // hop that can run off the main thread, and texImage2D uploads an ImageBitmap directly.
+        test.equal(describePath("rasterBlob", ["context2d", "image", "imageBitmap"]),
+            "rasterBlob -> imageBitmap",
+            "WebGL-style targets decode a blob straight to an ImageBitmap.");
+
+        // What the canvas drawer asks for. It cannot take an ImageBitmap, but going through one still beats
+        // the objectURL + Image round trip.
+        test.equal(describePath("rasterBlob", ["context2d"]),
+            "rasterBlob -> imageBitmap -> context2d",
+            "Canvas-style targets still decode via ImageBitmap before rasterizing.");
+
+        done();
+    });
+
     QUnit.test('Conversion path deduction', function (test) {
         const done = test.async();
 
@@ -377,6 +430,122 @@
         test.equal(cache.type, "__TEST__longConversionProcessForTesting",
             "Type not erased immediatelly as we still process the data.");
         test.ok(!conversionHappened, "We destroyed cache before conversion finished.");
+    });
+
+    QUnit.test('ImageBitmap is closed when destroyed', async function (test) {
+        const done = test.async();
+
+        const bitmap = await OpenSeadragon.converter.convert({}, "data/A.png", "__private__imageUrl", "imageBitmap");
+        test.ok(bitmap.width > 0 && bitmap.height > 0, "Decoded bitmap has dimensions.");
+
+        // Without a registered destructor the pixels would sit around until the collector runs, long after the
+        // cache decided to evict them. close() zeroes the dimensions.
+        OpenSeadragon.converter.destroy(bitmap, "imageBitmap");
+        test.equal(bitmap.width, 0, "Destroyed bitmap released its width.");
+        test.equal(bitmap.height, 0, "Destroyed bitmap released its height.");
+
+        done();
+    });
+
+    QUnit.test('A failing tile is not fetched twice', async function (test) {
+        const done = test.async();
+
+        const originalFetch = window.fetch;
+        let fetchCount = 0;
+        window.fetch = function () {
+            fetchCount++;
+            return originalFetch.apply(window, arguments);
+        };
+
+        let rejected = false;
+        try {
+            await OpenSeadragon.converter.convert({}, "data/this-tile-does-not-exist.png",
+                "__private__imageUrl", "imageBitmap");
+        } catch (e) {
+            rejected = true;
+        } finally {
+            window.fetch = originalFetch;
+        }
+
+        test.ok(rejected, "A missing tile rejects instead of resolving with nothing.");
+        // The worker reports HTTP and decode errors by rejecting, just like a dead worker does. Falling back
+        // on every rejection re-fetched broken tiles on the main thread, doubling the failed traffic - and
+        // multiplying it further once tile retries kick in. Only worker death is worth falling back for.
+        // (Counted on the main thread: when the worker is used this is 0, when it is unavailable it is 1.)
+        test.ok(fetchCount <= 1, "The missing tile is requested at most once, was " + fetchCount + ".");
+
+        done();
+    });
+
+    // A main-thread stall makes every in-flight conversion's 15 s timer fire in the same tick. Counting each
+    // of them as a separate strike retired a perfectly healthy worker for the rest of the session, after
+    // which every tile decoded on the main thread.
+    QUnit.test('Simultaneous worker timeouts do not retire the worker', async function (test) {
+        const done = test.async();
+
+        const originalFetch = window.fetch;
+        const originalSetTimeout = window.setTimeout;
+        const originalNow = OpenSeadragon.now;
+        let fetchCount = 0;
+        window.fetch = function () {
+            fetchCount++;
+            return originalFetch.apply(window, arguments);
+        };
+
+        // Probe: the worker fetches on its own thread, so a main-thread fetch means there is no worker here
+        // (no createImageBitmap, a CSP that blocks blob: workers, ...) and there is nothing to test.
+        await OpenSeadragon.converter.convert({}, "data/A.png", "__private__imageUrl", "imageBitmap");
+        if (fetchCount > 0) {
+            window.fetch = originalFetch;
+            test.ok(true, "No decoding worker in this environment, nothing to retire.");
+            done();
+            return;
+        }
+
+        // Conversion reaches postWorker() synchronously (converter.convert calls the first edge's transform
+        // directly), so the three timers below are all captured in one turn - no worker reply can land in
+        // between and reset the strike count.
+        const captured = [];
+        window.setTimeout = function (fn, delay) {
+            if (delay === 15000) {
+                captured.push(fn);
+                return -1;
+            }
+            return originalSetTimeout.apply(window, arguments);
+        };
+
+        const pending = [];
+        for (let i = 0; i < 3; i++) {
+            pending.push(OpenSeadragon.converter.convert(
+                {}, "data/A.png", "__private__imageUrl", "imageBitmap").catch(() => undefined));
+        }
+        window.setTimeout = originalSetTimeout;
+        test.equal(captured.length, 3, "Three conversions are waiting on the worker.");
+
+        // Freeze the clock so all three timeouts are indistinguishable in time, which is exactly the stall
+        // case: they say nothing about the worker's health and must collapse into a single strike.
+        const frozen = originalNow.call(OpenSeadragon);
+        OpenSeadragon.now = function () { return frozen; };
+        try {
+            for (let i = 0; i < captured.length; i++) {
+                captured[i]();
+            }
+        } finally {
+            OpenSeadragon.now = originalNow;
+        }
+        await Promise.all(pending);
+
+        fetchCount = 0;
+        const bitmap = await OpenSeadragon.converter.convert(
+            {}, "data/A.png", "__private__imageUrl", "imageBitmap");
+        window.fetch = originalFetch;
+
+        test.ok(bitmap && bitmap.width > 0, "Conversion still works after the burst of timeouts.");
+        test.equal(fetchCount, 0,
+            "The worker survived: decoding did not fall back to the main thread, fetches was " + fetchCount + ".");
+
+        OpenSeadragon.converter.destroy(bitmap, "imageBitmap");
+        done();
     });
 
     QUnit.test('Real types conversion', async function (test) {

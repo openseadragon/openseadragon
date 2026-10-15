@@ -319,10 +319,10 @@
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
   * @property {Number} [maxTilesPerFrame=1]
-  *     The number of tiles loaded per frame. As the frame rate of the client's machine is usually high (e.g., 50 fps),
-  *     one tile per frame should be a good choice. However, for large screens or lower frame rates, the number of
-  *     loaded tiles per frame can be adjusted here. Reasonable values might be 2 or 3 tiles per frame.
-  *     (Note that the actual frame rate is given by the client's browser and machine).
+  *     The maximum number of tiles whose download is started per frame, per tiled image, during steady-state
+  *     loading. After tiled image load and initial movement after a settled state, this allowance is temporarily
+  *     boosted to ten times the configured value and then decays back over the following frames.
+  *     The actual rate also depends on the browser, machine, and image-loader concurrency limit.
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
