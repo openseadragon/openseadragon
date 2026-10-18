@@ -167,6 +167,7 @@
             if (this.location instanceof $.Rect) {
                 this.width = this.location.width;
                 this.height = this.location.height;
+                this.rotation = this.location.degrees * (Math.PI / 180.0);
                 this.location = this.location.getTopLeft();
                 this.placement = $.Placement.TOP_LEFT;
             }
@@ -174,7 +175,7 @@
             // Deprecated properties kept for backward compatibility.
             this.scales = this.width !== null && this.height !== null;
             this.bounds = new $.Rect(
-                this.location.x, this.location.y, this.width, this.height);
+            this.location.x, this.location.y, this.width, this.height, this.rotation * (180.0 / Math.PI));
             this.position = this.location;
         },
 
@@ -272,6 +273,8 @@
                 outerScale = viewport.flipped ? " scaleX(-1)" : " scaleX(1)";
             }
             const rotate = viewport.flipped ? -positionAndSize.rotate : positionAndSize.rotate;
+            const overlayRotationRadians = this.rotation;
+            //const overlayRotationDegrees =  overlayRotationRadians * (180.0 / Math.PI);
             const scale = viewport.flipped ? " scaleX(-1)" : "";
             // call the onDraw callback if it exists to allow one to overwrite
             // the drawing/positioning/sizing of the overlay
@@ -309,7 +312,7 @@
                     } else {
                         innerStyle[transformProp] = "";
                         style[transformOriginProp] = "";
-                        style[transformProp] = "";
+                        style[transformProp] = "rotate(" + overlayRotationRadians + "rad)";
                     }
                 }
                 style.display = 'flex';
