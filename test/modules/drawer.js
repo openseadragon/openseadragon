@@ -558,6 +558,164 @@
             });
 
             // ----------
+            // Real context loss, as opposed to a patched MAX_TEXTURE_IMAGE_UNITS. The count is cached per context
+            // and stays positive after the context is lost, so tiles that are already loaded kept drawing into
+            // a dead context without ever triggering recovery. Opens the image, waits until it is fully loaded,
+            // then loses the context and redraws. Returns false when WEBGL_lose_context is unavailable.
+            const loseContextAfterLoad = function(assert, onLost) {
+                viewer.addOnceHandler('open', function() {
+                    viewer.whenFullyLoaded(function() {
+                        const gl = viewer.drawer._glContext.getContext();
+                        const ext = gl.getExtension('WEBGL_lose_context');
+                        if (!ext) {
+                            onLost(false);
+                            return;
+                        }
+                        ext.loseContext();
+                        assert.ok(gl.isContextLost(), 'context is lost');
+                        assert.equal(viewer.drawer._glContext.getMaxTextures(), 0,
+                            'a lost context reports no texture units');
+                        onLost(true);
+                        viewer.forceRedraw();
+                    });
+                });
+                viewer.open('/test/data/testpattern.dzi');
+            };
+
+            // ----------
+            QUnit.test('Webgl context recovery: enabled. Recovers from real context loss with loaded tiles', function(assert) {
+                const done = assert.async();
+                const timeout = Util.timeWatcher(assert, 10000);
+
+                createViewer();
+
+                if (viewer.drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                viewer.drawer.setContextRecoveryEnabled(true);
+                const oldDrawer = viewer.drawer;
+                const oldGlContext = oldDrawer._glContext;
+
+                viewer.addOnceHandler('webgl-context-recovered', function(event) {
+                    timeout.done();
+                    assert.strictEqual(event.drawer, oldDrawer, 'event.drawer is the same drawer instance');
+                    assert.notStrictEqual(viewer.drawer._glContext, oldGlContext, 'glContext is a new instance');
+                    const gl = viewer.drawer._glContext.getContext();
+                    assert.ok(gl && !gl.isContextLost(), 'new glContext is alive');
+                    assert.equal(viewer.drawer.getType(), 'webgl', 'viewer.drawer remains WebGL after recovery');
+                    done();
+                });
+
+                loseContextAfterLoad(assert, function(lost) {
+                    if (!lost) {
+                        timeout.done();
+                        assert.ok(true, 'WEBGL_lose_context unavailable, nothing to test.');
+                        done();
+                    }
+                });
+            });
+
+            // ----------
+            QUnit.test('Webgl context recovery: enabled. Falls back to canvas on real context loss when recreation fails', function(assert) {
+                const done = assert.async();
+                const timeout = Util.timeWatcher(assert, 10000);
+
+                createViewer({ drawer: ['webgl', 'canvas'] });
+
+                if (viewer.drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                viewer.drawer.setContextRecoveryEnabled(true);
+                const oldDrawer = viewer.drawer;
+
+                viewer.addOnceHandler('webgl-context-recovery-failed', function(event) {
+                    if (getContextPrototypeRestore) {
+                        getContextPrototypeRestore();
+                    }
+                    timeout.done();
+                    assert.strictEqual(event.drawer, oldDrawer, 'event.drawer is the failing WebGL drawer');
+                    assert.ok(event.canvasDrawer, 'event.canvasDrawer is provided');
+                    assert.equal(viewer.drawer.getType(), 'canvas', 'viewer.drawer switches to CanvasDrawer');
+                    done();
+                });
+
+                loseContextAfterLoad(assert, function(lost) {
+                    if (!lost) {
+                        timeout.done();
+                        assert.ok(true, 'WEBGL_lose_context unavailable, nothing to test.');
+                        done();
+                        return;
+                    }
+                    // Only the context recreated after the loss is broken.
+                    const originalGetContextProto = HTMLCanvasElement.prototype.getContext;
+                    getContextPrototypeRestore = function() {
+                        HTMLCanvasElement.prototype.getContext = originalGetContextProto;
+                        getContextPrototypeRestore = null;
+                    };
+                    HTMLCanvasElement.prototype.getContext = function() {
+                        const ctx = originalGetContextProto.apply(this, arguments);
+                        if (ctx && typeof ctx.getParameter === 'function' && ctx.MAX_TEXTURE_IMAGE_UNITS !== undefined) {
+                            const orig = ctx.getParameter.bind(ctx);
+                            ctx.getParameter = function(p) {
+                                return p === ctx.MAX_TEXTURE_IMAGE_UNITS ? 0 : orig(p);
+                            };
+                        }
+                        return ctx;
+                    };
+                });
+            });
+
+            // ----------
+            QUnit.test('Webgl context recovery: disabled. Rethrows on real context loss with loaded tiles', function(assert) {
+                const done = assert.async();
+                const timeout = Util.timeWatcher(assert, 10000);
+
+                createViewer();
+
+                if (viewer.drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    done();
+                    return;
+                }
+
+                viewer.drawer.setContextRecoveryEnabled(false);
+                const oldDrawer = viewer.drawer;
+
+                const previousOnError = window.onerror;
+                const restoreOnError = function() {
+                    window.onerror = previousOnError;
+                };
+                window.onerror = function(message) {
+                    if (message && message.indexOf('MAX_TEXTURE_IMAGE_UNITS') !== -1) {
+                        restoreOnError();
+                        timeout.done();
+                        assert.strictEqual(viewer.drawer, oldDrawer, 'viewer.drawer unchanged when recovery disabled');
+                        done();
+                        return true;
+                    }
+                    if (previousOnError) {
+                        return previousOnError.apply(this, arguments);
+                    }
+                    return false;
+                };
+
+                loseContextAfterLoad(assert, function(lost) {
+                    if (!lost) {
+                        restoreOnError();
+                        timeout.done();
+                        assert.ok(true, 'WEBGL_lose_context unavailable, nothing to test.');
+                        done();
+                    }
+                });
+            });
+
+            // ----------
             // Bad shader (simulated) with fallback. isSupported() functional test rejects WebGL; viewer falls back to canvas. Mirrors demo scenario 3.
             QUnit.test('Falls back to canvas when WebGL error is detected because of a shader error', function(assert) {
                 const done = assert.async();

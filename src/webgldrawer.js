@@ -110,10 +110,12 @@
 
         /**
          * Get the maximum number of texture units
-         * @returns {Number} MAX_TEXTURE_IMAGE_UNITS value
+         * @returns {Number} MAX_TEXTURE_IMAGE_UNITS value, 0 once the context is lost
          */
         getMaxTextures() {
-            if (!this._gl) {
+            // The cached value outlives the context: without this check a lost context keeps reporting
+            // a valid count, draws silently produce nothing and recovery is never triggered.
+            if (!this._gl || this._gl.isContextLost()) {
                 return 0;
             }
             return this._glNumTextures;

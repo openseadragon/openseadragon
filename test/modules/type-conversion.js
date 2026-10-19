@@ -548,6 +548,66 @@
         done();
     });
 
+    // For AJAX tiles the download already succeeded by the time the blob is decoded, so tile retries never
+    // revisit this step. A timeout rejected as an ordinary failure marked a valid tile as missing for good.
+    QUnit.test('A worker timeout on blob decoding falls back to the main thread', async function (test) {
+        const done = test.async();
+
+        const originalFetch = window.fetch;
+        const originalSetTimeout = window.setTimeout;
+        let fetchCount = 0;
+        window.fetch = function () {
+            fetchCount++;
+            return originalFetch.apply(window, arguments);
+        };
+        const blob = await OpenSeadragon.converter.convert({}, "data/A.png", "__private__imageUrl", "rasterBlob");
+        window.fetch = originalFetch;
+        if (fetchCount > 0) {
+            test.ok(true, "No decoding worker in this environment, nothing to time out.");
+            done();
+            return;
+        }
+
+        const captured = [];
+        window.setTimeout = function (fn, delay) {
+            if (delay === 15000) {
+                captured.push(fn);
+                return -1;
+            }
+            return originalSetTimeout.apply(window, arguments);
+        };
+        const pending = OpenSeadragon.converter.convert({}, blob, "rasterBlob", "imageBitmap");
+        window.setTimeout = originalSetTimeout;
+        test.equal(captured.length, 1, "The blob conversion is waiting on the worker.");
+
+        captured[0]();
+        let bitmap;
+        try {
+            bitmap = await pending;
+        } catch (e) {
+            bitmap = undefined;
+        }
+        test.ok(bitmap && bitmap.width > 0, "The timed out tile was decoded on the main thread instead of failing.");
+
+        if (bitmap) {
+            OpenSeadragon.converter.destroy(bitmap, "imageBitmap");
+        }
+        done();
+    });
+
+    QUnit.test('A blob the worker cannot decode still rejects', async function (test) {
+        const done = test.async();
+        const garbage = new Blob([new Uint8Array([1, 2, 3, 4])], { type: "image/png" });
+        let rejected = false;
+        try {
+            await OpenSeadragon.converter.convert({}, garbage, "rasterBlob", "imageBitmap");
+        } catch (e) {
+            rejected = true;
+        }
+        test.ok(rejected, "Undecodable data is reported as a failure, not retried into a tile.");
+        done();
+    });
+
     QUnit.test('Real types conversion', async function (test) {
         const done = test.async();
 

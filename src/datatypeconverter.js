@@ -219,6 +219,21 @@ function workerFatalError(reason) {
 }
 
 /**
+ * Builds an error that marks an operation the worker did not answer in time. Unlike a reported failure it
+ * says nothing about the data: the worker may simply be slow, so callers holding the input can still
+ * process it themselves.
+ * @private
+ * @param {String} reason
+ * @param {Boolean} fatal whether the timeout also retired the worker
+ * @returns {Error}
+ */
+function workerError(reason, fatal) {
+    const error = fatal ? workerFatalError(reason) : new Error(reason);
+    error.__osdWorkerTimeout = true;
+    return error;
+}
+
+/**
  * Marks the worker as permanently unusable and fails over every conversion still waiting on it.
  * Terminating also cancels whatever the worker still had in flight, so the main-thread retries the callers
  * do in response cannot duplicate live requests.
@@ -348,10 +363,10 @@ function postWorker(op, payload, { timeoutMs = 15000 } = {}) {
                 }
                 if (_consecutiveWorkerTimeouts >= MAX_CONSECUTIVE_WORKER_TIMEOUTS) {
                     disableWorker(`Worker timeout (${op})`);
-                    reject(workerFatalError(`Worker timeout (${op})`));
+                    reject(workerError(`Worker timeout (${op})`, true));
                     return;
                 }
-                reject(new Error(`Worker timeout (${op})`));
+                reject(workerError(`Worker timeout (${op})`, false));
             }, timeoutMs);
         }
         _pendingConversions.set(id, entry);
@@ -521,10 +536,12 @@ OpenSeadragon.DataTypeConverter = class DataTypeConverter {
             const decodeOnMainThread = () => createImageBitmap(blob, { colorSpaceConversion: 'none' });
             if (canUseWorker()) {
                 // The worker may die between the check above and the reply; fall back rather than lose the
-                // tile. Failures the worker itself reports (undecodable data) would fail here too, so they
-                // are propagated instead of being decoded a second time.
+                // tile. A timeout falls back too: the blob is already downloaded, so tile retries never
+                // revisit this step and a slow worker would otherwise leave a valid tile missing for good.
+                // Failures the worker itself reports (undecodable data) would fail here too, so they are
+                // propagated instead of being decoded a second time.
                 postWorker('decodeFromBlob', { blob }).catch(e => {
-                    if (e && e.__osdWorkerFatal) {
+                    if (e && (e.__osdWorkerFatal || e.__osdWorkerTimeout)) {
                         return decodeOnMainThread();
                     }
                     throw e;
