@@ -983,7 +983,7 @@ declare namespace OpenSeadragon {
         userData: any;
 
         constructor(options: TImageJobOptions);
-        abort(): void;
+        abort(abortMessage?: string): void;
         fail(errorMessage: string, request: XMLHttpRequest | null): void;
         finish(
             data: any,
@@ -1011,7 +1011,7 @@ declare namespace OpenSeadragon {
         timeout: number;
 
         constructor(options: BatchImageJobOptions);
-        abort(): void;
+        abort(abortMessage?: string): void;
         fail(errorMessage: string, request: XMLHttpRequest | null): void;
         finish(
             data: any,
