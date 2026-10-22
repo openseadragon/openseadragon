@@ -142,19 +142,23 @@
   *     Prefer the newer Options.tileSources.
   *
   * @property {String} [prefixUrl='/images/']
-  *     Prepends the prefixUrl to navImages paths, which is very useful
-  *     since the default paths are rarely useful for production
-  *     environments.
+  *     Prepends the prefixUrl to navImages paths. Data URLs, such as the
+  *     default button images, are not prefixed.
+  *
+  * @property {Object} [buttonColors]
+  *     Colors for the default button images. Hover and pressed states swap
+  *     the two, so pick a pair with good contrast.
+  * @property {String} [buttonColors.background='#1f2329']
+  * @property {String} [buttonColors.icon='#f4f5f7']
   *
   * @property {OpenSeadragon.NavImages} [navImages]
   *     An object with a property for each button or other built-in navigation
   *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
   *     Each of those in turn provides an image path for each state of the button
-  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
-  *     image paths, by default assume there is a folder on the servers root path
-  *     called '/images', eg '/images/zoomin_rest.svg'.  If you need to adjust
-  *     these paths, prefer setting the option.prefixUrl rather than overriding
-  *     every image path directly through this setting.
+  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'DOWN'. By default
+  *     these are SVGs built from buttonColors. Any button you set here replaces
+  *     the default for that button only. The legacy PNG buttons ship in the
+  *     images folder, eg '/images/zoomin_rest.png', for use with prefixUrl.
   *
   * @property {Boolean} [debugMode=false]
   *     TODO: provide an in-screen panel providing event detail feedback.
@@ -1523,61 +1527,9 @@ function OpenSeadragon( options ){
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
-            navImages: {
-                zoomIn: {
-                    REST:   'zoomin_rest.svg',
-                    GROUP:  'zoomin_grouphover.svg',
-                    HOVER:  'zoomin_hover.svg',
-                    DOWN:   'zoomin_pressed.svg'
-                },
-                zoomOut: {
-                    REST:   'zoomout_rest.svg',
-                    GROUP:  'zoomout_grouphover.svg',
-                    HOVER:  'zoomout_hover.svg',
-                    DOWN:   'zoomout_pressed.svg'
-                },
-                home: {
-                    REST:   'home_rest.svg',
-                    GROUP:  'home_grouphover.svg',
-                    HOVER:  'home_hover.svg',
-                    DOWN:   'home_pressed.svg'
-                },
-                fullpage: {
-                    REST:   'fullpage_rest.svg',
-                    GROUP:  'fullpage_grouphover.svg',
-                    HOVER:  'fullpage_hover.svg',
-                    DOWN:   'fullpage_pressed.svg'
-                },
-                rotateleft: {
-                    REST:   'rotateleft_rest.svg',
-                    GROUP:  'rotateleft_grouphover.svg',
-                    HOVER:  'rotateleft_hover.svg',
-                    DOWN:   'rotateleft_pressed.svg'
-                },
-                rotateright: {
-                    REST:   'rotateright_rest.svg',
-                    GROUP:  'rotateright_grouphover.svg',
-                    HOVER:  'rotateright_hover.svg',
-                    DOWN:   'rotateright_pressed.svg'
-                },
-                flip: { // The legacy flip_*.png icon was designed by Yaroslav Samoylov from the Noun Project and modified by Nelson Campos ncampos@criteriamarathon.com, https://thenounproject.com/term/flip/136289/
-                    REST:   'flip_rest.svg',
-                    GROUP:  'flip_grouphover.svg',
-                    HOVER:  'flip_hover.svg',
-                    DOWN:   'flip_pressed.svg'
-                },
-                previous: {
-                    REST:   'previous_rest.svg',
-                    GROUP:  'previous_grouphover.svg',
-                    HOVER:  'previous_hover.svg',
-                    DOWN:   'previous_pressed.svg'
-                },
-                next: {
-                    REST:   'next_rest.svg',
-                    GROUP:  'next_grouphover.svg',
-                    HOVER:  'next_hover.svg',
-                    DOWN:   'next_pressed.svg'
-                }
+            buttonColors: {
+                background: "#1f2329",
+                icon:       "#f4f5f7"
             },
 
             //DEVELOPER SETTINGS
