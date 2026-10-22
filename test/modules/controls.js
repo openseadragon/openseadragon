@@ -24,6 +24,22 @@
         }
     });
 
+    QUnit.test('ButtonColors', function (assert) {
+        viewer = OpenSeadragon({
+            id:           'controlsTests',
+            prefixUrl:    '/build/openseadragon/images/',
+            buttonColors: { icon: '#ff0000' },
+            navImages:    { home: { REST: 'home_rest.png', GROUP: 'home_grouphover.png', HOVER: 'home_hover.png', DOWN: 'home_pressed.png' } }
+        });
+
+        const zoomInSrc = viewer.zoomInButton.imgRest.getAttribute('src');
+        assert.ok(zoomInSrc.startsWith('data:image/svg+xml,'), 'default buttons use data URLs without prefixUrl');
+        assert.ok(zoomInSrc.includes(encodeURIComponent('#ff0000')), 'icon color is applied');
+        assert.ok(zoomInSrc.includes(encodeURIComponent('#1f2329')), 'unset background keeps its default');
+        assert.equal(viewer.homeButton.imgRest.getAttribute('src'), '/build/openseadragon/images/home_rest.png',
+            'navImages overrides one button and keeps prefixUrl');
+    });
+
     QUnit.test('ZoomControlOff', function (assert) {
         const done = assert.async();
         const openHandler = function () {

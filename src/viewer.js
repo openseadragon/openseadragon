@@ -218,7 +218,7 @@ $.Viewer = function( options ) {
 
         //UI image resources
         //TODO: rename navImages to uiImages
-        navImages:      null,
+        navImages:      makeNavImages( $.extend( {}, $.DEFAULT_SETTINGS.buttonColors, options.buttonColors ) ),
 
         //interface button controls
         buttonGroup:        null,
@@ -4597,7 +4597,50 @@ function drawWorld( viewer, tileSelectionChanged ) {
 // Navigation Controls
 ///////////////////////////////////////////////////////////////////////////////
 function resolveUrl( prefix, url ) {
-    return prefix ? prefix + url : url;
+    return prefix && !url.startsWith( "data:" ) ? prefix + url : url;
+}
+
+
+// Icon paths on a 24x24 grid, drawn as strokes.
+const ROTATE_ICON = '<path d="M12 6A6.5 6.5 0 1 1 5.5 12.5"/><path d="M14.5 3.5 12 6l2.5 2.5"/>';
+const ARROW_ICON = '<path d="M18 12H6"/><path d="M11 7l-5 5 5 5"/>';
+const MIRROR = '<g transform="matrix(-1 0 0 1 24 0)">';
+const NAV_ICONS = {
+    zoomIn:      '<path d="M12 6.5v11M6.5 12h11"/>',
+    zoomOut:     '<path d="M6.5 12h11"/>',
+    home:        '<path d="M4.5 11.5 12 5l7.5 6.5"/><path d="M7 10v9h4v-5h2v5h4v-9"/>',
+    fullpage:    '<path d="M5 9.5V5h4.5M14.5 5H19v4.5M19 14.5V19h-4.5M9.5 19H5v-4.5"/>',
+    rotateleft:  ROTATE_ICON,
+    rotateright: MIRROR + ROTATE_ICON + '</g>',
+    flip:        '<path d="M12 4v16" stroke-dasharray="2 2.5"/><path d="M9 7.5 4 17h5z"/><path d="M15 7.5 20 17h-5z"/>',
+    previous:    ARROW_ICON,
+    next:        MIRROR + ARROW_ICON + '</g>'
+};
+
+// Builds the default button images as SVG data URLs, so they need no image files or prefixUrl.
+function makeNavImages( colors ) {
+    const bg = colors.background;
+    const fg = colors.icon;
+    const states = {
+        REST:  { fill: bg, fillOpacity: 0.6, ring: fg, ringOpacity: 0.2, icon: fg, shade: 0 },
+        GROUP: { fill: bg, fillOpacity: 0.8, ring: fg, ringOpacity: 0.3, icon: fg, shade: 0 },
+        HOVER: { fill: fg, fillOpacity: 0.92, ring: bg, ringOpacity: 0.35, icon: bg, shade: 0 },
+        DOWN:  { fill: fg, fillOpacity: 1, ring: bg, ringOpacity: 0.35, icon: bg, shade: 0.12 }
+    };
+    const navImages = {};
+    Object.keys( NAV_ICONS ).forEach( name => {
+        navImages[ name ] = {};
+        Object.keys( states ).forEach( state => {
+            const s = states[ state ];
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="35" height="34" viewBox="0 0 35 34">` +
+                `<circle cx="17.5" cy="17" r="15.5" fill="${s.fill}" fill-opacity="${s.fillOpacity}" stroke="${s.ring}" stroke-opacity="${s.ringOpacity}"/>` +
+                `<circle cx="17.5" cy="17" r="15.5" fill="${bg}" fill-opacity="${s.shade}"/>` +
+                `<g transform="translate(5.5 5)" fill="none" stroke="${s.icon}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${NAV_ICONS[ name ]}</g>` +
+                `</svg>`;
+            navImages[ name ][ state ] = "data:image/svg+xml," + encodeURIComponent( svg );
+        } );
+    } );
+    return navImages;
 }
 
 
