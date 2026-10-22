@@ -8,10 +8,10 @@
     function makeButton(options) {
         button = new OpenSeadragon.Button(Object.assign({
             tooltip: 'Zoom in',
-            srcRest: imageBase + 'rest.png',
-            srcGroup: imageBase + 'grouphover.png',
-            srcHover: imageBase + 'hover.png',
-            srcDown: imageBase + 'pressed.png'
+            srcRest: imageBase + 'rest.svg',
+            srcGroup: imageBase + 'grouphover.svg',
+            srcHover: imageBase + 'hover.svg',
+            srcDown: imageBase + 'pressed.svg'
         }, options));
         document.getElementById('qunit-fixture').appendChild(button.element);
         return button;
