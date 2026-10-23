@@ -147,7 +147,8 @@
   *
   * @property {Object} [buttonColors]
   *     Colors for the default button images. Hover and pressed states swap
-  *     the two, so pick a pair with good contrast.
+  *     the two, so pick a pair with good contrast. Viewer#setButtonColors
+  *     changes them later.
   * @property {String} [buttonColors.background='#f4f5f7']
   * @property {String} [buttonColors.icon='#1f2329']
   *

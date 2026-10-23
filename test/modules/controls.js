@@ -38,6 +38,13 @@
         assert.ok(zoomInSrc.includes(encodeURIComponent('#f4f5f7')), 'unset background keeps its default');
         assert.equal(viewer.homeButton.imgRest.getAttribute('src'), '/build/openseadragon/images/home_rest.png',
             'navImages overrides one button and keeps prefixUrl');
+
+        viewer.setButtonColors({ background: '#00ff00' });
+        const newZoomInSrc = viewer.zoomInButton.imgRest.getAttribute('src');
+        assert.ok(newZoomInSrc.includes(encodeURIComponent('#00ff00')), 'setButtonColors rebuilds default buttons');
+        assert.ok(newZoomInSrc.includes(encodeURIComponent('#ff0000')), 'setButtonColors keeps the unchanged color');
+        assert.equal(viewer.homeButton.imgRest.getAttribute('src'), '/build/openseadragon/images/home_rest.png',
+            'setButtonColors leaves navImages overrides alone');
     });
 
     QUnit.test('ZoomControlOff', function (assert) {
