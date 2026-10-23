@@ -1893,7 +1893,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // First Part: Decide if tile will be used to draw //
             /////////////////////////////////////////////////////
 
-            if( this.viewer ){
+            if (this.viewer && this.viewer.numberOfHandlers("update-tile")) {
                 /**
                  * This event is called before tile is being updated: its position, coverage and other properties.
                  * Note that this does not mean the tile will be loaded, it might be just updated greedily to avoid
