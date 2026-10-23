@@ -57,6 +57,8 @@ export default defineConfig(({ mode }) => {
                 fileName: () => (min ? "openseadragon.min.js" : "openseadragon.js")
             },
             rolldownOptions: {
+                // src/index.js reads the free `module` variable on purpose, for CommonJS loaders.
+                checks: { commonJsVariableInEsm: false },
                 output: {
                     exports: "default",
                     postBanner: banner
