@@ -218,7 +218,9 @@ $.Viewer = function( options ) {
 
         //UI image resources
         //TODO: rename navImages to uiImages
-        navImages:      makeNavImages( $.extend( {}, $.DEFAULT_SETTINGS.buttonColors, options.buttonColors ) ),
+        navImages:      options.showNavigationControl === false && options.showSequenceControl === false ?
+            null :
+            makeNavImages( $.extend( {}, $.DEFAULT_SETTINGS.buttonColors, options.buttonColors ) ),
 
         //interface button controls
         buttonGroup:        null,
@@ -4617,10 +4619,17 @@ const NAV_ICONS = {
     next:        MIRROR + ARROW_ICON + '</g>'
 };
 
-// Builds the default button images as SVG data URLs, so they need no image files or prefixUrl.
+const navImagesCache = {};
+
+// Builds the default button images as SVG data URLs, cached per color pair.
+// The result is shared, so callers must not mutate it; the Viewer options merge deep-copies it.
 function makeNavImages( colors ) {
     const bg = colors.background;
     const fg = colors.icon;
+    const key = bg + "|" + fg;
+    if ( navImagesCache[ key ] ) {
+        return navImagesCache[ key ];
+    }
     const states = {
         REST:  { fill: bg, fillOpacity: 0.6, ring: fg, ringOpacity: 0.2, icon: fg, shade: 0 },
         GROUP: { fill: bg, fillOpacity: 0.8, ring: fg, ringOpacity: 0.3, icon: fg, shade: 0 },
@@ -4640,6 +4649,7 @@ function makeNavImages( colors ) {
             navImages[ name ][ state ] = "data:image/svg+xml," + encodeURIComponent( svg );
         } );
     } );
+    navImagesCache[ key ] = navImages;
     return navImages;
 }
 
