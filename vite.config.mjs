@@ -8,7 +8,7 @@ const outDir = "build/openseadragon";
 
 function gitDescribe() {
     try {
-        // Same format as grunt-git-describe: tag-since-hash, without git's "g" prefix.
+        // Same format the Grunt build used: tag-since-hash, without git's "g" prefix.
         return execSync("git describe --tags --always --long --dirty", { encoding: "utf8" })
             .trim()
             .replace(/-g([0-9a-f]+)/, "-$1");

@@ -24,11 +24,6 @@
 
         // Set config on the existing QUnit object (do not overwrite window.QUnit)
         QUnit.config.testTimeout = isInteractiveMode() ? 30000 : 10000;
-
-        // Reliable completion signal for the Puppeteer coverage runner.
-        QUnit.done(function () {
-            window.__qunitDone = true;
-        });
     </script>
 
     <script src="/test/lib/jquery-1.9.1.min.js"></script>
