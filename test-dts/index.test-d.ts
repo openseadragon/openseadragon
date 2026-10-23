@@ -11,6 +11,9 @@ expectType<boolean>(viewer.isFullPage());
 expectType<OpenSeadragon.Viewer>(viewer.close());
 expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: "viewer", cooperativeGestures: true }));
 expectType<OpenSeadragon.Viewer>(viewer.setCooperativeGestures(true));
+expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: "viewer", buttonColors: { icon: "#000" } }));
+expectType<OpenSeadragon.Viewer>(viewer.setButtonColors({ background: "#fff" }));
+expectError(viewer.setButtonColors({ icon: 1 }));
 viewer.destroy();
 
 // Viewport

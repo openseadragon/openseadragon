@@ -24,6 +24,29 @@
         }
     });
 
+    QUnit.test('ButtonColors', function (assert) {
+        viewer = OpenSeadragon({
+            id:           'controlsTests',
+            prefixUrl:    '/build/openseadragon/images/',
+            buttonColors: { icon: '#ff0000' },
+            navImages:    { home: { REST: 'home_rest.png', GROUP: 'home_grouphover.png', HOVER: 'home_hover.png', DOWN: 'home_pressed.png' } }
+        });
+
+        const zoomInSrc = viewer.zoomInButton.imgRest.getAttribute('src');
+        assert.ok(zoomInSrc.startsWith('data:image/svg+xml,'), 'default buttons use data URLs without prefixUrl');
+        assert.ok(zoomInSrc.includes(encodeURIComponent('#ff0000')), 'icon color is applied');
+        assert.ok(zoomInSrc.includes(encodeURIComponent('#f4f5f7')), 'unset background keeps its default');
+        assert.equal(viewer.homeButton.imgRest.getAttribute('src'), '/build/openseadragon/images/home_rest.png',
+            'navImages overrides one button and keeps prefixUrl');
+
+        viewer.setButtonColors({ background: '#00ff00' });
+        const newZoomInSrc = viewer.zoomInButton.imgRest.getAttribute('src');
+        assert.ok(newZoomInSrc.includes(encodeURIComponent('#00ff00')), 'setButtonColors rebuilds default buttons');
+        assert.ok(newZoomInSrc.includes(encodeURIComponent('#ff0000')), 'setButtonColors keeps the unchanged color');
+        assert.equal(viewer.homeButton.imgRest.getAttribute('src'), '/build/openseadragon/images/home_rest.png',
+            'setButtonColors leaves navImages overrides alone');
+    });
+
     QUnit.test('ZoomControlOff', function (assert) {
         const done = assert.async();
         const openHandler = function () {
