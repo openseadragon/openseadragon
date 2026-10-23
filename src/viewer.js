@@ -4396,13 +4396,19 @@ function doViewerResize(viewer, containerSize) {
 
 function handleNavKeys(viewer) {
     // Iterate over all navigation actions.
+    let anyDown = false;
     for (const action in viewer._activeActions) {
         if (viewer._activeActions[action] || viewer._navActionVirtuallyHeld[action]) {
             viewer._navActionFrames[action]++;
             if (viewer._navActionFrames[action] >= viewer._minNavActionFrames) {
                 viewer._navActionVirtuallyHeld[action] = false;
             }
+            anyDown = anyDown || viewer._activeActions[action] || viewer._navActionVirtuallyHeld[action];
         }
+    }
+    // This runs every frame for every viewer, so skip the allocations below when idle.
+    if (!anyDown) {
+        return;
     }
 
     // Helper for action state
