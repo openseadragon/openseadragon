@@ -83,9 +83,7 @@ If you wish to work interactively with the tests or test your changes:
 
     npm run dev
 
-and open `http://localhost:8000/test/test.html` in your browser.
-
-Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
+It opens `http://localhost:8000/`, which links to the test page (`/test/test.html`) and every demo. `test/demo/basic.html` is a good one for trying out your changes. Open pages reload after each rebuild.
 
 You can also get a report of the tests' code coverage:
 
