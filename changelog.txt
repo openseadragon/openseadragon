@@ -13,6 +13,7 @@ OPENSEADRAGON CHANGELOG
 * Tile loading and decoding recover more gracefully from transient failures instead of leaving the affected tiles stuck (#2953 @Aiosa)
 * Fixed a bug where tile downloads could be cancelled and restarted on every frame even when the view hadn't changed, which could stall loading when imageLoaderLimit was set (#2953 @Aiosa)
 * Fixed: ImageTileSource did not build its downsampling pyramid by default, causing aliasing when zoomed out (#2990 @lukew-cogapp)
+* Reduced the work done every frame when updating and drawing tiles (#3005 @lukew-cogapp)
 * Fixed: Viewer.isMouseNavEnabled() would always return undefined (#2997 @cavenel)
 * Fixed: PriorityQueue.insert() and DataTypeConverter.guessType() could throw (#3006 @lukew-cogapp)
 * Improved unit tests (#2976 @animesh68)
