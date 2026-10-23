@@ -1708,8 +1708,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.loadingCoverage = {};
         const lowestLevel = tiles.length ? tiles[0].level : 0;
 
-        const drawArea = this.getDrawArea();
-        if(!drawArea){
+        if (!tiles.length || !this.getDrawArea()) {
             return;
         }
 
