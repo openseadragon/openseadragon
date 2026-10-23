@@ -32,6 +32,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import { version } from "../package.json";
+
 /*
  * Portions of this source file taken from jQuery:
  *
@@ -84,7 +86,6 @@
 
 /**
  * @namespace OpenSeadragon
- * @version <%= pkg.name %> <%= pkg.version %>
  * @classdesc The root namespace for OpenSeadragon.  All utility methods
  * and classes are defined on or below this namespace.
  *
@@ -927,7 +928,6 @@
   *
   */
 
-/* eslint-disable no-redeclare */
 function OpenSeadragon( options ){
     return new OpenSeadragon.Viewer( options );
 }
@@ -945,11 +945,12 @@ function OpenSeadragon( options ){
      * @property {Number} revision - The revision number.
      * @since 1.0.0
      */
+    const versionParts = version.split('.');
     $.version = {
-        versionStr: '<%= osdVersion.versionStr %>',
-        major: parseInt('<%= osdVersion.major %>', 10),
-        minor: parseInt('<%= osdVersion.minor %>', 10),
-        revision: parseInt('<%= osdVersion.revision %>', 10)
+        versionStr: version,
+        major: parseInt(versionParts[0], 10),
+        minor: parseInt(versionParts[1], 10),
+        revision: parseInt(versionParts[2], 10)
     };
 
 
@@ -3145,24 +3146,4 @@ function OpenSeadragon( options ){
 }(OpenSeadragon));
 
 
-// Universal Module Definition, supports CommonJS, AMD and simple script tag
-(function (root, $) {
-    if (typeof define === 'function' && define.amd) {
-        // expose as amd module
-        define([], function () {
-            return $;
-        });
-    } else if (typeof module === 'object' && module.exports) {
-        // expose as commonjs module
-        module.exports = $;
-    } else {
-        if (!root) {
-            root = typeof window === 'object' && window;
-            if (!root) {
-                $.console.error("OpenSeadragon must run in browser environment!");
-            }
-        }
-        // expose as window.OpenSeadragon
-        root.OpenSeadragon = $;
-    }
-}(this, OpenSeadragon));
+export default OpenSeadragon;

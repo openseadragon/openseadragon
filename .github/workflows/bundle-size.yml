@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'src/**'
-      - 'Gruntfile.js'
+      - 'vite.config.mjs'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/bundle-size.yml'

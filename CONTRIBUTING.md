@@ -16,10 +16,9 @@ If you're new to open source in general, check out [GitHub's open source intro g
 
 ### First Time Setup
 
-All command-line operations for building and testing OpenSeadragon are scripted using [Grunt](https://gruntjs.com/) which is based on [Node.js](https://nodejs.org/). To get set up:
+All command-line operations for building and testing OpenSeadragon are npm scripts, built with [Vite](https://vite.dev/) on [Node.js](https://nodejs.org/). To get set up:
 
 1. Install Node 22.13+ or 24+, if you haven't already (available at the link above)
-1. Install the Grunt command line runner (if you haven't already); on the command line, run `npm install -g grunt-cli`
 1. Clone the openseadragon repository
 1. On the command line, go in to the openseadragon folder
 1. Run `npm install`
@@ -31,27 +30,23 @@ continue reading for build and test instructions.
 
 To build, just run (on the command line, in the openseadragon folder):
 
-    grunt
+    npm run build
 
-If you want Grunt to watch your source files and rebuild every time you change one, use:
+To have it watch your source files, rebuild every time you change one and run a server for you to test in:
 
-    grunt watch
-
-To have it watch your source files and also run a server for you to test in:
-
-    grunt dev
+    npm run dev
 
 The built files appear in the `build` folder.
 
 If you want to build tar and zip files for distribution (they will also appear in the `build` folder), use:
 
-    grunt package
+    npm run package
 
 Note that the `build` folder is masked with .gitignore; it's just for your local use, and won't be checked in to the repository.
 
 You can also publish the built version to the site-build repository. This assumes you have cloned it next to this repository. The command is:
 
-    grunt publish
+    npm run publish-site
 
 ... which will delete the existing openseadragon folder, along with the .zip and .tar.gz files, out of the site-build folder and replace them with newly built ones from the source in this repository; you'll then need to commit the changes to site-build.
 
@@ -74,11 +69,11 @@ The bundle size check runs automatically in CI/CD, and PRs will fail if bundle s
 
 Our tests are based on [QUnit](https://qunitjs.com/) and [Puppeteer](https://github.com/GoogleChrome/puppeteer); they're both installed when you run `npm install`. To run on the command line:
 
-    grunt test
+    npm test
 
 To test a specific module only (`navigator` here):
 
-    grunt test --module="navigator"
+    npm test -- --module="navigator"
 
 > [!TIP]
 > The argument can be found
@@ -86,29 +81,20 @@ To test a specific module only (`navigator` here):
 
 If you wish to work interactively with the tests or test your changes:
 
-    grunt connect watch
+    npm run dev
 
-and open `http://localhost:8000/test/test.html` in your browser.
-
-Another good page, if you want to interactively test out your changes, is `http://localhost:8000/test/demo/basic.html`.
-
-
-> [!NOTE]
-> corresponding npm commands for the above are:
->  - npm run test
->  - npm run test -- --module="navigator"
->  - npm run dev
+It opens `http://localhost:8000/`, which links to the test page (`/test/test.html`) and every demo. `test/demo/basic.html` is a good one for trying out your changes. Open pages reload after each rebuild.
 
 You can also get a report of the tests' code coverage:
 
-    grunt coverage
+    npm run coverage
 
 The report shows up at `coverage/index.html` viewable in a browser.
 
 ### Building and Testing Documentation
 
 * Clone https://github.com/openseadragon/site-build to your hard drive in a sibling folder named exactly `site-build` next to this repository, and do an `npm install` in it.
-* In this repository, do `grunt publish`; that will build the code and send a copy over to the `site-build` folder.
+* In this repository, do `npm run publish-site`; that will build the code and send a copy over to the `site-build` folder.
 * In this `site-build` folder, do a `grunt doc`. That will build the JSDocs.
 * Run `grunt dev` there. That'll start a server at localhost:9000 so you can see the docs.
 
@@ -116,11 +102,10 @@ The report shows up at `coverage/index.html` viewable in a browser.
 
 This project is now compatible with direct installation of forked Github repos/branches via npm/yarn (possible because of the new [prepare](https://docs.npmjs.com/misc/scripts) command).  This enables quick testing of a bugfix or feature addition via a forked repo.  In order to do this:
 
-1. Install the Grunt command line runner (if you haven't already); on the command line, run `npm install -g grunt-cli` (or `yarn global add grunt-cli`)
 1. Remove any currently installed openseadragon package via `npm uninstall openseadragon` or `yarn remove openseadragon`
 1. Add the specific forked repo/branch by running `npm install git://github.com/username/openseadragon.git#branch-name` or `yarn add git://github.com/username/openseadragon.git#branch-name`. Make sure to replace username and branch-name with proper targets.
 
-During installation, the package should be correctly built via grunt and can then be used via `import Openseadragon from 'openseadragon'` or `var Openseadragon = require('openseadragon')` statements as if the official package were installed.
+During installation, the package should be correctly built via its `prepare` script and can then be used via `import Openseadragon from 'openseadragon'` or `var Openseadragon = require('openseadragon')` statements as if the official package were installed.
 
 ### Async Debugging
 Some things like data loading and processing is asynchronous. To debug, you can use ``OpenSeadragon.trace(...)``
