@@ -317,9 +317,7 @@ class HTMLDrawer extends OpenSeadragon.DrawerBase{
         dataObject.style.height  = tile.size.y + "px";
         dataObject.style.width   = tile.size.x + "px";
 
-        if (tile.flipped) {
-            dataObject.style.transform = "scaleX(-1)";
-        }
+        dataObject.style.transform = tile.flipped ? "scaleX(-1)" : "";
 
         $.setElementOpacity( dataObject.element, tile.opacity );
     }
