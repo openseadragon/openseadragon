@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenSeadragon fitHorizontally() Top Row Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <style type="text/css">
+
+        .openseadragon1 {
+            width: 800px;
+            height: 400px;
+            border: thin black solid;
+        }
+
+    </style>
+</head>
+<body>
+    <p>
+        A grid of images taller than the viewer, with the top row marked "A". <code>fitHorizontally()</code> fits the
+        grid to the viewer's width but keeps it centred vertically, so the top and bottom
+        rows are cut off. Galleries and multi-page documents usually want to start at the
+        top instead (see <a href="https://github.com/openseadragon/openseadragon/issues/839">#839</a>).
+    </p>
+    <p>
+        On open, the demo calls <code>fitHorizontally(true)</code>, reads the height of the
+        visible area with <code>getBounds(true)</code>, then pans so the top of that area
+        meets the top of the grid. The home button still shows the whole grid.
+    </p>
+    <div id="contentDiv" class="openseadragon1"></div>
+    <script type="text/javascript">
+
+        var tileSources = [];
+        for (var i = 0; i < 24; i++) {
+            tileSources.push(i < 4 ? { type: "image", url: "../data/A.png" } : "../data/testpattern.dzi");
+        }
+
+        var viewer = OpenSeadragon({
+            id: "contentDiv",
+            prefixUrl: "../../build/openseadragon/images/",
+            tileSources: tileSources,
+            collectionMode: true,
+            collectionRows: 0,
+            collectionColumns: 4
+        });
+
+        viewer.addHandler("open", function() {
+            var viewport = viewer.viewport;
+            var home = viewer.world.getHomeBounds();
+
+            viewport.fitHorizontally(true);
+            var visible = viewport.getBounds(true);
+            viewport.panTo(new OpenSeadragon.Point(
+                home.x + home.width / 2,
+                home.y + visible.height / 2
+            ), true);
+        });
+
+    </script>
+</body>
+</html>
