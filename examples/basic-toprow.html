@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>OpenSeadragon: fitHorizontally + Top Row</title>
+    <script src="https://unpkg.com/openseadragon@latest/build/openseadragon/openseadragon.min.js"></script>
+    <style>
+      #viewer { width: 800px; height: 600px; margin: auto; }
+    </style>
+  </head>
+  <body>
+    <div id="viewer"></div>
+    <script>
+      const viewer = OpenSeadragon({
+        id: "viewer",
+        prefixUrl: "https://unpkg.com/openseadragon@latest/build/openseadragon/images/",
+        tileSources: "https://openseadragon.github.io/example-images/highsmith/highsmith.dzi"
+      });
+      viewer.addHandler("open", () => {
+        viewer.viewport.fitHorizontally(true);
+        const bounds = viewer.viewport.getBounds();
+        const topLeft = viewer.viewport.imageToViewportCoordinates(0, 0);
+        viewer.viewport.panTo(topLeft, true);
+      });
+    </script>
+  </body>
+</html>
