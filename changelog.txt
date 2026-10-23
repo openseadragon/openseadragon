@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * Added controls-fade event so custom controls can fade in step with the built-in ones (#2991 @lukew-cogapp)
 * We now expose the HTTP status code in open-failed events when possible (#2972 @a-sayed123)
 * Fixed: ImageTileSource did not build its downsampling pyramid by default, causing aliasing when zoomed out (#2990 @lukew-cogapp)
+* Reduced the work done every frame when updating and drawing tiles (#3005 @lukew-cogapp)
 * Fixed: Viewer.isMouseNavEnabled() would always return undefined (#2997 @cavenel)
 * Improved unit tests (#2976 @animesh68)
 * CI now runs on Node 24 with current GitHub Actions versions (#2992 @lukew-cogapp)
