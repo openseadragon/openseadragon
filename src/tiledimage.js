@@ -1708,8 +1708,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this.loadingCoverage = {};
         const lowestLevel = tiles.length ? tiles[0].level : 0;
 
-        const drawArea = this.getDrawArea();
-        if(!drawArea){
+        if (!tiles.length || !this.getDrawArea()) {
             return;
         }
 
@@ -1717,7 +1716,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // the coverage provided is also updated. If a level provides coverage
         // as part of this process, discard tiles from lower levels
         let level = 0;
-        for (const info of tiles) {
+        for (let i = 0; i < tiles.length; i++) {
+            const info = tiles[i];
             const tile = info.tile;
             if (tile && tile.loaded) {
                 const tileIsBlending = _this._blendTile(
@@ -1733,7 +1733,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 _this._needsDraw = _this._needsDraw || tileIsBlending || _this._wasBlending;
             }
 
-            if (this._providesCoverage(this.coverage, info.level)) {
+            // Tiles arrive grouped by level, and a level's coverage is only written by its own
+            // tiles, so checking once at the end of each group matches checking after every tile.
+            const next = tiles[i + 1];
+            if ((!next || next.level !== info.level) && this._providesCoverage(this.coverage, info.level)) {
                 level = Math.max(level, info.level);
             }
         }
@@ -1890,7 +1893,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             // First Part: Decide if tile will be used to draw //
             /////////////////////////////////////////////////////
 
-            if( this.viewer ){
+            if (this.viewer && this.viewer.numberOfHandlers("update-tile")) {
                 /**
                  * This event is called before tile is being updated: its position, coverage and other properties.
                  * Note that this does not mean the tile will be loaded, it might be just updated greedily to avoid
@@ -2007,6 +2010,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
         const numTiles = Math.max(0, (drawBottomRightTile.x - drawTopLeftTile.x) * (drawBottomRightTile.y - drawTopLeftTile.y));
 
+        // Rect.intersection clips arbitrary rotated rectangles and allocates heavily, so use a plain
+        // box overlap test when nothing is rotated. Zero-size areas stay on the general path because
+        // its containsPoint ignores the zero-length axis, which a box test would not.
+        const axisAligned = area.degrees === 0 && area.width > 0 && area.height > 0;
+        const areaRight = area.x + area.width;
+        const areaBottom = area.y + area.height;
+
         for (let x = drawTopLeftTile.x; x <= drawBottomRightTile.x; x++) {
             for (let y = drawTopLeftTile.y; y <= drawBottomRightTile.y; y++) {
                 let flippedX;
@@ -2017,7 +2027,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     flippedX = x;
                 }
 
-                if (area.intersection(this.getTileBounds(level, flippedX, y)) === null) {
+                const tileBounds = this.getTileBounds(level, flippedX, y);
+                const visible = axisAligned ?
+                    tileBounds.x <= areaRight && area.x <= tileBounds.x + tileBounds.width &&
+                    tileBounds.y <= areaBottom && area.y <= tileBounds.y + tileBounds.height :
+                    area.intersection(tileBounds) !== null;
+                if (!visible) {
                     // This tile is not in the draw area
                     continue;
                 }
