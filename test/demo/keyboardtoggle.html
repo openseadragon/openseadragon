@@ -28,6 +28,9 @@
             keyboardNavEnabled: true
         });
 
+        setInterval(() => {
+            viewer.setKeyboardNavEnabled(!viewer.isKeyboardNavEnabled());
+            console.log("isKeyboardNavEnabled: " + viewer.isKeyboardNavEnabled());
         },1000);
     </script>
 </body>
