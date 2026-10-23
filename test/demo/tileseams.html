@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mac M2/M4 Mac Tile Seams Issue</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='../lib/jquery-1.9.1.min.js'></script>
+    <style type="text/css">
+        .openseadragon {
+            width: 800px;
+            height: 600px;
+	    background-color: black;
+        }
+    </style>
+</head>
+<body>
+  <p>Open this page on an M2+ mac in latest Google Chrome. Note that, upon moving around in the viewer, seams between these tiles appear periodically.</p>
+  <div id="contentDiv" class="openseadragon"></div>
+  <script type="text/javascript">
+      const config = {
+	  // debugMode: true,
+	  maxPixelRatio: 0.7,
+	  tileSources: [{
+	      width: 5166,
+	      height: 2730,
+	      minLevel: 3,
+	      maxLevel: 3,
+	      getTileWidth: () => 512,
+	      getTileHeight: () => 512,
+	      getTileUrl: (level, col, row) => `/test/data/guppytiles/${level}/${col}_${row}.jpg`,
+	      // When tileOverlap is set to 0, it gets interpreted by openseadragon as unset. Instead of having it be unset, we simply want
+	      // it to be 0. Setting it to something quite small gives us that behavior
+	      tileOverlap: 0.000001,
+	  }],
+      };
+      
+      OpenSeadragon({
+        ...config,
+          id: 'contentDiv',
+	  drawer: 'webgl',
+      });
+    </script>
+</body>
+</html>
