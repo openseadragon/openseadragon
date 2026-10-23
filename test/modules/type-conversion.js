@@ -200,6 +200,10 @@
         );
     });
 
+    QUnit.test('guessType names unknown DOM elements', function (test) {
+        test.equal(Converter.guessType(document.createElement("foo")), "foo");
+    });
+
     QUnit.test('Copy of build-in types', function (test) {
         const done = test.async();
 
