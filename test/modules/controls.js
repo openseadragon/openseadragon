@@ -35,7 +35,7 @@
         const zoomInSrc = viewer.zoomInButton.imgRest.getAttribute('src');
         assert.ok(zoomInSrc.startsWith('data:image/svg+xml,'), 'default buttons use data URLs without prefixUrl');
         assert.ok(zoomInSrc.includes(encodeURIComponent('#ff0000')), 'icon color is applied');
-        assert.ok(zoomInSrc.includes(encodeURIComponent('#1f2329')), 'unset background keeps its default');
+        assert.ok(zoomInSrc.includes(encodeURIComponent('#f4f5f7')), 'unset background keeps its default');
         assert.equal(viewer.homeButton.imgRest.getAttribute('src'), '/build/openseadragon/images/home_rest.png',
             'navImages overrides one button and keeps prefixUrl');
     });

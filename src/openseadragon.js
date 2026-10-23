@@ -148,8 +148,8 @@
   * @property {Object} [buttonColors]
   *     Colors for the default button images. Hover and pressed states swap
   *     the two, so pick a pair with good contrast.
-  * @property {String} [buttonColors.background='#1f2329']
-  * @property {String} [buttonColors.icon='#f4f5f7']
+  * @property {String} [buttonColors.background='#f4f5f7']
+  * @property {String} [buttonColors.icon='#1f2329']
   *
   * @property {OpenSeadragon.NavImages} [navImages]
   *     An object with a property for each button or other built-in navigation
@@ -1528,8 +1528,8 @@ function OpenSeadragon( options ){
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
             buttonColors: {
-                background: "#1f2329",
-                icon:       "#f4f5f7"
+                background: "#f4f5f7",
+                icon:       "#1f2329"
             },
 
             //DEVELOPER SETTINGS
