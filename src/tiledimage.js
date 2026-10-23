@@ -2010,6 +2010,13 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
         const numTiles = Math.max(0, (drawBottomRightTile.x - drawTopLeftTile.x) * (drawBottomRightTile.y - drawTopLeftTile.y));
 
+        // Rect.intersection clips arbitrary rotated rectangles and allocates heavily, so use a plain
+        // box overlap test when nothing is rotated. Zero-size areas stay on the general path because
+        // its containsPoint ignores the zero-length axis, which a box test would not.
+        const axisAligned = area.degrees === 0 && area.width > 0 && area.height > 0;
+        const areaRight = area.x + area.width;
+        const areaBottom = area.y + area.height;
+
         for (let x = drawTopLeftTile.x; x <= drawBottomRightTile.x; x++) {
             for (let y = drawTopLeftTile.y; y <= drawBottomRightTile.y; y++) {
                 let flippedX;
@@ -2020,7 +2027,12 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                     flippedX = x;
                 }
 
-                if (area.intersection(this.getTileBounds(level, flippedX, y)) === null) {
+                const tileBounds = this.getTileBounds(level, flippedX, y);
+                const visible = axisAligned ?
+                    tileBounds.x <= areaRight && area.x <= tileBounds.x + tileBounds.width &&
+                    tileBounds.y <= areaBottom && area.y <= tileBounds.y + tileBounds.height :
+                    area.intersection(tileBounds) !== null;
+                if (!visible) {
                     // This tile is not in the draw area
                     continue;
                 }
