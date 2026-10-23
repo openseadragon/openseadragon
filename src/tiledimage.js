@@ -1717,7 +1717,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // the coverage provided is also updated. If a level provides coverage
         // as part of this process, discard tiles from lower levels
         let level = 0;
-        for (const info of tiles) {
+        for (let i = 0; i < tiles.length; i++) {
+            const info = tiles[i];
             const tile = info.tile;
             if (tile && tile.loaded) {
                 const tileIsBlending = _this._blendTile(
@@ -1733,7 +1734,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 _this._needsDraw = _this._needsDraw || tileIsBlending || _this._wasBlending;
             }
 
-            if (this._providesCoverage(this.coverage, info.level)) {
+            // Tiles arrive grouped by level, and a level's coverage is only written by its own
+            // tiles, so checking once at the end of each group matches checking after every tile.
+            const next = tiles[i + 1];
+            if ((!next || next.level !== info.level) && this._providesCoverage(this.coverage, info.level)) {
                 level = Math.max(level, info.level);
             }
         }
