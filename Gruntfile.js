@@ -217,7 +217,7 @@ module.exports = function(grunt) {
             tasks: "watchTask"
         },
         eslint: {
-            target: sources
+            target: sources.concat("src/index.js")
         },
         "git-describe": {
             options: {
@@ -227,15 +227,21 @@ module.exports = function(grunt) {
         },
         gitInfo: "unknown",
         shell: {
+            vite_build: {
+                command: "npx vite build && npx vite build --mode min"
+            },
+            vite_minbuild: {
+                command: "npx vite build"
+            },
             dts_check: {
                 command: "npx tsc --noEmit -p tsconfig.dts.json"
             },
             dts_smoke: {
                 command: "npx tsd"
             },
-            // Step 1: Instrument source files with nyc
+            // Step 1: Build an instrumented bundle
             instrument: {
-                command: "npx nyc instrument src instrumented/src"
+                command: "npx vite build --mode coverage"
             },
             // Step 2: Run tests with instrumented sources via custom
             // Puppeteer script that captures window.__coverage__
@@ -323,17 +329,12 @@ module.exports = function(grunt) {
     // ----------
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
-    grunt.registerTask("build", [
-        "clean:build", "git-describe", "eslint", "concat", "uglify",
-        "replace:cleanPaths", "copy:build"
-    ]);
+    grunt.registerTask("build", ["eslint", "shell:vite_build"]);
 
     // ----------
     // Minimal build task.
     // For use during development as desired. Creates only the unminified version.
-    grunt.registerTask("minbuild", [
-        "git-describe", "concat", "copy:build"
-    ]);
+    grunt.registerTask("minbuild", ["shell:vite_minbuild"]);
 
     // ----------
     // Test task.
@@ -346,7 +347,7 @@ module.exports = function(grunt) {
     //
     // Flow:
     //   1. clean:coverage      — remove old instrumented/, .nyc_output/, coverage/
-    //   2. shell:instrument    — nyc instrument src -> instrumented/src
+    //   2. shell:instrument    — vite build --mode coverage -> instrumented/
     //   3. build               — lint + build (ensures code quality)
     //   4. connect             — start local web server
     //   5. shell:coverage_run  — run Puppeteer, execute tests, capture __coverage__

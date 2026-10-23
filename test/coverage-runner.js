@@ -4,7 +4,7 @@
 /**
  * Coverage runner for OpenSeadragon
  *
- * Runs QUnit tests with nyc-instrumented sources in Puppeteer,
+ * Runs QUnit tests against the instrumented build in Puppeteer,
  * extracts window.__coverage__, and writes it to .nyc_output/.
  */
 
@@ -121,7 +121,7 @@ async function runCoverage() {
         console.error('  window.__coverage__ is undefined.');
         console.error('');
         console.error('  Make sure sources are instrumented:');
-        console.error('    npx nyc instrument src instrumented/src');
+        console.error('    npx vite build --mode coverage');
         console.error('========================================================');
         process.exit(1);
     }
