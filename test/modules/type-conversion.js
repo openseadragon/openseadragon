@@ -180,6 +180,26 @@
         done();
     });
 
+    QUnit.test('PriorityQueue insert, insertAll and clone', function (test) {
+        const queue = new OpenSeadragon.PriorityQueue();
+        queue.insert(3, "c");
+        queue.insert(1, "a");
+        queue.insert(2, "b");
+        test.equal(queue.peek(), "a", "insert keeps the lowest key at the root");
+
+        const copy = queue.clone();
+        test.equal(copy.getCount(), 3, "clone copies every item");
+
+        const merged = new OpenSeadragon.PriorityQueue();
+        merged.insert(0, "z");
+        merged.insertAll(queue);
+        test.deepEqual(
+            [merged.remove().value, merged.remove().value, merged.remove().value, merged.remove().value],
+            ["z", "a", "b", "c"],
+            "insertAll into a non-empty queue keeps key order"
+        );
+    });
+
     QUnit.test('Copy of build-in types', function (test) {
         const done = test.async();
 
