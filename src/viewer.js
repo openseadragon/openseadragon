@@ -1342,6 +1342,53 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
     },
 
     /**
+     * Changes the colors of the default button images, eg to follow a page's light/dark theme.
+     * Buttons whose images were set through navImages keep them.
+     *
+     * @function
+     * @param {Object} colors
+     * @param {String} [colors.background]
+     * @param {String} [colors.icon]
+     * @returns {OpenSeadragon.Viewer} Chainable.
+     */
+    setButtonColors: function( colors ) {
+        const oldImages = makeNavImages( this.buttonColors );
+        this.buttonColors = $.extend( {}, this.buttonColors, colors );
+        const newImages = makeNavImages( this.buttonColors );
+        const buttons = {
+            zoomIn:      this.zoomInButton,
+            zoomOut:     this.zoomOutButton,
+            home:        this.homeButton,
+            fullpage:    this.fullPageButton,
+            rotateleft:  this.rotateLeftButton,
+            rotateright: this.rotateRightButton,
+            flip:        this.flipButton,
+            previous:    this.previousButton,
+            next:        this.nextButton
+        };
+
+        Object.keys( buttons ).forEach( name => {
+            const images = this.navImages && this.navImages[ name ];
+            if ( !images ) {
+                return;
+            }
+            const button = buttons[ name ];
+            [ "REST", "GROUP", "HOVER", "DOWN" ].forEach( state => {
+                if ( images[ state ] !== oldImages[ name ][ state ] ) {
+                    return;
+                }
+                images[ state ] = newImages[ name ][ state ];
+                const suffix = state.charAt( 0 ) + state.slice( 1 ).toLowerCase();
+                if ( button && button[ "img" + suffix ] ) {
+                    button[ "src" + suffix ] = images[ state ];
+                    button[ "img" + suffix ].src = images[ state ];
+                }
+            } );
+        } );
+        return this;
+    },
+
+    /**
      * Update headers to include when making AJAX requests.
      *
      * Unless `propagate` is set to false (which is likely only useful in rare circumstances),
