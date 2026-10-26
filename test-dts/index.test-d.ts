@@ -225,6 +225,11 @@ if (viewer.navigator) {
 expectType<OpenSeadragon.DrawerBase>(viewer.drawer);
 expectType<boolean>(viewer.drawer.canRotate());
 expectType<OpenSeadragon.Point>(viewer.drawer.viewportCoordToDrawerCoord(new OpenSeadragon.Point(0, 0)));
+const webglDrawer = viewer.drawer as OpenSeadragon.WebGLDrawer;
+expectType<boolean>(webglDrawer.hasTransformFeedback());
+expectType<{ positions: Float32Array; texcoords: Float32Array } | null>(
+    webglDrawer.captureTransformFeedback([], item as OpenSeadragon.TiledImage)
+);
 
 // Tile
 const tile = new OpenSeadragon.Tile(0, 0, 0, new OpenSeadragon.Rect(0, 0, 256, 256), true, "tile.jpg", null as any, false, {}, new OpenSeadragon.Rect(0, 0, 256, 256), null as any, "key");
