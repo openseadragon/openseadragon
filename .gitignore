@@ -6,7 +6,6 @@ coverage/
 instrumented/
 .nyc_output/
 .idea
-/nbproject/private/
 .directory
 local-test
 .DS_Store
