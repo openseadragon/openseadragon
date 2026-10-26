@@ -93,4 +93,3 @@ window.MockSeadragon = {
         return OpenSeadragon.extend(new OpenSeadragon.CacheRecord(), props);
     }
 };
-
