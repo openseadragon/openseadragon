@@ -548,6 +548,7 @@ declare namespace OpenSeadragon {
         constructor(options: ButtonOptions);
         disable(): void;
         enable(): void;
+        isDisabled(): boolean;
         notifyGroupEnter(): void;
         notifyGroupExit(): void;
         destroy(): void;
@@ -575,6 +576,7 @@ declare namespace OpenSeadragon {
 
         tstamp: number;
         loaded: boolean;
+        failed: boolean;
         readonly data: any;
         readonly type: string;
 
@@ -602,7 +604,7 @@ declare namespace OpenSeadragon {
         isUsableForDrawer(drawer: DrawerBase): boolean;
         prepareForRendering(drawer: DrawerBase): Promise<any>;
         prepareInternalCacheAsync(drawer: DrawerBase): Promise<any>;
-        prepareInternalCacheSync(drawer: DrawerBase): InternalCacheRecord;
+        prepareInternalCacheSync(drawer: DrawerBase): InternalCacheRecord | undefined;
         transformTo(type?: string | string[]): Promise<any>;
         destroyInternalCache(drawerId?: string): void;
         withTileReference(ref: Tile): CacheRecord;
@@ -982,7 +984,7 @@ declare namespace OpenSeadragon {
         userData: any;
 
         constructor(options: TImageJobOptions);
-        abort(): void;
+        abort(abortMessage?: string): void;
         fail(errorMessage: string, request: XMLHttpRequest | null): void;
         finish(
             data: any,
@@ -1010,7 +1012,7 @@ declare namespace OpenSeadragon {
         timeout: number;
 
         constructor(options: BatchImageJobOptions);
-        abort(): void;
+        abort(abortMessage?: string): void;
         fail(errorMessage: string, request: XMLHttpRequest | null): void;
         finish(
             data: any,
@@ -1035,7 +1037,7 @@ declare namespace OpenSeadragon {
 
         addJob(options: TImageJobOptions): boolean;
         canAcceptNewJob(): boolean;
-        clear(): void;
+        clear(cancelRetries: boolean): void;
     }
 
     interface ImageTileSourceOptions extends TileSourceOptions {
@@ -1043,6 +1045,7 @@ declare namespace OpenSeadragon {
         buildPyramid?: boolean;
         crossOriginPolicy?: string | boolean;
         ajaxWithCredentials?: string | boolean;
+        /** @deprecated Ignored; use buildPyramid: false to skip the pyramid. */
         useCanvas?: boolean;
     }
 
@@ -1050,6 +1053,7 @@ declare namespace OpenSeadragon {
         buildPyramid: boolean;
         crossOriginPolicy: string | boolean;
         ajaxWithCredentials: string | boolean;
+        /** @deprecated Ignored; use buildPyramid: false to skip the pyramid. */
         useCanvas: boolean;
         image: HTMLImageElement | null;
         levels: Array<{ url?: string; width: number; height: number }>;
@@ -1159,7 +1163,6 @@ declare namespace OpenSeadragon {
         cooperativeGestureHandling: boolean;
 
         destroy(): void;
-        /** @deprecated use `this.tracking` */
         isTracking(): boolean;
         setCooperativeGestureHandling(enabled: boolean): MouseTracker;
         setTracking(track: boolean): MouseTracker;
@@ -2092,6 +2095,7 @@ declare namespace OpenSeadragon {
             _allowTileUnloaded?: boolean,
             _isFromTileLoad?: boolean,
         ): Promise<any>;
+        tileSelectionChanged(): boolean;
         ensureTilesUpToDate(tileList: Tile[]): void;
         resetItems(): void;
         setAutoRefigureSizes(value?: boolean): void;
@@ -2176,6 +2180,7 @@ declare namespace OpenSeadragon {
         "container-enter": ContainerEvent;
         "container-exit": ContainerEvent;
         "controls-enabled": ControlsEnabledEvent;
+        "controls-fade": ControlsFadeEvent;
         destroy: ViewerEvent;
         "drawer-error": DrawerErrorEvent;
         flip: FlipEvent;
@@ -2408,6 +2413,10 @@ declare namespace OpenSeadragon {
 
     interface ControlsEnabledEvent extends ViewerEvent {
         enabled: boolean;
+    }
+
+    interface ControlsFadeEvent extends ViewerEvent {
+        opacity: number;
     }
 
     interface DrawerErrorEvent extends ViewerEvent {

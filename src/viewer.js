@@ -986,7 +986,8 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
 
         this.world.removeAll();
         this.tileCache.clear();
-        this.imageLoader.clear();
+        // Teardown: also cancel tiles waiting out tileRetryDelay, their world is going away.
+        this.imageLoader.clear(true);
         /**
          * Raised when the viewer is closed (see {@link OpenSeadragon.Viewer#close}).
          *
@@ -1221,7 +1222,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @returns {Boolean}
      */
     isMouseNavEnabled: function () {
-        return this.innerTracker.tracking;
+        return this.innerTracker.isTracking();
     },
 
     /**
@@ -1300,6 +1301,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
      * @param {Boolean} true to show, false to hide.
      * @returns {OpenSeadragon.Viewer} Chainable.
      * @fires OpenSeadragon.Viewer.event:controls-enabled
+     * @fires OpenSeadragon.Viewer.event:controls-fade
      */
     setControlsEnabled: function( enabled ) {
         if( enabled ){
@@ -2448,6 +2450,11 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                     onFocus:    onFocusHandler,
                     onBlur:     onBlurHandler
                 }));
+
+                const updateZoomButtonsHandler = $.delegate( this, this._updateZoomButtons );
+                this.addHandler( 'open', updateZoomButtonsHandler );
+                this.addHandler( 'reset-size', updateZoomButtonsHandler );
+                this.addHandler( 'viewport-change', updateZoomButtonsHandler );
             }
 
             if ( this.showHomeControl ) {
@@ -2844,6 +2851,22 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
       },
 
     /**
+     * Disables each zoom button while the target zoom is at that button's limit.
+     * @function OpenSeadragon.Viewer.prototype._updateZoomButtons
+     * @private
+     */
+    _updateZoomButtons: function() {
+        if ( !this.viewport ) {
+            return;
+        }
+        const zoom = this.viewport.getZoom();
+        const maxZoom = this.viewport.getMaxZoom();
+        const minZoom = this.viewport.getMinZoom();
+        setButtonAtZoomLimit( this, this.zoomInButton, zoom >= maxZoom || isAtZoomLimit( zoom, maxZoom ) );
+        setButtonAtZoomLimit( this, this.zoomOutButton, zoom <= minZoom || isAtZoomLimit( zoom, minZoom ) );
+    },
+
+    /**
      * Display a message in the viewport
      * @function OpenSeadragon.Viewer.prototype._showMessage
      * @private
@@ -3230,7 +3253,7 @@ function getOverlayObject( viewer, overlay ) {
         return overlay;
     }
 
-    let element = null;
+    let element;
     if ( overlay.element ) {
         element = $.getElement( overlay.element );
     } else {
@@ -3317,16 +3340,16 @@ function scheduleUpdate( viewer, updateFunc ){
 
 
 //provides a sequence in the fade animation
-function scheduleControlsFade( viewer ) {
+function scheduleControlsFade( viewer, fadeId ) {
     $.requestAnimationFrame( function(){
-        updateControlsFade( viewer );
+        updateControlsFade( viewer, fadeId );
     });
 }
 
 
 //initiates an animation to hide the controls
 function beginControlsAutoHide( viewer ) {
-    if ( !viewer.autoHideControls ) {
+    if ( !viewer.autoHideControls || viewer.controlsShouldFade ) {
         return;
     }
     viewer.controlsShouldFade = true;
@@ -3334,15 +3357,18 @@ function beginControlsAutoHide( viewer ) {
         $.now() +
         viewer.controlsFadeDelay;
 
+    // An abort followed by a new begin can leave the previous timer or frame
+    // loop pending; the id lets it see it has been superseded.
+    const fadeId = viewer._controlsFadeId = ( viewer._controlsFadeId || 0 ) + 1;
     window.setTimeout( function(){
-        scheduleControlsFade( viewer );
+        scheduleControlsFade( viewer, fadeId );
     }, viewer.controlsFadeDelay );
 }
 
 
 //determines if fade animation is done or continues the animation
-function updateControlsFade( viewer ) {
-    if ( viewer.controlsShouldFade ) {
+function updateControlsFade( viewer, fadeId ) {
+    if ( viewer.controlsShouldFade && fadeId === viewer._controlsFadeId ) {
         let currentTime = $.now();
         let deltaTime = currentTime - viewer.controlsFadeBeginTime;
         let opacity = 1.0 - deltaTime / viewer.controlsFadeLength;
@@ -3356,9 +3382,24 @@ function updateControlsFade( viewer ) {
             }
         }
 
+        /**
+         * Raised on each step of the controls fade animation, and with an opacity
+         * of 1 when the controls are shown again. Use it to fade custom controls
+         * in step with the built-in ones.
+         *
+         * @event controls-fade
+         * @memberof OpenSeadragon.Viewer
+         * @type {object}
+         * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+         * @property {Number} opacity - The opacity applied to the controls, from 0 to 1.
+         * @property {?Object} userData - Arbitrary subscriber-defined object.
+         */
+        viewer._controlsOpacity = opacity;
+        viewer.raiseEvent( 'controls-fade', { opacity: opacity } );
+
         if ( opacity > 0 ) {
             // fade again
-            scheduleControlsFade( viewer );
+            scheduleControlsFade( viewer, fadeId );
         }
     }
 }
@@ -3369,6 +3410,12 @@ function abortControlsAutoHide( viewer ) {
     viewer.controlsShouldFade = false;
     for ( let i = viewer.controls.length - 1; i >= 0; i-- ) {
         viewer.controls[ i ].setOpacity( 1.0 );
+    }
+    // Tracked on the viewer rather than read from the controls: custom buttons
+    // are not in viewer.controls, so there may be none to ask.
+    if ( viewer._controlsOpacity < 1 ) {
+        viewer._controlsOpacity = 1;
+        viewer.raiseEvent( 'controls-fade', { opacity: 1.0 } );
     }
 }
 
@@ -3382,8 +3429,10 @@ function onFocus(){
 }
 
 function onBlur(){
-    beginControlsAutoHide( this );
-
+    // Clicking from a focused button to the canvas blurs it with the pointer still inside.
+    if ( !THIS[ this.hash ].mouseInside ) {
+        beginControlsAutoHide( this );
+    }
 }
 
 function onCanvasContextMenu( event ) {
@@ -4433,6 +4482,8 @@ function updateOnce( viewer ) {
 
     const viewportChange = viewer.viewport.update() || viewerWasResized;
     let animated = viewer.world.update(viewportChange) || viewportChange;
+    // Whether the set of wanted tiles could have moved, so that queued jobs might be stale.
+    const tileSelectionChanged = viewer.world.tileSelectionChanged() || viewportChange;
 
     if (viewportChange) {
         /**
@@ -4475,7 +4526,7 @@ function updateOnce( viewer ) {
     }
 
     if ( animated || isAnimationFinished || THIS[ viewer.hash ].forceRedraw || viewer.world.needsDraw() ) {
-        drawWorld( viewer );
+        drawWorld( viewer, tileSelectionChanged );
         viewer._drawOverlays();
         if( viewer.navigator ){
           viewer.navigator.update( viewer.viewport );
@@ -4520,8 +4571,14 @@ function updateOnce( viewer ) {
     //viewer.profiler.endUpdate();
 }
 
-function drawWorld( viewer ) {
-    viewer.imageLoader.clear();
+function drawWorld( viewer, tileSelectionChanged ) {
+    // Queued jobs are tiles that were selected for the view as it was when they were queued, so they only
+    // go stale when that view changes - the viewport moved, an item's own transform did, or an item dropped
+    // its tiles via reset(). Clearing unconditionally aborts jobs that are still wanted, and they can then
+    // only be re-selected at the per-frame rate, which starves the loader whenever imageLoaderLimit is set.
+    if ( tileSelectionChanged ) {
+        viewer.imageLoader.clear();
+    }
     viewer.world.draw();
 
     /**
@@ -4541,6 +4598,25 @@ function drawWorld( viewer ) {
 ///////////////////////////////////////////////////////////////////////////////
 function resolveUrl( prefix, url ) {
     return prefix ? prefix + url : url;
+}
+
+
+// Constrained zooms recompute zoom from bounds width, so they can stop one ULP (unit in the last place) short of the limit.
+function isAtZoomLimit( zoom, limit ) {
+    return Math.abs( zoom / limit - 1 ) < 1e-8;
+}
+
+
+function setButtonAtZoomLimit( viewer, button, atZoomLimit ) {
+    // Without the zoom control, zoomInButton/zoomOutButton keep the raw id or element from the options.
+    if ( !( button instanceof $.Button ) ) {
+        return;
+    }
+    if ( atZoomLimit && !button.isDisabled() ) {
+        // A disabled button ignores pointer release, so a press-and-hold zoom would never end.
+        viewer.endZoomAction();
+    }
+    button._setAtZoomLimit( atZoomLimit );
 }
 
 

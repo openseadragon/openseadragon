@@ -252,8 +252,8 @@ function configureFromXML( tileSource, xmlDoc ){
 
     const root         = xmlDoc.documentElement;
     const rootName     = root.tagName;
-    let conf         = null;
-    let levels       = [];
+    let conf;
+    let levels;
     let level;
 
     if ( rootName === "image" ) {

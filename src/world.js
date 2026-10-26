@@ -52,6 +52,7 @@ $.World = function( options ) {
     this.viewer = options.viewer;
     this._items = [];
     this._needsDraw = false;
+    this._tileSelectionChanged = false;
     this.__invalidatedAt = 1;
     this._autoRefigureSizes = true;
     this._needsSizesFigured = false;
@@ -706,11 +707,24 @@ $.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.W
      */
     update: function(viewportChanged) {
         let animated = false;
+        this._tileSelectionChanged = false;
         for ( let i = 0; i < this._items.length; i++ ) {
-            animated = this._items[i].update(viewportChanged) || animated;
+            const item = this._items[i];
+            animated = item.update(viewportChanged) || animated;
+            this._tileSelectionChanged = item._tileSelectionChanged || this._tileSelectionChanged;
         }
 
         return animated;
+    },
+
+    /**
+     * Whether the set of tiles wanted by any item could have changed during the last update(),
+     * meaning already queued tile requests might be stale. Note that an item can invalidate its
+     * tile selection without animating, e.g. through reset().
+     * @returns {Boolean}
+     */
+    tileSelectionChanged: function() {
+        return this._tileSelectionChanged;
     },
 
     /**
