@@ -456,6 +456,16 @@
         viewer.open('/test/data/testpattern.dzi');
     });
 
+    QUnit.test('SetMouseNavEnabled', function(assert) {
+        assert.strictEqual(viewer.isMouseNavEnabled(), true, "Mouse navigation is enabled by default.");
+
+        viewer.setMouseNavEnabled(false);
+        assert.strictEqual(viewer.isMouseNavEnabled(), false, "Mouse navigation is disabled.");
+
+        viewer.setMouseNavEnabled(true);
+        assert.strictEqual(viewer.isMouseNavEnabled(), true, "Mouse navigation is enabled again.");
+    });
+
     //Version numbers are injected by the build process, so skip version tests if we are only running code coverage
     if(!window.COVERAGE_RUN){
         QUnit.test('version object', function(assert) {

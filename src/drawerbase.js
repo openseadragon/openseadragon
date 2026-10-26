@@ -46,7 +46,10 @@
  * @property {boolean} [preloadCache=true] When internalCacheCreate is used, it can be applied offline
  *   (asynchronously) during data processing = preloading, or just in time before rendering (if necessary).
  *   Preloading supports async handlers, and can use promises. If preloadCache=false, no async (e.g. cache conversion)
- *   logics can be used!
+ *   logics can be used - returning a promise is then a contract violation and is reported. Note that even with
+ *   preloadCache=true, internalCacheCreate() can still be invoked from the drawing loop if the preloaded cache is
+ *   missing or was invalidated by setInternalCacheNeedsRefresh(); a drawer whose creation is cheap and synchronous
+ *   is drawn in that same frame, an async one in a later frame.
  *
  * @property {boolean} [offScreen=false] When true, the drawer is not attached to DOM. This must be false
  *   for all drawers created and used for rendering, particularly the main viewer drawer. However,
@@ -304,10 +307,20 @@ OpenSeadragon.DrawerBase = class DrawerBase {
     }
 
     /**
-     * If options.usePrivateCache is true, this method MUST RETURN the private cache content
+     * If options.usePrivateCache is true, this method MUST RETURN the private cache content.
+     *
+     * May return a promise if options.preloadCache is true; with preloadCache false the result must
+     * be synchronous, since the drawing loop consumes it in the same frame.
+     *
+     * Failure handling: returning null/undefined, throwing, or rejecting the returned promise are
+     * all treated the same way - the failure is logged, the tile is skipped for that frame rather
+     * than destroyed, and the build is retried later. Because a build that never produced a value
+     * cannot be handed to internalCacheFree(), the drawer must release anything it allocated before
+     * failing.
+     *
      * @param {OpenSeadragon.CacheRecord} cache
      * @param {OpenSeadragon.Tile} tile
-     * @return any
+     * @return {*|OpenSeadragon.Promise<*>}
      */
     internalCacheCreate(cache, tile) {}
 

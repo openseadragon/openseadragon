@@ -383,6 +383,7 @@ $.Viewport.prototype = {
         this._updateContainerInnerSize();
         if (this.viewer) {
             this.viewer.forceRedraw();
+            this.viewer._updateZoomButtons();
         }
     },
 
@@ -1829,6 +1830,10 @@ $.Viewport.prototype = {
             if (this.getZoom() > this.getMaxZoom()) {
                 this.applyConstraints(immediately);
             }
+        }
+
+        if (this.viewer) {
+            this.viewer._updateZoomButtons();
         }
     },
 
