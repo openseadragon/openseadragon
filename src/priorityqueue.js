@@ -103,7 +103,7 @@ OpenSeadragon.PriorityQueue = class PriorityQueue {
         const rootNode = nodes[0];
         if (count <= 0) {
             return undefined;
-        } else if (count == 1) {  // eslint-disable-line
+        } else if (count === 1) {
             nodes.length = 0;
         } else {
             nodes[0] = nodes.pop();
@@ -125,7 +125,7 @@ OpenSeadragon.PriorityQueue = class PriorityQueue {
      */
     peek() {
         const nodes = this.nodes_;
-        if (nodes.length == 0) {  // eslint-disable-line
+        if (nodes.length === 0) {
             return undefined;
         }
         return nodes[0].value;

@@ -43,8 +43,7 @@ const I18N = {
         Dzi:            "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
         Xml:            "Hmm, this doesn't appear to be a valid Deep Zoom Image.",
         ImageFormat:    "Sorry, we don't support {0}-based Deep Zoom Images.",
-        Security:       "It looks like a security restriction stopped us from " +
-                        "loading this Deep Zoom Image.",
+        Security:       "It looks like a security restriction stopped us from loading this Deep Zoom Image.",
         Status:         "This space unintentionally left blank ({0} {1}).",
         OpenFailed:     "Unable to open {0}: {1}"
     },
