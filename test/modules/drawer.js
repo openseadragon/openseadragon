@@ -287,6 +287,96 @@
         });
 
         // ----------
+        QUnit.test('canvas edge smoothing scales the sketch by the tile resolution', function(assert) {
+            const done = assert.async();
+
+            createViewer({
+                tileSources: '/test/data/testpattern.dzi',
+                smoothTileEdgesMinZoom: 0,
+            });
+            const drawer = viewer.drawer;
+
+            if (drawer.getType() !== 'canvas') {
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            viewer.addHandler('open', function openHandler() {
+                viewer.removeHandler('open', openHandler);
+                viewer.viewport.zoomTo(4, null, true);
+            });
+
+            viewer.world.addHandler('add-item', function addItemHandler(event) {
+                viewer.world.removeHandler('add-item', addItemHandler);
+                const tiledImage = event.item;
+
+                tiledImage.addHandler('fully-loaded-change', function loadedHandler(loadedEvent) {
+                    if (!loadedEvent.fullyLoaded) {
+                        return;
+                    }
+                    tiledImage.removeHandler('fully-loaded-change', loadedHandler);
+
+                    const tile = tiledImage.getTilesToDraw()[0].tile;
+                    const expected = drawer.getDataToDraw(tile).canvas.width /
+                        (tile.size.x * OpenSeadragon.pixelDensityRatio);
+
+                    const originalBlend = drawer.blendSketch;
+                    let scale;
+                    drawer.blendSketch = function(options) {
+                        scale = options.scale;
+                        return originalBlend.apply(this, arguments);
+                    };
+                    drawer.draw([tiledImage]);
+                    drawer.blendSketch = originalBlend;
+
+                    assert.ok(tiledImage.getTilesToDraw().length > 1, 'Several tiles are drawn');
+                    assert.notEqual(scale, 1, 'The sketch is not drawn at a scale of 1');
+                    assert.equal(scale, expected, 'The sketch scale is the native to displayed tile size ratio');
+                    done();
+                });
+            });
+        });
+
+        // ----------
+        QUnit.test('html drawer clears the tile flip when unflipped', function(assert) {
+            const done = assert.async();
+
+            createViewer({
+                tileSources: {
+                    tileSource: '/test/data/testpattern.dzi',
+                    flipped: true,
+                },
+            });
+            const drawer = viewer.drawer;
+
+            if (drawer.getType() !== 'html') {
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            viewer.addHandler('tile-drawn', function flippedHandler(event) {
+                viewer.removeHandler('tile-drawn', flippedHandler);
+                const cacheKey = event.tile.cacheKey;
+                assert.equal(drawer.getDataToDraw(event.tile).style.transform, 'scaleX(-1)',
+                    'A flipped tile is mirrored');
+
+                // Unflipping replaces the Tile, but the new one reuses the cached element
+                viewer.addHandler('tile-drawn', function unflippedHandler(unflippedEvent) {
+                    if (unflippedEvent.tile.flipped || unflippedEvent.tile.cacheKey !== cacheKey) {
+                        return;
+                    }
+                    viewer.removeHandler('tile-drawn', unflippedHandler);
+                    assert.equal(drawer.getDataToDraw(unflippedEvent.tile).style.transform, '',
+                        'The cached tile element is no longer mirrored once unflipped');
+                    done();
+                });
+                event.tiledImage.setFlip(false);
+            });
+        });
+
+        // ----------
         QUnit.test('deprecations', function(assert) {
             const done = assert.async();
 

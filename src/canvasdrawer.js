@@ -303,7 +303,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             // Note: Disabled on iOS devices per default as it causes a native crash
             useSketch = true;
 
-            const context = tile.length && this.getDataToDraw(tile);
+            const context = this.getDataToDraw(tile);
             if (context) {
                 sketchScale = context.canvas.width / (tile.size.x * $.pixelDensityRatio);
             } else {
