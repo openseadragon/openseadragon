@@ -18,20 +18,20 @@
 class DrawerSwitcher {
     url = new URL(window.location.href);
     drawers = {
-        canvas: "Context2d drawer (default in OSD &lt;= 4.1.0)",
-        webgl: "New WebGL drawer"
+        canvas: 'Context2d drawer (default in OSD &lt;= 4.1.0)',
+        webgl: 'New WebGL drawer'
     };
-    _data = {}
+    _data = {};
 
-    addDrawerOption(urlQueryName, title="Select drawer:", defaultDrawerImplementation="canvas") {
+    addDrawerOption(urlQueryName, title = 'Select drawer:', defaultDrawerImplementation = 'canvas') {
         const drawer = this.url.searchParams.get(urlQueryName) || defaultDrawerImplementation;
-        if (!this.drawers[drawer]) throw "Unsupported drawer implementation: " + drawer;
+        if (!this.drawers[drawer]) throw 'Unsupported drawer implementation: ' + drawer;
 
-        const context = this._data[urlQueryName] = {
+        const context = (this._data[urlQueryName] = {
             query: urlQueryName,
             implementation: drawer,
             title: title
-        };
+        });
     }
 
     activeName(urlQueryName) {
@@ -42,18 +42,25 @@ class DrawerSwitcher {
         return this._data[urlQueryName].implementation;
     }
 
-    _getFormData(useNewline=true) {
-        return Object.values(this._data).map(ctx => `${ctx.title}&nbsp;
+    _getFormData(useNewline = true) {
+        return Object.values(this._data)
+            .map(
+                (ctx) => `${ctx.title}&nbsp;
 <select name="${ctx.query}">
-  ${Object.entries(this.drawers).map(([k, v]) => {
-            const selected = ctx.implementation === k ? "selected" : "";
-            return `<option value="${k}" ${selected}>${v}</option>`;
-        }).join("\n")}
-</select>`).join(useNewline ? "<br>" : "");
+  ${Object.entries(this.drawers)
+      .map(([k, v]) => {
+          const selected = ctx.implementation === k ? 'selected' : '';
+          return `<option value="${k}" ${selected}>${v}</option>`;
+      })
+      .join('\n')}
+</select>`
+            )
+            .join(useNewline ? '<br>' : '');
     }
 
     _preserveOtherSeachParams() {
-        const res = [], registered = Object.keys(this._data);
+        const res = [],
+            registered = Object.keys(this._data);
         for (const [k, v] of this.url.searchParams.entries()) {
             if (!registered.includes(k)) {
                 res.push(`<input name="${k}" type="hidden" value=${v} />`);
@@ -62,12 +69,12 @@ class DrawerSwitcher {
         return res.join('\n');
     }
 
-    render(selector, useNewline=undefined) {
-        useNewline = typeof useNewline === "boolean" ? useNewline : Object.keys(this._data).length > 1;
+    render(selector, useNewline = undefined) {
+        useNewline = typeof useNewline === 'boolean' ? useNewline : Object.keys(this._data).length > 1;
         const html = `<div>
   <form method="get">
      ${this._preserveOtherSeachParams()}
-     ${this._getFormData()}${useNewline ? "<br>":""}<button>Submit</button>
+     ${this._getFormData()}${useNewline ? '<br>' : ''}<button>Submit</button>
   </form>
 </div>`;
         if (selector) $(selector).append(html);

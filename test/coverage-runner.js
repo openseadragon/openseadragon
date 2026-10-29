@@ -29,12 +29,11 @@ const MODULE = process.env.QUNIT_MODULE || '';
 const NYC_OUTPUT_DIR = path.join(process.cwd(), '.nyc_output');
 
 function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function runCoverage() {
-    const url = BASE_URL + '/test/coverage.html' +
-        (MODULE ? '?module=' + encodeURIComponent(MODULE) : '');
+    const url = BASE_URL + '/test/coverage.html' + (MODULE ? '?module=' + encodeURIComponent(MODULE) : '');
 
     console.log('');
     console.log('========================================================');
@@ -45,18 +44,14 @@ async function runCoverage() {
 
     const browser = await puppeteer.launch({
         headless: 'new',
-        args: [
-            '--no-sandbox',
-            '--allow-file-access-from-files',
-            '--disable-dev-shm-usage'
-        ]
+        args: ['--no-sandbox', '--allow-file-access-from-files', '--disable-dev-shm-usage']
     });
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1024, height: 768 });
 
     // Capture browser console for debugging
-    page.on('console', msg => {
+    page.on('console', (msg) => {
         const type = msg.type();
         const text = msg.text();
         if (type === 'error') {
@@ -66,11 +61,11 @@ async function runCoverage() {
         }
     });
 
-    page.on('pageerror', err => {
+    page.on('pageerror', (err) => {
         console.error('  [page error]', err.message);
     });
 
-    page.on('requestfailed', req => {
+    page.on('requestfailed', (req) => {
         const reqUrl = req.url();
         if (!reqUrl.includes('data:') && !reqUrl.includes('blob:')) {
             console.error('  [request failed]', reqUrl, req.failure().errorText);
@@ -99,9 +94,7 @@ async function runCoverage() {
         const resultText = resultEl ? resultEl.textContent : 'No results found';
 
         return {
-            coverage: typeof window.__coverage__ !== 'undefined'
-                ? window.__coverage__
-                : null,
+            coverage: typeof window.__coverage__ !== 'undefined' ? window.__coverage__ : null,
             resultText: resultText.trim()
         };
     });
@@ -143,7 +136,7 @@ async function runCoverage() {
     process.exit(0);
 }
 
-runCoverage().catch(err => {
+runCoverage().catch((err) => {
     console.error('');
     console.error('========================================================');
     console.error('  FATAL: Coverage run failed!');

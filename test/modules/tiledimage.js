@@ -1,13 +1,13 @@
 /* global QUnit, $, Util, testLog */
 
-(function() {
+(function () {
     let viewer;
 
     const precision = 0.000000001;
 
     QUnit.module('TiledImage', {
-        beforeEach: function() {
-            $('<div id="example"></div>').appendTo("#qunit-fixture");
+        beforeEach: function () {
+            $('<div id="example"></div>').appendTo('#qunit-fixture');
 
             testLog.reset();
 
@@ -16,11 +16,11 @@
                 id: 'example',
                 prefixUrl: '/build/openseadragon/images/',
                 springStiffness: 100, // Faster animation = faster tests
-                drawer: 'canvas', // always use canvas drawer for these tests
+                drawer: 'canvas' // always use canvas drawer for these tests
             });
         },
-        afterEach: function() {
-            if (viewer){
+        afterEach: function () {
+            if (viewer) {
                 viewer.destroy();
             }
 
@@ -29,7 +29,7 @@
     });
 
     // ----------
-    const checkBounds = function(assert, image, expected, message) {
+    const checkBounds = function (assert, image, expected, message) {
         const bounds = image.getBounds();
         assert.equal(bounds.x, expected.x, message + ' x');
         assert.equal(bounds.y, expected.y, message + ' y');
@@ -38,11 +38,11 @@
     };
 
     // ----------
-    QUnit.test('metrics', function(assert) {
+    QUnit.test('metrics', function (assert) {
         const done = assert.async();
         let handlerCount = 0;
 
-        viewer.addHandler('open', function(event) {
+        viewer.addHandler('open', function (event) {
             const image = viewer.world.getItemAt(0);
             const contentSize = image.getContentSize();
             const sizeInWindowCoords = image.getSizeInWindowCoordinates();
@@ -61,8 +61,12 @@
             assert.propEqual(image.imageToViewportCoordinates(imagePoint), viewportPoint, 'imageToViewportCoordinates');
 
             const viewportRect = new OpenSeadragon.Rect(viewportPoint.x, viewportPoint.y, 6, 7);
-            const imageRect = new OpenSeadragon.Rect(imagePoint.x, imagePoint.y,
-                viewportRect.width * scale, viewportRect.height * scale);
+            const imageRect = new OpenSeadragon.Rect(
+                imagePoint.x,
+                imagePoint.y,
+                viewportRect.width * scale,
+                viewportRect.height * scale
+            );
 
             assert.propEqual(image.viewportToImageRectangle(viewportRect), imageRect, 'viewportToImageRectangle');
             assert.propEqual(image.imageToViewportRectangle(imageRect), viewportRect, 'imageToViewportRectangle');
@@ -105,16 +109,20 @@
     });
 
     // ----------
-    QUnit.test('animation', function(assert) {
+    QUnit.test('animation', function (assert) {
         const done = assert.async();
-        viewer.addHandler("open", function() {
+        viewer.addHandler('open', function () {
             const image = viewer.world.getItemAt(0);
             assert.propEqual(image.getBounds(), new OpenSeadragon.Rect(0, 0, 1, 1), 'target bounds on open');
             assert.propEqual(image.getBounds(true), new OpenSeadragon.Rect(0, 0, 1, 1), 'current bounds on open');
 
             image.setPosition(new OpenSeadragon.Point(1, 2));
             assert.propEqual(image.getBounds(), new OpenSeadragon.Rect(1, 2, 1, 1), 'target bounds after position');
-            assert.propEqual(image.getBounds(true), new OpenSeadragon.Rect(0, 0, 1, 1), 'current bounds after position');
+            assert.propEqual(
+                image.getBounds(true),
+                new OpenSeadragon.Rect(0, 0, 1, 1),
+                'current bounds after position'
+            );
 
             image.setWidth(3);
             assert.propEqual(image.getBounds(), new OpenSeadragon.Rect(1, 2, 3, 3), 'target bounds after width');
@@ -122,8 +130,20 @@
 
             viewer.addHandler('animation-finish', function animationHandler() {
                 viewer.removeHandler('animation-finish', animationHandler);
-                Util.assertRectangleEquals(assert,  new OpenSeadragon.Rect(1, 2, 3, 3), image.getBounds(), precision, 'target bounds after animation');
-                Util.assertRectangleEquals(assert,  new OpenSeadragon.Rect(1, 2, 3, 3), image.getBounds(true), precision, 'target bounds after animation');
+                Util.assertRectangleEquals(
+                    assert,
+                    new OpenSeadragon.Rect(1, 2, 3, 3),
+                    image.getBounds(),
+                    precision,
+                    'target bounds after animation'
+                );
+                Util.assertRectangleEquals(
+                    assert,
+                    new OpenSeadragon.Rect(1, 2, 3, 3),
+                    image.getBounds(true),
+                    precision,
+                    'target bounds after animation'
+                );
                 done();
             });
         });
@@ -132,12 +152,12 @@
     });
 
     // ----------
-    QUnit.test('update', function(assert) {
+    QUnit.test('update', function (assert) {
         const done = assert.async();
         let handlerCount = 0;
         const expectedHandlers = 4;
 
-        viewer.addHandler('open', function(event) {
+        viewer.addHandler('open', function (event) {
             const image = viewer.world.getItemAt(0);
             assert.equal(image.needsDraw(), true, 'needs draw after open');
 
@@ -164,7 +184,6 @@
                 assert.ok(event.tile, 'update-tile event includes tile');
             });
 
-
             viewer.addHandler('tile-drawing', function tileDrawingHandler(event) {
                 viewer.removeHandler('tile-drawing', tileDrawingHandler);
                 handlerCount++;
@@ -174,8 +193,6 @@
                 assert.ok(event.context, 'tile-drawing event includes a context');
                 assert.ok(event.rendered, 'tile-drawing event includes a rendered');
             });
-
-
 
             viewer.addHandler('tiled-image-drawn', function tileDrawnHandler(event) {
                 viewer.removeHandler('tiled-image-drawn', tileDrawnHandler);
@@ -188,14 +205,14 @@
                 done();
             });
 
-            viewer.drawer.draw( [ image ] );
+            viewer.drawer.draw([image]);
         });
 
         viewer.open('/test/data/testpattern.dzi');
     });
 
     // ----------
-    QUnit.test('reset', function(assert) {
+    QUnit.test('reset', function (assert) {
         const done = assert.async();
         viewer.addHandler('tiled-image-drawn', function updateHandler() {
             viewer.removeHandler('tiled-image-drawn', updateHandler);
@@ -221,11 +238,11 @@
     });
 
     // ----------
-    QUnit.test('clip', function(assert) {
+    QUnit.test('clip', function (assert) {
         const done = assert.async();
         const clip = new OpenSeadragon.Rect(100, 100, 800, 800);
 
-        viewer.addHandler('open', function() {
+        viewer.addHandler('open', function () {
             const image = viewer.world.getItemAt(0);
             assert.propEqual(image.getClip(), clip, 'image has correct clip');
 
@@ -235,13 +252,11 @@
             image.setClip(clip);
             assert.propEqual(image.getClip(), clip, 'clip is set correctly');
 
-            Util.spyOnce(viewer.drawer, '_setClip', function(rect) {
+            Util.spyOnce(viewer.drawer, '_setClip', function (rect) {
                 const homeBounds = viewer.viewport.getHomeBounds();
-                const canvasClip = viewer.drawer
-                    .viewportToDrawerRectangle(homeBounds);
+                const canvasClip = viewer.drawer.viewportToDrawerRectangle(homeBounds);
                 const precision = 0.00000001;
-                Util.assertRectangleEquals(assert, rect, canvasClip, precision,
-                    'clipping should be ' + canvasClip);
+                Util.assertRectangleEquals(assert, rect, canvasClip, precision, 'clipping should be ' + canvasClip);
                 done();
             });
         });
@@ -253,10 +268,10 @@
     });
 
     // ----------
-    QUnit.test('tile load rate boost decays once per frame, not once per level', function(assert) {
+    QUnit.test('tile load rate boost decays once per frame, not once per level', function (assert) {
         const done = assert.async();
 
-        viewer.addHandler('open', function() {
+        viewer.addHandler('open', function () {
             const image = viewer.world.getItemAt(0);
             const steady = image.maxTilesPerFrame;
 
@@ -267,15 +282,21 @@
             assert.equal(boosted, steady * 10, 'Boost raises the per-frame allowance tenfold.');
 
             image._updateLevelsForViewport();
-            assert.equal(image._currentMaxTilesPerFrame, Math.ceil(boosted / 2),
-                'One frame halves the allowance exactly once, whatever the level count.');
+            assert.equal(
+                image._currentMaxTilesPerFrame,
+                Math.ceil(boosted / 2),
+                'One frame halves the allowance exactly once, whatever the level count.'
+            );
 
             // And it must bottom out at the configured steady-state value rather than decaying to nothing.
             for (let i = 0; i < 20; i++) {
                 image._updateLevelsForViewport();
             }
-            assert.equal(image._currentMaxTilesPerFrame, steady,
-                'The allowance decays down to maxTilesPerFrame and stops there.');
+            assert.equal(
+                image._currentMaxTilesPerFrame,
+                steady,
+                'The allowance decays down to maxTilesPerFrame and stops there.'
+            );
 
             done();
         });
@@ -286,10 +307,10 @@
     });
 
     // ----------
-    QUnit.test('tile load rate is re-boosted whenever tiles become needed', function(assert) {
+    QUnit.test('tile load rate is re-boosted whenever tiles become needed', function (assert) {
         const done = assert.async();
 
-        viewer.addHandler('open', function() {
+        viewer.addHandler('open', function () {
             const image = viewer.world.getItemAt(0);
 
             // Settle the allowance at its steady-state value.
@@ -302,8 +323,11 @@
             // Discovering that the view is incomplete - what a pan or zoom does - must refill fast rather than
             // trickle at the steady-state rate. Before this, only reset() ever re-armed the boost.
             image._setFullyLoaded(false);
-            assert.equal(image._currentMaxTilesPerFrame, image.maxTilesPerFrame * 10,
-                'Becoming not-fully-loaded re-boosts the per-frame allowance.');
+            assert.equal(
+                image._currentMaxTilesPerFrame,
+                image.maxTilesPerFrame * 10,
+                'Becoming not-fully-loaded re-boosts the per-frame allowance.'
+            );
 
             done();
         });
@@ -314,15 +338,15 @@
     });
 
     // ----------
-    QUnit.test('clip-change event', function(assert) {
+    QUnit.test('clip-change event', function (assert) {
         const done = assert.async();
         assert.expect(0);
         const clip = new OpenSeadragon.Rect(100, 100, 800, 800);
 
-        viewer.addHandler('open', function() {
+        viewer.addHandler('open', function () {
             const image = viewer.world.getItemAt(0);
-            image.addOnceHandler('clip-change', function() {
-                image.addOnceHandler('clip-change', function() {
+            image.addOnceHandler('clip-change', function () {
+                image.addOnceHandler('clip-change', function () {
                     done();
                 });
                 image.setClip(clip);
@@ -336,42 +360,43 @@
     });
 
     // ----------
-    QUnit.test('getClipBounds', function(assert) {
+    QUnit.test('getClipBounds', function (assert) {
         const done = assert.async();
         const clip = new OpenSeadragon.Rect(100, 200, 800, 500);
 
-        viewer.addHandler('open', function() {
+        viewer.addHandler('open', function () {
             let image = viewer.world.getItemAt(0);
             let bounds = image.getClippedBounds();
             let expectedBounds = new OpenSeadragon.Rect(1.2, 1.4, 1.6, 1);
-            assert.propEqual(bounds, expectedBounds,
-                'getClipBounds should take clipping into account.');
+            assert.propEqual(bounds, expectedBounds, 'getClipBounds should take clipping into account.');
 
             image = viewer.world.getItemAt(1);
             bounds = image.getClippedBounds();
             expectedBounds = new OpenSeadragon.Rect(1, 2, 2, 2);
-            assert.propEqual(bounds, expectedBounds,
-                'getClipBounds should work when no clipping set.');
+            assert.propEqual(bounds, expectedBounds, 'getClipBounds should work when no clipping set.');
 
             done();
         });
 
-        viewer.open([{
-            tileSource: '/test/data/testpattern.dzi',
-            clip: clip,
-            x: 1,
-            y: 1,
-            width: 2
-        }, {
-            tileSource: '/test/data/testpattern.dzi',
-            x: 1,
-            y: 2,
-            width: 2
-        }]);
+        viewer.open([
+            {
+                tileSource: '/test/data/testpattern.dzi',
+                clip: clip,
+                x: 1,
+                y: 1,
+                width: 2
+            },
+            {
+                tileSource: '/test/data/testpattern.dzi',
+                x: 1,
+                y: 2,
+                width: 2
+            }
+        ]);
     });
 
     // ----------
-    QUnit.test('opacity', function(assert) {
+    QUnit.test('opacity', function (assert) {
         const done = assert.async();
         function testDefaultOpacity() {
             viewer.removeHandler('open', testDefaultOpacity);
@@ -403,16 +428,18 @@
 
         viewer.opacity = 0.5;
         viewer.open({
-            tileSource: '/test/data/testpattern.dzi',
+            tileSource: '/test/data/testpattern.dzi'
         });
     });
 
     // ----------
-    QUnit.test('level opacity ramp', function(assert) {
+    QUnit.test('level opacity ramp', function (assert) {
         // Pure function of minPixelRatio: call it directly rather than driving a viewer to a scale.
         const opacityAt = (minPixelRatio, renderPixelRatio) =>
             OpenSeadragon.TiledImage.prototype._getLevelOpacity.call(
-                { minPixelRatio: minPixelRatio }, renderPixelRatio);
+                { minPixelRatio: minPixelRatio },
+                renderPixelRatio
+            );
 
         // Default ratio: the ramp spans [minPixelRatio, 2 * minPixelRatio), which is the range level
         // selection actually draws a level at.
@@ -420,8 +447,11 @@
         assert.strictEqual(opacityAt(0.5, 0.75), 0.5, 'default: half way up the ramp');
         assert.strictEqual(opacityAt(0.5, 1), 1, 'default: opaque at twice minPixelRatio');
         assert.strictEqual(opacityAt(0.5, 2), 1, 'default: clamped above the ramp');
-        assert.strictEqual(opacityAt(0.5, 0.25), 0,
-            'default: clamped below the ramp, where the minimum level bypasses the selection gate');
+        assert.strictEqual(
+            opacityAt(0.5, 0.25),
+            0,
+            'default: clamped below the ramp, where the minimum level bypasses the selection gate'
+        );
 
         // A non-default minPixelRatio must move the ramp with it: a hard-coded 0.5 would report 0.41
         // instead of 0 at minRatio here, and reach full opacity before the level is done fading in.
@@ -436,7 +466,7 @@
     });
 
     // ----------
-    QUnit.test('rotation', function(assert) {
+    QUnit.test('rotation', function (assert) {
         const done = assert.async();
         function testDefaultRotation() {
             const image = viewer.world.getItemAt(0);
@@ -467,43 +497,69 @@
 
         viewer.addOnceHandler('open', testDefaultRotation);
         viewer.open({
-            tileSource: '/test/data/testpattern.dzi',
+            tileSource: '/test/data/testpattern.dzi'
         });
     });
 
-    QUnit.test('fitBounds', function(assert) {
+    QUnit.test('fitBounds', function (assert) {
         const done = assert.async();
         function assertRectEquals(actual, expected, message) {
-            assert.ok(actual.equals(expected), message + ' should be ' +
-                expected.toString() + ', found ' + actual.toString());
+            assert.ok(
+                actual.equals(expected),
+                message + ' should be ' + expected.toString() + ', found ' + actual.toString()
+            );
         }
 
         viewer.addHandler('open', function openHandler() {
             viewer.removeHandler('open', openHandler);
 
             const squareImage = viewer.world.getItemAt(0);
-            squareImage.fitBounds(
-                new OpenSeadragon.Rect(0, 0, 1, 2),
-                OpenSeadragon.Placement.CENTER,
-                true);
+            squareImage.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 2), OpenSeadragon.Placement.CENTER, true);
             let actualBounds = squareImage.getBounds(true);
             let expectedBounds = new OpenSeadragon.Rect(0, 0.5, 1, 1);
             assertRectEquals(actualBounds, expectedBounds, 'Square image bounds');
 
             const tallImage = viewer.world.getItemAt(1);
-            tallImage.fitBounds(
-                new OpenSeadragon.Rect(0, 0, 1, 2),
-                OpenSeadragon.Placement.TOP_LEFT,
-                true);
+            tallImage.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 2), OpenSeadragon.Placement.TOP_LEFT, true);
             actualBounds = tallImage.getBounds(true);
             expectedBounds = new OpenSeadragon.Rect(0, 0, 0.5, 2);
             assertRectEquals(actualBounds, expectedBounds, 'Tall image bounds');
 
             const wideImage = viewer.world.getItemAt(2);
-            wideImage.fitBounds(
-                new OpenSeadragon.Rect(0, 0, 1, 2),
-                OpenSeadragon.Placement.BOTTOM_RIGHT,
-                true);
+            wideImage.fitBounds(new OpenSeadragon.Rect(0, 0, 1, 2), OpenSeadragon.Placement.BOTTOM_RIGHT, true);
+            actualBounds = wideImage.getBounds(true);
+            expectedBounds = new OpenSeadragon.Rect(0, 1.75, 1, 0.25);
+            assertRectEquals(actualBounds, expectedBounds, 'Wide image bounds');
+            done();
+        });
+
+        viewer.open(['/test/data/testpattern.dzi', '/test/data/tall.dzi', '/test/data/wide.dzi']);
+    });
+
+    // ----------
+    QUnit.test('fitBounds in constructor', function (assert) {
+        const done = assert.async();
+        function assertRectEquals(actual, expected, message) {
+            assert.ok(
+                actual.equals(expected),
+                message + ' should be ' + expected.toString() + ', found ' + actual.toString()
+            );
+        }
+
+        viewer.addHandler('open', function openHandler() {
+            viewer.removeHandler('open', openHandler);
+
+            const squareImage = viewer.world.getItemAt(0);
+            let actualBounds = squareImage.getBounds(true);
+            let expectedBounds = new OpenSeadragon.Rect(0, 0.5, 1, 1);
+            assertRectEquals(actualBounds, expectedBounds, 'Square image bounds');
+
+            const tallImage = viewer.world.getItemAt(1);
+            actualBounds = tallImage.getBounds(true);
+            expectedBounds = new OpenSeadragon.Rect(0, 0, 0.5, 2);
+            assertRectEquals(actualBounds, expectedBounds, 'Tall image bounds');
+
+            const wideImage = viewer.world.getItemAt(2);
             actualBounds = wideImage.getBounds(true);
             expectedBounds = new OpenSeadragon.Rect(0, 1.75, 1, 0.25);
             assertRectEquals(actualBounds, expectedBounds, 'Wide image bounds');
@@ -511,64 +567,35 @@
         });
 
         viewer.open([
-            '/test/data/testpattern.dzi',
-            '/test/data/tall.dzi',
-            '/test/data/wide.dzi'
-        ]);
-    });
-
-    // ----------
-    QUnit.test('fitBounds in constructor', function(assert) {
-        const done = assert.async();
-        function assertRectEquals(actual, expected, message) {
-            assert.ok(actual.equals(expected), message + ' should be ' +
-                expected.toString() + ', found ' + actual.toString());
-        }
-
-        viewer.addHandler('open', function openHandler() {
-            viewer.removeHandler('open', openHandler);
-
-            const squareImage = viewer.world.getItemAt(0);
-            let actualBounds = squareImage.getBounds(true);
-            let expectedBounds = new OpenSeadragon.Rect(0, 0.5, 1, 1);
-            assertRectEquals(actualBounds, expectedBounds, 'Square image bounds');
-
-            const tallImage = viewer.world.getItemAt(1);
-            actualBounds = tallImage.getBounds(true);
-            expectedBounds = new OpenSeadragon.Rect(0, 0, 0.5, 2);
-            assertRectEquals(actualBounds, expectedBounds, 'Tall image bounds');
-
-            const wideImage = viewer.world.getItemAt(2);
-            actualBounds = wideImage.getBounds(true);
-            expectedBounds = new OpenSeadragon.Rect(0, 1.75, 1, 0.25);
-            assertRectEquals(actualBounds, expectedBounds, 'Wide image bounds');
-            done();
-        });
-
-        viewer.open([{
+            {
                 tileSource: '/test/data/testpattern.dzi',
                 x: 1, // should be ignored
                 y: 1, // should be ignored
                 width: 2, // should be ignored
                 fitBounds: new OpenSeadragon.Rect(0, 0, 1, 2)
                 // No placement specified, should default to CENTER
-            }, {
+            },
+            {
                 tileSource: '/test/data/tall.dzi',
                 fitBounds: new OpenSeadragon.Rect(0, 0, 1, 2),
                 fitBoundsPlacement: OpenSeadragon.Placement.TOP_LEFT
-            }, {
+            },
+            {
                 tileSource: '/test/data/wide.dzi',
                 fitBounds: new OpenSeadragon.Rect(0, 0, 1, 2),
                 fitBoundsPlacement: OpenSeadragon.Placement.BOTTOM_RIGHT
-            }]);
+            }
+        ]);
     });
 
     // ----------
-    QUnit.test('fitBounds with clipping', function(assert) {
+    QUnit.test('fitBounds with clipping', function (assert) {
         const done = assert.async();
         function assertRectEquals(actual, expected, message) {
-            assert.ok(actual.equals(expected), message + ' should be ' +
-                expected.toString() + ', found ' + actual.toString());
+            assert.ok(
+                actual.equals(expected),
+                message + ' should be ' + expected.toString() + ', found ' + actual.toString()
+            );
         }
 
         viewer.addHandler('open', function openHandler() {
@@ -591,25 +618,29 @@
             done();
         });
 
-        viewer.open([{
+        viewer.open([
+            {
                 tileSource: '/test/data/testpattern.dzi',
                 clip: new OpenSeadragon.Rect(500, 500, 500, 500),
                 fitBounds: new OpenSeadragon.Rect(0, 0, 1, 1)
-            }, {
+            },
+            {
                 tileSource: '/test/data/tall.dzi',
                 clip: new OpenSeadragon.Rect(0, 0, 250, 100),
                 fitBounds: new OpenSeadragon.Rect(1, 1, 1, 2),
                 fitBoundsPlacement: OpenSeadragon.Placement.TOP
-            }, {
+            },
+            {
                 tileSource: '/test/data/wide.dzi',
                 clip: new OpenSeadragon.Rect(0, 0, 100, 250),
                 fitBounds: new OpenSeadragon.Rect(1, 1, 1, 2),
                 fitBoundsPlacement: OpenSeadragon.Placement.TOP_LEFT
-            }]);
+            }
+        ]);
     });
 
     // ----------
-    QUnit.test('fullyLoaded', function(assert) {
+    QUnit.test('fullyLoaded', function (assert) {
         const done = assert.async();
         viewer.addHandler('open', function openHandler() {
             viewer.removeHandler('open', openHandler);
@@ -622,7 +653,7 @@
 
             let count = 0;
 
-            const fullyLoadedChangeHandler = function(event) {
+            const fullyLoadedChangeHandler = function (event) {
                 if (count === 0) {
                     assert.equal(event.fullyLoaded, true, 'event includes true fullyLoaded property');
                     assert.equal(image.getFullyLoaded(), true, 'image is fully loaded after event');
@@ -644,15 +675,17 @@
             image.addHandler('fully-loaded-change', fullyLoadedChangeHandler);
         });
 
-        viewer.open([{
-            tileSource: '/test/data/tall.dzi',
-        }]);
+        viewer.open([
+            {
+                tileSource: '/test/data/tall.dzi'
+            }
+        ]);
     });
 
-    QUnit.test('_visitTiles matches Rect.intersection for every candidate tile', function(assert) {
+    QUnit.test('_visitTiles matches Rect.intersection for every candidate tile', function (assert) {
         const done = assert.async();
 
-        viewer.addHandler('open', function() {
+        viewer.addHandler('open', function () {
             const image = viewer.world.getItemAt(0);
             const level = image.source.maxLevel;
             const tile = image.getTileBounds(level, 1, 1);
@@ -666,31 +699,37 @@
                 'zero width': new OpenSeadragon.Rect(tile.x, 0.1, 0, 0.5),
                 'zero size': new OpenSeadragon.Rect(tile.x, tile.y, 0, 0),
                 rotated: new OpenSeadragon.Rect(0.3, 0.3, 0.2, 0.2, 30),
-                'past the right of the image': new OpenSeadragon.Rect(0.8, 0.2, 0.5, 0.3),
+                'past the right of the image': new OpenSeadragon.Rect(0.8, 0.2, 0.5, 0.3)
             };
 
             function check(label) {
-                Object.keys(areas).forEach(function(name) {
+                Object.keys(areas).forEach(function (name) {
                     const area = areas[name];
                     const candidates = [];
                     const getTileBounds = image.getTileBounds;
-                    image.getTileBounds = function(l, x, y) {
+                    image.getTileBounds = function (l, x, y) {
                         const bounds = getTileBounds.apply(this, arguments);
                         candidates.push({ key: x + ',' + y, bounds: bounds });
                         return bounds;
                     };
                     const visited = new Set();
-                    image._visitTiles(level, area, function(x, y) {
+                    image._visitTiles(level, area, function (x, y) {
                         visited.add(x + ',' + y);
                     });
                     image.getTileBounds = getTileBounds;
 
-                    const mismatches = candidates.filter(function(candidate) {
-                        return visited.has(candidate.key) !== (area.intersection(candidate.bounds) !== null);
-                    }).map(function(candidate) {
-                        return candidate.key;
-                    });
-                    assert.deepEqual(mismatches, [], label + ', ' + name + ': visits the tiles Rect.intersection reports');
+                    const mismatches = candidates
+                        .filter(function (candidate) {
+                            return visited.has(candidate.key) !== (area.intersection(candidate.bounds) !== null);
+                        })
+                        .map(function (candidate) {
+                            return candidate.key;
+                        });
+                    assert.deepEqual(
+                        mismatches,
+                        [],
+                        label + ', ' + name + ': visits the tiles Rect.intersection reports'
+                    );
                 });
             }
 
@@ -708,13 +747,13 @@
             width: 1024,
             height: 1024,
             tileSize: 256,
-            getTileUrl: function() {
+            getTileUrl: function () {
                 return '/test/data/testpattern_files/0/0_0.jpg';
             }
         });
     });
 
-    QUnit.test('_getCornerTiles without wrapping', function(assert) {
+    QUnit.test('_getCornerTiles without wrapping', function (assert) {
         const tiledImageMock = MockSeadragon.getTiledImage(null, {
             wrapHorizontal: false,
             wrapVertical: false,
@@ -723,20 +762,24 @@
                 height: 1000,
                 tileWidth: 200,
                 tileHeight: 150,
-                tileOverlap: 1,
+                tileOverlap: 1
             })
         });
         const _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
-        function assertCornerTiles(topLeftBound, bottomRightBound,
-            expectedTopLeft, expectedBottomRight) {
+        function assertCornerTiles(topLeftBound, bottomRightBound, expectedTopLeft, expectedBottomRight) {
             const cornerTiles = _getCornerTiles(11, topLeftBound, bottomRightBound);
-            assert.ok(cornerTiles.topLeft.equals(expectedTopLeft),
-                'Top left tile should be ' + expectedTopLeft.toString() +
-                ' found ' + cornerTiles.topLeft.toString());
-            assert.ok(cornerTiles.bottomRight.equals(expectedBottomRight),
-                'Bottom right tile should be ' + expectedBottomRight.toString() +
-                ' found ' + cornerTiles.bottomRight.toString());
+            assert.ok(
+                cornerTiles.topLeft.equals(expectedTopLeft),
+                'Top left tile should be ' + expectedTopLeft.toString() + ' found ' + cornerTiles.topLeft.toString()
+            );
+            assert.ok(
+                cornerTiles.bottomRight.equals(expectedBottomRight),
+                'Bottom right tile should be ' +
+                    expectedBottomRight.toString() +
+                    ' found ' +
+                    cornerTiles.bottomRight.toString()
+            );
         }
 
         assertCornerTiles(
@@ -762,7 +805,7 @@
         );
     });
 
-    QUnit.test('_getCornerTiles with horizontal wrapping', function(assert) {
+    QUnit.test('_getCornerTiles with horizontal wrapping', function (assert) {
         const tiledImageMock = MockSeadragon.getTiledImage(null, {
             wrapHorizontal: true,
             wrapVertical: false,
@@ -772,15 +815,19 @@
         });
         const _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
-        function assertCornerTiles(topLeftBound, bottomRightBound,
-            expectedTopLeft, expectedBottomRight) {
+        function assertCornerTiles(topLeftBound, bottomRightBound, expectedTopLeft, expectedBottomRight) {
             const cornerTiles = _getCornerTiles(11, topLeftBound, bottomRightBound);
-            assert.ok(cornerTiles.topLeft.equals(expectedTopLeft),
-                'Top left tile should be ' + expectedTopLeft.toString() +
-                ' found ' + cornerTiles.topLeft.toString());
-            assert.ok(cornerTiles.bottomRight.equals(expectedBottomRight),
-                'Bottom right tile should be ' + expectedBottomRight.toString() +
-                ' found ' + cornerTiles.bottomRight.toString());
+            assert.ok(
+                cornerTiles.topLeft.equals(expectedTopLeft),
+                'Top left tile should be ' + expectedTopLeft.toString() + ' found ' + cornerTiles.topLeft.toString()
+            );
+            assert.ok(
+                cornerTiles.bottomRight.equals(expectedBottomRight),
+                'Bottom right tile should be ' +
+                    expectedBottomRight.toString() +
+                    ' found ' +
+                    cornerTiles.bottomRight.toString()
+            );
         }
 
         assertCornerTiles(
@@ -805,7 +852,7 @@
         );
     });
 
-    QUnit.test('_getCornerTiles with vertical wrapping', function(assert) {
+    QUnit.test('_getCornerTiles with vertical wrapping', function (assert) {
         const tiledImageMock = MockSeadragon.getTiledImage(null, {
             wrapHorizontal: false,
             wrapVertical: true,
@@ -815,15 +862,19 @@
         });
         const _getCornerTiles = OpenSeadragon.TiledImage.prototype._getCornerTiles.bind(tiledImageMock);
 
-        function assertCornerTiles(topLeftBound, bottomRightBound,
-            expectedTopLeft, expectedBottomRight) {
+        function assertCornerTiles(topLeftBound, bottomRightBound, expectedTopLeft, expectedBottomRight) {
             const cornerTiles = _getCornerTiles(11, topLeftBound, bottomRightBound);
-            assert.ok(cornerTiles.topLeft.equals(expectedTopLeft),
-                'Top left tile should be ' + expectedTopLeft.toString() +
-                ' found ' + cornerTiles.topLeft.toString());
-            assert.ok(cornerTiles.bottomRight.equals(expectedBottomRight),
-                'Bottom right tile should be ' + expectedBottomRight.toString() +
-                ' found ' + cornerTiles.bottomRight.toString());
+            assert.ok(
+                cornerTiles.topLeft.equals(expectedTopLeft),
+                'Top left tile should be ' + expectedTopLeft.toString() + ' found ' + cornerTiles.topLeft.toString()
+            );
+            assert.ok(
+                cornerTiles.bottomRight.equals(expectedBottomRight),
+                'Bottom right tile should be ' +
+                    expectedBottomRight.toString() +
+                    ' found ' +
+                    cornerTiles.bottomRight.toString()
+            );
         }
 
         assertCornerTiles(
@@ -847,5 +898,4 @@
             new OpenSeadragon.Point(2, 9)
         );
     });
-
 })();

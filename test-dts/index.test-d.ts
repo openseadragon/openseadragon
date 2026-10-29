@@ -2,19 +2,31 @@ import { expectType, expectError, expectAssignable } from 'tsd';
 import OpenSeadragon from '..';
 
 // Viewer
-const viewer = OpenSeadragon({ id: "viewer" });
+const viewer = OpenSeadragon({ id: 'viewer' });
 expectType<OpenSeadragon.Viewer>(viewer);
-expectType<OpenSeadragon.Viewer>(OpenSeadragon({ element: document.createElement("div") }));
+expectType<OpenSeadragon.Viewer>(OpenSeadragon({ element: document.createElement('div') }));
 expectError(OpenSeadragon({ id: 123 }));
 expectType<boolean>(viewer.isOpen());
 expectType<boolean>(viewer.isFullPage());
 expectType<OpenSeadragon.Viewer>(viewer.close());
-expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: "viewer", cooperativeGestures: true }));
+expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: 'viewer', cooperativeGestures: true }));
 expectType<OpenSeadragon.Viewer>(viewer.setCooperativeGestures(true));
-expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: "viewer", buttonColors: { icon: "#000" } }));
-expectType<OpenSeadragon.Viewer>(viewer.setButtonColors({ background: "#fff" }));
+expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: 'viewer', buttonColors: { icon: '#000' } }));
+expectType<OpenSeadragon.Viewer>(viewer.setButtonColors({ background: '#fff' }));
 expectError(viewer.setButtonColors({ icon: 1 }));
-expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: "viewer", navImages: { home: { REST: "home_rest.png", GROUP: "home_grouphover.png", HOVER: "home_hover.png", DOWN: "home_pressed.png" } } }));
+expectType<OpenSeadragon.Viewer>(
+    OpenSeadragon({
+        id: 'viewer',
+        navImages: {
+            home: {
+                REST: 'home_rest.png',
+                GROUP: 'home_grouphover.png',
+                HOVER: 'home_hover.png',
+                DOWN: 'home_pressed.png'
+            }
+        }
+    })
+);
 viewer.destroy();
 
 // Viewport
@@ -59,14 +71,16 @@ expectType<boolean>(viewer.viewport.update());
 expectType<OpenSeadragon.Viewport>(viewer.viewport.toggleFlip());
 expectType<OpenSeadragon.Rect>(viewer.viewport.viewportToImageRectangle(new OpenSeadragon.Rect(0, 0, 1, 1)));
 expectType<OpenSeadragon.Rect>(viewer.viewport.imageToViewportRectangle(new OpenSeadragon.Rect(0, 0, 100, 100)));
-expectType<OpenSeadragon.Rect>(viewer.viewport.viewerElementToViewportRectangle(new OpenSeadragon.Rect(0, 0, 100, 100)));
+expectType<OpenSeadragon.Rect>(
+    viewer.viewport.viewerElementToViewportRectangle(new OpenSeadragon.Rect(0, 0, 100, 100))
+);
 expectType<number>(viewer.viewport.viewportToImageZoom(1));
 expectType<number>(viewer.viewport.imageToViewportZoom(1));
 
 // World
 expectType<number>(viewer.world.getItemCount());
 expectAssignable<OpenSeadragon.TiledImage | undefined>(viewer.world.getItemAt(0));
-viewer.world.addHandler("add-item", (ev) => {
+viewer.world.addHandler('add-item', (ev) => {
     expectType<OpenSeadragon.TiledImage>(ev.item);
 });
 
@@ -103,28 +117,28 @@ if (item) {
 }
 
 // Events
-viewer.addHandler("open", (ev) => {
+viewer.addHandler('open', (ev) => {
     expectType<OpenSeadragon.Viewer>(ev.eventSource);
     expectType<OpenSeadragon.TileSource>(ev.source);
 });
-viewer.addHandler("zoom", (ev) => {
+viewer.addHandler('zoom', (ev) => {
     expectType<number>(ev.zoom);
     expectType<OpenSeadragon.Point>(ev.refPoint);
 });
-viewer.addHandler("canvas-click", (ev) => {
+viewer.addHandler('canvas-click', (ev) => {
     expectType<OpenSeadragon.Point>(ev.position);
     expectType<boolean>(ev.quick);
 });
-viewer.addHandler("tile-loaded", (ev) => {
+viewer.addHandler('tile-loaded', (ev) => {
     expectType<OpenSeadragon.Tile>(ev.tile);
     expectType<OpenSeadragon.TiledImage>(ev.tiledImage);
 });
-viewer.addHandler("canvas-cooperative-gesture", (ev) => {
-    expectType<"drag" | "scroll">(ev.gesture);
+viewer.addHandler('canvas-cooperative-gesture', (ev) => {
+    expectType<'drag' | 'scroll'>(ev.gesture);
     expectType<string>(ev.message);
     expectType<boolean>(ev.preventDefaultAction);
 });
-expectError(viewer.addHandler("invalid", () => {}));
+expectError(viewer.addHandler('invalid', () => {}));
 
 // Point
 const pt = new OpenSeadragon.Point(5, 6);
@@ -154,7 +168,7 @@ expectType<boolean>(rect.containsPoint(pt));
 expectType<OpenSeadragon.Rect>(rect.rotate(45));
 
 // TileSource
-const dziSource = new OpenSeadragon.DziTileSource(1000, 800, 256, 1, "/tiles/", "jpg", []);
+const dziSource = new OpenSeadragon.DziTileSource(1000, 800, 256, 1, '/tiles/', 'jpg', []);
 expectType<number>(dziSource.aspectRatio);
 expectType<OpenSeadragon.Point>(dziSource.dimensions);
 expectType<number>(dziSource.maxLevel);
@@ -168,20 +182,20 @@ expectType<OpenSeadragon.Point>(dziSource.getNumTiles(0));
 expectType<number>(dziSource.getPixelRatio(0));
 
 const iiifSource = new OpenSeadragon.IIIFTileSource({ width: 1000, height: 800, tileSize: 256 });
-const imgSource = new OpenSeadragon.ImageTileSource({ url: "image.jpg" });
+const imgSource = new OpenSeadragon.ImageTileSource({ url: 'image.jpg' });
 const zoomifySource = new OpenSeadragon.ZoomifyTileSource({
     width: 1000,
     height: 800,
     tileSize: 256,
-    tilesUrl: "/tiles/",
+    tilesUrl: '/tiles/'
 });
 
 // TmsTileSource
-const tmsSource = new OpenSeadragon.TmsTileSource({ width: 1000, height: 800, tileSize: 256, tilesUrl: "/tiles/" });
+const tmsSource = new OpenSeadragon.TmsTileSource({ width: 1000, height: 800, tileSize: 256, tilesUrl: '/tiles/' });
 expectType<string>(tmsSource.tilesUrl);
 
 // Overlay
-const div = document.createElement("div");
+const div = document.createElement('div');
 viewer.addOverlay({ element: div, location: new OpenSeadragon.Rect(0, 0, 1, 1) });
 viewer.addOverlay({ element: div, location: new OpenSeadragon.Point(0.5, 0.5) });
 expectType<OpenSeadragon.Viewer>(viewer.removeOverlay(div));
@@ -197,7 +211,7 @@ overlay.destroy();
 
 // Button
 const button = new OpenSeadragon.Button({
-    tooltip: "Zoom In",
+    tooltip: 'Zoom In',
     onClick: (ev) => expectType<OpenSeadragon.Button>(ev.eventSource)
 });
 expectType<OpenSeadragon.ButtonState>(button.currentState);
@@ -208,7 +222,7 @@ button.destroy();
 
 // MouseTracker
 const tracker = new OpenSeadragon.MouseTracker({
-    element: document.createElement("div"),
+    element: document.createElement('div'),
     cooperativeGestureHandling: true,
     clickHandler: (ev) => expectType<OpenSeadragon.MouseTracker>(ev.eventSource)
 });
@@ -231,13 +245,28 @@ expectType<boolean>(viewer.drawer.canRotate());
 expectType<OpenSeadragon.Point>(viewer.drawer.viewportCoordToDrawerCoord(new OpenSeadragon.Point(0, 0)));
 
 // Tile
-const tile = new OpenSeadragon.Tile(0, 0, 0, new OpenSeadragon.Rect(0, 0, 256, 256), true, "tile.jpg", null as any, false, {}, new OpenSeadragon.Rect(0, 0, 256, 256), null as any, "key");
+const tile = new OpenSeadragon.Tile(
+    0,
+    0,
+    0,
+    new OpenSeadragon.Rect(0, 0, 256, 256),
+    true,
+    'tile.jpg',
+    null as any,
+    false,
+    {},
+    new OpenSeadragon.Rect(0, 0, 256, 256),
+    null as any,
+    'key'
+);
 expectType<number>(tile.level);
 expectType<number>(tile.x);
 expectType<number>(tile.y);
 expectType<boolean>(tile.loaded);
 expectType<string>(tile.getUrl());
-expectType<OpenSeadragon.Point>(tile.getTranslationForEdgeSmoothing(1, new OpenSeadragon.Point(256, 256), new OpenSeadragon.Point(256, 256)));
+expectType<OpenSeadragon.Point>(
+    tile.getTranslationForEdgeSmoothing(1, new OpenSeadragon.Point(256, 256), new OpenSeadragon.Point(256, 256))
+);
 expectType<string>(tile.toString());
 expectType<void>(tile.unload());
 
@@ -262,7 +291,7 @@ const _enumTest4 = OpenSeadragon.OverlayRotationMode.EXACT;
 
 // PriorityQueue
 const queue = new OpenSeadragon.PriorityQueue<string, number>();
-expectType<void>(queue.insert("item1", 10));
+expectType<void>(queue.insert('item1', 10));
 expectType<OpenSeadragon.PriorityQueue.Node<string, number> | undefined>(queue.remove());
 expectType<number | undefined>(queue.peek());
 expectType<number>(queue.getCount());
@@ -276,15 +305,15 @@ expectType<any>(cacheRecord.data);
 expectType<string>(cacheRecord.type);
 expectType<void>(cacheRecord.destroy());
 expectType<Promise<any>>(cacheRecord.await());
-expectType<Promise<any>>(cacheRecord.setDataAs("test", "image"));
-expectType<Promise<any>>(cacheRecord.getDataAs("image"));
+expectType<Promise<any>>(cacheRecord.setDataAs('test', 'image'));
+expectType<Promise<any>>(cacheRecord.getDataAs('image'));
 expectType<any>(cacheRecord.getImage());
 expectType<any>(cacheRecord.getRenderedContext());
 
 // Utilities
-expectType<Element>(OpenSeadragon.getElement("id"));
-expectType<OpenSeadragon.Point>(OpenSeadragon.getElementOffset(document.createElement("div")));
+expectType<Element>(OpenSeadragon.getElement('id'));
+expectType<OpenSeadragon.Point>(OpenSeadragon.getElementOffset(document.createElement('div')));
 expectType<OpenSeadragon.Point>(OpenSeadragon.getWindowSize());
-expectType<void>(OpenSeadragon.setElementTouchAction("id", "pan-x pan-y"));
+expectType<void>(OpenSeadragon.setElementTouchAction('id', 'pan-x pan-y'));
 expectType<string>(OpenSeadragon.version.versionStr);
 expectType<boolean>(OpenSeadragon.supportsCanvas);

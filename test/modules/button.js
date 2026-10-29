@@ -6,13 +6,18 @@
     let pageStyle;
 
     function makeButton(options) {
-        button = new OpenSeadragon.Button(Object.assign({
-            tooltip: 'Zoom in',
-            srcRest: imageBase + 'rest.png',
-            srcGroup: imageBase + 'grouphover.png',
-            srcHover: imageBase + 'hover.png',
-            srcDown: imageBase + 'pressed.png'
-        }, options));
+        button = new OpenSeadragon.Button(
+            Object.assign(
+                {
+                    tooltip: 'Zoom in',
+                    srcRest: imageBase + 'rest.png',
+                    srcGroup: imageBase + 'grouphover.png',
+                    srcHover: imageBase + 'hover.png',
+                    srcDown: imageBase + 'pressed.png'
+                },
+                options
+            )
+        );
         document.getElementById('qunit-fixture').appendChild(button.element);
         return button;
     }
@@ -85,16 +90,21 @@
         });
 
         [13, 32, 65].forEach(function (keyCode) {
-            button.element.dispatchEvent(new KeyboardEvent('keypress', {
-                keyCode: keyCode,
-                charCode: keyCode,
-                bubbles: true,
-                cancelable: true
-            }));
+            button.element.dispatchEvent(
+                new KeyboardEvent('keypress', {
+                    keyCode: keyCode,
+                    charCode: keyCode,
+                    bubbles: true,
+                    cancelable: true
+                })
+            );
         });
 
-        assert.deepEqual(events, ['click', 'release', 'click', 'release'],
-            'Enter and Space activate, other keys do not');
+        assert.deepEqual(
+            events,
+            ['click', 'release', 'click', 'release'],
+            'Enter and Space activate, other keys do not'
+        );
     });
 
     QUnit.test('held Space activates once', function (assert) {
@@ -105,13 +115,15 @@
         });
 
         [false, true, true].forEach(function (repeat) {
-            button.element.dispatchEvent(new KeyboardEvent('keypress', {
-                keyCode: 32,
-                charCode: 32,
-                repeat: repeat,
-                bubbles: true,
-                cancelable: true
-            }));
+            button.element.dispatchEvent(
+                new KeyboardEvent('keypress', {
+                    keyCode: 32,
+                    charCode: 32,
+                    repeat: repeat,
+                    bubbles: true,
+                    cancelable: true
+                })
+            );
         });
 
         assert.equal(clicks, 1, 'repeats are ignored');
@@ -147,7 +159,8 @@
         assert.deepEqual(
             [button.imgRest.alt, button.imgGroup.alt, button.imgHover.alt, button.imgDown.alt],
             ['', '', '', ''],
-            'images leave title as the name');
+            'images leave title as the name'
+        );
         assert.equal(button.element.title, 'Zoom in', 'title kept');
 
         button.element.click();
@@ -156,7 +169,8 @@
 
     QUnit.test('page button styles do not reach the button', function (assert) {
         pageStyle = document.createElement('style');
-        pageStyle.textContent = 'button { padding: 20px; margin: 8px; background: red; ' +
+        pageStyle.textContent =
+            'button { padding: 20px; margin: 8px; background: red; ' +
             'border: 3px solid blue; border-radius: 9px; min-width: 80px; ' +
             'transform: scale(2); transition: opacity 1s; }';
         document.head.appendChild(pageStyle);
@@ -191,12 +205,14 @@
         });
 
         button.element.focus();
-        button.element.dispatchEvent(new KeyboardEvent('keypress', {
-            keyCode: 13,
-            charCode: 13,
-            bubbles: true,
-            cancelable: true
-        }));
+        button.element.dispatchEvent(
+            new KeyboardEvent('keypress', {
+                keyCode: 13,
+                charCode: 13,
+                bubbles: true,
+                cancelable: true
+            })
+        );
         assert.deepEqual(events, ['focus'], 'only focus raised');
     });
 
@@ -206,5 +222,4 @@
         assert.equal(button.element, element, 'element used as given');
         assert.notOk(element.hasAttribute('aria-label'), 'no aria-label added');
     });
-
 })();

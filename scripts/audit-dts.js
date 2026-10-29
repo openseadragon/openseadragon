@@ -45,23 +45,23 @@
  *
  * Usage: node scripts/audit-dts.js
  */
-const fs = require("fs");
-const path = require("path");
-const ts = require("typescript");
+const fs = require('fs');
+const path = require('path');
+const ts = require('typescript');
 
-const ROOT = path.resolve(__dirname, "..");
+const ROOT = path.resolve(__dirname, '..');
 
 // ---------- source file list ----------
 
 function loadSourceList(root) {
-    const gruntfile = fs.readFileSync(path.join(root, "Gruntfile.js"), "utf8");
+    const gruntfile = fs.readFileSync(path.join(root, 'Gruntfile.js'), 'utf8');
     const arrayMatch = gruntfile.match(/sources\s*=\s*\[([\s\S]*?)\]/);
     if (!arrayMatch) {
-        throw new Error("Could not find `sources = [...]` array in Gruntfile.js");
+        throw new Error('Could not find `sources = [...]` array in Gruntfile.js');
     }
     const files = [];
-    for (const line of arrayMatch[1].split("\n")) {
-        const uncommented = line.replace(/\/\/.*/, "");
+    for (const line of arrayMatch[1].split('\n')) {
+        const uncommented = line.replace(/\/\/.*/, '');
         const entryPattern = /["'](src\/[^"']+\.js)["']/g;
         let entry;
         while ((entry = entryPattern.exec(uncommented))) {
@@ -76,7 +76,7 @@ function loadSourceList(root) {
 function getLeadingJSDoc(sourceFile, node) {
     const text = sourceFile.getFullText();
     const ranges = ts.getLeadingCommentRanges(text, node.getFullStart()) || [];
-    return ranges.map(r => text.slice(r.pos, r.end)).join("\n");
+    return ranges.map((r) => text.slice(r.pos, r.end)).join('\n');
 }
 
 function isPrivateDoc(doc) {
@@ -124,10 +124,10 @@ function addObjectLiteralMembers(sf, objLit, cls, members, loc) {
             ts.isSetAccessorDeclaration(prop)
         ) {
             const name = memberName(prop.name);
-            if (name && !name.startsWith("_")) {
+            if (name && !name.startsWith('_')) {
                 const doc = getLeadingJSDoc(sf, prop);
                 if (!isPrivateDoc(doc)) {
-                    const key = cls + "." + name;
+                    const key = cls + '.' + name;
                     if (!members.has(key)) {
                         members.set(key, loc(prop));
                     }
@@ -150,10 +150,10 @@ function addClassMembers(sf, classNode, cls, members, loc) {
             ts.isSetAccessorDeclaration(el)
         ) {
             const name = memberName(el.name);
-            if (name && !name.startsWith("_")) {
+            if (name && !name.startsWith('_')) {
                 const doc = getLeadingJSDoc(sf, el);
                 if (!isPrivateDoc(doc)) {
-                    const key = cls + "." + name;
+                    const key = cls + '.' + name;
                     if (!members.has(key)) {
                         members.set(key, loc(el));
                     }
@@ -170,7 +170,7 @@ function collectClassDeclarations(node, out) {
     if (ts.isClassDeclaration(node) && node.name) {
         out.set(node.name.text, node);
     }
-    ts.forEachChild(node, child => collectClassDeclarations(child, out));
+    ts.forEachChild(node, (child) => collectClassDeclarations(child, out));
 }
 
 // ---------- extract from src/*.js ----------
@@ -183,10 +183,10 @@ function extractSrc(root, sourceFiles) {
     for (const rel of sourceFiles) {
         const file = path.join(root, rel);
         if (!fs.existsSync(file)) {
-            console.error("WARN: missing source file " + rel);
+            console.error('WARN: missing source file ' + rel);
             continue;
         }
-        const text = fs.readFileSync(file, "utf8");
+        const text = fs.readFileSync(file, 'utf8');
         const sf = ts.createSourceFile(file, text, ts.ScriptTarget.ES2019, true, ts.ScriptKind.JS);
 
         // `class Foo extends ... {...}` declarations in this file, by name, so
@@ -194,12 +194,12 @@ function extractSrc(root, sourceFiles) {
         const localClasses = new Map();
         collectClassDeclarations(sf, localClasses);
 
-        const loc = function(node) {
+        const loc = function (node) {
             const { line } = sf.getLineAndCharacterOfPosition(node.getStart(sf));
             return { file: rel, line: line + 1 };
         };
 
-        const visit = function(node) {
+        const visit = function (node) {
             // $.Foo = ...   or   $.Foo.prototype.bar = ...   or   $.Foo.prototype = {...}
             if (
                 ts.isExpressionStatement(node) &&
@@ -209,12 +209,12 @@ function extractSrc(root, sourceFiles) {
             ) {
                 const bin = node.expression;
                 const parts = chainParts(bin.left);
-                if (parts && (parts[0] === "$" || parts[0] === "OpenSeadragon")) {
+                if (parts && (parts[0] === '$' || parts[0] === 'OpenSeadragon')) {
                     const rest = parts.slice(1);
                     const doc = getLeadingJSDoc(sf, node);
                     if (rest.length === 1) {
                         // $.Foo = ...
-                        if (!isPrivateDoc(doc) && !rest[0].startsWith("_")) {
+                        if (!isPrivateDoc(doc) && !rest[0].startsWith('_')) {
                             const cls = rest[0];
                             if (!topLevel.has(cls)) {
                                 topLevel.set(cls, loc(node));
@@ -232,17 +232,17 @@ function extractSrc(root, sourceFiles) {
                                 addClassMembers(sf, classNode, cls, members, loc);
                             }
                         }
-                    } else if (rest.length === 3 && rest[1] === "prototype") {
+                    } else if (rest.length === 3 && rest[1] === 'prototype') {
                         // $.Foo.prototype.bar = ...
                         const cls = rest[0];
                         const member = rest[2];
-                        if (!isPrivateDoc(doc) && !member.startsWith("_")) {
-                            const key = cls + "." + member;
+                        if (!isPrivateDoc(doc) && !member.startsWith('_')) {
+                            const key = cls + '.' + member;
                             if (!members.has(key)) {
                                 members.set(key, loc(node));
                             }
                         }
-                    } else if (rest.length === 2 && rest[1] === "prototype") {
+                    } else if (rest.length === 2 && rest[1] === 'prototype') {
                         // $.Foo.prototype = { a: ..., b: ... }
                         const cls = rest[0];
                         const rhs = bin.right;
@@ -257,8 +257,8 @@ function extractSrc(root, sourceFiles) {
                         // which accepts a match against any declared top-level name as well.
                         const cls = rest[0];
                         const member = rest[1];
-                        if (!isPrivateDoc(doc) && !member.startsWith("_")) {
-                            const key = cls + "." + member;
+                        if (!isPrivateDoc(doc) && !member.startsWith('_')) {
+                            const key = cls + '.' + member;
                             if (!members.has(key)) {
                                 members.set(key, loc(node));
                             }
@@ -272,10 +272,14 @@ function extractSrc(root, sourceFiles) {
             if (
                 ts.isCallExpression(node) &&
                 ts.isPropertyAccessExpression(node.expression) &&
-                node.expression.name.text === "extend"
+                node.expression.name.text === 'extend'
             ) {
                 const calleeParts = chainParts(node.expression.expression);
-                if (calleeParts && calleeParts.length === 1 && (calleeParts[0] === "$" || calleeParts[0] === "OpenSeadragon")) {
+                if (
+                    calleeParts &&
+                    calleeParts.length === 1 &&
+                    (calleeParts[0] === '$' || calleeParts[0] === 'OpenSeadragon')
+                ) {
                     let args = node.arguments;
                     // drop leading boolean literal (deep-extend flag)
                     if (args.length && args[0].kind === ts.SyntaxKind.TrueKeyword) {
@@ -286,8 +290,8 @@ function extractSrc(root, sourceFiles) {
                         if (
                             targetParts &&
                             targetParts.length === 3 &&
-                            (targetParts[0] === "$" || targetParts[0] === "OpenSeadragon") &&
-                            targetParts[2] === "prototype"
+                            (targetParts[0] === '$' || targetParts[0] === 'OpenSeadragon') &&
+                            targetParts[2] === 'prototype'
                         ) {
                             const cls = targetParts[1];
                             for (let i = 1; i < args.length; i++) {
@@ -302,7 +306,7 @@ function extractSrc(root, sourceFiles) {
                         } else if (
                             targetParts &&
                             targetParts.length === 1 &&
-                            (targetParts[0] === "$" || targetParts[0] === "OpenSeadragon")
+                            (targetParts[0] === '$' || targetParts[0] === 'OpenSeadragon')
                         ) {
                             // namespace-level mixin
                             for (let i = 1; i < args.length; i++) {
@@ -315,7 +319,7 @@ function extractSrc(root, sourceFiles) {
                                             ts.isShorthandPropertyAssignment(prop)
                                         ) {
                                             const name = memberName(prop.name);
-                                            if (name && !name.startsWith("_")) {
+                                            if (name && !name.startsWith('_')) {
                                                 const doc = getLeadingJSDoc(sf, prop);
                                                 if (!isPrivateDoc(doc)) {
                                                     if (!topLevel.has(name)) {
@@ -344,8 +348,8 @@ function extractSrc(root, sourceFiles) {
 // ---------- extract from types/index.d.ts ----------
 
 function extractDts(root) {
-    const file = path.join(root, "types/index.d.ts");
-    const text = fs.readFileSync(file, "utf8");
+    const file = path.join(root, 'types/index.d.ts');
+    const text = fs.readFileSync(file, 'utf8');
     const sf = ts.createSourceFile(file, text, ts.ScriptTarget.ES2019, true, ts.ScriptKind.TS);
 
     const topLevel = new Map(); // name -> kind
@@ -355,13 +359,13 @@ function extractDts(root) {
     function visitNamespaceBody(statements) {
         for (const stmt of statements) {
             if (ts.isClassDeclaration(stmt) && stmt.name) {
-                topLevel.set(stmt.name.text, "class");
+                topLevel.set(stmt.name.text, 'class');
                 for (const m of stmt.members) {
                     const name = memberName(m.name);
                     if (!name) {
                         continue;
                     }
-                    members.set(stmt.name.text + "." + name, "class-member");
+                    members.set(stmt.name.text + '.' + name, 'class-member');
                 }
                 if (stmt.heritageClauses) {
                     for (const clause of stmt.heritageClauses) {
@@ -380,24 +384,24 @@ function extractDts(root) {
                 // mixed-in members without overriding what makes it a class. Don't let this
                 // downgrade an already-recorded class to "interface" -- that would silently
                 // stop member auditing for it (the missingMembers check only runs for classes).
-                if (topLevel.get(stmt.name.text) !== "class") {
-                    topLevel.set(stmt.name.text, "interface");
+                if (topLevel.get(stmt.name.text) !== 'class') {
+                    topLevel.set(stmt.name.text, 'interface');
                 }
                 for (const m of stmt.members) {
                     const name = memberName(m.name);
                     if (!name) {
                         continue;
                     }
-                    members.set(stmt.name.text + "." + name, "class-member");
+                    members.set(stmt.name.text + '.' + name, 'class-member');
                 }
             } else if (ts.isFunctionDeclaration(stmt) && stmt.name) {
-                topLevel.set(stmt.name.text, "function");
+                topLevel.set(stmt.name.text, 'function');
             } else if (ts.isEnumDeclaration(stmt)) {
-                topLevel.set(stmt.name.text, "enum");
+                topLevel.set(stmt.name.text, 'enum');
             } else if (ts.isVariableStatement(stmt)) {
                 for (const decl of stmt.declarationList.declarations) {
                     if (ts.isIdentifier(decl.name)) {
-                        topLevel.set(decl.name.text, "const");
+                        topLevel.set(decl.name.text, 'const');
                     }
                 }
             } else if (ts.isModuleDeclaration(stmt) && stmt.body && ts.isModuleBlock(stmt.body)) {
@@ -423,7 +427,7 @@ function hasMemberInChain(dts, cls, name, seen) {
         return false;
     }
     seen.add(cls);
-    if (dts.members.has(cls + "." + name)) {
+    if (dts.members.has(cls + '.' + name)) {
         return true;
     }
     const base = dts.extendsMap.get(cls);
@@ -449,8 +453,8 @@ function main() {
 
     const missingMembers = [];
     for (const [key, loc] of src.members) {
-        const cls = key.split(".")[0];
-        const name = key.split(".").slice(1).join(".");
+        const cls = key.split('.')[0];
+        const name = key.split('.').slice(1).join('.');
         // only flag if the class itself is declared (as class) but the member is
         // missing from it AND from every ancestor in its declared `extends` chain;
         // if the class isn't declared at all it's already covered by missingTopLevel.
@@ -458,11 +462,7 @@ function main() {
         // assignment is ambiguous between a static member and a nested type (e.g.
         // `$.MouseTracker.GesturePointList`), and the .d.ts side flattens the latter
         // into a same-named top-level declaration rather than nesting it.
-        if (
-            dts.topLevel.get(cls) === "class" &&
-            !hasMemberInChain(dts, cls, name) &&
-            !dts.topLevel.has(name)
-        ) {
+        if (dts.topLevel.get(cls) === 'class' && !hasMemberInChain(dts, cls, name) && !dts.topLevel.has(name)) {
             missingMembers.push({ key, loc });
         }
     }
@@ -473,14 +473,14 @@ function main() {
     // the .d.ts isn't misread as stale just because src only has it under a qualified key.
     const srcMemberTailNames = new Set();
     for (const key of src.members.keys()) {
-        srcMemberTailNames.add(key.split(".").slice(1).join("."));
+        srcMemberTailNames.add(key.split('.').slice(1).join('.'));
     }
 
     // declared in .d.ts but never found in src -- candidates for removal, or just
     // missed by these heuristics (see the notes at the top of this file)
     const staleTopLevel = [];
     for (const [name, kind] of dts.topLevel) {
-        if (kind === "interface") {
+        if (kind === 'interface') {
             continue; // interfaces are pure types, no src equivalent expected
         }
         if (!src.topLevel.has(name) && !srcMemberTailNames.has(name)) {
@@ -488,29 +488,31 @@ function main() {
         }
     }
 
-    console.log("=== SRC SUMMARY ===");
-    console.log("top-level public symbols found in src:", src.topLevel.size);
-    console.log("prototype members found in src:", src.members.size);
+    console.log('=== SRC SUMMARY ===');
+    console.log('top-level public symbols found in src:', src.topLevel.size);
+    console.log('prototype members found in src:', src.members.size);
     console.log();
 
-    console.log("=== DTS SUMMARY ===");
-    console.log("top-level declarations in .d.ts:", dts.topLevel.size);
-    console.log("class members in .d.ts:", dts.members.size);
+    console.log('=== DTS SUMMARY ===');
+    console.log('top-level declarations in .d.ts:', dts.topLevel.size);
+    console.log('class members in .d.ts:', dts.members.size);
     console.log();
 
-    console.log("=== MISSING FROM types/index.d.ts (top-level) ===");
+    console.log('=== MISSING FROM types/index.d.ts (top-level) ===');
     missingTopLevel
         .sort((a, b) => a.name.localeCompare(b.name))
         .forEach(({ name, loc }) => console.log(`  ${name}  (${loc.file}:${loc.line})`));
     console.log(`(${missingTopLevel.length} total)\n`);
 
-    console.log("=== MISSING FROM types/index.d.ts (class members, only for classes that ARE declared) ===");
+    console.log('=== MISSING FROM types/index.d.ts (class members, only for classes that ARE declared) ===');
     missingMembers
         .sort((a, b) => a.key.localeCompare(b.key))
         .forEach(({ key, loc }) => console.log(`  ${key}  (${loc.file}:${loc.line})`));
     console.log(`(${missingMembers.length} total)\n`);
 
-    console.log("=== IN types/index.d.ts BUT NOT FOUND IN src (review: maybe removed, renamed, or missed by heuristics) ===");
+    console.log(
+        '=== IN types/index.d.ts BUT NOT FOUND IN src (review: maybe removed, renamed, or missed by heuristics) ==='
+    );
     staleTopLevel
         .sort((a, b) => a.name.localeCompare(b.name))
         .forEach(({ name, kind }) => console.log(`  ${name}  [${kind}]`));

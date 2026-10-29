@@ -1,70 +1,64 @@
-const js = require("@eslint/js");
-const compat = require("eslint-plugin-compat");
-const globals = require("globals");
+const js = require('@eslint/js');
+const compat = require('eslint-plugin-compat');
+const globals = require('globals');
 
 module.exports = [
     {
-        ignores: [
-            "**/*.d.ts",
-            "types/",
-            "test-dts/**/*.ts",
-            "test/lib/*.js",
-            "eslint.config.js"
-        ]
+        ignores: ['**/*.d.ts', 'types/', 'test-dts/**/*.ts', 'test/lib/*.js', 'eslint.config.js']
     },
     js.configs.recommended,
-    compat.configs["flat/recommended"],
+    compat.configs['flat/recommended'],
     {
         languageOptions: {
             ecmaVersion: 2015,
-            sourceType: "script",
+            sourceType: 'script',
             globals: Object.assign({}, globals.browser, {
-                OpenSeadragon: "writable",
-                define: "readonly",
-                module: "readonly"
+                OpenSeadragon: 'writable',
+                define: 'readonly',
+                module: 'readonly'
             })
         },
         rules: {
-            "no-unused-vars": ["error", {"args": "none", "caughtErrors": "none"}],
-            "block-scoped-var": ["error"],
-            "consistent-return": ["error"],
-            "curly": ["error", "all"],
-            "eqeqeq": ["error"],
-            "no-eval": ["error"],
-            "no-implicit-globals": ["error"],
-            "no-implied-eval": ["error"],
-            "no-invalid-this": ["error"],
-            "no-new-wrappers": ["error"],
-            "no-new": ["error"],
-            "no-return-assign": ["error"],
-            "no-self-compare": ["error"],
-            "no-unmodified-loop-condition": ["error"],
-            "no-unused-expressions": ["error"],
-            "no-useless-call": ["error"],
-            "no-useless-concat": ["error"],
-            "no-useless-escape": ["error"],
-            "no-useless-return": ["error"],
-            "no-with": ["error"],
-            "radix": ["error"],
-            "yoda": ["off"],
-            "no-undef-init": ["error"],
-            "no-use-before-define": ["error", {"functions": false, "classes": true, "variables": true}],
-            "camelcase": ["error"],
-            "consistent-this": ["off", "self"],
-            "func-name-matching": ["error"],
-            "new-cap": ["error"],
-            "no-array-constructor": ["error"],
-            "no-unneeded-ternary": ["error"],
-            "one-var": ["off", "never"],
-            "operator-assignment": ["error"],
-            "unicode-bom": ["error"],
-            "no-caller": ["error"],
-            "no-loop-func": ["error"],
-            "no-object-constructor": ["error"],
+            'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
+            'block-scoped-var': ['error'],
+            'consistent-return': ['error'],
+            curly: ['error', 'all'],
+            eqeqeq: ['error'],
+            'no-eval': ['error'],
+            'no-implicit-globals': ['error'],
+            'no-implied-eval': ['error'],
+            'no-invalid-this': ['error'],
+            'no-new-wrappers': ['error'],
+            'no-new': ['error'],
+            'no-return-assign': ['error'],
+            'no-self-compare': ['error'],
+            'no-unmodified-loop-condition': ['error'],
+            'no-unused-expressions': ['error'],
+            'no-useless-call': ['error'],
+            'no-useless-concat': ['error'],
+            'no-useless-escape': ['error'],
+            'no-useless-return': ['error'],
+            'no-with': ['error'],
+            radix: ['error'],
+            yoda: ['off'],
+            'no-undef-init': ['error'],
+            'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
+            camelcase: ['error'],
+            'consistent-this': ['off', 'self'],
+            'func-name-matching': ['error'],
+            'new-cap': ['error'],
+            'no-array-constructor': ['error'],
+            'no-unneeded-ternary': ['error'],
+            'one-var': ['off', 'never'],
+            'operator-assignment': ['error'],
+            'unicode-bom': ['error'],
+            'no-caller': ['error'],
+            'no-loop-func': ['error'],
+            'no-object-constructor': ['error'],
             // Dropped from recommended in ESLint 9.
-            "no-inner-declarations": ["error"],
+            'no-inner-declarations': ['error'],
             // Defensive initialisations signal intent, so they are allowed.
-            "no-useless-assignment": ["off"]
+            'no-useless-assignment': ['off']
         }
     }
 ];
