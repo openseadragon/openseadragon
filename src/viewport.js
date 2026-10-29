@@ -1694,8 +1694,7 @@ $.Viewport.prototype = {
             const count = this.viewer.world.getItemCount();
             if (count > 1) {
                 if (!this.silenceMultiImageWarnings) {
-                    $.console.error('[Viewport.viewportToImageZoom] is not ' +
-                        'accurate with multi-image.');
+                    $.console.error('[Viewport.viewportToImageZoom] is not accurate with multi-image.');
                 }
             } else if (count === 1) {
                 // It is better to use TiledImage.viewportToImageZoom

@@ -1306,8 +1306,7 @@
 
                 // We need to force data acquisition now to guess the type
                 if (typeof options.data === 'function') {
-                    $.console.error("[TileCache.cacheTile] options.dataType is mandatory " +
-                        " when data item is a callback!");
+                    $.console.error("[TileCache.cacheTile] options.dataType is mandatory when data item is a callback!");
                 }
                 options.dataType = $.converter.guessType(options.data);
             }
