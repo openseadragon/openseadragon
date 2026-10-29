@@ -19,6 +19,8 @@ fs.copyFileSync("changelog.txt", `${packageDir}/changelog.txt`);
 fs.copyFileSync("LICENSE.txt", `${packageDir}/LICENSE.txt`);
 
 fs.mkdirSync("build/releases", { recursive: true });
+// zip adds to an existing archive, which would keep files removed since the last run.
+fs.rmSync(`build/releases/${dirName}.zip`, { force: true });
 execFileSync("zip", ["-qr9", `releases/${dirName}.zip`, dirName], { cwd: "build" });
 execFileSync("tar", ["-czf", `releases/${dirName}.tar.gz`, dirName], { cwd: "build" });
 fs.rmSync(packageDir, { recursive: true });
