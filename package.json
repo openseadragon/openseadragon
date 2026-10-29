@@ -25,7 +25,6 @@
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
-        "@stylistic/eslint-plugin": "^5.10.0",
         "eslint": "^10.12.0",
         "eslint-plugin-compat": "^7.0.2",
         "globals": "^17.13.0",
@@ -42,6 +41,7 @@
         "grunt-shell": "^4.0.0",
         "grunt-text-replace": "^0.4.0",
         "nyc": "^18.0.0",
+        "prettier": "3.9.10",
         "puppeteer": "^24.0.0",
         "qunit": "^2.24.1",
         "source-map-explorer": "^2.5.3",
@@ -57,7 +57,9 @@
         "bundlesize": "node scripts/check-bundle-size.js",
         "bundlesize:visualize": "source-map-explorer build/openseadragon/openseadragon.min.js --no-border-checks",
         "audit-dts": "node scripts/audit-dts.js",
-        "package": "grunt package"
+        "package": "grunt package",
+        "format": "prettier --write \"*.{js,mjs}\" \"{src,test,types,test-dts,scripts}/**/*.{js,mjs,ts}\"",
+        "format:check": "prettier --check \"*.{js,mjs}\" \"{src,test,types,test-dts,scripts}/**/*.{js,mjs,ts}\""
     },
     "bundlesize": [
         {

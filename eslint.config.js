@@ -1,6 +1,5 @@
 const js = require("@eslint/js");
 const compat = require("eslint-plugin-compat");
-const stylistic = require("@stylistic/eslint-plugin");
 const globals = require("globals");
 
 module.exports = [
@@ -16,9 +15,6 @@ module.exports = [
     js.configs.recommended,
     compat.configs["flat/recommended"],
     {
-        plugins: {
-            "@stylistic": stylistic
-        },
         languageOptions: {
             ecmaVersion: 2015,
             sourceType: "script",
@@ -30,8 +26,6 @@ module.exports = [
         },
         rules: {
             "no-unused-vars": ["error", {"args": "none", "caughtErrors": "none"}],
-            "@stylistic/semi": ["error", "always"],
-            "@stylistic/no-extra-semi": ["error"],
             "block-scoped-var": ["error"],
             "consistent-return": ["error"],
             "curly": ["error", "all"],
@@ -40,10 +34,6 @@ module.exports = [
             "no-implicit-globals": ["error"],
             "no-implied-eval": ["error"],
             "no-invalid-this": ["error"],
-            "@stylistic/no-multi-spaces": ["error", {
-                "ignoreEOLComments": true,
-                "exceptions": {"Property": true, "VariableDeclarator": true, "AssignmentExpression": true}
-            }],
             "no-new-wrappers": ["error"],
             "no-new": ["error"],
             "no-return-assign": ["error"],
@@ -60,37 +50,13 @@ module.exports = [
             "no-undef-init": ["error"],
             "no-use-before-define": ["error", {"functions": false, "classes": true, "variables": true}],
             "camelcase": ["error"],
-            "@stylistic/comma-spacing": ["error"],
-            "@stylistic/comma-style": ["error"],
             "consistent-this": ["off", "self"],
-            "@stylistic/eol-last": ["error"],
-            "@stylistic/function-call-spacing": ["error"],
             "func-name-matching": ["error"],
-            "@stylistic/key-spacing": ["error", {"mode": "minimum"}],
-            "@stylistic/max-statements-per-line": ["error", {"max": 1}],
             "new-cap": ["error"],
-            "@stylistic/new-parens": ["error"],
             "no-array-constructor": ["error"],
-            "@stylistic/no-mixed-operators": ["error", {
-                "groups": [
-                    ["&", "|", "^", "~", "<<", ">>", ">>>"],
-                    ["==", "!=", "===", "!==", ">", ">=", "<", "<="],
-                    ["&&", "||"],
-                    ["in", "instanceof"]
-                ]
-            }],
-            "@stylistic/no-tabs": ["error"],
-            "@stylistic/no-trailing-spaces": ["error"],
             "no-unneeded-ternary": ["error"],
-            "@stylistic/no-whitespace-before-property": ["error"],
-            "@stylistic/one-var-declaration-per-line": ["error"],
             "one-var": ["off", "never"],
             "operator-assignment": ["error"],
-            "@stylistic/operator-linebreak": ["error", "after"],
-            "@stylistic/quote-props": ["error", "as-needed"],
-            "@stylistic/semi-spacing": ["error"],
-            "@stylistic/space-infix-ops": ["error"],
-            "@stylistic/space-unary-ops": ["error", {"words": true, "nonwords": false}],
             "unicode-bom": ["error"],
             "no-caller": ["error"],
             "no-loop-func": ["error"],
