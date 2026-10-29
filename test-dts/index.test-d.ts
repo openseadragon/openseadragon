@@ -14,6 +14,7 @@ expectType<OpenSeadragon.Viewer>(viewer.setCooperativeGestures(true));
 expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: "viewer", buttonColors: { icon: "#000" } }));
 expectType<OpenSeadragon.Viewer>(viewer.setButtonColors({ background: "#fff" }));
 expectError(viewer.setButtonColors({ icon: 1 }));
+expectType<OpenSeadragon.Viewer>(OpenSeadragon({ id: "viewer", navImages: { home: { REST: "home_rest.png", GROUP: "home_grouphover.png", HOVER: "home_hover.png", DOWN: "home_pressed.png" } } }));
 viewer.destroy();
 
 // Viewport

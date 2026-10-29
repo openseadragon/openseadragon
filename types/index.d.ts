@@ -315,7 +315,7 @@ declare namespace OpenSeadragon {
         xmlPath?: string;
         prefixUrl?: string;
         buttonColors?: { background?: string; icon?: string };
-        navImages?: NavImages;
+        navImages?: Partial<NavImages>;
         debugMode?: boolean;
         debugGridColor?: string;
         silenceMultiImageWarnings?: boolean;
