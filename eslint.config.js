@@ -4,13 +4,7 @@ const globals = require("globals");
 
 module.exports = [
     {
-        ignores: [
-            "**/*.d.ts",
-            "types/",
-            "test-dts/**/*.ts",
-            "test/lib/*.js",
-            "eslint.config.js"
-        ]
+        ignores: ["**/*.d.ts", "types/", "test-dts/**/*.ts", "test/lib/*.js", "eslint.config.js"],
     },
     js.configs.recommended,
     compat.configs["flat/recommended"],
@@ -21,15 +15,15 @@ module.exports = [
             globals: Object.assign({}, globals.browser, {
                 OpenSeadragon: "writable",
                 define: "readonly",
-                module: "readonly"
-            })
+                module: "readonly",
+            }),
         },
         rules: {
-            "no-unused-vars": ["error", {"args": "none", "caughtErrors": "none"}],
+            "no-unused-vars": ["error", { args: "none", caughtErrors: "none" }],
             "block-scoped-var": ["error"],
             "consistent-return": ["error"],
-            "curly": ["error", "all"],
-            "eqeqeq": ["error"],
+            curly: ["error", "all"],
+            eqeqeq: ["error"],
             "no-eval": ["error"],
             "no-implicit-globals": ["error"],
             "no-implied-eval": ["error"],
@@ -45,11 +39,11 @@ module.exports = [
             "no-useless-escape": ["error"],
             "no-useless-return": ["error"],
             "no-with": ["error"],
-            "radix": ["error"],
-            "yoda": ["off"],
+            radix: ["error"],
+            yoda: ["off"],
             "no-undef-init": ["error"],
-            "no-use-before-define": ["error", {"functions": false, "classes": true, "variables": true}],
-            "camelcase": ["error"],
+            "no-use-before-define": ["error", { functions: false, classes: true, variables: true }],
+            camelcase: ["error"],
             "consistent-this": ["off", "self"],
             "func-name-matching": ["error"],
             "new-cap": ["error"],
@@ -64,7 +58,7 @@ module.exports = [
             // Dropped from recommended in ESLint 9.
             "no-inner-declarations": ["error"],
             // Defensive initialisations signal intent, so they are allowed.
-            "no-useless-assignment": ["off"]
-        }
-    }
+            "no-useless-assignment": ["off"],
+        },
+    },
 ];

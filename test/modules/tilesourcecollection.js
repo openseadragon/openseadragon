@@ -1,19 +1,17 @@
 /* global QUnit, Util, testLog */
 
-(function() {
-    QUnit.module('TileSourceCollection', {
+(function () {
+    QUnit.module("TileSourceCollection", {
         beforeEach: function () {
             testLog.reset();
         },
-        afterEach: function () {
-        }
+        afterEach: function () {},
     });
 
     // ----------
-    QUnit.test('deprecation', function(assert) {
+    QUnit.test("deprecation", function (assert) {
         const done = assert.async();
-        Util.testDeprecation(assert, OpenSeadragon, 'TileSourceCollection');
+        Util.testDeprecation(assert, OpenSeadragon, "TileSourceCollection");
         done();
     });
-
 })();

@@ -76,7 +76,7 @@ function loadSourceList(root) {
 function getLeadingJSDoc(sourceFile, node) {
     const text = sourceFile.getFullText();
     const ranges = ts.getLeadingCommentRanges(text, node.getFullStart()) || [];
-    return ranges.map(r => text.slice(r.pos, r.end)).join("\n");
+    return ranges.map((r) => text.slice(r.pos, r.end)).join("\n");
 }
 
 function isPrivateDoc(doc) {
@@ -170,7 +170,7 @@ function collectClassDeclarations(node, out) {
     if (ts.isClassDeclaration(node) && node.name) {
         out.set(node.name.text, node);
     }
-    ts.forEachChild(node, child => collectClassDeclarations(child, out));
+    ts.forEachChild(node, (child) => collectClassDeclarations(child, out));
 }
 
 // ---------- extract from src/*.js ----------
@@ -194,12 +194,12 @@ function extractSrc(root, sourceFiles) {
         const localClasses = new Map();
         collectClassDeclarations(sf, localClasses);
 
-        const loc = function(node) {
+        const loc = function (node) {
             const { line } = sf.getLineAndCharacterOfPosition(node.getStart(sf));
             return { file: rel, line: line + 1 };
         };
 
-        const visit = function(node) {
+        const visit = function (node) {
             // $.Foo = ...   or   $.Foo.prototype.bar = ...   or   $.Foo.prototype = {...}
             if (
                 ts.isExpressionStatement(node) &&
@@ -275,7 +275,11 @@ function extractSrc(root, sourceFiles) {
                 node.expression.name.text === "extend"
             ) {
                 const calleeParts = chainParts(node.expression.expression);
-                if (calleeParts && calleeParts.length === 1 && (calleeParts[0] === "$" || calleeParts[0] === "OpenSeadragon")) {
+                if (
+                    calleeParts &&
+                    calleeParts.length === 1 &&
+                    (calleeParts[0] === "$" || calleeParts[0] === "OpenSeadragon")
+                ) {
                     let args = node.arguments;
                     // drop leading boolean literal (deep-extend flag)
                     if (args.length && args[0].kind === ts.SyntaxKind.TrueKeyword) {
@@ -458,11 +462,7 @@ function main() {
         // assignment is ambiguous between a static member and a nested type (e.g.
         // `$.MouseTracker.GesturePointList`), and the .d.ts side flattens the latter
         // into a same-named top-level declaration rather than nesting it.
-        if (
-            dts.topLevel.get(cls) === "class" &&
-            !hasMemberInChain(dts, cls, name) &&
-            !dts.topLevel.has(name)
-        ) {
+        if (dts.topLevel.get(cls) === "class" && !hasMemberInChain(dts, cls, name) && !dts.topLevel.has(name)) {
             missingMembers.push({ key, loc });
         }
     }
@@ -510,7 +510,9 @@ function main() {
         .forEach(({ key, loc }) => console.log(`  ${key}  (${loc.file}:${loc.line})`));
     console.log(`(${missingMembers.length} total)\n`);
 
-    console.log("=== IN types/index.d.ts BUT NOT FOUND IN src (review: maybe removed, renamed, or missed by heuristics) ===");
+    console.log(
+        "=== IN types/index.d.ts BUT NOT FOUND IN src (review: maybe removed, renamed, or missed by heuristics) ==="
+    );
     staleTopLevel
         .sort((a, b) => a.name.localeCompare(b.name))
         .forEach(({ name, kind }) => console.log(`  ${name}  [${kind}]`));

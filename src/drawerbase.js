@@ -32,463 +32,466 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
+(function ($) {
+    /**
+     * @typedef OpenSeadragon.BaseDrawerOptions
+     * @memberOf OpenSeadragon
+     * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
+     *   detached (=internal) cache object in case it has to perform custom type conversion atop
+     *   what cache performs. In that case, drawer must implement internalCacheCreate() which gets data in one
+     *   of formats the drawer declares as supported. This method must return object to be used during drawing.
+     *   You should probably implement also internalCacheFree() to provide cleanup logics.
+     *
+     * @property {boolean} [preloadCache=true] When internalCacheCreate is used, it can be applied offline
+     *   (asynchronously) during data processing = preloading, or just in time before rendering (if necessary).
+     *   Preloading supports async handlers, and can use promises. If preloadCache=false, no async (e.g. cache conversion)
+     *   logics can be used - returning a promise is then a contract violation and is reported. Note that even with
+     *   preloadCache=true, internalCacheCreate() can still be invoked from the drawing loop if the preloaded cache is
+     *   missing or was invalidated by setInternalCacheNeedsRefresh(); a drawer whose creation is cheap and synchronous
+     *   is drawn in that same frame, an async one in a later frame.
+     *
+     * @property {boolean} [offScreen=false] When true, the drawer is not attached to DOM. This must be false
+     *   for all drawers created and used for rendering, particularly the main viewer drawer. However,
+     *   if you need to use particular viewer API for rendering an offscreen images for further processing,
+     *   you can set this to true.
+     *
+     * @property {boolean} [broadCastTileInvalidation=true] When true, the drawer will reflect changes done to the viewer's
+     *   base drawer instance. For example, navigator will reflect data updates of the main viewport.
+     */
 
-/**
- * @typedef OpenSeadragon.BaseDrawerOptions
- * @memberOf OpenSeadragon
- * @property {boolean} [usePrivateCache=false] specify whether the drawer should use
- *   detached (=internal) cache object in case it has to perform custom type conversion atop
- *   what cache performs. In that case, drawer must implement internalCacheCreate() which gets data in one
- *   of formats the drawer declares as supported. This method must return object to be used during drawing.
- *   You should probably implement also internalCacheFree() to provide cleanup logics.
- *
- * @property {boolean} [preloadCache=true] When internalCacheCreate is used, it can be applied offline
- *   (asynchronously) during data processing = preloading, or just in time before rendering (if necessary).
- *   Preloading supports async handlers, and can use promises. If preloadCache=false, no async (e.g. cache conversion)
- *   logics can be used - returning a promise is then a contract violation and is reported. Note that even with
- *   preloadCache=true, internalCacheCreate() can still be invoked from the drawing loop if the preloaded cache is
- *   missing or was invalidated by setInternalCacheNeedsRefresh(); a drawer whose creation is cheap and synchronous
- *   is drawn in that same frame, an async one in a later frame.
- *
- * @property {boolean} [offScreen=false] When true, the drawer is not attached to DOM. This must be false
- *   for all drawers created and used for rendering, particularly the main viewer drawer. However,
- *   if you need to use particular viewer API for rendering an offscreen images for further processing,
- *   you can set this to true.
- *
- * @property {boolean} [broadCastTileInvalidation=true] When true, the drawer will reflect changes done to the viewer's
- *   base drawer instance. For example, navigator will reflect data updates of the main viewport.
- */
+    const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
+    /**
+     * @class OpenSeadragon.DrawerBase
+     * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
+     *   More viewers can be implemented even as plugins if they are attached to the OpenSeadragon namespace.
+     *   Then you can employ the newly defined type as you would do with built-in drawers.
+     * @param {Object} options - Options for this Drawer.
+     * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
+     * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
+     * @param {HTMLElement} options.element - Parent element.
+     * @abstract
+     */
 
-const OpenSeadragon = $; // (re)alias back to OpenSeadragon for JSDoc
-/**
- * @class OpenSeadragon.DrawerBase
- * @classdesc Base class for Drawers that handle rendering of tiles for an {@link OpenSeadragon.Viewer}.
- *   More viewers can be implemented even as plugins if they are attached to the OpenSeadragon namespace.
- *   Then you can employ the newly defined type as you would do with built-in drawers.
- * @param {Object} options - Options for this Drawer.
- * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this Drawer.
- * @param {OpenSeadragon.Viewport} options.viewport - Reference to Viewer viewport.
- * @param {HTMLElement} options.element - Parent element.
- * @abstract
- */
+    OpenSeadragon.DrawerBase = class DrawerBase {
+        constructor(options) {
+            $.console.assert(options.viewer, "[Drawer] options.viewer is required");
+            $.console.assert(options.viewport, "[Drawer] options.viewport is required");
+            $.console.assert(options.element, "[Drawer] options.element is required");
 
-OpenSeadragon.DrawerBase = class DrawerBase {
-    constructor(options){
-        $.console.assert( options.viewer, "[Drawer] options.viewer is required" );
-        $.console.assert( options.viewport, "[Drawer] options.viewport is required" );
-        $.console.assert( options.element, "[Drawer] options.element is required" );
+            this._id = this.getType() + $.now();
+            this.viewer = options.viewer;
+            this.viewport = options.viewport;
+            this.debugGridColor =
+                typeof options.debugGridColor === "string"
+                    ? [options.debugGridColor]
+                    : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
 
-        this._id = this.getType() + $.now();
-        this.viewer = options.viewer;
-        this.viewport = options.viewport;
-        this.debugGridColor = typeof options.debugGridColor === 'string' ? [options.debugGridColor] : options.debugGridColor || $.DEFAULT_SETTINGS.debugGridColor;
+            /**
+             * @memberof OpenSeadragon.DrawerBase#
+             * @type OpenSeadragon.BaseDrawerOptions
+             */
+            this.options = $.extend(
+                {
+                    usePrivateCache: false,
+                    preloadCache: true,
+                    offScreen: false,
+                    broadCastTileInvalidation: true,
+                },
+                this.defaultOptions,
+                options.options
+            );
+
+            this.container = $.getElement(options.element);
+
+            this._renderingTarget = this._createDrawingElement();
+
+            if (!this.options.offScreen) {
+                this.canvas.style.width = "100%";
+                this.canvas.style.height = "100%";
+                this.canvas.style.position = "absolute";
+                // set canvas.style.left = 0 so the canvas is positioned properly in ltr and rtl html
+                this.canvas.style.left = "0";
+                $.setElementOpacity(this.canvas, this.viewer.opacity, true);
+
+                // Allow pointer events to pass through the canvas element so implicit
+                //   pointer capture works on touch devices
+                $.setElementPointerEventsNone(this.canvas);
+                $.setElementTouchActionNone(this.canvas);
+
+                // explicit left-align
+                this.container.style.textAlign = "left";
+                this.container.appendChild(this.canvas);
+
+                if (this.options.broadCastTileInvalidation) {
+                    let parentViewer = this.viewer;
+                    while (parentViewer.viewer) {
+                        parentViewer = parentViewer.viewer;
+                    }
+                    this._parentViewer = parentViewer;
+                    parentViewer._registerDrawer(this);
+                } else {
+                    this.viewer._registerDrawer(this);
+                    this._parentViewer = this.viewer;
+                }
+            }
+
+            this._checkInterfaceImplementation();
+            this.setInternalCacheNeedsRefresh(); // initializes timestamp
+        }
 
         /**
-         * @memberof OpenSeadragon.DrawerBase#
-         * @type OpenSeadragon.BaseDrawerOptions
+         * Retrieve default options for the current drawer.
+         * The base implementation provides default shared options.
+         * Overrides should enumerate all defaults or extend from this implementation.
+         *   return $.extend({}, super.options, { ... custom drawer instance options ... });
+         * @memberof {OpenSeadragon.DrawerBase}
+         * @returns {OpenSeadragon.BaseDrawerOptions} common options
          */
-        this.options = $.extend({
-            usePrivateCache: false,
-            preloadCache: true,
-            offScreen: false,
-            broadCastTileInvalidation: true,
-        }, this.defaultOptions, options.options);
+        get defaultOptions() {
+            // defaults are defined in constructor to avoid overriding issues
+            return {};
+        }
 
-        this.container  = $.getElement( options.element );
+        /**
+         * @memberof {OpenSeadragon.DrawerBase}
+         * @return {Element}
+         */
+        get canvas() {
+            return this._renderingTarget;
+        }
 
-        this._renderingTarget = this._createDrawingElement();
+        get element() {
+            $.console.error("Drawer.element is deprecated. Use Drawer.container instead.");
+            return this.container;
+        }
 
-        if (!this.options.offScreen) {
-            this.canvas.style.width     = "100%";
-            this.canvas.style.height    = "100%";
-            this.canvas.style.position  = "absolute";
-            // set canvas.style.left = 0 so the canvas is positioned properly in ltr and rtl html
-            this.canvas.style.left = "0";
-            $.setElementOpacity( this.canvas, this.viewer.opacity, true );
+        /**
+         * Get unique drawer ID
+         * @return {string}
+         */
+        getId() {
+            return this._id;
+        }
 
-            // Allow pointer events to pass through the canvas element so implicit
-            //   pointer capture works on touch devices
-            $.setElementPointerEventsNone( this.canvas );
-            $.setElementTouchActionNone( this.canvas );
+        /**
+         * @abstract
+         * @memberof {OpenSeadragon.DrawerBase}
+         * @returns {String | undefined} What type of drawer this is. Must be overridden by extending classes.
+         */
+        getType() {
+            $.console.error("Drawer.getType must be implemented by child class");
+            return undefined;
+        }
 
-            // explicit left-align
-            this.container.style.textAlign = "left";
-            this.container.appendChild( this.canvas );
+        /**
+         * Retrieve required data formats the data must be converted to.
+         * This list MUST BE A VALID SUBSET OF getSupportedDataFormats()
+         * @memberof {OpenSeadragon.DrawerBase}
+         * @return {string[]}
+         */
+        getRequiredDataFormats() {
+            return this.getSupportedDataFormats();
+        }
 
-            if (this.options.broadCastTileInvalidation) {
-                let parentViewer = this.viewer;
-                while (parentViewer.viewer) {
-                    parentViewer = parentViewer.viewer;
-                }
-                this._parentViewer = parentViewer;
-                parentViewer._registerDrawer(this);
-            } else {
-                this.viewer._registerDrawer(this);
-                this._parentViewer = this.viewer;
+        /**
+         * Retrieve data types
+         * @abstract
+         * @memberof {OpenSeadragon.DrawerBase}
+         * @return {string[]}
+         */
+        getSupportedDataFormats() {
+            throw "Drawer.getSupportedDataFormats must define its supported rendering data types!";
+        }
+
+        /**
+         * Check a particular cache record is compatible.
+         * This function _MUST_ be called: if it returns a falsey
+         * value, the rendering _MUST NOT_ proceed. It should
+         * await next animation frames and check again for availability.
+         * @param {OpenSeadragon.Tile} tile
+         * @memberof {OpenSeadragon.DrawerBase}
+         * @return {any|undefined} undefined if cache not available, compatible data otherwise.
+         */
+        getDataToDraw(tile) {
+            const cache = tile.getCache(tile.cacheKey);
+            if (!cache) {
+                $.console.warn("Attempt to draw tile %s when not cached!", tile);
+                return undefined;
+            }
+            const dataCache = cache.getDataForRendering(this, tile);
+            return dataCache && dataCache.data;
+        }
+
+        /**
+         * @abstract
+         * @param {OpenSeadragon.BaseDrawerOptions} [options] Options, if available.
+         *   For details please see {@link OpenSeadragon.DrawerOptions}.
+         * @returns {Boolean} Whether the drawer implementation is supported by the browser.
+         *  Must be overridden by extending classes.
+         */
+        static isSupported(options = undefined) {
+            $.console.error("Drawer.isSupported must be implemented by child class");
+            return false;
+        }
+
+        /**
+         * @abstract
+         * @returns {Element} the element to draw into
+         * @private
+         */
+        _createDrawingElement() {
+            $.console.error("Drawer._createDrawingElement must be implemented by child class");
+            return null;
+        }
+
+        /**
+         * @abstract
+         * @param {Array} tiledImages - An array of TiledImages that are ready to be drawn.
+         * @private
+         */
+        draw(tiledImages) {
+            $.console.error("Drawer.draw must be implemented by child class");
+        }
+
+        /**
+         * @abstract
+         * @returns {Boolean} True if rotation is supported.
+         */
+        canRotate() {
+            $.console.error("Drawer.canRotate must be implemented by child class");
+        }
+
+        /**
+         * Destroy the drawer. Child classes must call this super class.
+         */
+        destroy() {
+            // how to force child classes to call this?
+            // we could force destroy methods to return some unique value that is obtainable only from this method...
+            this._parentViewer._unregisterDrawer(this);
+        }
+
+        /**
+         * Destroy internal cache. Should be called within destroy() when
+         * usePrivateCache is set to true. Ensures cleanup of anything created
+         * by internalCacheCreate(...).
+         */
+        destroyInternalCache() {
+            this.viewer.tileCache.clearDrawerInternalCache(this);
+        }
+
+        /**
+         * @param {TiledImage} tiledImage the tiled image that is calling the function
+         * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
+         * @private
+         */
+        minimumOverlapRequired(tiledImage) {
+            return false;
+        }
+
+        /**
+         * @abstract
+         * @param {Boolean} [imageSmoothingEnabled] - Whether or not the image is
+         * drawn smoothly on the canvas; see imageSmoothingEnabled in
+         * {@link OpenSeadragon.Options} for more explanation.
+         */
+        setImageSmoothingEnabled(imageSmoothingEnabled) {
+            $.console.error("Drawer.setImageSmoothingEnabled must be implemented by child class");
+        }
+
+        /**
+         * Optional public API to draw a rectangle (e.g. for debugging purposes)
+         * Child classes can override this method if they wish to support this
+         * @param {OpenSeadragon.Rect} rect
+         */
+        drawDebuggingRect(rect) {
+            $.console.warn("[drawer].drawDebuggingRect is not implemented by this drawer");
+        }
+
+        // Deprecated functions
+        clear() {
+            $.console.warn(
+                "[drawer].clear() is deprecated. The drawer is responsible for clearing itself as needed before drawing tiles."
+            );
+        }
+
+        /**
+         * If options.usePrivateCache is true, this method MUST RETURN the private cache content.
+         *
+         * May return a promise if options.preloadCache is true; with preloadCache false the result must
+         * be synchronous, since the drawing loop consumes it in the same frame.
+         *
+         * Failure handling: returning null/undefined, throwing, or rejecting the returned promise are
+         * all treated the same way - the failure is logged, the tile is skipped for that frame rather
+         * than destroyed, and the build is retried later. Because a build that never produced a value
+         * cannot be handed to internalCacheFree(), the drawer must release anything it allocated before
+         * failing.
+         *
+         * @param {OpenSeadragon.CacheRecord} cache
+         * @param {OpenSeadragon.Tile} tile
+         * @return {*|OpenSeadragon.Promise<*>}
+         */
+        internalCacheCreate(cache, tile) {}
+
+        /**
+         * It is possible to perform any necessary cleanup on internal cache, necessary if you
+         * need to clean up some memory (e.g. destroy canvas by setting with & height to 0).
+         * @param {*} data object returned by internalCacheCreate(...)
+         */
+        internalCacheFree(data) {}
+
+        /**
+         * Call to invalidate internal cache. It will be rebuilt. With synchronous converions,
+         * it will be rebuilt immediatelly. With asynchronous, it will be rebuilt once invalidation
+         * routine happens, e.g. you should call also requestInvalidate() if you need to happen
+         * it as soon as possible.
+         */
+        setInternalCacheNeedsRefresh() {
+            this._dataNeedsRefresh = $.now();
+        }
+
+        /**
+         * When a Tiled Image is initialized and ready, this method is called.
+         * Unlike with events, here it is guaranteed that all external code has finished
+         * processing (under normal circumstances) and the tiled image should not change.
+         * @param {OpenSeadragon.TiledImage} tiledImage target image that has been created
+         */
+        tiledImageCreated(tiledImage) {
+            // pass
+        }
+
+        // Private functions
+
+        /**
+         * Ensures that child classes have provided implementations for public API methods
+         * draw, canRotate, destroy, and setImageSmoothinEnabled. Throws an exception if the original
+         * placeholder methods are still in place.
+         * @private
+         *
+         */
+        _checkInterfaceImplementation() {
+            if (this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement) {
+                throw new Error("[drawer]._createDrawingElement must be implemented by child class");
+            }
+            if (this.draw === $.DrawerBase.prototype.draw) {
+                throw new Error("[drawer].draw must be implemented by child class");
+            }
+            if (this.canRotate === $.DrawerBase.prototype.canRotate) {
+                throw new Error("[drawer].canRotate must be implemented by child class");
+            }
+            if (this.destroy === $.DrawerBase.prototype.destroy) {
+                throw new Error("[drawer].destroy must be implemented by child class");
+            }
+            if (this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled) {
+                throw new Error("[drawer].setImageSmoothingEnabled must be implemented by child class");
             }
         }
 
-        this._checkInterfaceImplementation();
-        this.setInternalCacheNeedsRefresh();  // initializes timestamp
-    }
+        // Utility functions
 
-    /**
-     * Retrieve default options for the current drawer.
-     * The base implementation provides default shared options.
-     * Overrides should enumerate all defaults or extend from this implementation.
-     *   return $.extend({}, super.options, { ... custom drawer instance options ... });
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @returns {OpenSeadragon.BaseDrawerOptions} common options
-     */
-    get defaultOptions() {
-        // defaults are defined in constructor to avoid overriding issues
-        return {};
-    }
+        /**
+         * Scale from OpenSeadragon viewer rectangle to drawer rectangle
+         * (ignoring rotation)
+         * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
+         * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
+         */
+        viewportToDrawerRectangle(rectangle) {
+            const topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
+            const size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
 
-    /**
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @return {Element}
-     */
-    get canvas(){
-        return this._renderingTarget;
-    }
-
-    get element(){
-        $.console.error('Drawer.element is deprecated. Use Drawer.container instead.');
-        return this.container;
-    }
-
-    /**
-     * Get unique drawer ID
-     * @return {string}
-     */
-    getId() {
-        return this._id;
-    }
-
-    /**
-     * @abstract
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @returns {String | undefined} What type of drawer this is. Must be overridden by extending classes.
-     */
-    getType(){
-        $.console.error('Drawer.getType must be implemented by child class');
-        return undefined;
-    }
-
-    /**
-     * Retrieve required data formats the data must be converted to.
-     * This list MUST BE A VALID SUBSET OF getSupportedDataFormats()
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @return {string[]}
-     */
-    getRequiredDataFormats() {
-        return this.getSupportedDataFormats();
-    }
-
-    /**
-     * Retrieve data types
-     * @abstract
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @return {string[]}
-     */
-    getSupportedDataFormats() {
-        throw "Drawer.getSupportedDataFormats must define its supported rendering data types!";
-    }
-
-    /**
-     * Check a particular cache record is compatible.
-     * This function _MUST_ be called: if it returns a falsey
-     * value, the rendering _MUST NOT_ proceed. It should
-     * await next animation frames and check again for availability.
-     * @param {OpenSeadragon.Tile} tile
-     * @memberof {OpenSeadragon.DrawerBase}
-     * @return {any|undefined} undefined if cache not available, compatible data otherwise.
-     */
-    getDataToDraw(tile) {
-        const cache = tile.getCache(tile.cacheKey);
-        if (!cache) {
-            $.console.warn("Attempt to draw tile %s when not cached!", tile);
-            return undefined;
-        }
-        const dataCache = cache.getDataForRendering(this, tile);
-        return dataCache && dataCache.data;
-    }
-
-    /**
-     * @abstract
-     * @param {OpenSeadragon.BaseDrawerOptions} [options] Options, if available.
-     *   For details please see {@link OpenSeadragon.DrawerOptions}.
-     * @returns {Boolean} Whether the drawer implementation is supported by the browser.
-     *  Must be overridden by extending classes.
-     */
-    static isSupported(options = undefined) {
-        $.console.error('Drawer.isSupported must be implemented by child class');
-        return false;
-    }
-
-    /**
-     * @abstract
-     * @returns {Element} the element to draw into
-     * @private
-     */
-    _createDrawingElement() {
-        $.console.error('Drawer._createDrawingElement must be implemented by child class');
-        return null;
-    }
-
-    /**
-     * @abstract
-     * @param {Array} tiledImages - An array of TiledImages that are ready to be drawn.
-     * @private
-     */
-    draw(tiledImages) {
-        $.console.error('Drawer.draw must be implemented by child class');
-    }
-
-    /**
-     * @abstract
-     * @returns {Boolean} True if rotation is supported.
-     */
-    canRotate() {
-        $.console.error('Drawer.canRotate must be implemented by child class');
-    }
-
-    /**
-     * Destroy the drawer. Child classes must call this super class.
-     */
-    destroy() {
-        // how to force child classes to call this?
-        // we could force destroy methods to return some unique value that is obtainable only from this method...
-        this._parentViewer._unregisterDrawer(this);
-    }
-
-    /**
-     * Destroy internal cache. Should be called within destroy() when
-     * usePrivateCache is set to true. Ensures cleanup of anything created
-     * by internalCacheCreate(...).
-     */
-    destroyInternalCache() {
-        this.viewer.tileCache.clearDrawerInternalCache(this);
-    }
-
-    /**
-     * @param {TiledImage} tiledImage the tiled image that is calling the function
-     * @returns {Boolean} Whether this drawer requires enforcing minimum tile overlap to avoid showing seams.
-     * @private
-     */
-    minimumOverlapRequired(tiledImage) {
-        return false;
-    }
-
-    /**
-     * @abstract
-     * @param {Boolean} [imageSmoothingEnabled] - Whether or not the image is
-     * drawn smoothly on the canvas; see imageSmoothingEnabled in
-     * {@link OpenSeadragon.Options} for more explanation.
-     */
-    setImageSmoothingEnabled(imageSmoothingEnabled){
-        $.console.error('Drawer.setImageSmoothingEnabled must be implemented by child class');
-    }
-
-    /**
-     * Optional public API to draw a rectangle (e.g. for debugging purposes)
-     * Child classes can override this method if they wish to support this
-     * @param {OpenSeadragon.Rect} rect
-     */
-    drawDebuggingRect(rect) {
-        $.console.warn('[drawer].drawDebuggingRect is not implemented by this drawer');
-    }
-
-    // Deprecated functions
-    clear(){
-        $.console.warn('[drawer].clear() is deprecated. The drawer is responsible for clearing itself as needed before drawing tiles.');
-    }
-
-    /**
-     * If options.usePrivateCache is true, this method MUST RETURN the private cache content.
-     *
-     * May return a promise if options.preloadCache is true; with preloadCache false the result must
-     * be synchronous, since the drawing loop consumes it in the same frame.
-     *
-     * Failure handling: returning null/undefined, throwing, or rejecting the returned promise are
-     * all treated the same way - the failure is logged, the tile is skipped for that frame rather
-     * than destroyed, and the build is retried later. Because a build that never produced a value
-     * cannot be handed to internalCacheFree(), the drawer must release anything it allocated before
-     * failing.
-     *
-     * @param {OpenSeadragon.CacheRecord} cache
-     * @param {OpenSeadragon.Tile} tile
-     * @return {*|OpenSeadragon.Promise<*>}
-     */
-    internalCacheCreate(cache, tile) {}
-
-    /**
-     * It is possible to perform any necessary cleanup on internal cache, necessary if you
-     * need to clean up some memory (e.g. destroy canvas by setting with & height to 0).
-     * @param {*} data object returned by internalCacheCreate(...)
-     */
-    internalCacheFree(data) {}
-
-    /**
-     * Call to invalidate internal cache. It will be rebuilt. With synchronous converions,
-     * it will be rebuilt immediatelly. With asynchronous, it will be rebuilt once invalidation
-     * routine happens, e.g. you should call also requestInvalidate() if you need to happen
-     * it as soon as possible.
-     */
-    setInternalCacheNeedsRefresh() {
-        this._dataNeedsRefresh = $.now();
-    }
-
-    /**
-     * When a Tiled Image is initialized and ready, this method is called.
-     * Unlike with events, here it is guaranteed that all external code has finished
-     * processing (under normal circumstances) and the tiled image should not change.
-     * @param {OpenSeadragon.TiledImage} tiledImage target image that has been created
-     */
-    tiledImageCreated(tiledImage) {
-        // pass
-    }
-
-    // Private functions
-
-    /**
-     * Ensures that child classes have provided implementations for public API methods
-     * draw, canRotate, destroy, and setImageSmoothinEnabled. Throws an exception if the original
-     * placeholder methods are still in place.
-     * @private
-     *
-     */
-    _checkInterfaceImplementation(){
-        if (this._createDrawingElement === $.DrawerBase.prototype._createDrawingElement) {
-            throw(new Error("[drawer]._createDrawingElement must be implemented by child class"));
-        }
-        if (this.draw === $.DrawerBase.prototype.draw) {
-            throw(new Error("[drawer].draw must be implemented by child class"));
-        }
-        if (this.canRotate === $.DrawerBase.prototype.canRotate) {
-            throw(new Error("[drawer].canRotate must be implemented by child class"));
-        }
-        if (this.destroy === $.DrawerBase.prototype.destroy) {
-            throw(new Error("[drawer].destroy must be implemented by child class"));
-        }
-        if (this.setImageSmoothingEnabled === $.DrawerBase.prototype.setImageSmoothingEnabled) {
-            throw(new Error("[drawer].setImageSmoothingEnabled must be implemented by child class"));
-        }
-    }
-
-
-    // Utility functions
-
-    /**
-     * Scale from OpenSeadragon viewer rectangle to drawer rectangle
-     * (ignoring rotation)
-     * @param {OpenSeadragon.Rect} rectangle - The rectangle in viewport coordinate system.
-     * @returns {OpenSeadragon.Rect} Rectangle in drawer coordinate system.
-     */
-    viewportToDrawerRectangle(rectangle) {
-        const topLeft = this.viewport.pixelFromPointNoRotate(rectangle.getTopLeft(), true);
-        const size = this.viewport.deltaPixelsFromPointsNoRotate(rectangle.getSize(), true);
-
-        return new $.Rect(
-            topLeft.x * $.pixelDensityRatio,
-            topLeft.y * $.pixelDensityRatio,
-            size.x * $.pixelDensityRatio,
-            size.y * $.pixelDensityRatio
-        );
-    }
-
-    /**
-     * This function converts the given point from to the drawer coordinate by
-     * multiplying it with the pixel density.
-     * This function does not take rotation into account, thus assuming provided
-     * point is at 0 degree.
-     * @param {OpenSeadragon.Point} point - the pixel point to convert
-     * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
-     */
-    viewportCoordToDrawerCoord(point) {
-        const vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
-        return new $.Point(
-            vpPoint.x * $.pixelDensityRatio,
-            vpPoint.y * $.pixelDensityRatio
-        );
-    }
-
-
-    // Internal utility functions
-
-    /**
-     * Calculate width and height of the canvas based on viewport dimensions
-     * and pixelDensityRatio
-     * @private
-     * @returns {OpenSeadragon.Point} {x, y} size of the canvas
-     */
-    _calculateCanvasSize() {
-        const pixelDensityRatio = $.pixelDensityRatio;
-        const viewportSize = this.viewport.getContainerSize();
-        return new OpenSeadragon.Point( Math.round(viewportSize.x * pixelDensityRatio), Math.round(viewportSize.y * pixelDensityRatio));
-    }
-
-    /**
-     * Called by implementations to fire the tiled-image-drawn event (used by tests)
-     * @private
-     */
-    _raiseTiledImageDrawnEvent(tiledImage, tiles){
-        if(!this.viewer) {
-            return;
+            return new $.Rect(
+                topLeft.x * $.pixelDensityRatio,
+                topLeft.y * $.pixelDensityRatio,
+                size.x * $.pixelDensityRatio,
+                size.y * $.pixelDensityRatio
+            );
         }
 
         /**
-        *  Raised when a tiled image is drawn to the canvas. Used internally for testing.
-        *  The update-viewport event is preferred if you want to know when a frame has been drawn.
-        *
-        * @event tiled-image-drawn
-        * @memberof OpenSeadragon.Viewer
-        * @type {object}
-        * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-        * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-        * @property {Array} tiles - An array of Tile objects that were drawn.
-        * @property {?Object} userData - Arbitrary subscriber-defined object.
-        * @private
-        */
-        this.viewer.raiseEvent( 'tiled-image-drawn', {
-            tiledImage: tiledImage,
-            tiles: tiles,
-        });
-    }
+         * This function converts the given point from to the drawer coordinate by
+         * multiplying it with the pixel density.
+         * This function does not take rotation into account, thus assuming provided
+         * point is at 0 degree.
+         * @param {OpenSeadragon.Point} point - the pixel point to convert
+         * @returns {OpenSeadragon.Point} Point in drawer coordinate system.
+         */
+        viewportCoordToDrawerCoord(point) {
+            const vpPoint = this.viewport.pixelFromPointNoRotate(point, true);
+            return new $.Point(vpPoint.x * $.pixelDensityRatio, vpPoint.y * $.pixelDensityRatio);
+        }
 
-    /**
-     * Called by implementations to fire the drawer-error event
-     * @private
-     */
-    _raiseDrawerErrorEvent(tiledImage, errorMessage){
-        if(!this.viewer) {
-            return;
+        // Internal utility functions
+
+        /**
+         * Calculate width and height of the canvas based on viewport dimensions
+         * and pixelDensityRatio
+         * @private
+         * @returns {OpenSeadragon.Point} {x, y} size of the canvas
+         */
+        _calculateCanvasSize() {
+            const pixelDensityRatio = $.pixelDensityRatio;
+            const viewportSize = this.viewport.getContainerSize();
+            return new OpenSeadragon.Point(
+                Math.round(viewportSize.x * pixelDensityRatio),
+                Math.round(viewportSize.y * pixelDensityRatio)
+            );
         }
 
         /**
-        *  Raised when a tiled image is drawn to the canvas. Used internally for testing.
-        *  The update-viewport event is preferred if you want to know when a frame has been drawn.
-        *
-        * @event drawer-error
-        * @memberof OpenSeadragon.Viewer
-        * @type {object}
-        * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-        * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-        * @property {OpenSeadragon.DrawerBase} drawer - The drawer that raised the error.
-        * @property {String} error - A message describing the error.
-        * @property {?Object} userData - Arbitrary subscriber-defined object.
-        * @protected
-        */
-        this.viewer.raiseEvent( 'drawer-error', {
-            tiledImage: tiledImage,
-            drawer: this,
-            error: errorMessage,
-        });
-    }
+         * Called by implementations to fire the tiled-image-drawn event (used by tests)
+         * @private
+         */
+        _raiseTiledImageDrawnEvent(tiledImage, tiles) {
+            if (!this.viewer) {
+                return;
+            }
 
+            /**
+             *  Raised when a tiled image is drawn to the canvas. Used internally for testing.
+             *  The update-viewport event is preferred if you want to know when a frame has been drawn.
+             *
+             * @event tiled-image-drawn
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+             * @property {Array} tiles - An array of Tile objects that were drawn.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             * @private
+             */
+            this.viewer.raiseEvent("tiled-image-drawn", {
+                tiledImage: tiledImage,
+                tiles: tiles,
+            });
+        }
 
-};
+        /**
+         * Called by implementations to fire the drawer-error event
+         * @private
+         */
+        _raiseDrawerErrorEvent(tiledImage, errorMessage) {
+            if (!this.viewer) {
+                return;
+            }
 
-}( OpenSeadragon ));
+            /**
+             *  Raised when a tiled image is drawn to the canvas. Used internally for testing.
+             *  The update-viewport event is preferred if you want to know when a frame has been drawn.
+             *
+             * @event drawer-error
+             * @memberof OpenSeadragon.Viewer
+             * @type {object}
+             * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+             * @property {OpenSeadragon.DrawerBase} drawer - The drawer that raised the error.
+             * @property {String} error - A message describing the error.
+             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             * @protected
+             */
+            this.viewer.raiseEvent("drawer-error", {
+                tiledImage: tiledImage,
+                drawer: this,
+                error: errorMessage,
+            });
+        }
+    };
+})(OpenSeadragon);

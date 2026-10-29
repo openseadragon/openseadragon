@@ -32,887 +32,915 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
+(function ($) {
+    /**
+     * @class World
+     * @memberof OpenSeadragon
+     * @extends OpenSeadragon.EventSource
+     * @classdesc Keeps track of all of the tiled images in the scene.
+     * @param {Object} options - World options.
+     * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this World.
+     **/
+    $.World = function (options) {
+        const _this = this;
 
-/**
- * @class World
- * @memberof OpenSeadragon
- * @extends OpenSeadragon.EventSource
- * @classdesc Keeps track of all of the tiled images in the scene.
- * @param {Object} options - World options.
- * @param {OpenSeadragon.Viewer} options.viewer - The Viewer that owns this World.
- **/
-$.World = function( options ) {
-    const _this = this;
+        $.console.assert(options.viewer, "[World] options.viewer is required");
 
-    $.console.assert( options.viewer, "[World] options.viewer is required" );
+        $.EventSource.call(this);
 
-    $.EventSource.call( this );
+        this.viewer = options.viewer;
+        this._items = [];
+        this._needsDraw = false;
+        this._tileSelectionChanged = false;
+        this.__invalidatedAt = 1;
+        this._autoRefigureSizes = true;
+        this._needsSizesFigured = false;
+        this._delegatedFigureSizes = function (event) {
+            if (_this._autoRefigureSizes) {
+                _this._figureSizes();
+            } else {
+                _this._needsSizesFigured = true;
+            }
+        };
 
-    this.viewer = options.viewer;
-    this._items = [];
-    this._needsDraw = false;
-    this._tileSelectionChanged = false;
-    this.__invalidatedAt = 1;
-    this._autoRefigureSizes = true;
-    this._needsSizesFigured = false;
-    this._delegatedFigureSizes = function(event) {
-        if (_this._autoRefigureSizes) {
-            _this._figureSizes();
-        } else {
-            _this._needsSizesFigured = true;
-        }
+        this._figureSizes();
     };
 
-    this._figureSizes();
-};
+    $.extend(
+        $.World.prototype,
+        $.EventSource.prototype,
+        /** @lends OpenSeadragon.World.prototype */ {
+            /**
+             * Add the specified item.
+             * @param {OpenSeadragon.TiledImage} item - The item to add.
+             * @param {Object} options - Options affecting insertion.
+             * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
+             * @fires OpenSeadragon.World.event:add-item
+             * @fires OpenSeadragon.World.event:metrics-change
+             */
+            addItem: function (item, options) {
+                $.console.assert(item, "[World.addItem] item is required");
+                $.console.assert(
+                    item instanceof $.TiledImage,
+                    "[World.addItem] only TiledImages supported at this time"
+                );
 
-$.extend( $.World.prototype, $.EventSource.prototype, /** @lends OpenSeadragon.World.prototype */{
-    /**
-     * Add the specified item.
-     * @param {OpenSeadragon.TiledImage} item - The item to add.
-     * @param {Object} options - Options affecting insertion.
-     * @param {Number} [options.index] - Index for the item. If not specified, goes at the top.
-     * @fires OpenSeadragon.World.event:add-item
-     * @fires OpenSeadragon.World.event:metrics-change
-     */
-    addItem: function( item, options ) {
-        $.console.assert(item, "[World.addItem] item is required");
-        $.console.assert(item instanceof $.TiledImage, "[World.addItem] only TiledImages supported at this time");
-
-        options = options || {};
-        if (options.index !== undefined) {
-            const index = Math.max(0, Math.min(this._items.length, options.index));
-            this._items.splice(index, 0, item);
-        } else {
-            this._items.push( item );
-        }
-
-        if (this._autoRefigureSizes) {
-            this._figureSizes();
-        } else {
-            this._needsSizesFigured = true;
-        }
-
-        this._needsDraw = true;
-
-        item.addHandler('bounds-change', this._delegatedFigureSizes);
-        item.addHandler('clip-change', this._delegatedFigureSizes);
-
-        /**
-         * Raised when an item is added to the World.
-         * @event add-item
-         * @memberOf OpenSeadragon.World
-         * @type {object}
-         * @property {OpenSeadragon.Viewer} eventSource - A reference to the World which raised the event.
-         * @property {OpenSeadragon.TiledImage} item - The item that has been added.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'add-item', {
-            item: item
-        } );
-    },
-
-    /**
-     * Get the item at the specified index.
-     * @param {Number} index - The item's index.
-     * @returns {OpenSeadragon.TiledImage} The item at the specified index.
-     */
-    getItemAt: function( index ) {
-        $.console.assert(index !== undefined, "[World.getItemAt] index is required");
-        return this._items[ index ];
-    },
-
-    /**
-     * Get the index of the given item or -1 if not present.
-     * @param {OpenSeadragon.TiledImage} item - The item.
-     * @returns {Number} The index of the item or -1 if not present.
-     */
-    getIndexOfItem: function( item ) {
-        $.console.assert(item, "[World.getIndexOfItem] item is required");
-        return $.indexOf( this._items, item );
-    },
-
-    /**
-     * @returns {Number} The number of items used.
-     */
-    getItemCount: function() {
-        return this._items.length;
-    },
-
-    /**
-     * Change the index of a item so that it appears over or under others.
-     * @param {OpenSeadragon.TiledImage} item - The item to move.
-     * @param {Number} index - The new index.
-     * @fires OpenSeadragon.World.event:item-index-change
-     */
-    setItemIndex: function( item, index ) {
-        $.console.assert(item, "[World.setItemIndex] item is required");
-        $.console.assert(index !== undefined, "[World.setItemIndex] index is required");
-
-        const oldIndex = this.getIndexOfItem( item );
-
-        if ( index >= this._items.length ) {
-            throw new Error( "Index bigger than number of layers." );
-        }
-
-        this._items.splice( oldIndex, 1 );
-        this._items.splice( index, 0, item );
-        this._needsDraw = true;
-
-        /**
-         * Raised when the order of the indexes has been changed.
-         * @event item-index-change
-         * @memberOf OpenSeadragon.World
-         * @type {object}
-         * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
-         * @property {OpenSeadragon.TiledImage} item - The item whose index has
-         * been changed
-         * @property {Number} previousIndex - The previous index of the item
-         * @property {Number} newIndex - The new index of the item
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'item-index-change', {
-            item: item,
-            previousIndex: oldIndex,
-            newIndex: index
-        } );
-    },
-
-    /**
-     * Remove an item.
-     * @param {OpenSeadragon.TiledImage} item - The item to remove.
-     * @fires OpenSeadragon.World.event:remove-item
-     * @fires OpenSeadragon.World.event:metrics-change
-     */
-    removeItem: function( item ) {
-        $.console.assert(item, "[World.removeItem] item is required");
-
-        const index = $.indexOf(this._items, item );
-        if ( index === -1 ) {
-            return;
-        }
-
-        item.removeHandler('bounds-change', this._delegatedFigureSizes);
-        item.removeHandler('clip-change', this._delegatedFigureSizes);
-        item.destroy();
-        this._items.splice( index, 1 );
-        this._figureSizes();
-        this._needsDraw = true;
-        this._raiseRemoveItem(item);
-    },
-
-    /**
-     * Remove all items.
-     * @fires OpenSeadragon.World.event:remove-item
-     * @fires OpenSeadragon.World.event:metrics-change
-     */
-    removeAll: function() {
-        // We need to make sure any pending images are canceled so the world items don't get messed up
-        this.viewer._cancelPendingImages();
-        let item;
-        for (let i = 0; i < this._items.length; i++) {
-            item = this._items[i];
-            item.removeHandler('bounds-change', this._delegatedFigureSizes);
-            item.removeHandler('clip-change', this._delegatedFigureSizes);
-            item.destroy();
-        }
-
-        const removedItems = this._items;
-        this._items = [];
-        this._figureSizes();
-        this._needsDraw = true;
-
-        for (let i = 0; i < removedItems.length; i++) {
-            item = removedItems[i];
-            this._raiseRemoveItem(item);
-        }
-    },
-
-    /**
-     * Forces the system consider all tiles across all tiled images
-     * as outdated, and fire tile update event on relevant tiles
-     * Detailed description is available within the 'tile-invalidated'
-     * event.
-     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
-     * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
-     * @function
-     * @fires OpenSeadragon.Viewer.event:tile-invalidated
-     * @return {OpenSeadragon.Promise<?>}
-     */
-    requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
-
-        // Note: Getting the async cache + invalidation flow right is VERY tricky.
-        //
-        // When debugging invalidation flow, instead of this optimized version,
-        // uncomment the following snipplet and test in easier setting:
-        //
-        // this.__invalidatedAt = tStamp;
-        // const batch = this.viewer.tileCache.getLoadedTilesFor(null);
-        // OpenSeadragon.trace(`Invalidate request ${tStamp} - ${batch.length} tiles`);
-        // return this.requestTileInvalidateEvent(batch, tStamp, restoreTiles);
-        //
-        // This makes the code easier to reason about. Also, recommended is to put logging
-        // messages into a buffered logger using OpenSeadragon.trace(..)
-        // to avoid change of flow in the async execution with detailed logs.
-
-
-        this.__invalidatedAt = tStamp;
-        let drawnTstamp = Infinity;
-        for (const item of this._items) {
-            if (item._lastDrawn.length) {
-                drawnTstamp = Math.min(drawnTstamp, item._lastDrawn[0].tile.lastTouchTime);
-            }
-            // Might be nested
-            for (const tileSet of item._tilesToDraw) {
-                if (Array.isArray(tileSet)) {
-                    if (tileSet.length) {
-                        drawnTstamp = Math.min(drawnTstamp, tileSet[0].tile.lastTouchTime);
-                    }
-                } else if (tileSet) {
-                    drawnTstamp = Math.min(drawnTstamp, tileSet.tile.lastTouchTime);
+                options = options || {};
+                if (options.index !== undefined) {
+                    const index = Math.max(0, Math.min(this._items.length, options.index));
+                    this._items.splice(index, 0, item);
+                } else {
+                    this._items.push(item);
                 }
-            }
-        }
 
-        const allTiles = this.viewer.tileCache.getLoadedTilesFor(null);
-        const tilesToRestore = new Array(allTiles.length);
+                if (this._autoRefigureSizes) {
+                    this._figureSizes();
+                } else {
+                    this._needsSizesFigured = true;
+                }
 
-        let restoreIndex = 0;
-        let deletedTiles = 0;
+                this._needsDraw = true;
 
-        const cache = this.viewer.tileCache;
-        for (let i = 0; i < allTiles.length; i++) {
-            const tile = allTiles[i];
-            const isRecentlyTouched = tile.lastTouchTime >= drawnTstamp;
-            const isAboveCutoff = tile.level <= (tile.tiledImage.savedCutOffLevel || 0);
+                item.addHandler("bounds-change", this._delegatedFigureSizes);
+                item.addHandler("clip-change", this._delegatedFigureSizes);
 
-            if (isRecentlyTouched || isAboveCutoff) {
-                tilesToRestore[restoreIndex++] = tile;
-            } else {
-                cache._unloadTile(tile, false, i - deletedTiles);
-                deletedTiles++;
-            }
-        }
-        tilesToRestore.length = restoreIndex;
-        return this.requestTileInvalidateEvent(tilesToRestore, tStamp, restoreTiles);
-    },
-
-    /**
-     * Requests tile data update.
-     * @function OpenSeadragon.Viewer.prototype._updateSequenceButtons
-     * @private
-     * @param {OpenSeadragon.Tile[]} tilesToProcess tiles to update
-     * @param {Number} tStamp timestamp in milliseconds, if active timestamp of the same value is executing,
-     *   changes are added to the cycle, else they await next iteration
-     * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
-     * @param {Boolean} [_allowTileUnloaded=false] internal flag for calling on tiles that come new to the system
-     * @param {Boolean} [_isFromTileLoad=false] internal flag that must not be used manually
-     * @fires OpenSeadragon.Viewer.event:tile-invalidated
-     * @return {OpenSeadragon.Promise<?>}
-     */
-    requestTileInvalidateEvent: function(tilesToProcess, tStamp, restoreTiles = true,
-                                         _allowTileUnloaded = false, _isFromTileLoad = false) {
-        // Calling the event is not considered invalidation, as tile load events finishes with this too.
-        if (!this.viewer.isOpen()) {
-            return $.Promise.resolve();
-        }
-
-        if (tStamp === undefined) {
-            tStamp = this.__invalidatedAt;
-        }
-
-        const tilesThatNeedReprocessing = [];
-
-        const jobList = tilesToProcess.map(tile => {
-            // We allow re-execution on tiles that are in process but have too low processing timestamp,
-            // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
-            // pipeline take no effect.
-            // Note that in the same list we can have tiles that have shared cache and such
-            // cache needs to be processed just once.
-            if (!tile || (!_allowTileUnloaded && !tile.loaded && !tile.processing)) {
-                // OpenSeadragon.trace(`Ignoring tile ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
-                return Promise.resolve();
-            }
-
-            const originalCache = tile.getCache(tile.originalCacheKey);
-            // A tile unloaded before it finished loading keeps 'processing' set - it passes the check
-            // above - but it has dropped its tiledImage and its cache references, and records that are
-            // still reachable can be destroyed afterwards. All of this has to be settled before the
-            // tiledImage below is dereferenced.
-            if (!tile.tiledImage || !originalCache || originalCache._destroyed || !originalCache._tiles ||
-                    (originalCache.__invStamp && originalCache.__invStamp >= tStamp)) {
-                return Promise.resolve();
-            }
-
-            const tiledImage = tile.tiledImage;
-            const drawer = tiledImage.getDrawer();
-            // We call the event on the parent viewer window no matter what, nested viewers have parent viewer ref.
-            //  we use the knowledge that drawerBase keeps track of parent viewer to register into, we use this ref.
-            //  We could turn this into API...
-            const eventTarget = drawer._parentViewer || this.viewer;
-
-
-            let wasOutdatedRun = false;
-            if (originalCache.__finishProcessing) {
-                // OpenSeadragon.trace(`                 Tile Pre-Finisher,  ${tile ? tile.toString() : 'null'} as Invalid from future ${tStamp}`);
-                originalCache.__finishProcessing(true);
-            }
-
-            // Keep the original promise alive until the processing finished normally. If the
-            // processing was interrupted, the old promise gets reused in the new run - awaited logics
-            // will wait for proper invalidation finish.
-            let promise;
-            if (!originalCache.__resolve) {
-                promise = new $.Promise((resolve) => {
-                    originalCache.__resolve = resolve;
+                /**
+                 * Raised when an item is added to the World.
+                 * @event add-item
+                 * @memberOf OpenSeadragon.World
+                 * @type {object}
+                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the World which raised the event.
+                 * @property {OpenSeadragon.TiledImage} item - The item that has been added.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
+                this.raiseEvent("add-item", {
+                    item: item,
                 });
-            }
+            },
 
-            originalCache.__finishProcessing = (asInvalidRun) => {
-                wasOutdatedRun = wasOutdatedRun || asInvalidRun;
-                // OpenSeadragon.trace(`                  Tile Finisher, ${tile ? tile.toString() : 'null'} as Invalid run ${asInvalidRun} with ${tStamp}`);
-                tile.processing = false;
-                originalCache.__finishProcessing = null;
-                // resolve only when finished without interruption
-                if (!asInvalidRun) {
-                    originalCache.__resolve(tile);
-                    originalCache.__resolve = null;
+            /**
+             * Get the item at the specified index.
+             * @param {Number} index - The item's index.
+             * @returns {OpenSeadragon.TiledImage} The item at the specified index.
+             */
+            getItemAt: function (index) {
+                $.console.assert(index !== undefined, "[World.getItemAt] index is required");
+                return this._items[index];
+            },
+
+            /**
+             * Get the index of the given item or -1 if not present.
+             * @param {OpenSeadragon.TiledImage} item - The item.
+             * @returns {Number} The index of the item or -1 if not present.
+             */
+            getIndexOfItem: function (item) {
+                $.console.assert(item, "[World.getIndexOfItem] item is required");
+                return $.indexOf(this._items, item);
+            },
+
+            /**
+             * @returns {Number} The number of items used.
+             */
+            getItemCount: function () {
+                return this._items.length;
+            },
+
+            /**
+             * Change the index of a item so that it appears over or under others.
+             * @param {OpenSeadragon.TiledImage} item - The item to move.
+             * @param {Number} index - The new index.
+             * @fires OpenSeadragon.World.event:item-index-change
+             */
+            setItemIndex: function (item, index) {
+                $.console.assert(item, "[World.setItemIndex] item is required");
+                $.console.assert(index !== undefined, "[World.setItemIndex] index is required");
+
+                const oldIndex = this.getIndexOfItem(item);
+
+                if (index >= this._items.length) {
+                    throw new Error("Index bigger than number of layers.");
                 }
-            };
 
-            for (const t of originalCache._tiles) {
-                // Mark all related tiles as processing and register callback to unmark later on
-                t.processing = tStamp;
-                if (promise) {
-                    t.processingPromise = promise;
-                }
-            }
-            originalCache.__invStamp = tStamp;
-            originalCache.__wasRestored = restoreTiles;
+                this._items.splice(oldIndex, 1);
+                this._items.splice(index, 0, item);
+                this._needsDraw = true;
 
-
-            let workingCache = null;
-            const getWorkingCacheData = (type) => {
-                if (workingCache) {
-                    return workingCache.getDataAs(type, false);
-                }
-
-                const targetCopyKey = restoreTiles ? tile.originalCacheKey : tile.cacheKey;
-                const origCache = tile.getCache(targetCopyKey);
-                if (!origCache) {
-                    $.console.error("[Tile::getData] There is no cache available for tile with key %s", targetCopyKey);
-                    return $.Promise.reject();
-                }
-                // Here ensure type is defined, rquired by data callbacks
-                type = type || origCache.type;
-                workingCache = new $.CacheRecord().withTileReference(tile);
-                return origCache.getDataAs(type, true).then(data => {
-                    if (data === undefined || data === null) {
-                        // Conversion/loading failed upstream; abort invalidation for this tile.
-                        return $.Promise.reject(new Error('[World.getData] Working cache source data unavailable'));
-                    }
-                    workingCache.addTile(tile, data, type);
-                    return workingCache.data;
+                /**
+                 * Raised when the order of the indexes has been changed.
+                 * @event item-index-change
+                 * @memberOf OpenSeadragon.World
+                 * @type {object}
+                 * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+                 * @property {OpenSeadragon.TiledImage} item - The item whose index has
+                 * been changed
+                 * @property {Number} previousIndex - The previous index of the item
+                 * @property {Number} newIndex - The new index of the item
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
+                this.raiseEvent("item-index-change", {
+                    item: item,
+                    previousIndex: oldIndex,
+                    newIndex: index,
                 });
-            };
-            const setWorkingCacheData = (value, type) => {
-                // // OpenSeadragon.trace(`        WORKER tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
-                if (!workingCache) {
-                    workingCache = new $.CacheRecord().withTileReference(tile);
-                    workingCache.addTile(tile, value, type);
+            },
+
+            /**
+             * Remove an item.
+             * @param {OpenSeadragon.TiledImage} item - The item to remove.
+             * @fires OpenSeadragon.World.event:remove-item
+             * @fires OpenSeadragon.World.event:metrics-change
+             */
+            removeItem: function (item) {
+                $.console.assert(item, "[World.removeItem] item is required");
+
+                const index = $.indexOf(this._items, item);
+                if (index === -1) {
+                    return;
+                }
+
+                item.removeHandler("bounds-change", this._delegatedFigureSizes);
+                item.removeHandler("clip-change", this._delegatedFigureSizes);
+                item.destroy();
+                this._items.splice(index, 1);
+                this._figureSizes();
+                this._needsDraw = true;
+                this._raiseRemoveItem(item);
+            },
+
+            /**
+             * Remove all items.
+             * @fires OpenSeadragon.World.event:remove-item
+             * @fires OpenSeadragon.World.event:metrics-change
+             */
+            removeAll: function () {
+                // We need to make sure any pending images are canceled so the world items don't get messed up
+                this.viewer._cancelPendingImages();
+                let item;
+                for (let i = 0; i < this._items.length; i++) {
+                    item = this._items[i];
+                    item.removeHandler("bounds-change", this._delegatedFigureSizes);
+                    item.removeHandler("clip-change", this._delegatedFigureSizes);
+                    item.destroy();
+                }
+
+                const removedItems = this._items;
+                this._items = [];
+                this._figureSizes();
+                this._needsDraw = true;
+
+                for (let i = 0; i < removedItems.length; i++) {
+                    item = removedItems[i];
+                    this._raiseRemoveItem(item);
+                }
+            },
+
+            /**
+             * Forces the system consider all tiles across all tiled images
+             * as outdated, and fire tile update event on relevant tiles
+             * Detailed description is available within the 'tile-invalidated'
+             * event.
+             * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+             * @param {number} [tStamp=OpenSeadragon.now()] optionally provide tStamp of the update event
+             * @function
+             * @fires OpenSeadragon.Viewer.event:tile-invalidated
+             * @return {OpenSeadragon.Promise<?>}
+             */
+            requestInvalidate: function (restoreTiles = true, tStamp = $.now()) {
+                // Note: Getting the async cache + invalidation flow right is VERY tricky.
+                //
+                // When debugging invalidation flow, instead of this optimized version,
+                // uncomment the following snipplet and test in easier setting:
+                //
+                // this.__invalidatedAt = tStamp;
+                // const batch = this.viewer.tileCache.getLoadedTilesFor(null);
+                // OpenSeadragon.trace(`Invalidate request ${tStamp} - ${batch.length} tiles`);
+                // return this.requestTileInvalidateEvent(batch, tStamp, restoreTiles);
+                //
+                // This makes the code easier to reason about. Also, recommended is to put logging
+                // messages into a buffered logger using OpenSeadragon.trace(..)
+                // to avoid change of flow in the async execution with detailed logs.
+
+                this.__invalidatedAt = tStamp;
+                let drawnTstamp = Infinity;
+                for (const item of this._items) {
+                    if (item._lastDrawn.length) {
+                        drawnTstamp = Math.min(drawnTstamp, item._lastDrawn[0].tile.lastTouchTime);
+                    }
+                    // Might be nested
+                    for (const tileSet of item._tilesToDraw) {
+                        if (Array.isArray(tileSet)) {
+                            if (tileSet.length) {
+                                drawnTstamp = Math.min(drawnTstamp, tileSet[0].tile.lastTouchTime);
+                            }
+                        } else if (tileSet) {
+                            drawnTstamp = Math.min(drawnTstamp, tileSet.tile.lastTouchTime);
+                        }
+                    }
+                }
+
+                const allTiles = this.viewer.tileCache.getLoadedTilesFor(null);
+                const tilesToRestore = new Array(allTiles.length);
+
+                let restoreIndex = 0;
+                let deletedTiles = 0;
+
+                const cache = this.viewer.tileCache;
+                for (let i = 0; i < allTiles.length; i++) {
+                    const tile = allTiles[i];
+                    const isRecentlyTouched = tile.lastTouchTime >= drawnTstamp;
+                    const isAboveCutoff = tile.level <= (tile.tiledImage.savedCutOffLevel || 0);
+
+                    if (isRecentlyTouched || isAboveCutoff) {
+                        tilesToRestore[restoreIndex++] = tile;
+                    } else {
+                        cache._unloadTile(tile, false, i - deletedTiles);
+                        deletedTiles++;
+                    }
+                }
+                tilesToRestore.length = restoreIndex;
+                return this.requestTileInvalidateEvent(tilesToRestore, tStamp, restoreTiles);
+            },
+
+            /**
+             * Requests tile data update.
+             * @function OpenSeadragon.Viewer.prototype._updateSequenceButtons
+             * @private
+             * @param {OpenSeadragon.Tile[]} tilesToProcess tiles to update
+             * @param {Number} tStamp timestamp in milliseconds, if active timestamp of the same value is executing,
+             *   changes are added to the cycle, else they await next iteration
+             * @param {Boolean} [restoreTiles=true] if true, tile processing starts from the tile original data
+             * @param {Boolean} [_allowTileUnloaded=false] internal flag for calling on tiles that come new to the system
+             * @param {Boolean} [_isFromTileLoad=false] internal flag that must not be used manually
+             * @fires OpenSeadragon.Viewer.event:tile-invalidated
+             * @return {OpenSeadragon.Promise<?>}
+             */
+            requestTileInvalidateEvent: function (
+                tilesToProcess,
+                tStamp,
+                restoreTiles = true,
+                _allowTileUnloaded = false,
+                _isFromTileLoad = false
+            ) {
+                // Calling the event is not considered invalidation, as tile load events finishes with this too.
+                if (!this.viewer.isOpen()) {
                     return $.Promise.resolve();
                 }
-                return workingCache.setDataAs(value, type);
-            };
-            const atomicCacheSwap = () => {
-                if (workingCache) {
-                    const newCacheKey = tile.buildDistinctMainCacheKey();
-                    const injected = tiledImage._tileCache.injectCache({
-                        tile: tile,
-                        cache: workingCache,
-                        targetKey: newCacheKey,
-                        setAsMainCache: true,
-                        tileAllowNotLoaded: tile.loading
-                    });
-                    if (injected) {
-                        // The cache belongs to the tile cache now: release our claim so that the cleanup
-                        // below cannot destroy a record that has just been installed. A refused cache
-                        // stays ours, and the cleanup is what frees it.
-                        workingCache = null;
-                    }
-                } else if (restoreTiles) {
-                    // If we requested restore, perform now
-                    tiledImage._tileCache.restoreTilesThatShareOriginalCache(tile, tile.getCache(tile.originalCacheKey), true);
-                }
-            };
 
-            const outdatedTest = () => wasOutdatedRun ||
-                (typeof originalCache.__invStamp === "number" && originalCache.__invStamp < this.__invalidatedAt) ||
-                (!tile.loaded && !tile.loading);
+                if (tStamp === undefined) {
+                    tStamp = this.__invalidatedAt;
+                }
 
-            // OpenSeadragon.trace(`   Procesing tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
-            /**
-             * @event tile-invalidated
-             * @memberof OpenSeadragon.Viewer
-             * @type {object}
-             * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-             * @property {OpenSeadragon.Tile} tile
-             * @property {AsyncNullaryFunction<boolean>} outdated - predicate that evaluates to true if the event
-             *   is outdated and should not be longer processed (has no effect)
-             * @property {AsyncUnaryFunction<any, string>} getData - get data of desired type (string argument)
-             * @property {AsyncBinaryFunction<undefined, any, string>} setData - set data (any)
-             *   and the type of the data (string)
-             * @property {function} resetData - function that deletes any previous data modification in the current
-             *   execution pipeline
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
-             */
-            return eventTarget.raiseEventAwaiting('tile-invalidated', {
-                tile: tile,
-                tiledImage: tiledImage,
-                outdated: outdatedTest,
-                getData: getWorkingCacheData,
-                setData: setWorkingCacheData,
-                resetData: () => {
-                    if (workingCache) {
-                        workingCache.destroy();
-                        workingCache = null;
+                const tilesThatNeedReprocessing = [];
+
+                const jobList = tilesToProcess.map((tile) => {
+                    // We allow re-execution on tiles that are in process but have too low processing timestamp,
+                    // which must be solved by ensuring subsequent data calls in the suddenly outdated processing
+                    // pipeline take no effect.
+                    // Note that in the same list we can have tiles that have shared cache and such
+                    // cache needs to be processed just once.
+                    if (!tile || (!_allowTileUnloaded && !tile.loaded && !tile.processing)) {
+                        // OpenSeadragon.trace(`Ignoring tile ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                        return Promise.resolve();
                     }
-                },
-                stopPropagation: () => {
-                    const result = outdatedTest();
-                    // if (result) {
-                    //     OpenSeadragon.trace( `              Stop propagation ${tile.toString()}: out: ${wasOutdatedRun} | ${originalCache.__invStamp} ${tile.loaded} ${tile.loading}`);
-                    // }
-                    return result;
-                },
-            }).catch(err => {
-                // Plugin/invalidation error: keep existing main cache, discard working cache, and finish processing as invalid.
-                $.console.error('Update routine error:', err);
-                if (workingCache) {
-                    try {
-                        workingCache.destroy();
-                    } catch (e) {
-                        //no-op
+
+                    const originalCache = tile.getCache(tile.originalCacheKey);
+                    // A tile unloaded before it finished loading keeps 'processing' set - it passes the check
+                    // above - but it has dropped its tiledImage and its cache references, and records that are
+                    // still reachable can be destroyed afterwards. All of this has to be settled before the
+                    // tiledImage below is dereferenced.
+                    if (
+                        !tile.tiledImage ||
+                        !originalCache ||
+                        originalCache._destroyed ||
+                        !originalCache._tiles ||
+                        (originalCache.__invStamp && originalCache.__invStamp >= tStamp)
+                    ) {
+                        return Promise.resolve();
                     }
-                    workingCache = null;
-                }
-                wasOutdatedRun = true;
-                if (originalCache.__finishProcessing) {
-                    originalCache.__finishProcessing(true);
-                }
-                return null;
-            }).then(_ => {
-                if (this.viewer.isDestroyed()) {
+
+                    const tiledImage = tile.tiledImage;
+                    const drawer = tiledImage.getDrawer();
+                    // We call the event on the parent viewer window no matter what, nested viewers have parent viewer ref.
+                    //  we use the knowledge that drawerBase keeps track of parent viewer to register into, we use this ref.
+                    //  We could turn this into API...
+                    const eventTarget = drawer._parentViewer || this.viewer;
+
+                    let wasOutdatedRun = false;
                     if (originalCache.__finishProcessing) {
+                        // OpenSeadragon.trace(`                 Tile Pre-Finisher,  ${tile ? tile.toString() : 'null'} as Invalid from future ${tStamp}`);
                         originalCache.__finishProcessing(true);
                     }
-                    return null;
-                }
 
-                if (wasOutdatedRun) {
-                    return null;
-                }
+                    // Keep the original promise alive until the processing finished normally. If the
+                    // processing was interrupted, the old promise gets reused in the new run - awaited logics
+                    // will wait for proper invalidation finish.
+                    let promise;
+                    if (!originalCache.__resolve) {
+                        promise = new $.Promise((resolve) => {
+                            originalCache.__resolve = resolve;
+                        });
+                    }
 
-                // OpenSeadragon.trace(`           FF Tile, ${tile ? tile.toString() : 'null'}    FINISH   ${tStamp}`);
+                    originalCache.__finishProcessing = (asInvalidRun) => {
+                        wasOutdatedRun = wasOutdatedRun || asInvalidRun;
+                        // OpenSeadragon.trace(`                  Tile Finisher, ${tile ? tile.toString() : 'null'} as Invalid run ${asInvalidRun} with ${tStamp}`);
+                        tile.processing = false;
+                        originalCache.__finishProcessing = null;
+                        // resolve only when finished without interruption
+                        if (!asInvalidRun) {
+                            originalCache.__resolve(tile);
+                            originalCache.__resolve = null;
+                        }
+                    };
 
-                // If we do not have the handler, we were already discarded
-                if (originalCache.__finishProcessing) {
-                    // If we are not in outdated run, we can finish the data processing if the state is valid
-                    if (!wasOutdatedRun && (tile.loaded || tile.loading)) {
-                        // If we find out that processing was outdated but the system did not find about this yet, request re-processing
-                        if (originalCache.__invStamp < this.__invalidatedAt) {
-                            // OpenSeadragon.trace(`         Tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} needs reprocessing`);
-                            // todo consider some recursion loop prevention
-                            tilesThatNeedReprocessing.push(tile);
-                            // we will let it fall through to handle later
-                        } else if (originalCache.__invStamp === tStamp) {
-                            // If we matched the invalidation state, ensure the new working cache (if created) is used
+                    for (const t of originalCache._tiles) {
+                        // Mark all related tiles as processing and register callback to unmark later on
+                        t.processing = tStamp;
+                        if (promise) {
+                            t.processingPromise = promise;
+                        }
+                    }
+                    originalCache.__invStamp = tStamp;
+                    originalCache.__wasRestored = restoreTiles;
+
+                    let workingCache = null;
+                    const getWorkingCacheData = (type) => {
+                        if (workingCache) {
+                            return workingCache.getDataAs(type, false);
+                        }
+
+                        const targetCopyKey = restoreTiles ? tile.originalCacheKey : tile.cacheKey;
+                        const origCache = tile.getCache(targetCopyKey);
+                        if (!origCache) {
+                            $.console.error(
+                                "[Tile::getData] There is no cache available for tile with key %s",
+                                targetCopyKey
+                            );
+                            return $.Promise.reject();
+                        }
+                        // Here ensure type is defined, rquired by data callbacks
+                        type = type || origCache.type;
+                        workingCache = new $.CacheRecord().withTileReference(tile);
+                        return origCache.getDataAs(type, true).then((data) => {
+                            if (data === undefined || data === null) {
+                                // Conversion/loading failed upstream; abort invalidation for this tile.
+                                return $.Promise.reject(
+                                    new Error("[World.getData] Working cache source data unavailable")
+                                );
+                            }
+                            workingCache.addTile(tile, data, type);
+                            return workingCache.data;
+                        });
+                    };
+                    const setWorkingCacheData = (value, type) => {
+                        // // OpenSeadragon.trace(`        WORKER tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                        if (!workingCache) {
+                            workingCache = new $.CacheRecord().withTileReference(tile);
+                            workingCache.addTile(tile, value, type);
+                            return $.Promise.resolve();
+                        }
+                        return workingCache.setDataAs(value, type);
+                    };
+                    const atomicCacheSwap = () => {
+                        if (workingCache) {
+                            const newCacheKey = tile.buildDistinctMainCacheKey();
+                            const injected = tiledImage._tileCache.injectCache({
+                                tile: tile,
+                                cache: workingCache,
+                                targetKey: newCacheKey,
+                                setAsMainCache: true,
+                                tileAllowNotLoaded: tile.loading,
+                            });
+                            if (injected) {
+                                // The cache belongs to the tile cache now: release our claim so that the cleanup
+                                // below cannot destroy a record that has just been installed. A refused cache
+                                // stays ours, and the cleanup is what frees it.
+                                workingCache = null;
+                            }
+                        } else if (restoreTiles) {
+                            // If we requested restore, perform now
+                            tiledImage._tileCache.restoreTilesThatShareOriginalCache(
+                                tile,
+                                tile.getCache(tile.originalCacheKey),
+                                true
+                            );
+                        }
+                    };
+
+                    const outdatedTest = () =>
+                        wasOutdatedRun ||
+                        (typeof originalCache.__invStamp === "number" &&
+                            originalCache.__invStamp < this.__invalidatedAt) ||
+                        (!tile.loaded && !tile.loading);
+
+                    // OpenSeadragon.trace(`   Procesing tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp}`);
+                    /**
+                     * @event tile-invalidated
+                     * @memberof OpenSeadragon.Viewer
+                     * @type {object}
+                     * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+                     * @property {OpenSeadragon.Tile} tile
+                     * @property {AsyncNullaryFunction<boolean>} outdated - predicate that evaluates to true if the event
+                     *   is outdated and should not be longer processed (has no effect)
+                     * @property {AsyncUnaryFunction<any, string>} getData - get data of desired type (string argument)
+                     * @property {AsyncBinaryFunction<undefined, any, string>} setData - set data (any)
+                     *   and the type of the data (string)
+                     * @property {function} resetData - function that deletes any previous data modification in the current
+                     *   execution pipeline
+                     * @property {?Object} userData - Arbitrary subscriber-defined object.
+                     */
+                    return eventTarget
+                        .raiseEventAwaiting("tile-invalidated", {
+                            tile: tile,
+                            tiledImage: tiledImage,
+                            outdated: outdatedTest,
+                            getData: getWorkingCacheData,
+                            setData: setWorkingCacheData,
+                            resetData: () => {
+                                if (workingCache) {
+                                    workingCache.destroy();
+                                    workingCache = null;
+                                }
+                            },
+                            stopPropagation: () => {
+                                const result = outdatedTest();
+                                // if (result) {
+                                //     OpenSeadragon.trace( `              Stop propagation ${tile.toString()}: out: ${wasOutdatedRun} | ${originalCache.__invStamp} ${tile.loaded} ${tile.loading}`);
+                                // }
+                                return result;
+                            },
+                        })
+                        .catch((err) => {
+                            // Plugin/invalidation error: keep existing main cache, discard working cache, and finish processing as invalid.
+                            $.console.error("Update routine error:", err);
                             if (workingCache) {
-                                // OpenSeadragon.trace(`         Tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finishing normally, working cache exists.`);
-                                return workingCache.prepareForRendering(drawer).then(c => {
-                                    // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'} swapping working cache ${tStamp}`);
+                                try {
+                                    workingCache.destroy();
+                                } catch (e) {
+                                    //no-op
+                                }
+                                workingCache = null;
+                            }
+                            wasOutdatedRun = true;
+                            if (originalCache.__finishProcessing) {
+                                originalCache.__finishProcessing(true);
+                            }
+                            return null;
+                        })
+                        .then((_) => {
+                            if (this.viewer.isDestroyed()) {
+                                if (originalCache.__finishProcessing) {
+                                    originalCache.__finishProcessing(true);
+                                }
+                                return null;
+                            }
 
-                                    // Inside async then, we need to again check validity of the state
-                                    if (!wasOutdatedRun) {
-                                        if (!outdatedTest() && c) {
-                                            atomicCacheSwap();
-                                        } else {
-                                            workingCache.destroy();
-                                            workingCache = null;
+                            if (wasOutdatedRun) {
+                                return null;
+                            }
+
+                            // OpenSeadragon.trace(`           FF Tile, ${tile ? tile.toString() : 'null'}    FINISH   ${tStamp}`);
+
+                            // If we do not have the handler, we were already discarded
+                            if (originalCache.__finishProcessing) {
+                                // If we are not in outdated run, we can finish the data processing if the state is valid
+                                if (!wasOutdatedRun && (tile.loaded || tile.loading)) {
+                                    // If we find out that processing was outdated but the system did not find about this yet, request re-processing
+                                    if (originalCache.__invStamp < this.__invalidatedAt) {
+                                        // OpenSeadragon.trace(`         Tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} needs reprocessing`);
+                                        // todo consider some recursion loop prevention
+                                        tilesThatNeedReprocessing.push(tile);
+                                        // we will let it fall through to handle later
+                                    } else if (originalCache.__invStamp === tStamp) {
+                                        // If we matched the invalidation state, ensure the new working cache (if created) is used
+                                        if (workingCache) {
+                                            // OpenSeadragon.trace(`         Tile,  ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finishing normally, working cache exists.`);
+                                            return workingCache.prepareForRendering(drawer).then((c) => {
+                                                // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'} swapping working cache ${tStamp}`);
+
+                                                // Inside async then, we need to again check validity of the state
+                                                if (!wasOutdatedRun) {
+                                                    if (!outdatedTest() && c) {
+                                                        atomicCacheSwap();
+                                                    } else {
+                                                        workingCache.destroy();
+                                                        workingCache = null;
+                                                    }
+                                                    originalCache.__finishProcessing();
+                                                } else {
+                                                    workingCache.destroy();
+                                                    workingCache = null;
+                                                }
+                                            });
                                         }
-                                        originalCache.__finishProcessing();
+
+                                        // If we requested restore, restore to originalCacheKey
+                                        if (restoreTiles) {
+                                            // OpenSeadragon.trace(`         Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finishing normally, original data restored.`);
+
+                                            const mainCacheRef = tile.getCache();
+                                            const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
+                                            if (mainCacheRef !== freshOriginalCacheRef) {
+                                                return freshOriginalCacheRef.prepareForRendering(drawer).then((c) => {
+                                                    // OpenSeadragon.trace(`            Tile, ${tile ? tile.toString() : 'null'}  SWAP2 ${tStamp}`);
+                                                    // Inside async then, we need to again check validity of the state
+                                                    if (!wasOutdatedRun) {
+                                                        if (!outdatedTest() && c) {
+                                                            atomicCacheSwap();
+                                                        }
+                                                        originalCache.__finishProcessing();
+                                                    }
+                                                });
+                                            } else {
+                                                // OpenSeadragon.trace(`         Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finished - no need to swap cache.`);
+                                                return null;
+                                            }
+                                        }
+                                        // else we will let it fall through to handle later
                                     } else {
-                                        workingCache.destroy();
-                                        workingCache = null;
+                                        $.console.error(
+                                            `Invalidation flow error: tile processing state is invalid. ` +
+                                                `Tile: ${tile ? tile.toString() : "null"}, ` +
+                                                `loaded: ${tile ? tile.loaded : "n/a"}, loading: ${tile ? tile.loading : "n/a"}, ` +
+                                                `originalCache.__invStamp: ${originalCache.__invStamp}, ` +
+                                                `this.__invalidatedAt: ${this.__invalidatedAt}, ` +
+                                                `tStamp: ${tStamp}, wasOutdatedRun: ${wasOutdatedRun}`
+                                        );
                                     }
+
+                                    // If we did not handle the data, finish here - still a valid run.
+
+                                    // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
+                                    if (_isFromTileLoad) {
+                                        // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp}`);
+                                        const freshMainCacheRef = tile.getCache();
+                                        return freshMainCacheRef.prepareForRendering(drawer).then(() => {
+                                            // Inside async then, we need to again check validity of the state
+                                            if (!wasOutdatedRun && originalCache.__finishProcessing) {
+                                                originalCache.__finishProcessing();
+                                            }
+                                            // else: do not destroy, we are the initial base cache, the system will remove
+                                            // any rendering internal cache on events such as atomic cache swap
+                                            // OpenSeadragon.trace(`            Tile, ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
+                                        });
+                                    }
+                                    originalCache.__finishProcessing();
+                                    return null;
+                                }
+                                // else invalid state, let this fall through
+                                // OpenSeadragon.trace(`Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} discarded.`);
+                                if (!wasOutdatedRun) {
+                                    originalCache.__finishProcessing(true);
+                                }
+                            }
+
+                            // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
+                            if (_isFromTileLoad) {
+                                // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp} - from invalid event!`);
+                                const freshMainCacheRef = tile.getCache();
+                                return freshMainCacheRef.prepareForRendering(drawer).then(() => {
+                                    // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
+                                    if (!wasOutdatedRun && originalCache.__finishProcessing) {
+                                        originalCache.__finishProcessing();
+                                    }
+                                    // else: do not destroy, we are the initial base cache, the system will remove
+                                    // any rendering internal cache on events such as atomic cache swap
                                 });
                             }
 
-                            // If we requested restore, restore to originalCacheKey
-                            if (restoreTiles) {
-                                // OpenSeadragon.trace(`         Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finishing normally, original data restored.`);
-
-                                const mainCacheRef = tile.getCache();
-                                const freshOriginalCacheRef = tile.getCache(tile.originalCacheKey);
-                                if (mainCacheRef !== freshOriginalCacheRef) {
-                                    return freshOriginalCacheRef.prepareForRendering(drawer).then((c) => {
-                                        // OpenSeadragon.trace(`            Tile, ${tile ? tile.toString() : 'null'}  SWAP2 ${tStamp}`);
-                                        // Inside async then, we need to again check validity of the state
-                                        if (!wasOutdatedRun) {
-                                            if (!outdatedTest() && c) {
-                                                atomicCacheSwap();
-                                            }
-                                            originalCache.__finishProcessing();
-                                        }
-                                    });
-                                } else {
-                                    // OpenSeadragon.trace(`         Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} finished - no need to swap cache.`);
-                                    return null;
-                                }
+                            if (workingCache) {
+                                workingCache.destroy();
+                                workingCache = null;
                             }
-                            // else we will let it fall through to handle later
-                        } else {
-                            $.console.error(
-                                `Invalidation flow error: tile processing state is invalid. ` +
-                                `Tile: ${tile ? tile.toString() : 'null'}, ` +
-                                `loaded: ${tile ? tile.loaded : 'n/a'}, loading: ${tile ? tile.loading : 'n/a'}, ` +
-                                `originalCache.__invStamp: ${originalCache.__invStamp}, ` +
-                                `this.__invalidatedAt: ${this.__invalidatedAt}, ` +
-                                `tStamp: ${tStamp}, wasOutdatedRun: ${wasOutdatedRun}`
-                            );
-                        }
+                            return null;
+                        })
+                        .catch((e) => {
+                            $.console.error("Update routine error:", e);
+                            if (workingCache) {
+                                workingCache.destroy();
+                                workingCache = null;
+                            }
+                            // A throw after the run already finished normally would find the finisher cleared: calling
+                            // it then replaces the real error with 'not a function'.
+                            if (originalCache.__finishProcessing) {
+                                originalCache.__finishProcessing();
+                            }
+                        })
+                        .finally(() => {
+                            // Several exits above return before reaching a disposal site - a run that was declared
+                            // outdated by a newer one is the common case. Whatever the route, a working cache still
+                            // held here was never installed, and it owns data nobody else will release.
+                            if (workingCache) {
+                                workingCache.destroy();
+                                workingCache = null;
+                            }
+                        });
+                });
 
-                        // If we did not handle the data, finish here - still a valid run.
-
-                        // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
-                        if (_isFromTileLoad) {
-                            // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp}`);
-                            const freshMainCacheRef = tile.getCache();
-                            return freshMainCacheRef.prepareForRendering(drawer).then(() => {
-                                // Inside async then, we need to again check validity of the state
-                                if (!wasOutdatedRun && originalCache.__finishProcessing) {
-                                    originalCache.__finishProcessing();
-                                }
-                                // else: do not destroy, we are the initial base cache, the system will remove
-                                // any rendering internal cache on events such as atomic cache swap
-                                // OpenSeadragon.trace(`            Tile, ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
-                            });
-                        }
-                        originalCache.__finishProcessing();
-                        return null;
+                return $.Promise.all(jobList).then(() => {
+                    if (tilesThatNeedReprocessing.length) {
+                        this.requestTileInvalidateEvent(tilesThatNeedReprocessing, undefined, restoreTiles, true);
                     }
-                    // else invalid state, let this fall through
-                    // OpenSeadragon.trace(`Tile, ${tile ? tile.toString() : 'null'} tstamp ${tStamp} discarded.`);
-                    if (!wasOutdatedRun) {
-                        originalCache.__finishProcessing(true);
+                    if (!_allowTileUnloaded && !this.viewer.isDestroyed()) {
+                        this.draw();
                     }
-                }
+                });
+            },
 
-                // If this is also the first run on the tile, ensure the main cache, whatever it is, is ready for render
-                if (_isFromTileLoad) {
-                    // OpenSeadragon.trace(`                             Tile, ${tile ? tile.toString() : 'null'} needs render prep as a first run ${tStamp} - from invalid event!`);
-                    const freshMainCacheRef = tile.getCache();
-                    return freshMainCacheRef.prepareForRendering(drawer).then(() => {
-                        // OpenSeadragon.trace(`            Tile,  ${tile ? tile.toString() : 'null'}  SWAP FIRST LOAD FINISH ${tStamp}`);
-                        if (!wasOutdatedRun && originalCache.__finishProcessing) {
-                            originalCache.__finishProcessing();
-                        }
-                        // else: do not destroy, we are the initial base cache, the system will remove
-                        // any rendering internal cache on events such as atomic cache swap
-                    });
-                }
-
-                if (workingCache) {
-                    workingCache.destroy();
-                    workingCache = null;
-                }
-                return null;
-            }).catch(e => {
-                $.console.error("Update routine error:", e);
-                if (workingCache) {
-                    workingCache.destroy();
-                    workingCache = null;
-                }
-                // A throw after the run already finished normally would find the finisher cleared: calling
-                // it then replaces the real error with 'not a function'.
-                if (originalCache.__finishProcessing) {
-                    originalCache.__finishProcessing();
-                }
-            }).finally(() => {
-                // Several exits above return before reaching a disposal site - a run that was declared
-                // outdated by a newer one is the common case. Whatever the route, a working cache still
-                // held here was never installed, and it owns data nobody else will release.
-                if (workingCache) {
-                    workingCache.destroy();
-                    workingCache = null;
-                }
-            });
-        });
-
-        return $.Promise.all(jobList).then(() => {
-            if (tilesThatNeedReprocessing.length) {
-                this.requestTileInvalidateEvent(tilesThatNeedReprocessing, undefined, restoreTiles, true);
-            }
-            if (!_allowTileUnloaded && !this.viewer.isDestroyed()) {
-                this.draw();
-            }
-        });
-    },
-
-    /**
-     * Check if a tile needs update, update such tiles in the given list
-     * @param {OpenSeadragon.Tile[]} tileList
-     */
-    ensureTilesUpToDate: function(tileList) {
-        let updateList;
-        // we cannot track this on per-tile level, but at least we try to find last used value
-        let wasRestored;
-        for (let tile of tileList) {
-            tile = tile.tile || tile;  // osd uses objects of draw-spec with nested tile ref
-            if (!tile.loaded || tile.processing) {
-                continue;
-            }
-
-            const originalCache = tile.getCache(tile.originalCacheKey);
-            wasRestored = originalCache.__wasRestored;
-            if (originalCache.__invStamp < this.__invalidatedAt) {
-                if (!updateList) {
-                    updateList = [tile];
-                } else {
-                    updateList.push(tile);
-                }
-            }
-        }
-        if (updateList && updateList.length) {
-            // OpenSeadragon.trace(`Ensure tiles up to date ${this.__invalidatedAt} - ${updateList.length} tiles`);
-            this.requestTileInvalidateEvent(updateList, $.now(), wasRestored, false);
-        }
-    },
-
-    /**
-     * Clears all tiles and triggers updates for all items.
-     */
-    resetItems: function() {
-        for ( let i = 0; i < this._items.length; i++ ) {
-            this._items[i].reset();
-        }
-    },
-
-    /**
-     * Updates (i.e. animates bounds of) all items.
-     * @function
-     * @param viewportChanged Whether the viewport changed, which indicates that
-     * all TiledImages need to be updated.
-     */
-    update: function(viewportChanged) {
-        let animated = false;
-        this._tileSelectionChanged = false;
-        for ( let i = 0; i < this._items.length; i++ ) {
-            const item = this._items[i];
-            animated = item.update(viewportChanged) || animated;
-            this._tileSelectionChanged = item._tileSelectionChanged || this._tileSelectionChanged;
-        }
-
-        return animated;
-    },
-
-    /**
-     * Whether the set of tiles wanted by any item could have changed during the last update(),
-     * meaning already queued tile requests might be stale. Note that an item can invalidate its
-     * tile selection without animating, e.g. through reset().
-     * @returns {Boolean}
-     */
-    tileSelectionChanged: function() {
-        return this._tileSelectionChanged;
-    },
-
-    /**
-     * Draws all items.
-     */
-    draw: function() {
-        this.viewer.drawer.draw(this._items);
-        this._needsDraw = false;
-        for (const item of this._items) {
-            this._needsDraw = item.setDrawn() || this._needsDraw;
-        }
-    },
-
-    /**
-     * @returns {Boolean} true if any items need updating.
-     */
-    needsDraw: function() {
-        for ( let i = 0; i < this._items.length; i++ ) {
-            if ( this._items[i].needsDraw() ) {
-                return true;
-            }
-        }
-        return this._needsDraw;
-    },
-
-    /**
-     * @returns {OpenSeadragon.Rect} The smallest rectangle that encloses all items, in viewport coordinates.
-     */
-    getHomeBounds: function() {
-        return this._homeBounds.clone();
-    },
-
-    /**
-     * To facilitate zoom constraints, we keep track of the pixel density of the
-     * densest item in the World (i.e. the item whose content size to viewport size
-     * ratio is the highest) and save it as this "content factor".
-     * @returns {Number} the number of content units per viewport unit.
-     */
-    getContentFactor: function() {
-        return this._contentFactor;
-    },
-
-    /**
-     * As a performance optimization, setting this flag to false allows the bounds-change event handler
-     * on tiledImages to skip calculations on the world bounds. If a lot of images are going to be positioned in
-     * rapid succession, this is a good idea. When finished, setAutoRefigureSizes should be called with true
-     * or the system may behave oddly.
-     * @param {Boolean} [value] The value to which to set the flag.
-     */
-    setAutoRefigureSizes: function(value) {
-        this._autoRefigureSizes = value;
-        if (value & this._needsSizesFigured) {
-            this._figureSizes();
-            this._needsSizesFigured = false;
-        }
-    },
-
-    /**
-     * Arranges all of the TiledImages with the specified settings.
-     * @param {Object} options - Specifies how to arrange.
-     * @param {Boolean} [options.immediately=false] - Whether to animate to the new arrangement.
-     * @param {String} [options.layout] - See collectionLayout in {@link OpenSeadragon.Options}.
-     * @param {Number} [options.rows] - See collectionRows in {@link OpenSeadragon.Options}.
-     * @param {Number} [options.columns] - See collectionColumns in {@link OpenSeadragon.Options}.
-     * @param {Number} [options.tileSize] - See collectionTileSize in {@link OpenSeadragon.Options}.
-     * @param {Number} [options.tileMargin] - See collectionTileMargin in {@link OpenSeadragon.Options}.
-     * @fires OpenSeadragon.World.event:metrics-change
-     */
-    arrange: function(options) {
-        options = options || {};
-        const immediately = options.immediately || false;
-        const layout = options.layout || $.DEFAULT_SETTINGS.collectionLayout;
-        const rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
-        const columns = options.columns || $.DEFAULT_SETTINGS.collectionColumns;
-        const tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
-        const tileMargin = options.tileMargin || $.DEFAULT_SETTINGS.collectionTileMargin;
-        const increment = tileSize + tileMargin;
-        let wrap;
-        if (!options.rows && columns) {
-            wrap = columns;
-        } else {
-            wrap = Math.ceil(this._items.length / rows);
-        }
-        let x = 0;
-        let y = 0;
-        let item, box, width, height, position;
-
-        this.setAutoRefigureSizes(false);
-        for (let i = 0; i < this._items.length; i++) {
-            if (i && (i % wrap) === 0) {
-                if (layout === 'horizontal') {
-                    y += increment;
-                    x = 0;
-                } else {
-                    x += increment;
-                    y = 0;
-                }
-            }
-
-            item = this._items[i];
-            box = item.getBoundsNoRotate();
-            if (box.width > box.height) {
-                width = tileSize;
-            } else {
-                width = tileSize * (box.width / box.height);
-            }
-
-            height = width * (box.height / box.width);
-            position = new $.Point(x + ((tileSize - width) / 2),
-                y + ((tileSize - height) / 2));
-
-            item.setPosition(position, immediately);
-            item.setWidth(width, immediately);
-
-            if (layout === 'horizontal') {
-                x += increment;
-            } else {
-                y += increment;
-            }
-        }
-        this.setAutoRefigureSizes(true);
-    },
-
-    // private
-    _figureSizes: function() {
-        const oldHomeBounds = this._homeBounds ? this._homeBounds.clone() : null;
-        const oldContentSize = this._contentSize ? this._contentSize.clone() : null;
-        const oldContentFactor = this._contentFactor || 0;
-
-        if (!this._items.length) {
-            this._homeBounds = new $.Rect(0, 0, 1, 1);
-            this._contentSize = new $.Point(1, 1);
-            this._contentFactor = 1;
-        } else {
-            let item = this._items[0];
-            let bounds = item.getBounds();
-            this._contentFactor = item.getContentSize().x / bounds.width;
-            let clippedBounds = item.getClippedBounds().getBoundingBox();
-            let left = clippedBounds.x;
-            let top = clippedBounds.y;
-            let right = clippedBounds.x + clippedBounds.width;
-            let bottom = clippedBounds.y + clippedBounds.height;
-            for (let i = 1; i < this._items.length; i++) {
-                item = this._items[i];
-                bounds = item.getBounds();
-                this._contentFactor = Math.max(this._contentFactor,
-                    item.getContentSize().x / bounds.width);
-                clippedBounds = item.getClippedBounds().getBoundingBox();
-                left = Math.min(left, clippedBounds.x);
-                top = Math.min(top, clippedBounds.y);
-                right = Math.max(right, clippedBounds.x + clippedBounds.width);
-                bottom = Math.max(bottom, clippedBounds.y + clippedBounds.height);
-            }
-
-            this._homeBounds = new $.Rect(left, top, right - left, bottom - top);
-            this._contentSize = new $.Point(
-                this._homeBounds.width * this._contentFactor,
-                this._homeBounds.height * this._contentFactor);
-        }
-
-        if (this._contentFactor !== oldContentFactor ||
-            !this._homeBounds.equals(oldHomeBounds) ||
-            !this._contentSize.equals(oldContentSize)) {
             /**
-             * Raised when the home bounds or content factor change.
-             * @event metrics-change
-             * @memberOf OpenSeadragon.World
-             * @type {object}
-             * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
-             * @property {?Object} userData - Arbitrary subscriber-defined object.
+             * Check if a tile needs update, update such tiles in the given list
+             * @param {OpenSeadragon.Tile[]} tileList
              */
-            this.raiseEvent('metrics-change', {});
+            ensureTilesUpToDate: function (tileList) {
+                let updateList;
+                // we cannot track this on per-tile level, but at least we try to find last used value
+                let wasRestored;
+                for (let tile of tileList) {
+                    tile = tile.tile || tile; // osd uses objects of draw-spec with nested tile ref
+                    if (!tile.loaded || tile.processing) {
+                        continue;
+                    }
+
+                    const originalCache = tile.getCache(tile.originalCacheKey);
+                    wasRestored = originalCache.__wasRestored;
+                    if (originalCache.__invStamp < this.__invalidatedAt) {
+                        if (!updateList) {
+                            updateList = [tile];
+                        } else {
+                            updateList.push(tile);
+                        }
+                    }
+                }
+                if (updateList && updateList.length) {
+                    // OpenSeadragon.trace(`Ensure tiles up to date ${this.__invalidatedAt} - ${updateList.length} tiles`);
+                    this.requestTileInvalidateEvent(updateList, $.now(), wasRestored, false);
+                }
+            },
+
+            /**
+             * Clears all tiles and triggers updates for all items.
+             */
+            resetItems: function () {
+                for (let i = 0; i < this._items.length; i++) {
+                    this._items[i].reset();
+                }
+            },
+
+            /**
+             * Updates (i.e. animates bounds of) all items.
+             * @function
+             * @param viewportChanged Whether the viewport changed, which indicates that
+             * all TiledImages need to be updated.
+             */
+            update: function (viewportChanged) {
+                let animated = false;
+                this._tileSelectionChanged = false;
+                for (let i = 0; i < this._items.length; i++) {
+                    const item = this._items[i];
+                    animated = item.update(viewportChanged) || animated;
+                    this._tileSelectionChanged = item._tileSelectionChanged || this._tileSelectionChanged;
+                }
+
+                return animated;
+            },
+
+            /**
+             * Whether the set of tiles wanted by any item could have changed during the last update(),
+             * meaning already queued tile requests might be stale. Note that an item can invalidate its
+             * tile selection without animating, e.g. through reset().
+             * @returns {Boolean}
+             */
+            tileSelectionChanged: function () {
+                return this._tileSelectionChanged;
+            },
+
+            /**
+             * Draws all items.
+             */
+            draw: function () {
+                this.viewer.drawer.draw(this._items);
+                this._needsDraw = false;
+                for (const item of this._items) {
+                    this._needsDraw = item.setDrawn() || this._needsDraw;
+                }
+            },
+
+            /**
+             * @returns {Boolean} true if any items need updating.
+             */
+            needsDraw: function () {
+                for (let i = 0; i < this._items.length; i++) {
+                    if (this._items[i].needsDraw()) {
+                        return true;
+                    }
+                }
+                return this._needsDraw;
+            },
+
+            /**
+             * @returns {OpenSeadragon.Rect} The smallest rectangle that encloses all items, in viewport coordinates.
+             */
+            getHomeBounds: function () {
+                return this._homeBounds.clone();
+            },
+
+            /**
+             * To facilitate zoom constraints, we keep track of the pixel density of the
+             * densest item in the World (i.e. the item whose content size to viewport size
+             * ratio is the highest) and save it as this "content factor".
+             * @returns {Number} the number of content units per viewport unit.
+             */
+            getContentFactor: function () {
+                return this._contentFactor;
+            },
+
+            /**
+             * As a performance optimization, setting this flag to false allows the bounds-change event handler
+             * on tiledImages to skip calculations on the world bounds. If a lot of images are going to be positioned in
+             * rapid succession, this is a good idea. When finished, setAutoRefigureSizes should be called with true
+             * or the system may behave oddly.
+             * @param {Boolean} [value] The value to which to set the flag.
+             */
+            setAutoRefigureSizes: function (value) {
+                this._autoRefigureSizes = value;
+                if (value & this._needsSizesFigured) {
+                    this._figureSizes();
+                    this._needsSizesFigured = false;
+                }
+            },
+
+            /**
+             * Arranges all of the TiledImages with the specified settings.
+             * @param {Object} options - Specifies how to arrange.
+             * @param {Boolean} [options.immediately=false] - Whether to animate to the new arrangement.
+             * @param {String} [options.layout] - See collectionLayout in {@link OpenSeadragon.Options}.
+             * @param {Number} [options.rows] - See collectionRows in {@link OpenSeadragon.Options}.
+             * @param {Number} [options.columns] - See collectionColumns in {@link OpenSeadragon.Options}.
+             * @param {Number} [options.tileSize] - See collectionTileSize in {@link OpenSeadragon.Options}.
+             * @param {Number} [options.tileMargin] - See collectionTileMargin in {@link OpenSeadragon.Options}.
+             * @fires OpenSeadragon.World.event:metrics-change
+             */
+            arrange: function (options) {
+                options = options || {};
+                const immediately = options.immediately || false;
+                const layout = options.layout || $.DEFAULT_SETTINGS.collectionLayout;
+                const rows = options.rows || $.DEFAULT_SETTINGS.collectionRows;
+                const columns = options.columns || $.DEFAULT_SETTINGS.collectionColumns;
+                const tileSize = options.tileSize || $.DEFAULT_SETTINGS.collectionTileSize;
+                const tileMargin = options.tileMargin || $.DEFAULT_SETTINGS.collectionTileMargin;
+                const increment = tileSize + tileMargin;
+                let wrap;
+                if (!options.rows && columns) {
+                    wrap = columns;
+                } else {
+                    wrap = Math.ceil(this._items.length / rows);
+                }
+                let x = 0;
+                let y = 0;
+                let item, box, width, height, position;
+
+                this.setAutoRefigureSizes(false);
+                for (let i = 0; i < this._items.length; i++) {
+                    if (i && i % wrap === 0) {
+                        if (layout === "horizontal") {
+                            y += increment;
+                            x = 0;
+                        } else {
+                            x += increment;
+                            y = 0;
+                        }
+                    }
+
+                    item = this._items[i];
+                    box = item.getBoundsNoRotate();
+                    if (box.width > box.height) {
+                        width = tileSize;
+                    } else {
+                        width = tileSize * (box.width / box.height);
+                    }
+
+                    height = width * (box.height / box.width);
+                    position = new $.Point(x + (tileSize - width) / 2, y + (tileSize - height) / 2);
+
+                    item.setPosition(position, immediately);
+                    item.setWidth(width, immediately);
+
+                    if (layout === "horizontal") {
+                        x += increment;
+                    } else {
+                        y += increment;
+                    }
+                }
+                this.setAutoRefigureSizes(true);
+            },
+
+            // private
+            _figureSizes: function () {
+                const oldHomeBounds = this._homeBounds ? this._homeBounds.clone() : null;
+                const oldContentSize = this._contentSize ? this._contentSize.clone() : null;
+                const oldContentFactor = this._contentFactor || 0;
+
+                if (!this._items.length) {
+                    this._homeBounds = new $.Rect(0, 0, 1, 1);
+                    this._contentSize = new $.Point(1, 1);
+                    this._contentFactor = 1;
+                } else {
+                    let item = this._items[0];
+                    let bounds = item.getBounds();
+                    this._contentFactor = item.getContentSize().x / bounds.width;
+                    let clippedBounds = item.getClippedBounds().getBoundingBox();
+                    let left = clippedBounds.x;
+                    let top = clippedBounds.y;
+                    let right = clippedBounds.x + clippedBounds.width;
+                    let bottom = clippedBounds.y + clippedBounds.height;
+                    for (let i = 1; i < this._items.length; i++) {
+                        item = this._items[i];
+                        bounds = item.getBounds();
+                        this._contentFactor = Math.max(this._contentFactor, item.getContentSize().x / bounds.width);
+                        clippedBounds = item.getClippedBounds().getBoundingBox();
+                        left = Math.min(left, clippedBounds.x);
+                        top = Math.min(top, clippedBounds.y);
+                        right = Math.max(right, clippedBounds.x + clippedBounds.width);
+                        bottom = Math.max(bottom, clippedBounds.y + clippedBounds.height);
+                    }
+
+                    this._homeBounds = new $.Rect(left, top, right - left, bottom - top);
+                    this._contentSize = new $.Point(
+                        this._homeBounds.width * this._contentFactor,
+                        this._homeBounds.height * this._contentFactor
+                    );
+                }
+
+                if (
+                    this._contentFactor !== oldContentFactor ||
+                    !this._homeBounds.equals(oldHomeBounds) ||
+                    !this._contentSize.equals(oldContentSize)
+                ) {
+                    /**
+                     * Raised when the home bounds or content factor change.
+                     * @event metrics-change
+                     * @memberOf OpenSeadragon.World
+                     * @type {object}
+                     * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+                     * @property {?Object} userData - Arbitrary subscriber-defined object.
+                     */
+                    this.raiseEvent("metrics-change", {});
+                }
+            },
+
+            // private
+            _raiseRemoveItem: function (item) {
+                /**
+                 * Raised when an item is removed.
+                 * @event remove-item
+                 * @memberOf OpenSeadragon.World
+                 * @type {object}
+                 * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
+                 * @property {OpenSeadragon.TiledImage} item - The item's underlying item.
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
+                this.raiseEvent("remove-item", { item: item });
+            },
         }
-    },
-
-    // private
-    _raiseRemoveItem: function(item) {
-        /**
-         * Raised when an item is removed.
-         * @event remove-item
-         * @memberOf OpenSeadragon.World
-         * @type {object}
-         * @property {OpenSeadragon.World} eventSource - A reference to the World which raised the event.
-         * @property {OpenSeadragon.TiledImage} item - The item's underlying item.
-         * @property {?Object} userData - Arbitrary subscriber-defined object.
-         */
-        this.raiseEvent( 'remove-item', { item: item } );
-    }
-});
-
-}( OpenSeadragon ));
+    );
+})(OpenSeadragon);

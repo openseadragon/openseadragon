@@ -1,9 +1,8 @@
 /* globals $, App */
 
-(function() {
-
+(function () {
     window.App = {
-        init: function() {
+        init: function () {
             const self = this;
 
             const testInitialOpen = true;
@@ -31,7 +30,7 @@
                 // wrapHorizontal: true,
                 // wrapVertical: true,
                 id: "contentDiv",
-                prefixUrl: "../../../build/openseadragon/images/"
+                prefixUrl: "../../../build/openseadragon/images/",
             };
 
             const highsmith = {
@@ -43,9 +42,9 @@
                     TileSize: "256",
                     Size: {
                         Height: "9221",
-                        Width:  "7026"
-                    }
-                }
+                        Width: "7026",
+                    },
+                },
             };
 
             if (testInitialOpen) {
@@ -54,21 +53,21 @@
                         tileSource: "../../data/testpattern.dzi",
                         x: 4,
                         y: 2,
-                        width: 2
+                        width: 2,
                     },
                     {
                         tileSource: "../../data/tall.dzi",
                         x: 1.5,
                         y: 0,
-                        width: 1
+                        width: 1,
                     },
                     {
-                        tileSource: '../../data/wide.dzi',
+                        tileSource: "../../data/wide.dzi",
                         opacity: 1,
                         x: 0,
                         y: 1.5,
-                        height: 1
-                    }
+                        height: 1,
+                    },
                 ];
 
                 // config.tileSources = {
@@ -84,14 +83,14 @@
                         x: 2,
                         y: 0,
                         width: 0.25,
-                        height: 0.25
+                        height: 0.25,
                     },
                     {
                         px: 13,
                         py: 120,
                         width: 124,
                         height: 132,
-                        id: "overlay"
+                        id: "overlay",
                     },
                     {
                         px: 400,
@@ -99,8 +98,8 @@
                         width: 400,
                         height: 400,
                         id: "fixed-overlay",
-                        placement: "TOP_LEFT"
-                    }
+                        placement: "TOP_LEFT",
+                    },
                 ];
             }
 
@@ -109,7 +108,7 @@
                     top: 250,
                     left: 250,
                     right: 250,
-                    bottom: 250
+                    bottom: 250,
                 };
 
                 config.viewportMargins = margins;
@@ -119,17 +118,20 @@
 
             if (testInitialOpen) {
                 function openHandler() {
-                    self.viewer.removeHandler('open', openHandler);
+                    self.viewer.removeHandler("open", openHandler);
                 }
 
-                this.viewer.addHandler( "open", openHandler);
+                this.viewer.addHandler("open", openHandler);
             }
 
             if (testMargins) {
-                this.viewer.addHandler('animation', function() {
-                    const box = new OpenSeadragon.Rect(margins.left, margins.top,
-                        $('#contentDiv').width() - (margins.left + margins.right),
-                        $('#contentDiv').height() - (margins.top + margins.bottom));
+                this.viewer.addHandler("animation", function () {
+                    const box = new OpenSeadragon.Rect(
+                        margins.left,
+                        margins.top,
+                        $("#contentDiv").width() - (margins.left + margins.right),
+                        $("#contentDiv").height() - (margins.top + margins.bottom)
+                    );
                     // If drawDebuggingRect is implemented, use it to show the box.
                     // This is not implemented by all drawers however.
                     self.viewer.drawer.drawDebuggingRect(box);
@@ -142,14 +144,14 @@
         },
 
         // ----------
-        shrink: function(index) {
+        shrink: function (index) {
             index = index || 0;
             const image = this.viewer.world.getItemAt(index);
             image.setWidth(image.getBounds().width * 0.3);
         },
 
         // ----------
-        move: function(index) {
+        move: function (index) {
             index = index || 0;
             const image = this.viewer.world.getItemAt(index);
             const point = image.getBounds().getTopLeft();
@@ -158,93 +160,92 @@
         },
 
         // ----------
-        add: function() {
+        add: function () {
             const self = this;
 
             this.viewer.addTiledImage({
                 tileSource: "../../data/testpattern.dzi",
                 width: 1,
-                success: function() {
+                success: function () {
                     self.viewer.viewport.goHome();
-                }
+                },
             });
         },
 
         // ----------
-        toggle: function() {
+        toggle: function () {
             const $el = $(this.viewer.element);
-            $el.toggleClass('small');
+            $el.toggleClass("small");
         },
 
         // ----------
-        basicTest: function() {
+        basicTest: function () {
             const self = this;
 
-            this.viewer.addHandler('open', function() {
-            });
+            this.viewer.addHandler("open", function () {});
 
             this.viewer.open({
                 tileSource: "../../data/testpattern.dzi",
-                width: 1
+                width: 1,
             });
         },
 
         // ----------
-        crossTest: function() {
+        crossTest: function () {
             const self = this;
 
-            this.viewer.addHandler( "open", function() {
+            this.viewer.addHandler("open", function () {
                 const options = {
-                    tileSource: '../../data/wide.dzi',
+                    tileSource: "../../data/wide.dzi",
                     opacity: 1,
                     x: 0,
                     y: 1.5,
-                    height: 1
+                    height: 1,
                 };
 
-                const addItemHandler = function( event ) {
-                    if ( event.options === options ) {
-                        self.viewer.world.removeHandler( "add-item", addItemHandler );
+                const addItemHandler = function (event) {
+                    if (event.options === options) {
+                        self.viewer.world.removeHandler("add-item", addItemHandler);
                         self.viewer.viewport.goHome();
                     }
                 };
-                self.viewer.world.addHandler( "add-item", addItemHandler );
-                self.viewer.addTiledImage( options );
+                self.viewer.world.addHandler("add-item", addItemHandler);
+                self.viewer.addTiledImage(options);
             });
 
             this.viewer.open({
                 tileSource: "../../data/tall.dzi",
                 x: 1.5,
                 y: 0,
-                width: 1
+                width: 1,
             });
         },
 
         // ----------
-        crossTest2: function() {
+        crossTest2: function () {
             this.viewer.open([
                 {
                     tileSource: "../../data/tall.dzi",
                     x: 1.5,
                     y: 0,
-                    width: 1
+                    width: 1,
                 },
                 {
-                    tileSource: '../../data/wide.dzi',
+                    tileSource: "../../data/wide.dzi",
                     x: 0,
                     y: 1.5,
-                    height: 1
-                }
+                    height: 1,
+                },
             ]);
         },
 
         // ----------
-        crossTest3: function() {
+        crossTest3: function () {
             const self = this;
             const expected = 2;
             let loaded = 0;
 
-            this.viewer.world.addHandler('add-item', function() {
+            this.viewer.world.addHandler("add-item", function () {
                 loaded++;
                 if (loaded === expected) {
                     // self.viewer.viewport.goHome();
@@ -255,30 +256,30 @@
                 tileSource: "../../data/tall.dzi",
                 x: 1.5,
                 y: 0,
-                width: 1
+                width: 1,
             });
 
             this.viewer.addTiledImage({
-                tileSource: '../../data/wide.dzi',
+                tileSource: "../../data/wide.dzi",
                 opacity: 1,
                 x: 0,
                 y: 1.5,
-                height: 1
+                height: 1,
             });
         },
 
         // ----------
-        collectionTest: function() {
+        collectionTest: function () {
             const tileSources = [];
             let random;
             for (let i = 0; i < 10; i++) {
                 random = Math.random();
                 if (random < 0.33) {
-                    tileSources.push('../../data/testpattern.dzi');
+                    tileSources.push("../../data/testpattern.dzi");
                 } else if (random < 0.66) {
-                    tileSources.push('../../data/tall.dzi');
+                    tileSources.push("../../data/tall.dzi");
                 } else {
-                    tileSources.push('../../data/wide.dzi');
+                    tileSources.push("../../data/wide.dzi");
                 }
             }
 
@@ -286,14 +287,14 @@
         },
 
         // ----------
-        gridTest: function() {
+        gridTest: function () {
             const self = this;
             const startX = -3;
             let expected = 0;
             let loaded = 0;
 
-            this.viewer.addHandler( "open", function() {
-                self.viewer.world.addHandler('add-item', function() {
+            this.viewer.addHandler("open", function () {
+                self.viewer.world.addHandler("add-item", function () {
                     loaded++;
                     if (loaded === expected) {
                         self.viewer.viewport.goHome(true);
@@ -308,14 +309,14 @@
                         }
 
                         const options = {
-                            tileSource: '../../data/testpattern.dzi',
+                            tileSource: "../../data/testpattern.dzi",
                             x: startX + x,
                             y: y,
-                            width: 1
+                            width: 1,
                         };
 
                         expected++;
-                        self.viewer.addTiledImage( options );
+                        self.viewer.addTiledImage(options);
                     }
                 }
             });
@@ -324,58 +325,69 @@
                 tileSource: "../../data/testpattern.dzi",
                 x: startX,
                 y: 0,
-                width: 1
+                width: 1,
             });
         },
 
         // ----------
-        bigTest: function() {
+        bigTest: function () {
             this.viewer.open({
                 tileSource: "../../data/testpattern.dzi",
                 x: -2,
                 y: -2,
-                width: 6
+                width: 6,
             });
         },
 
         // ----------
-        cjTest: function() {
+        cjTest: function () {
             const imageKey = "e-pluribus-unum";
-            const imageXML = '<?xml version="1.0" encoding="UTF-8"?><Image TileSize="254" Overlap="1" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="88560" Height="88560"/></Image>';
+            const imageXML =
+                '<?xml version="1.0" encoding="UTF-8"?><Image TileSize="254" Overlap="1" Format="png" xmlns="http://schemas.microsoft.com/deepzoom/2008"><Size Width="88560" Height="88560"/></Image>';
             const $xml = $($.parseXML(imageXML));
-            const $image = $xml.find('Image');
-            const $size = $xml.find('Size');
+            const $image = $xml.find("Image");
+            const $size = $xml.find("Size");
 
             const dzi = {
                 Image: {
-                    xmlns: $image.attr('xmlns'),
-                    Url: "http://chrisjordan.com/dzi/" + imageKey + '_files/',
-                    Format: $image.attr('Format'),
-                    Overlap: $image.attr('Overlap'),
-                    TileSize: $image.attr('TileSize'),
+                    xmlns: $image.attr("xmlns"),
+                    Url: "http://chrisjordan.com/dzi/" + imageKey + "_files/",
+                    Format: $image.attr("Format"),
+                    Overlap: $image.attr("Overlap"),
+                    TileSize: $image.attr("TileSize"),
                     Size: {
-                        Height: $size.attr('Height'),
-                        Width: $size.attr('Width')
-                    }
-                }
+                        Height: $size.attr("Height"),
+                        Width: $size.attr("Width"),
+                    },
+                },
             };
 
             this.viewer.open({
                 tileSource: dzi,
-                width: 100
+                width: 100,
             });
         },
 
         // ----------
-        stanfordTest: function() {
-            const info = {"@context":"http://library.stanford.edu/iiif/image-api/1.1/context.json","@id":"http://ids.lib.harvard.edu/ids/iiif/48530377","width":6251,"height":109517,"scale_factors":[1,2,4,8,16,32],"tile_width":256,"tile_height":256,"formats":["jpg"],"qualities":["native"],"profile":"http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1"};
+        stanfordTest: function () {
+            const info = {
+                "@context": "http://library.stanford.edu/iiif/image-api/1.1/context.json",
+                "@id": "http://ids.lib.harvard.edu/ids/iiif/48530377",
+                width: 6251,
+                height: 109517,
+                scale_factors: [1, 2, 4, 8, 16, 32],
+                tile_width: 256,
+                tile_height: 256,
+                formats: ["jpg"],
+                qualities: ["native"],
+                profile: "http://library.stanford.edu/iiif/image-api/1.1/compliance.html#level1",
+            };
 
             this.viewer.open(info);
-        }
+        },
     };
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         App.init();
     });
-
 })();

@@ -1,8 +1,7 @@
 /* global App, $ */
-(function() {
-
+(function () {
     // ----------
-    const component = App.Page = function(config) {
+    const component = (App.Page = function (config) {
         this.label = config.label;
         this.alternates = config.alternates;
         this.pageIndex = config.pageIndex;
@@ -16,23 +15,27 @@
             x: config.x,
             y: config.y,
             width: config.width,
-            tileSource: config.tileSource
+            tileSource: config.tileSource,
         };
 
         if (config.clip) {
-            this.starter.clip = new OpenSeadragon.Rect(config.clip.x, config.clip.y,
-                config.clip.width, config.clip.height);
+            this.starter.clip = new OpenSeadragon.Rect(
+                config.clip.x,
+                config.clip.y,
+                config.clip.width,
+                config.clip.height
+            );
         }
 
         this.main = {};
 
         this.alternateIndex = -1;
-    };
+    });
 
     // ----------
     component.prototype = {
         // ----------
-        setTiledImage: function(tiledImage) {
+        setTiledImage: function (tiledImage) {
             this.setDetail(this.main, this.starter, tiledImage);
 
             if (!this.bounds) {
@@ -41,7 +44,7 @@
         },
 
         // ----------
-        setDetail: function(detail, info, tiledImage) {
+        setDetail: function (detail, info, tiledImage) {
             detail.tiledImage = tiledImage;
             detail.x = info.x || 0;
             detail.y = info.y || 0;
@@ -49,38 +52,38 @@
         },
 
         // ----------
-        selectAlternate: function(index) {
+        selectAlternate: function (index) {
             const self = this;
 
             if (index === this.alternateIndex) {
                 return;
             }
 
-            const itemInfo = (index === -1 ? this.starter : this.alternates[index]);
+            const itemInfo = index === -1 ? this.starter : this.alternates[index];
 
             App.viewer.world.removeItem(this.main.tiledImage);
             App.viewer.addTiledImage({
                 tileSource: itemInfo.tileSource,
                 clip: itemInfo.clip,
                 index: this.pageIndex,
-                success: function(event) {
+                success: function (event) {
                     self.setDetail(self.main, itemInfo, event.item);
                     self.placeDetail(self.main, true);
-                }
+                },
             });
 
             this.alternateIndex = index;
         },
 
         // ----------
-        addDetails: function() {
+        addDetails: function () {
             const self = this;
 
             if (!this.details) {
                 return;
             }
 
-            $.each(this.details, function(i, v) {
+            $.each(this.details, function (i, v) {
                 if (v.tiledImage) {
                     return;
                 }
@@ -88,23 +91,23 @@
                 App.viewer.addTiledImage({
                     tileSource: v.tileSource,
                     clip: v.clip,
-                    success: function(event) {
+                    success: function (event) {
                         v.tiledImage = event.item;
                         self.placeDetail(v, true);
-                    }
+                    },
                 });
             });
         },
 
         // ----------
-        removeDetails: function() {
+        removeDetails: function () {
             const self = this;
 
             if (!this.details) {
                 return;
             }
 
-            $.each(this.details, function(i, v) {
+            $.each(this.details, function (i, v) {
                 if (v.tiledImage) {
                     App.viewer.world.removeItem(v.tiledImage);
                     delete v.tiledImage;
@@ -113,7 +116,7 @@
         },
 
         // ----------
-        hitTest: function(pos) {
+        hitTest: function (pos) {
             if (!this.details) {
                 return this.main.tiledImage;
             }
@@ -128,8 +131,7 @@
                 }
 
                 box = detail.tiledImage.getBounds();
-                if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width &&
-                        pos.y < box.y + box.height) {
+                if (pos.x > box.x && pos.y > box.y && pos.x < box.x + box.width && pos.y < box.y + box.height) {
                     return detail.tiledImage;
                 }
             }
@@ -138,12 +140,12 @@
         },
 
         // ----------
-        getBounds: function() {
+        getBounds: function () {
             return this.bounds.clone();
         },
 
         // ----------
-        place: function(bounds, immediately) {
+        place: function (bounds, immediately) {
             const self = this;
 
             this.bounds = bounds.clone();
@@ -151,7 +153,7 @@
             this.placeDetail(this.main, immediately);
 
             if (this.details) {
-                $.each(this.details, function(i, v) {
+                $.each(this.details, function (i, v) {
                     if (v.tiledImage) {
                         self.placeDetail(v, immediately);
                     }
@@ -160,14 +162,14 @@
         },
 
         // ----------
-        placeDetail: function(detail, immediately) {
+        placeDetail: function (detail, immediately) {
             const position = new OpenSeadragon.Point(
-                this.bounds.x + (this.bounds.width * detail.x),
-                this.bounds.y + (this.bounds.width * detail.y));
+                this.bounds.x + this.bounds.width * detail.x,
+                this.bounds.y + this.bounds.width * detail.y
+            );
 
             detail.tiledImage.setPosition(position, immediately);
             detail.tiledImage.setWidth(this.bounds.width * detail.width, immediately);
-        }
+        },
     };
-
 })();

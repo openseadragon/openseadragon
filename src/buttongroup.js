@@ -32,127 +32,128 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
-/**
- * @class ButtonGroup
- * @classdesc Manages events on groups of buttons.
- *
- * @memberof OpenSeadragon
- * @param {Object} options - A dictionary of settings applied against the entire group of buttons.
- * @param {Array} options.buttons Array of buttons
- * @param {Element} [options.element] Element to use as the container
- **/
-$.ButtonGroup = function( options ) {
+(function ($) {
+    /**
+     * @class ButtonGroup
+     * @classdesc Manages events on groups of buttons.
+     *
+     * @memberof OpenSeadragon
+     * @param {Object} options - A dictionary of settings applied against the entire group of buttons.
+     * @param {Array} options.buttons Array of buttons
+     * @param {Element} [options.element] Element to use as the container
+     **/
+    $.ButtonGroup = function (options) {
+        $.extend(
+            true,
+            this,
+            {
+                /**
+                 * An array containing the buttons themselves.
+                 * @member {Array} buttons
+                 * @memberof OpenSeadragon.ButtonGroup#
+                 */
+                buttons: [],
+                clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
+                clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold,
+                labelText: "",
+            },
+            options
+        );
 
-    $.extend( true, this, {
+        // copy the button elements  TODO: Why?
+        let buttons = this.buttons.concat([]),
+            _this = this,
+            i;
+
         /**
-         * An array containing the buttons themselves.
-         * @member {Array} buttons
+         * The shared container for the buttons.
+         * @member {Element} element
          * @memberof OpenSeadragon.ButtonGroup#
          */
-        buttons:            [],
-        clickTimeThreshold: $.DEFAULT_SETTINGS.clickTimeThreshold,
-        clickDistThreshold: $.DEFAULT_SETTINGS.clickDistThreshold,
-        labelText:          ""
-    }, options );
+        this.element = options.element || $.makeNeutralElement("div");
 
-    // copy the button elements  TODO: Why?
-    let buttons = this.buttons.concat([]),
-        _this = this,
-        i;
-
-    /**
-     * The shared container for the buttons.
-     * @member {Element} element
-     * @memberof OpenSeadragon.ButtonGroup#
-     */
-    this.element = options.element || $.makeNeutralElement( "div" );
-
-    // TODO What if there IS an options.group specified?
-    if( !options.group ){
-        this.element.style.display = "inline-block";
-        //this.label   = $.makeNeutralElement( "label" );
-        //TODO: support labels for ButtonGroups
-        //this.label.innerHTML = this.labelText;
-        //this.element.appendChild( this.label );
-        for ( i = 0; i < buttons.length; i++ ) {
-            this.element.appendChild( buttons[ i ].element );
-        }
-    }
-
-    $.setElementTouchActionNone( this.element );
-
-    /**
-     * Tracks mouse/touch/key events across the group of buttons.
-     * @member {OpenSeadragon.MouseTracker} tracker
-     * @memberof OpenSeadragon.ButtonGroup#
-     */
-    this.tracker = new $.MouseTracker({
-        userData:           'ButtonGroup.tracker',
-        element:            this.element,
-        clickTimeThreshold: this.clickTimeThreshold,
-        clickDistThreshold: this.clickDistThreshold,
-        enterHandler: function ( event ) {
-            let i;
-            for ( i = 0; i < _this.buttons.length; i++ ) {
-                _this.buttons[ i ].notifyGroupEnter();
+        // TODO What if there IS an options.group specified?
+        if (!options.group) {
+            this.element.style.display = "inline-block";
+            //this.label   = $.makeNeutralElement( "label" );
+            //TODO: support labels for ButtonGroups
+            //this.label.innerHTML = this.labelText;
+            //this.element.appendChild( this.label );
+            for (i = 0; i < buttons.length; i++) {
+                this.element.appendChild(buttons[i].element);
             }
-        },
-        leaveHandler: function ( event ) {
-            let i;
-            if ( !event.insideElementPressed ) {
-                for ( i = 0; i < _this.buttons.length; i++ ) {
-                    _this.buttons[ i ].notifyGroupExit();
+        }
+
+        $.setElementTouchActionNone(this.element);
+
+        /**
+         * Tracks mouse/touch/key events across the group of buttons.
+         * @member {OpenSeadragon.MouseTracker} tracker
+         * @memberof OpenSeadragon.ButtonGroup#
+         */
+        this.tracker = new $.MouseTracker({
+            userData: "ButtonGroup.tracker",
+            element: this.element,
+            clickTimeThreshold: this.clickTimeThreshold,
+            clickDistThreshold: this.clickDistThreshold,
+            enterHandler: function (event) {
+                let i;
+                for (i = 0; i < _this.buttons.length; i++) {
+                    _this.buttons[i].notifyGroupEnter();
                 }
-            }
+            },
+            leaveHandler: function (event) {
+                let i;
+                if (!event.insideElementPressed) {
+                    for (i = 0; i < _this.buttons.length; i++) {
+                        _this.buttons[i].notifyGroupExit();
+                    }
+                }
+            },
+        });
+    };
+
+    /** @lends OpenSeadragon.ButtonGroup.prototype */
+    $.ButtonGroup.prototype = {
+        /**
+         * Adds the given button to this button group.
+         *
+         * @function
+         * @param {OpenSeadragon.Button} button
+         */
+        addButton: function (button) {
+            this.buttons.push(button);
+            this.element.appendChild(button.element);
         },
-    });
-};
 
-/** @lends OpenSeadragon.ButtonGroup.prototype */
-$.ButtonGroup.prototype = {
+        /**
+         * TODO: Figure out why this is used on the public API and if a more useful
+         * api can be created.
+         * @function
+         * @private
+         */
+        emulateEnter: function () {
+            this.tracker.enterHandler({ eventSource: this.tracker });
+        },
 
-    /**
-     * Adds the given button to this button group.
-     *
-     * @function
-     * @param {OpenSeadragon.Button} button
-     */
-    addButton: function( button ){
-        this.buttons.push(button);
-        this.element.appendChild(button.element);
-    },
+        /**
+         * TODO: Figure out why this is used on the public API and if a more useful
+         * api can be created.
+         * @function
+         * @private
+         */
+        emulateLeave: function () {
+            this.tracker.leaveHandler({ eventSource: this.tracker });
+        },
 
-    /**
-     * TODO: Figure out why this is used on the public API and if a more useful
-     * api can be created.
-     * @function
-     * @private
-     */
-    emulateEnter: function() {
-        this.tracker.enterHandler( { eventSource: this.tracker } );
-    },
-
-    /**
-     * TODO: Figure out why this is used on the public API and if a more useful
-     * api can be created.
-     * @function
-     * @private
-     */
-    emulateLeave: function() {
-        this.tracker.leaveHandler( { eventSource: this.tracker } );
-    },
-
-    destroy: function() {
-        while (this.buttons.length) {
-            const button = this.buttons.pop();
-            this.element.removeChild(button.element);
-            button.destroy();
-        }
-        this.tracker.destroy();
-        this.element = null;
-    }
-};
-
-
-}( OpenSeadragon ));
+        destroy: function () {
+            while (this.buttons.length) {
+                const button = this.buttons.pop();
+                this.element.removeChild(button.element);
+                button.destroy();
+            }
+            this.tracker.destroy();
+            this.element = null;
+        },
+    };
+})(OpenSeadragon);

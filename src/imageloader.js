@@ -32,745 +32,766 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function($){
-
-/**
- * @class ImageJob
- * @classdesc Handles downloading of a single image.
- *
- * @memberof OpenSeadragon
- * @param {Object} options - Options for this ImageJob.
- * @param {String} [options.src] - URL of image to download.
- * @param {Tile} [options.tile] - Tile that belongs the data to.
- * @param {TileSource} [options.source] - Image loading strategy
- * @param {Boolean} [options.loadWithAjax] - Whether to load this image with AJAX.
- * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
- * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
- * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
- * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
- *      see TileSource::getTilePostData) or null
- * @param {Function} [options.callback] - Called once image has been downloaded.
- * @param {Function} [options.abort] - Called when this image job is aborted.
- * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
- * @param {Number} [options.tries] - Actual number of the current try.
- */
-$.ImageJob = function(options) {
-
+(function ($) {
     /**
-     * Private parameter. Called automatically once image has been downloaded
-     *   (triggered by finish).
-     * @member {function} callback
-     * @memberof OpenSeadragon.ImageJob#
-     * @private
-     */
-
-    /**
-     * URL of image (or other data item that will be rendered) to download.
-     * @member {string} src
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * Tile that owns the load. Note the data might be shared between tiles.
-     * @member {OpenSeadragon.Tile} tile
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * TileSource that initiated the load and owns the tile. Note the data might be shared between tiles and tile sources.
-     * @member {OpenSeadragon.TileSource} source
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * Whether to load this image with AJAX.
-     * @member {boolean} loadWithAjax
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * Headers to add to the image request if using AJAX.
-     * @member {Object.<string, string>} ajaxHeaders
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * Whether to set withCredentials on AJAX requests.
-     * @member {boolean} ajaxWithCredentials
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * CORS policy to use for downloads
-     * @member {String} crossOriginPolicy
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * HTTP POST data to send with the request
-     * @member {(String|Object)} [postData] - HTTP POST data (usually but not necessarily
-     *   in k=v&k2=v2... form, see TileSource::getTilePostData) or null
-     * @memberof OpenSeadragon.ImageJob#
-     */
-
-    /**
-     * Data object which will contain downloaded image data.
-     * @member {Image|*} data data object, by default an Image object (depends on TileSource)
-     * @memberof OpenSeadragon.ImageJob#
-     */
-    this.data = null;
-
-    /**
-     * User workspace to populate with helper variables
-     * @member {*} userData to append custom data and avoid namespace collision
-     * @memberof OpenSeadragon.ImageJob#
-     */
-    this.userData = {};
-
-    /**
-     * Error message holder. The final error message, default null (set by finish).
-     * @member {string} error message
-     * @memberof OpenSeadragon.ImageJob#
-     * @private
-     */
-    this.errorMsg = null;
-
-    /**
-     * Private parameter. The max number of milliseconds that
-     *   this image job may take to complete.
-     * @member {number} timeout
-     * @memberof OpenSeadragon.ImageJob#
-     * @private
-     */
-    this.timeout = $.DEFAULT_SETTINGS.timeout;
-
-    /**
-     * Flag if part of batch query.
-     * @member {boolean} isBatched
-     * @memberof OpenSeadragon.ImageJob#
-     * @private
-     */
-    this.isBatched = false;
-
-
-    $.extend(true, this, {
-        jobId: null,
-        tries: 0,
-    }, options);
-
-    /**
-     * Private supplied abort callback, captured before start() replaces
-     * this.abort with its own closure. start() runs again for every retry, so reading this.abort there
-     * would chain the previous attempt's closure into the new one, and a single abort() would then fail
-     * the job once per attempt already made - calling back (and decrementing
-     * ImageLoader.jobsInProgress) several times for one job.
-     * @member {function} _callerAbort
-     * @memberof OpenSeadragon.ImageJob#
-     * @private
-     */
-    this._callerAbort = typeof this.abort === "function" ? this.abort : null;
-};
-
-$.ImageJob.prototype = {
-    /**
-     * Starts the image job.
-     * @method
-     * @private
-     * @memberof OpenSeadragon.ImageJob#
-     */
-    start: function() {
-        this.tries++;
-
-        const self = this;
-        // Captured at construction: see ImageJob#_callerAbort. Must not be re-read from this.abort,
-        // which on a retry is the closure installed by the previous start().
-        const selfAbort = this._callerAbort;
-
-        /**
-         * Called automatically when the job times out.
-         *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
-         * @member {function} abort
-         * @memberof OpenSeadragon.ImageJob#
-         * @param {string} abortMessage description of reason
-         */
-        this.abort = function(abortMessage) {
-            // this should call finish or fail
-            self.source.downloadTileAbort(self);
-            if (typeof selfAbort === "function") {
-                selfAbort();
-            }
-            self.fail(abortMessage || "Image load aborted.", null);
-        };
-
-        this.jobId = window.setTimeout(function () {
-            self.abort("Image load exceeded timeout (" + self.timeout + " ms)");
-        }, this.timeout);
-
-        this.source.downloadTileStart(this);
-    },
-
-    /**
-     * Prepares the image job to be part of batched mode. It does not override abort
-     * callback and does not set timeout, nor call any tile source APIs. Managed by parent batch.
-     * @method
-     * @private
-     * @memberof OpenSeadragon.ImageJob#
-     */
-    prepareForBatch: function() {
-        this.tries++;
-        this.jobId = -1;  // ensures methods above work, calling clearTimeout is noop
-    },
-
-    /**
-     * Finish this job. Should be called unless abort() was executed upon successful data retrieval.
-     *   Usage: context.finish(data, request, dataType=undefined). Pass the downloaded data object
-     *   add also reference to an ajax request if used. Optionally, specify what data type the data is.
-     * @param {*} data data that has been downloaded
-     * @param {XMLHttpRequest} request reference to the request if used
-     * @param {string} dataType data type identifier
-     *   fallback compatibility behavior: dataType treated as errorMessage if data is falsey value
-     * @memberof OpenSeadragon.ImageJob#
-     */
-    finish: function(data, request, dataType) {
-        if (!this.jobId) {
-            return;
-        }
-        // old behavior, no deprecation due to possible finish calls with invalid data item (e.g. different error)
-        if (isInvalidData(data)) {
-            this.fail(dataType || "[downloadTileStart->finish()] Retrieved data is invalid!", request);
-            return;
-        }
-
-        this.data = data;
-        this.request = request;
-        this.errorMsg = null;
-        this.dataType = dataType;
-
-        window.clearTimeout(this.jobId);
-        this.jobId = null;
-
-        this.callback(this);
-    },
-
-    /**
-     * Finish this job as a failure. Should be called unless abort() was executed upon unsuccessful request.
-     *   Usage: context.fail(errMessage, request). Provide error message in case of failure,
-     *   add also reference to an ajax request if used.
-     * @param {string} errorMessage description upon failure
-     * @param {XMLHttpRequest} request reference to the request if used
-     */
-    fail: function(errorMessage, request) {
-        // Same guard as finish(): a job completes exactly once. A tile source can report a failure the
-        // job already knows about - aborting an XHR, for instance, fires its error handler synchronously
-        // from inside downloadTileAbort() - and calling back twice would decrement
-        // ImageLoader.jobsInProgress twice and queue the tile for retry twice.
-        if (!this.jobId) {
-            return;
-        }
-
-        this.data = null;
-        this.request = request;
-        this.errorMsg = errorMessage;
-        this.dataType = null;
-
-        window.clearTimeout(this.jobId);
-        this.jobId = null;
-
-        this.callback(this);
-    }
-};
-
-/**
- * @class BatchImageJob
- * @memberof OpenSeadragon
- * @classdesc Wraps a group of ImageJobs as a single unit of work for the ImageLoader queue.
- * It mimics the ImageJob API so it can be managed in a similar way.
- * @param {Object} options
- * @param {TileSource} options.source
- * @param {Array<OpenSeadragon.ImageJob>} options.jobs
- * @param {Function} [options.callback]
- * @param {Function} [options.abort]
- */
-$.BatchImageJob = function(options) {
-    $.extend(true, this, {
-        timeout: $.DEFAULT_SETTINGS.timeout,
-        jobId: null,
-        data: null,
-        dataType: null,
-        errorMsg: null,
-        _completed: false
-    }, options);
-
-    this.jobs = options.jobs || [];
-    this.source = options.source;
-};
-
-$.BatchImageJob.prototype = {
-    /**
-     * Starts the batch job.
-     * @method
-     * @private
-     * @memberof OpenSeadragon.BatchImageJob#
-     */
-    start: function() {
-        this._finishedJobs = 0;
-        this._completed = false;
-        const self = this;
-
-        /**
-         * Called automatically when the job times out.
-         *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
-         * @member {function} abort
-         * @memberof OpenSeadragon.ImageJob#
-         * @param {string} abortMessage description of reason
-         */
-        this.abort = function(abortMessage) {
-            // we don't call job.start() for each job, so abort is callable here
-            self.source.downloadTileBatchAbort(self);
-            for (let j of this.jobs) {
-                // Abort only running jobs by checking jobId. In theory, all should finish at once,
-                // but we cannot enforce the logic executed by each batch job. Note that this
-                // 'abort' is not the same as ImageJob.abort() method -- the job was not executed
-                // via ImageJob.start() and the abort here is an optional callback passed externally.
-                if (j.jobId && j.abort) {
-                    j.abort();
-                }
-            }
-            self.fail(abortMessage || "Batch image aborted.", null);
-        };
-
-        // Set timeout for the whole batch
-        // The batch stays active (jobId set) while abort() fails its children: the wrapped fail below
-        // is a noop once jobId is cleared, so clearing it here would release the tiles without ever
-        // invoking their callbacks - no tile failure events and no configured retries.
-        this.jobId = window.setTimeout(function () {
-            self.abort("Batch image load exceeded timeout (" + self.timeout + " ms)");
-        }, this.timeout);
-
-        const wrap = (fn, job) => {
-            return (...args) => {
-                if (!this.jobId) {
-                    return;
-                }
-                this._finishedJobs++;
-                fn.call(job, ...args);
-                if (this._finishedJobs === this.jobs.length) {
-                    this._complete();
-                }
-            };
-        };
-
-        for (let j of this.jobs) {
-            // Handle timeout securely
-            const originalFinish = j.finish,
-                originalFail = j.fail;
-            j.finish = wrap(originalFinish, j);
-            j.fail = wrap(originalFail, j);
-            j.unbatch = function() {
-                this.finish = originalFinish;
-                this.fail = originalFail;
-                delete this.unbatch;
-            };
-            j.prepareForBatch();
-        }
-
-        this.source.downloadTileBatchStart(this);
-    },
-
-    /**
-     * Aborts a batch job that has not been started yet. Once start() runs it installs its own abort
-     * that also tears down the request; this one only exists for jobs still sitting in the queue.
-     * Their child jobs still carry the caller-supplied release callback (it resets tile.loading), so
-     * dropping the references without calling it strands the tiles as permanently "loading".
-     */
-    abort: function() {
-        for (let i = 0; i < this.jobs.length; i++) {
-            const job = this.jobs[i];
-            if (typeof job.abort === "function") {
-                job.abort();
-            }
-        }
-        this.jobs.length = 0;
-    },
-
-    /**
-     * Finish is defined as not to throw when accidentally used, but should not be called.
-     */
-    finish: function(data, request, dataType) {
-        $.console.error('Finish call on batch job is not desirable: call finish on individual child jobs!', data, request);
-    },
-
-    /**
-     * Finish all batched jobs as a failure. This is available mainly for ImageLoader class logics,
-     * implementations should fail/finish/abort individual jobs directly.
-     * @param {string} errorMessage description upon failure
-     * @param {XMLHttpRequest} request reference to the request if used
-     */
-    fail: function(errorMessage, request) {
-        if (this._completed) {
-            return;
-        }
-
-        this.data = null;
-        this.request = request;
-        this.errorMsg = errorMessage;
-        this.dataType = null;
-
-        // Fail before setting jobId to null, which is checked for in wrapped fail call.
-        for (let i = 0; i < this.jobs.length; i++) {
-            if (this.jobs[i].jobId) { // If still running
-                this.jobs[i].fail(errorMessage || "Batch failed", request);
-            }
-        }
-
-        // Failing the last child already completed the parent through the wrapper; _complete() is
-        // idempotent so the parent callback (and its jobsInProgress decrement) happens exactly once.
-        this._complete();
-    },
-
-    /**
-     * Completes the batch exactly once: stops the timeout, deactivates the job and notifies the owner.
-     * @method
-     * @private
-     * @memberof OpenSeadragon.BatchImageJob#
-     */
-    _complete: function() {
-        if (this._completed) {
-            return;
-        }
-        this._completed = true;
-
-        if (this.jobId) {
-            window.clearTimeout(this.jobId);
-        }
-        this.jobId = null;
-
-        if (this.callback) {
-            this.callback(this);
-        }
-    }
-};
-
-/**
- * @class ImageLoader
- * @memberof OpenSeadragon
- * @classdesc Handles downloading of a set of images using asynchronous queue pattern.
- * You generally won't have to interact with the ImageLoader directly.
- * @param {Object} options - Options for this ImageLoader.
- * @param {Number} [options.jobLimit] - The number of concurrent image requests. See imageLoaderLimit in {@link OpenSeadragon.Options} for details.
- * @param {Number} [options.timeout] - The max number of milliseconds that an image job may take to complete.
- */
-$.ImageLoader = function(options) {
-
-    $.extend(true, this, {
-        jobLimit:       $.DEFAULT_SETTINGS.imageLoaderLimit,
-        timeout:        $.DEFAULT_SETTINGS.timeout,
-        jobQueue:       [],
-        failedTiles:    [],
-        jobsInProgress: 0
-    }, options);
-
-    this._batchBuckets = [];
-    // setTimeout handles for failedTiles entries waiting out tileRetryDelay. Kept so teardown can cancel
-    // them: a retry that fires after Viewer#close() downloads into a world that no longer has the tile.
-    this._retryTimers = [];
-    // Bumped by clear(cancelRetries). Jobs carry the generation they were created in, so a job that was
-    // still in flight when the viewer was torn down can finish without queueing a fresh retry: cancelling
-    // the timers alone does not help, because such a job creates a brand new one when it completes.
-    this._generation = 0;
-};
-
-/** @lends OpenSeadragon.ImageLoader.prototype */
-$.ImageLoader.prototype = {
-
-    /**
-     * Add an unloaded image to the loader queue.
-     * @method
-     * @param {Object} options - Options for this job.
-     * @param {TileSource} options.source - Image loading strategy definition
+     * @class ImageJob
+     * @classdesc Handles downloading of a single image.
+     *
+     * @memberof OpenSeadragon
+     * @param {Object} options - Options for this ImageJob.
      * @param {String} [options.src] - URL of image to download.
-     * @param {Tile} [options.tile] - Tile that belongs the data to. The tile instance
-     *      is not internally used and serves for custom TileSources implementations.
+     * @param {Tile} [options.tile] - Tile that belongs the data to.
+     * @param {TileSource} [options.source] - Image loading strategy
      * @param {Boolean} [options.loadWithAjax] - Whether to load this image with AJAX.
      * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
-     * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
-     * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,
+     * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX requests.
+     * @param {String} [options.crossOriginPolicy] - CORS policy to use for downloads
+     * @param {String} [options.postData] - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
      *      see TileSource::getTilePostData) or null
-     * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
-     *      requests.
      * @param {Function} [options.callback] - Called once image has been downloaded.
      * @param {Function} [options.abort] - Called when this image job is aborted.
-     * @returns {boolean} true if job was immediatelly started, false if queued
+     * @param {Number} [options.timeout] - The max number of milliseconds that this image job may take to complete.
+     * @param {Number} [options.tries] - Actual number of the current try.
      */
-    addJob: function(options) {
-        if (!options.source) {
-            $.console.error('ImageLoader.prototype.addJob() requires [options.source]...');
-            options.source = $.TileSource.prototype;
-        }
+    $.ImageJob = function (options) {
+        /**
+         * Private parameter. Called automatically once image has been downloaded
+         *   (triggered by finish).
+         * @member {function} callback
+         * @memberof OpenSeadragon.ImageJob#
+         * @private
+         */
 
-        const _this = this,
-            jobOptions = {
-                src: options.src,
-                tile: options.tile || {},
-                source: options.source,
-                loadWithAjax: options.loadWithAjax,
-                ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
-                crossOriginPolicy: options.crossOriginPolicy,
-                ajaxWithCredentials: options.ajaxWithCredentials,
-                postData: options.postData,
-                callback: (job) => completeJob(_this, job, options.callback),
-                abort: options.abort,
-                timeout: this.timeout
+        /**
+         * URL of image (or other data item that will be rendered) to download.
+         * @member {string} src
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * Tile that owns the load. Note the data might be shared between tiles.
+         * @member {OpenSeadragon.Tile} tile
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * TileSource that initiated the load and owns the tile. Note the data might be shared between tiles and tile sources.
+         * @member {OpenSeadragon.TileSource} source
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * Whether to load this image with AJAX.
+         * @member {boolean} loadWithAjax
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * Headers to add to the image request if using AJAX.
+         * @member {Object.<string, string>} ajaxHeaders
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * Whether to set withCredentials on AJAX requests.
+         * @member {boolean} ajaxWithCredentials
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * CORS policy to use for downloads
+         * @member {String} crossOriginPolicy
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * HTTP POST data to send with the request
+         * @member {(String|Object)} [postData] - HTTP POST data (usually but not necessarily
+         *   in k=v&k2=v2... form, see TileSource::getTilePostData) or null
+         * @memberof OpenSeadragon.ImageJob#
+         */
+
+        /**
+         * Data object which will contain downloaded image data.
+         * @member {Image|*} data data object, by default an Image object (depends on TileSource)
+         * @memberof OpenSeadragon.ImageJob#
+         */
+        this.data = null;
+
+        /**
+         * User workspace to populate with helper variables
+         * @member {*} userData to append custom data and avoid namespace collision
+         * @memberof OpenSeadragon.ImageJob#
+         */
+        this.userData = {};
+
+        /**
+         * Error message holder. The final error message, default null (set by finish).
+         * @member {string} error message
+         * @memberof OpenSeadragon.ImageJob#
+         * @private
+         */
+        this.errorMsg = null;
+
+        /**
+         * Private parameter. The max number of milliseconds that
+         *   this image job may take to complete.
+         * @member {number} timeout
+         * @memberof OpenSeadragon.ImageJob#
+         * @private
+         */
+        this.timeout = $.DEFAULT_SETTINGS.timeout;
+
+        /**
+         * Flag if part of batch query.
+         * @member {boolean} isBatched
+         * @memberof OpenSeadragon.ImageJob#
+         * @private
+         */
+        this.isBatched = false;
+
+        $.extend(
+            true,
+            this,
+            {
+                jobId: null,
+                tries: 0,
             },
-            newJob = new $.ImageJob(jobOptions);
-        newJob._generation = this._generation;
+            options
+        );
 
-        const sourceWantsBatching = options.source && options.source.batchEnabled();
-        if (sourceWantsBatching) {
-            // Mark job as batched so completeJob knows not to decrement global counters
-            newJob.isBatched = true;
-            this._stageJobForBatching(newJob, options.source);
-            return false;
-        }
+        /**
+         * Private supplied abort callback, captured before start() replaces
+         * this.abort with its own closure. start() runs again for every retry, so reading this.abort there
+         * would chain the previous attempt's closure into the new one, and a single abort() would then fail
+         * the job once per attempt already made - calling back (and decrementing
+         * ImageLoader.jobsInProgress) several times for one job.
+         * @member {function} _callerAbort
+         * @memberof OpenSeadragon.ImageJob#
+         * @private
+         */
+        this._callerAbort = typeof this.abort === "function" ? this.abort : null;
+    };
 
-        if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
-            newJob.start();
-            this.jobsInProgress++;
-            return true;
-        }
-        this.jobQueue.push( newJob );
-        return false;
-    },
+    $.ImageJob.prototype = {
+        /**
+         * Starts the image job.
+         * @method
+         * @private
+         * @memberof OpenSeadragon.ImageJob#
+         */
+        start: function () {
+            this.tries++;
 
-    /**
-     * Internal method to group jobs.
-     * @private
-     */
-    _stageJobForBatching: function(newJob, source) {
-        let bucket = null;
-        for (let i = 0; i < this._batchBuckets.length; i++) {
-            if (this._batchBuckets[i].source.batchCompatible(source)) {
-                bucket = this._batchBuckets[i];
-                break;
-            }
-        }
+            const self = this;
+            // Captured at construction: see ImageJob#_callerAbort. Must not be re-read from this.abort,
+            // which on a retry is the closure installed by the previous start().
+            const selfAbort = this._callerAbort;
 
-        if (bucket && !bucket.timer) {
-            $.console.error(
-                'Attempted to add a new job to a batch bucket that has already been flushed. ' +
-                'Creating a new batch bucket for this source. ' +
-                'Check batch logic and timing if this happens frequently. ' +
-                'Bucket source:', source, 'Job ID:', newJob && newJob.jobId
-            );
-            bucket = null;
-        }
-
-        if (!bucket) {
-            bucket = {
-                source: source,
-                jobs: [],
-                timer: null,
-                waitTimeout: source.batchTimeout(),
-                maxJobs: source.batchMaxJobs()
+            /**
+             * Called automatically when the job times out.
+             *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
+             * @member {function} abort
+             * @memberof OpenSeadragon.ImageJob#
+             * @param {string} abortMessage description of reason
+             */
+            this.abort = function (abortMessage) {
+                // this should call finish or fail
+                self.source.downloadTileAbort(self);
+                if (typeof selfAbort === "function") {
+                    selfAbort();
+                }
+                self.fail(abortMessage || "Image load aborted.", null);
             };
-            bucket.timer = setTimeout(() => this._flushBatchBucket(bucket), bucket.waitTimeout);
-            this._batchBuckets.push(bucket);
-        }
 
-        bucket.jobs.push(newJob);
+            this.jobId = window.setTimeout(function () {
+                self.abort("Image load exceeded timeout (" + self.timeout + " ms)");
+            }, this.timeout);
 
-        if (bucket.maxJobs >= 1 && bucket.jobs.length >= bucket.maxJobs) {
-            clearTimeout(bucket.timer);
-            this._flushBatchBucket(bucket);
-        }
-    },
+            this.source.downloadTileStart(this);
+        },
 
-    /**
-     * Flushes a specific bucket, creating a BatchJob and submitting it to the main queue logic.
-     * @private
-     */
-    _flushBatchBucket: function(bucket) {
-        bucket.timer = null;
-        const index = this._batchBuckets.indexOf(bucket);
-        if (index > -1) {
-            this._batchBuckets.splice(index, 1);
-        }
+        /**
+         * Prepares the image job to be part of batched mode. It does not override abort
+         * callback and does not set timeout, nor call any tile source APIs. Managed by parent batch.
+         * @method
+         * @private
+         * @memberof OpenSeadragon.ImageJob#
+         */
+        prepareForBatch: function () {
+            this.tries++;
+            this.jobId = -1; // ensures methods above work, calling clearTimeout is noop
+        },
 
-        if (bucket.jobs.length === 0) {
-            return;
-        }
-
-        const _this = this;
-        const batchJob = new $.BatchImageJob({
-            source: bucket.source,
-            jobs: bucket.jobs,
-            timeout: this.timeout,
-            callback: (job) => completeBatchJob(_this, job),
-            // no abort here
-        });
-
-        if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
-            batchJob.start();
-            this.jobsInProgress++;
-        } else {
-            this.jobQueue.push(batchJob);
-        }
-    },
-
-    /**
-     * @returns {boolean} true if a job can be submitted
-     */
-    canAcceptNewJob() {
-        return !this.jobLimit || this.jobsInProgress < this.jobLimit;
-    },
-
-    /**
-     * Clear any unstarted image loading jobs from the queue.
-     * @method
-     * @param {Boolean} [cancelRetries=false] Also drop tiles waiting to be retried and cancel their pending
-     *      retry timers. For teardown only ({@link OpenSeadragon.Viewer#close}); the per-frame caller must
-     *      never set it, see the comment below.
-     */
-    clear: function(cancelRetries) {
-        for( let i = 0; i < this.jobQueue.length; i++ ) {
-            const job = this.jobQueue[i];
-            if ( typeof job.abort === "function" ) {
-                job.abort();
+        /**
+         * Finish this job. Should be called unless abort() was executed upon successful data retrieval.
+         *   Usage: context.finish(data, request, dataType=undefined). Pass the downloaded data object
+         *   add also reference to an ajax request if used. Optionally, specify what data type the data is.
+         * @param {*} data data that has been downloaded
+         * @param {XMLHttpRequest} request reference to the request if used
+         * @param {string} dataType data type identifier
+         *   fallback compatibility behavior: dataType treated as errorMessage if data is falsey value
+         * @memberof OpenSeadragon.ImageJob#
+         */
+        finish: function (data, request, dataType) {
+            if (!this.jobId) {
+                return;
             }
-        }
-        this.jobQueue = [];
+            // old behavior, no deprecation due to possible finish calls with invalid data item (e.g. different error)
+            if (isInvalidData(data)) {
+                this.fail(dataType || "[downloadTileStart->finish()] Retrieved data is invalid!", request);
+                return;
+            }
 
-        if (this._batchBuckets) {
-            for (let i = 0; i < this._batchBuckets.length; i++) {
-                const bucket = this._batchBuckets[i];
-                clearTimeout(bucket.timer);
-                bucket.timer = null;
-                // Staged jobs never started, so their abort is still the caller-supplied release callback (it
-                // resets tile.loading). Dropping the refs without calling it strands the tile as permanently
-                // "loading", so it is never re-selected for download.
-                for (let j = 0; j < bucket.jobs.length; j++) {
-                    const job = bucket.jobs[j];
-                    if ( typeof job.abort === "function" ) {
-                        job.abort();
+            this.data = data;
+            this.request = request;
+            this.errorMsg = null;
+            this.dataType = dataType;
+
+            window.clearTimeout(this.jobId);
+            this.jobId = null;
+
+            this.callback(this);
+        },
+
+        /**
+         * Finish this job as a failure. Should be called unless abort() was executed upon unsuccessful request.
+         *   Usage: context.fail(errMessage, request). Provide error message in case of failure,
+         *   add also reference to an ajax request if used.
+         * @param {string} errorMessage description upon failure
+         * @param {XMLHttpRequest} request reference to the request if used
+         */
+        fail: function (errorMessage, request) {
+            // Same guard as finish(): a job completes exactly once. A tile source can report a failure the
+            // job already knows about - aborting an XHR, for instance, fires its error handler synchronously
+            // from inside downloadTileAbort() - and calling back twice would decrement
+            // ImageLoader.jobsInProgress twice and queue the tile for retry twice.
+            if (!this.jobId) {
+                return;
+            }
+
+            this.data = null;
+            this.request = request;
+            this.errorMsg = errorMessage;
+            this.dataType = null;
+
+            window.clearTimeout(this.jobId);
+            this.jobId = null;
+
+            this.callback(this);
+        },
+    };
+
+    /**
+     * @class BatchImageJob
+     * @memberof OpenSeadragon
+     * @classdesc Wraps a group of ImageJobs as a single unit of work for the ImageLoader queue.
+     * It mimics the ImageJob API so it can be managed in a similar way.
+     * @param {Object} options
+     * @param {TileSource} options.source
+     * @param {Array<OpenSeadragon.ImageJob>} options.jobs
+     * @param {Function} [options.callback]
+     * @param {Function} [options.abort]
+     */
+    $.BatchImageJob = function (options) {
+        $.extend(
+            true,
+            this,
+            {
+                timeout: $.DEFAULT_SETTINGS.timeout,
+                jobId: null,
+                data: null,
+                dataType: null,
+                errorMsg: null,
+                _completed: false,
+            },
+            options
+        );
+
+        this.jobs = options.jobs || [];
+        this.source = options.source;
+    };
+
+    $.BatchImageJob.prototype = {
+        /**
+         * Starts the batch job.
+         * @method
+         * @private
+         * @memberof OpenSeadragon.BatchImageJob#
+         */
+        start: function () {
+            this._finishedJobs = 0;
+            this._completed = false;
+            const self = this;
+
+            /**
+             * Called automatically when the job times out.
+             *   Usage: if you decide to abort the request (no fail/finish will be called), call context.abort().
+             * @member {function} abort
+             * @memberof OpenSeadragon.ImageJob#
+             * @param {string} abortMessage description of reason
+             */
+            this.abort = function (abortMessage) {
+                // we don't call job.start() for each job, so abort is callable here
+                self.source.downloadTileBatchAbort(self);
+                for (let j of this.jobs) {
+                    // Abort only running jobs by checking jobId. In theory, all should finish at once,
+                    // but we cannot enforce the logic executed by each batch job. Note that this
+                    // 'abort' is not the same as ImageJob.abort() method -- the job was not executed
+                    // via ImageJob.start() and the abort here is an optional callback passed externally.
+                    if (j.jobId && j.abort) {
+                        j.abort();
                     }
                 }
-                bucket.jobs.length = 0;
+                self.fail(abortMessage || "Batch image aborted.", null);
+            };
+
+            // Set timeout for the whole batch
+            // The batch stays active (jobId set) while abort() fails its children: the wrapped fail below
+            // is a noop once jobId is cleared, so clearing it here would release the tiles without ever
+            // invoking their callbacks - no tile failure events and no configured retries.
+            this.jobId = window.setTimeout(function () {
+                self.abort("Batch image load exceeded timeout (" + self.timeout + " ms)");
+            }, this.timeout);
+
+            const wrap = (fn, job) => {
+                return (...args) => {
+                    if (!this.jobId) {
+                        return;
+                    }
+                    this._finishedJobs++;
+                    fn.call(job, ...args);
+                    if (this._finishedJobs === this.jobs.length) {
+                        this._complete();
+                    }
+                };
+            };
+
+            for (let j of this.jobs) {
+                // Handle timeout securely
+                const originalFinish = j.finish,
+                    originalFail = j.fail;
+                j.finish = wrap(originalFinish, j);
+                j.fail = wrap(originalFail, j);
+                j.unbatch = function () {
+                    this.finish = originalFinish;
+                    this.fail = originalFail;
+                    delete this.unbatch;
+                };
+                j.prepareForBatch();
             }
-            this._batchBuckets = [];
-        }
 
-        // Without cancelRetries, failedTiles and the pending retry timers are left strictly alone. This
-        // method runs once per frame whenever the wanted tile set changes, and the retry queue is the ONLY
-        // route back for a tile that already failed: TiledImage#_onTileLoad sets tile.exists = false on
-        // every failure and _updateTile() returns early on !tile.exists, so normal tile selection never
-        // picks that tile up again. Dropping the queue per frame would leave those tiles blank until
-        // TiledImage#reset().
-        if (cancelRetries && this._retryTimers) {
-            // Jobs already in flight outlive this call - their timeout or response lands later. The bump
-            // tells completeJob() not to queue a retry for them, which would undo the cancellation below.
-            this._generation++;
-            for (let i = 0; i < this._retryTimers.length; i++) {
-                clearTimeout(this._retryTimers[i]);
-            }
-            // _pumpQueue() incremented jobsInProgress once per timer it scheduled, so give back exactly that
-            // many slots - the jobs those timers would have started never ran.
-            this.jobsInProgress -= this._retryTimers.length;
-            this._retryTimers = [];
-            // Dropped without abort()/fail() on purpose. Once a job has been through start(), its abort is
-            // the closure that calls fail() -> completeJob(), which would re-push the job into failedTiles
-            // (the retry condition still holds) and decrement jobsInProgress for a job that was never
-            // counted as in progress. There is also nothing to release: these tiles already have
-            // loading === false, cleared by TiledImage#_onTileLoad when they failed.
-            this.failedTiles = [];
-        }
-    }
-};
+            this.source.downloadTileBatchStart(this);
+        },
 
-/**
- * Cleans up ImageJob once completed. Restarts job after tileRetryDelay seconds if failed
- * but max tileRetryMax times
- * @method
- * @private
- * @param loader - ImageLoader used to start job.
- * @param {OpenSeadragon.ImageJob} job - The ImageJob that has completed.
- * @param callback - Called once cleanup is finished.
- */
-function completeJob(loader, job, callback) {
-    // Must be sampled before the retry branch below clears the flag: the counter was incremented for the parent
-    // BatchImageJob, never for its children, so deciding on the post-retry value would decrement it twice.
-    const wasBatched = job.isBatched;
-
-    // A job from an earlier generation belongs to a view that has been torn down (see clear()), so it is
-    // allowed to finish, but not to queue more work.
-    if (job.errorMsg && job.data === null && job.tries < 1 + loader.tileRetryMax &&
-            job._generation === loader._generation) {
-        // Retries are ran separately.
-        job.isBatched = false;
-        if (typeof job.unbatch === "function") {
-            job.unbatch();
-        }
-        loader.failedTiles.push(job);
-    }
-
-    // CRITICAL: Child batch job items are marked as batched - do NOT decrement.
-    if (!wasBatched) {
-        loader.jobsInProgress--;
-    }
-
-    _pumpQueue(loader);
-
-    if (callback) {
-        callback(job.data, job.errorMsg, job.request, job.dataType, job.tries);
-    }
-}
-
-/**
- * Cleans up BatchImageJob once completed. Explicit here so it's easier to debug,
- * In fact batch job does not need to do anything except decrementing counter.
- * @method
- * @private
- * @param loader - ImageLoader used to start job.
- * @param {BatchImageJob} job - The ImageJob that has completed.
- */
-function completeBatchJob(loader, job) {
-    loader.jobsInProgress--;
-    job.jobs.length = 0; // make sure items are detached
-    _pumpQueue(loader);
-}
-
-/**
- * Starts the next waiting job now that a slot has been freed: queued jobs first, then delayed retries of
- * failed ones. Both completion paths must call this - completing a batch frees a slot just like any other job.
- * @method
- * @private
- * @param {OpenSeadragon.ImageLoader} loader
- */
-function _pumpQueue(loader) {
-    if (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
-        let nextJob = loader.jobQueue.shift();
-        nextJob.start();
-        loader.jobsInProgress++;
-    }
-
-    if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
-        if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
-            let nextJob = loader.failedTiles.shift();
-            const timer = setTimeout(function () {
-                const index = loader._retryTimers.indexOf(timer);
-                if (index > -1) {
-                    loader._retryTimers.splice(index, 1);
+        /**
+         * Aborts a batch job that has not been started yet. Once start() runs it installs its own abort
+         * that also tears down the request; this one only exists for jobs still sitting in the queue.
+         * Their child jobs still carry the caller-supplied release callback (it resets tile.loading), so
+         * dropping the references without calling it strands the tiles as permanently "loading".
+         */
+        abort: function () {
+            for (let i = 0; i < this.jobs.length; i++) {
+                const job = this.jobs[i];
+                if (typeof job.abort === "function") {
+                    job.abort();
                 }
-                nextJob.start();
-            }, loader.tileRetryDelay);
-            loader._retryTimers.push(timer);
+            }
+            this.jobs.length = 0;
+        },
+
+        /**
+         * Finish is defined as not to throw when accidentally used, but should not be called.
+         */
+        finish: function (data, request, dataType) {
+            $.console.error(
+                "Finish call on batch job is not desirable: call finish on individual child jobs!",
+                data,
+                request
+            );
+        },
+
+        /**
+         * Finish all batched jobs as a failure. This is available mainly for ImageLoader class logics,
+         * implementations should fail/finish/abort individual jobs directly.
+         * @param {string} errorMessage description upon failure
+         * @param {XMLHttpRequest} request reference to the request if used
+         */
+        fail: function (errorMessage, request) {
+            if (this._completed) {
+                return;
+            }
+
+            this.data = null;
+            this.request = request;
+            this.errorMsg = errorMessage;
+            this.dataType = null;
+
+            // Fail before setting jobId to null, which is checked for in wrapped fail call.
+            for (let i = 0; i < this.jobs.length; i++) {
+                if (this.jobs[i].jobId) {
+                    // If still running
+                    this.jobs[i].fail(errorMessage || "Batch failed", request);
+                }
+            }
+
+            // Failing the last child already completed the parent through the wrapper; _complete() is
+            // idempotent so the parent callback (and its jobsInProgress decrement) happens exactly once.
+            this._complete();
+        },
+
+        /**
+         * Completes the batch exactly once: stops the timeout, deactivates the job and notifies the owner.
+         * @method
+         * @private
+         * @memberof OpenSeadragon.BatchImageJob#
+         */
+        _complete: function () {
+            if (this._completed) {
+                return;
+            }
+            this._completed = true;
+
+            if (this.jobId) {
+                window.clearTimeout(this.jobId);
+            }
+            this.jobId = null;
+
+            if (this.callback) {
+                this.callback(this);
+            }
+        },
+    };
+
+    /**
+     * @class ImageLoader
+     * @memberof OpenSeadragon
+     * @classdesc Handles downloading of a set of images using asynchronous queue pattern.
+     * You generally won't have to interact with the ImageLoader directly.
+     * @param {Object} options - Options for this ImageLoader.
+     * @param {Number} [options.jobLimit] - The number of concurrent image requests. See imageLoaderLimit in {@link OpenSeadragon.Options} for details.
+     * @param {Number} [options.timeout] - The max number of milliseconds that an image job may take to complete.
+     */
+    $.ImageLoader = function (options) {
+        $.extend(
+            true,
+            this,
+            {
+                jobLimit: $.DEFAULT_SETTINGS.imageLoaderLimit,
+                timeout: $.DEFAULT_SETTINGS.timeout,
+                jobQueue: [],
+                failedTiles: [],
+                jobsInProgress: 0,
+            },
+            options
+        );
+
+        this._batchBuckets = [];
+        // setTimeout handles for failedTiles entries waiting out tileRetryDelay. Kept so teardown can cancel
+        // them: a retry that fires after Viewer#close() downloads into a world that no longer has the tile.
+        this._retryTimers = [];
+        // Bumped by clear(cancelRetries). Jobs carry the generation they were created in, so a job that was
+        // still in flight when the viewer was torn down can finish without queueing a fresh retry: cancelling
+        // the timers alone does not help, because such a job creates a brand new one when it completes.
+        this._generation = 0;
+    };
+
+    /** @lends OpenSeadragon.ImageLoader.prototype */
+    $.ImageLoader.prototype = {
+        /**
+         * Add an unloaded image to the loader queue.
+         * @method
+         * @param {Object} options - Options for this job.
+         * @param {TileSource} options.source - Image loading strategy definition
+         * @param {String} [options.src] - URL of image to download.
+         * @param {Tile} [options.tile] - Tile that belongs the data to. The tile instance
+         *      is not internally used and serves for custom TileSources implementations.
+         * @param {Boolean} [options.loadWithAjax] - Whether to load this image with AJAX.
+         * @param {String} [options.ajaxHeaders] - Headers to add to the image request if using AJAX.
+         * @param {String|Boolean} [options.crossOriginPolicy] - CORS policy to use for downloads
+         * @param {String} [options.postData] - POST parameters (usually but not necessarily in k=v&k2=v2... form,
+         *      see TileSource::getTilePostData) or null
+         * @param {Boolean} [options.ajaxWithCredentials] - Whether to set withCredentials on AJAX
+         *      requests.
+         * @param {Function} [options.callback] - Called once image has been downloaded.
+         * @param {Function} [options.abort] - Called when this image job is aborted.
+         * @returns {boolean} true if job was immediatelly started, false if queued
+         */
+        addJob: function (options) {
+            if (!options.source) {
+                $.console.error("ImageLoader.prototype.addJob() requires [options.source]...");
+                options.source = $.TileSource.prototype;
+            }
+
+            const _this = this,
+                jobOptions = {
+                    src: options.src,
+                    tile: options.tile || {},
+                    source: options.source,
+                    loadWithAjax: options.loadWithAjax,
+                    ajaxHeaders: options.loadWithAjax ? options.ajaxHeaders : null,
+                    crossOriginPolicy: options.crossOriginPolicy,
+                    ajaxWithCredentials: options.ajaxWithCredentials,
+                    postData: options.postData,
+                    callback: (job) => completeJob(_this, job, options.callback),
+                    abort: options.abort,
+                    timeout: this.timeout,
+                },
+                newJob = new $.ImageJob(jobOptions);
+            newJob._generation = this._generation;
+
+            const sourceWantsBatching = options.source && options.source.batchEnabled();
+            if (sourceWantsBatching) {
+                // Mark job as batched so completeJob knows not to decrement global counters
+                newJob.isBatched = true;
+                this._stageJobForBatching(newJob, options.source);
+                return false;
+            }
+
+            if (!this.jobLimit || this.jobsInProgress < this.jobLimit) {
+                newJob.start();
+                this.jobsInProgress++;
+                return true;
+            }
+            this.jobQueue.push(newJob);
+            return false;
+        },
+
+        /**
+         * Internal method to group jobs.
+         * @private
+         */
+        _stageJobForBatching: function (newJob, source) {
+            let bucket = null;
+            for (let i = 0; i < this._batchBuckets.length; i++) {
+                if (this._batchBuckets[i].source.batchCompatible(source)) {
+                    bucket = this._batchBuckets[i];
+                    break;
+                }
+            }
+
+            if (bucket && !bucket.timer) {
+                $.console.error(
+                    "Attempted to add a new job to a batch bucket that has already been flushed. " +
+                        "Creating a new batch bucket for this source. " +
+                        "Check batch logic and timing if this happens frequently. " +
+                        "Bucket source:",
+                    source,
+                    "Job ID:",
+                    newJob && newJob.jobId
+                );
+                bucket = null;
+            }
+
+            if (!bucket) {
+                bucket = {
+                    source: source,
+                    jobs: [],
+                    timer: null,
+                    waitTimeout: source.batchTimeout(),
+                    maxJobs: source.batchMaxJobs(),
+                };
+                bucket.timer = setTimeout(() => this._flushBatchBucket(bucket), bucket.waitTimeout);
+                this._batchBuckets.push(bucket);
+            }
+
+            bucket.jobs.push(newJob);
+
+            if (bucket.maxJobs >= 1 && bucket.jobs.length >= bucket.maxJobs) {
+                clearTimeout(bucket.timer);
+                this._flushBatchBucket(bucket);
+            }
+        },
+
+        /**
+         * Flushes a specific bucket, creating a BatchJob and submitting it to the main queue logic.
+         * @private
+         */
+        _flushBatchBucket: function (bucket) {
+            bucket.timer = null;
+            const index = this._batchBuckets.indexOf(bucket);
+            if (index > -1) {
+                this._batchBuckets.splice(index, 1);
+            }
+
+            if (bucket.jobs.length === 0) {
+                return;
+            }
+
+            const _this = this;
+            const batchJob = new $.BatchImageJob({
+                source: bucket.source,
+                jobs: bucket.jobs,
+                timeout: this.timeout,
+                callback: (job) => completeBatchJob(_this, job),
+                // no abort here
+            });
+
+            if (!this.jobLimit || this.jobsInProgress < this.jobLimit) {
+                batchJob.start();
+                this.jobsInProgress++;
+            } else {
+                this.jobQueue.push(batchJob);
+            }
+        },
+
+        /**
+         * @returns {boolean} true if a job can be submitted
+         */
+        canAcceptNewJob() {
+            return !this.jobLimit || this.jobsInProgress < this.jobLimit;
+        },
+
+        /**
+         * Clear any unstarted image loading jobs from the queue.
+         * @method
+         * @param {Boolean} [cancelRetries=false] Also drop tiles waiting to be retried and cancel their pending
+         *      retry timers. For teardown only ({@link OpenSeadragon.Viewer#close}); the per-frame caller must
+         *      never set it, see the comment below.
+         */
+        clear: function (cancelRetries) {
+            for (let i = 0; i < this.jobQueue.length; i++) {
+                const job = this.jobQueue[i];
+                if (typeof job.abort === "function") {
+                    job.abort();
+                }
+            }
+            this.jobQueue = [];
+
+            if (this._batchBuckets) {
+                for (let i = 0; i < this._batchBuckets.length; i++) {
+                    const bucket = this._batchBuckets[i];
+                    clearTimeout(bucket.timer);
+                    bucket.timer = null;
+                    // Staged jobs never started, so their abort is still the caller-supplied release callback (it
+                    // resets tile.loading). Dropping the refs without calling it strands the tile as permanently
+                    // "loading", so it is never re-selected for download.
+                    for (let j = 0; j < bucket.jobs.length; j++) {
+                        const job = bucket.jobs[j];
+                        if (typeof job.abort === "function") {
+                            job.abort();
+                        }
+                    }
+                    bucket.jobs.length = 0;
+                }
+                this._batchBuckets = [];
+            }
+
+            // Without cancelRetries, failedTiles and the pending retry timers are left strictly alone. This
+            // method runs once per frame whenever the wanted tile set changes, and the retry queue is the ONLY
+            // route back for a tile that already failed: TiledImage#_onTileLoad sets tile.exists = false on
+            // every failure and _updateTile() returns early on !tile.exists, so normal tile selection never
+            // picks that tile up again. Dropping the queue per frame would leave those tiles blank until
+            // TiledImage#reset().
+            if (cancelRetries && this._retryTimers) {
+                // Jobs already in flight outlive this call - their timeout or response lands later. The bump
+                // tells completeJob() not to queue a retry for them, which would undo the cancellation below.
+                this._generation++;
+                for (let i = 0; i < this._retryTimers.length; i++) {
+                    clearTimeout(this._retryTimers[i]);
+                }
+                // _pumpQueue() incremented jobsInProgress once per timer it scheduled, so give back exactly that
+                // many slots - the jobs those timers would have started never ran.
+                this.jobsInProgress -= this._retryTimers.length;
+                this._retryTimers = [];
+                // Dropped without abort()/fail() on purpose. Once a job has been through start(), its abort is
+                // the closure that calls fail() -> completeJob(), which would re-push the job into failedTiles
+                // (the retry condition still holds) and decrement jobsInProgress for a job that was never
+                // counted as in progress. There is also nothing to release: these tiles already have
+                // loading === false, cleared by TiledImage#_onTileLoad when they failed.
+                this.failedTiles = [];
+            }
+        },
+    };
+
+    /**
+     * Cleans up ImageJob once completed. Restarts job after tileRetryDelay seconds if failed
+     * but max tileRetryMax times
+     * @method
+     * @private
+     * @param loader - ImageLoader used to start job.
+     * @param {OpenSeadragon.ImageJob} job - The ImageJob that has completed.
+     * @param callback - Called once cleanup is finished.
+     */
+    function completeJob(loader, job, callback) {
+        // Must be sampled before the retry branch below clears the flag: the counter was incremented for the parent
+        // BatchImageJob, never for its children, so deciding on the post-retry value would decrement it twice.
+        const wasBatched = job.isBatched;
+
+        // A job from an earlier generation belongs to a view that has been torn down (see clear()), so it is
+        // allowed to finish, but not to queue more work.
+        if (
+            job.errorMsg &&
+            job.data === null &&
+            job.tries < 1 + loader.tileRetryMax &&
+            job._generation === loader._generation
+        ) {
+            // Retries are ran separately.
+            job.isBatched = false;
+            if (typeof job.unbatch === "function") {
+                job.unbatch();
+            }
+            loader.failedTiles.push(job);
+        }
+
+        // CRITICAL: Child batch job items are marked as batched - do NOT decrement.
+        if (!wasBatched) {
+            loader.jobsInProgress--;
+        }
+
+        _pumpQueue(loader);
+
+        if (callback) {
+            callback(job.data, job.errorMsg, job.request, job.dataType, job.tries);
+        }
+    }
+
+    /**
+     * Cleans up BatchImageJob once completed. Explicit here so it's easier to debug,
+     * In fact batch job does not need to do anything except decrementing counter.
+     * @method
+     * @private
+     * @param loader - ImageLoader used to start job.
+     * @param {BatchImageJob} job - The ImageJob that has completed.
+     */
+    function completeBatchJob(loader, job) {
+        loader.jobsInProgress--;
+        job.jobs.length = 0; // make sure items are detached
+        _pumpQueue(loader);
+    }
+
+    /**
+     * Starts the next waiting job now that a slot has been freed: queued jobs first, then delayed retries of
+     * failed ones. Both completion paths must call this - completing a batch frees a slot just like any other job.
+     * @method
+     * @private
+     * @param {OpenSeadragon.ImageLoader} loader
+     */
+    function _pumpQueue(loader) {
+        if (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
+            let nextJob = loader.jobQueue.shift();
+            nextJob.start();
             loader.jobsInProgress++;
         }
+
+        if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
+            if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
+                let nextJob = loader.failedTiles.shift();
+                const timer = setTimeout(function () {
+                    const index = loader._retryTimers.indexOf(timer);
+                    if (index > -1) {
+                        loader._retryTimers.splice(index, 1);
+                    }
+                    nextJob.start();
+                }, loader.tileRetryDelay);
+                loader._retryTimers.push(timer);
+                loader.jobsInProgress++;
+            }
+        }
     }
-}
 
-// Consistent data validity checker
-function isInvalidData(dataItem) {
-    return dataItem === null || dataItem === undefined || dataItem === false;
-}
-
-}(OpenSeadragon));
+    // Consistent data validity checker
+    function isInvalidData(dataItem) {
+        return dataItem === null || dataItem === undefined || dataItem === false;
+    }
+})(OpenSeadragon);
