@@ -15,7 +15,6 @@ on:
       - '*.json'
       - '*.js'
       - '*.css'
-      - '!test/demo/**'
 
 jobs:
   run_checks:
