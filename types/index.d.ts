@@ -314,7 +314,8 @@ declare namespace OpenSeadragon {
         toolbar?: string | HTMLElement;
         xmlPath?: string;
         prefixUrl?: string;
-        navImages?: NavImages;
+        buttonColors?: { background?: string; icon?: string };
+        navImages?: Partial<NavImages>;
         debugMode?: boolean;
         debugGridColor?: string;
         silenceMultiImageWarnings?: boolean;
@@ -1875,6 +1876,7 @@ declare namespace OpenSeadragon {
         setAjaxHeaders(ajaxHeaders: object, propagate?: boolean): void;
         setCooperativeGestures(enabled: boolean): Viewer;
         setDebugMode(debug: boolean): Viewer;
+        setButtonColors(colors: { background?: string; icon?: string }): Viewer;
         setFullPage(fullScreen: boolean): Viewer;
         setFullScreen(fullScreen: boolean): Viewer;
         setKeyboardNavEnabled(enabled: boolean): Viewer;

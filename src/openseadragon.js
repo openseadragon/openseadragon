@@ -142,19 +142,24 @@
   *     Prefer the newer Options.tileSources.
   *
   * @property {String} [prefixUrl='/images/']
-  *     Prepends the prefixUrl to navImages paths, which is very useful
-  *     since the default paths are rarely useful for production
-  *     environments.
+  *     Prepends the prefixUrl to navImages paths. Data URLs, such as the
+  *     default button images, are not prefixed.
+  *
+  * @property {Object} [buttonColors]
+  *     Colors for the default button images. Hover and pressed states swap
+  *     the two, so pick a pair with good contrast. Viewer#setButtonColors
+  *     changes them later.
+  * @property {String} [buttonColors.background='#f4f5f7']
+  * @property {String} [buttonColors.icon='#1f2329']
   *
   * @property {OpenSeadragon.NavImages} [navImages]
   *     An object with a property for each button or other built-in navigation
   *     control, eg the current 'zoomIn', 'zoomOut', 'home', and 'fullpage'.
   *     Each of those in turn provides an image path for each state of the button
-  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'PRESS'. Finally the
-  *     image paths, by default assume there is a folder on the servers root path
-  *     called '/images', eg '/images/zoomin_rest.png'.  If you need to adjust
-  *     these paths, prefer setting the option.prefixUrl rather than overriding
-  *     every image path directly through this setting.
+  *     or navigation control, eg 'REST', 'GROUP', 'HOVER', 'DOWN'. By default
+  *     these are SVGs built from buttonColors. Any button you set here replaces
+  *     the default for that button only. The legacy PNG buttons ship in the
+  *     images folder, eg '/images/zoomin_rest.png', for use with prefixUrl.
   *
   * @property {Boolean} [debugMode=false]
   *     TODO: provide an in-screen panel providing event detail feedback.
@@ -1523,61 +1528,9 @@ function OpenSeadragon( options ){
 
             //INTERFACE RESOURCE SETTINGS
             prefixUrl:              "/images/",
-            navImages: {
-                zoomIn: {
-                    REST:   'zoomin_rest.png',
-                    GROUP:  'zoomin_grouphover.png',
-                    HOVER:  'zoomin_hover.png',
-                    DOWN:   'zoomin_pressed.png'
-                },
-                zoomOut: {
-                    REST:   'zoomout_rest.png',
-                    GROUP:  'zoomout_grouphover.png',
-                    HOVER:  'zoomout_hover.png',
-                    DOWN:   'zoomout_pressed.png'
-                },
-                home: {
-                    REST:   'home_rest.png',
-                    GROUP:  'home_grouphover.png',
-                    HOVER:  'home_hover.png',
-                    DOWN:   'home_pressed.png'
-                },
-                fullpage: {
-                    REST:   'fullpage_rest.png',
-                    GROUP:  'fullpage_grouphover.png',
-                    HOVER:  'fullpage_hover.png',
-                    DOWN:   'fullpage_pressed.png'
-                },
-                rotateleft: {
-                    REST:   'rotateleft_rest.png',
-                    GROUP:  'rotateleft_grouphover.png',
-                    HOVER:  'rotateleft_hover.png',
-                    DOWN:   'rotateleft_pressed.png'
-                },
-                rotateright: {
-                    REST:   'rotateright_rest.png',
-                    GROUP:  'rotateright_grouphover.png',
-                    HOVER:  'rotateright_hover.png',
-                    DOWN:   'rotateright_pressed.png'
-                },
-                flip: { // Flip icon designed by Yaroslav Samoylov from the Noun Project and modified by Nelson Campos ncampos@criteriamarathon.com, https://thenounproject.com/term/flip/136289/
-                    REST:   'flip_rest.png',
-                    GROUP:  'flip_grouphover.png',
-                    HOVER:  'flip_hover.png',
-                    DOWN:   'flip_pressed.png'
-                },
-                previous: {
-                    REST:   'previous_rest.png',
-                    GROUP:  'previous_grouphover.png',
-                    HOVER:  'previous_hover.png',
-                    DOWN:   'previous_pressed.png'
-                },
-                next: {
-                    REST:   'next_rest.png',
-                    GROUP:  'next_grouphover.png',
-                    HOVER:  'next_hover.png',
-                    DOWN:   'next_pressed.png'
-                }
+            buttonColors: {
+                background: "#f4f5f7",
+                icon:       "#1f2329"
             },
 
             //DEVELOPER SETTINGS
