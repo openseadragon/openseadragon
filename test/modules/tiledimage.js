@@ -649,6 +649,71 @@
         }]);
     });
 
+    QUnit.test('_visitTiles matches Rect.intersection for every candidate tile', function(assert) {
+        const done = assert.async();
+
+        viewer.addHandler('open', function() {
+            const image = viewer.world.getItemAt(0);
+            const level = image.source.maxLevel;
+            const tile = image.getTileBounds(level, 1, 1);
+            const left = tile.x / 2;
+            const top = tile.y / 2;
+
+            const areas = {
+                interior: new OpenSeadragon.Rect(0.3, 0.3, 0.2, 0.2),
+                'ending on a tile edge': new OpenSeadragon.Rect(left, tile.y + 0.01, left, 0.1),
+                'ending on a tile corner': new OpenSeadragon.Rect(left, top, left, top),
+                'zero width': new OpenSeadragon.Rect(tile.x, 0.1, 0, 0.5),
+                'zero size': new OpenSeadragon.Rect(tile.x, tile.y, 0, 0),
+                rotated: new OpenSeadragon.Rect(0.3, 0.3, 0.2, 0.2, 30),
+                'past the right of the image': new OpenSeadragon.Rect(0.8, 0.2, 0.5, 0.3),
+            };
+
+            function check(label) {
+                Object.keys(areas).forEach(function(name) {
+                    const area = areas[name];
+                    const candidates = [];
+                    const getTileBounds = image.getTileBounds;
+                    image.getTileBounds = function(l, x, y) {
+                        const bounds = getTileBounds.apply(this, arguments);
+                        candidates.push({ key: x + ',' + y, bounds: bounds });
+                        return bounds;
+                    };
+                    const visited = new Set();
+                    image._visitTiles(level, area, function(x, y) {
+                        visited.add(x + ',' + y);
+                    });
+                    image.getTileBounds = getTileBounds;
+
+                    const mismatches = candidates.filter(function(candidate) {
+                        return visited.has(candidate.key) !== (area.intersection(candidate.bounds) !== null);
+                    }).map(function(candidate) {
+                        return candidate.key;
+                    });
+                    assert.deepEqual(mismatches, [], label + ', ' + name + ': visits the tiles Rect.intersection reports');
+                });
+            }
+
+            check('plain');
+            image.wrapHorizontal = true;
+            check('wrapped');
+            image.wrapHorizontal = false;
+            image.setFlip(true);
+            check('flipped');
+            done();
+        });
+
+        // Power-of-two sizes put tile edges on exact binary fractions, so an area can end exactly on one
+        viewer.open({
+            width: 1024,
+            height: 1024,
+            tileSize: 256,
+            getTileUrl: function() {
+                return '/test/data/testpattern_files/0/0_0.jpg';
+            }
+        });
+    });
+
     QUnit.test('_getCornerTiles without wrapping', function(assert) {
         const tiledImageMock = MockSeadragon.getTiledImage(null, {
             wrapHorizontal: false,
