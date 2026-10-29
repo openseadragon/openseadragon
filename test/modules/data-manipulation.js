@@ -1,7 +1,6 @@
 /* global QUnit, testLog */
 
-(function() {
-
+(function () {
     let viewer;
     QUnit.module(`Data Manipulation Across Drawers`, {
         beforeEach: function () {
@@ -14,7 +13,7 @@
             }
 
             viewer = null;
-        }
+        },
     });
 
     const PROMISE_REF_KEY = Symbol("_private_test_ref");
@@ -24,19 +23,19 @@
     // ['webgl'].forEach(testDrawer);
 
     function getPluginCode(overlayColor = "rgba(0,0,255,0.5)") {
-        return async function(e) {
-            const ctx = await e.getData('context2d');
+        return async function (e) {
+            const ctx = await e.getData("context2d");
             if (ctx) {
                 const canvas = ctx.canvas;
                 ctx.fillStyle = overlayColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                await e.setData(ctx, 'context2d');
+                await e.setData(ctx, "context2d");
             }
         };
     }
 
     function getResetTileDataCode() {
-        return async function(e) {
+        return async function (e) {
             e.resetData();
         };
     }
@@ -45,16 +44,14 @@
         return `${t.level}/${t.x}-${t.y}`;
     }
 
-
     function testDrawer(type) {
-
         function whiteViewport() {
             viewer = OpenSeadragon({
-                id: 'example',
-                prefixUrl: '/build/openseadragon/images/',
+                id: "example",
+                prefixUrl: "/build/openseadragon/images/",
                 maxImageCacheCount: 200,
                 springStiffness: 100,
-                drawer: type
+                drawer: type,
             });
 
             viewer.open({
@@ -75,15 +72,15 @@
                     ctx.fillRect(0, 0, context.tile.size.x, context.tile.size.y);
 
                     context.finish(ctx, null, "context2d");
-                }
+                },
             });
 
             // Get promise reference to wait for tile ready
-            viewer.addHandler('tile-loaded', e => {
+            viewer.addHandler("tile-loaded", (e) => {
                 e.tile[PROMISE_REF_KEY] = e.promise;
             });
         }
-        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
         // we test middle of the canvas, so that we can test both tiles or the output canvas of canvas drawer :)
         async function readTileData(tileRef = null) {
@@ -98,7 +95,7 @@
             if (type === "canvas") {
                 //test with the underlying canvas instead
                 const canvas = viewer.drawer.canvas;
-                return viewer.drawer.canvas.getContext("2d").getImageData(canvas.width/2, canvas.height/2, 1, 1);
+                return viewer.drawer.canvas.getContext("2d").getImageData(canvas.width / 2, canvas.height / 2, 1, 1);
             }
 
             //else incompatible drawer for data getting
@@ -107,19 +104,19 @@
 
             const ctx = await cache.getDataAs("context2d");
             if (!ctx) return null;
-            return ctx.getImageData(ctx.canvas.width/2, ctx.canvas.height/2, 1, 1)
+            return ctx.getImageData(ctx.canvas.width / 2, ctx.canvas.height / 2, 1, 1);
         }
 
-        QUnit.test(type + ' drawer: basic scenario.', function(assert) {
+        QUnit.test(type + " drawer: basic scenario.", function (assert) {
             whiteViewport();
             const done = assert.async();
             const fnA = getPluginCode("rgba(0,0,255,1)");
             const fnB = getPluginCode("rgba(255,0,0,1)");
 
-            viewer.addHandler('tile-invalidated', fnA);
-            viewer.addHandler('tile-invalidated', fnB);
+            viewer.addHandler("tile-invalidated", fnA);
+            viewer.addHandler("tile-invalidated", fnB);
 
-            viewer.addHandler('open', async () => {
+            viewer.addHandler("open", async () => {
                 await viewer.waitForFinishedJobsForTest();
                 const data = await readTileData();
                 assert.equal(data.data[0], 255);
@@ -132,7 +129,11 @@
                     await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
-                    assert.equal(caches.length, 2, `Tile ${getTileDescription(tile)} has only two caches - main & original`);
+                    assert.equal(
+                        caches.length,
+                        2,
+                        `Tile ${getTileDescription(tile)} has only two caches - main & original`
+                    );
                     for (const [key, value] of caches) {
                         assert.ok(value.loaded, `Attached cache '${key}' is ready.`);
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
@@ -144,18 +145,18 @@
             });
         });
 
-        QUnit.test(type + ' drawer: basic scenario with priorities + events addition.', function(assert) {
+        QUnit.test(type + " drawer: basic scenario with priorities + events addition.", function (assert) {
             whiteViewport();
             const done = assert.async();
             // FNA gets applied last since it has low priority
             const fnA = getPluginCode("rgba(0,0,255,1)");
             const fnB = getPluginCode("rgba(255,0,0,1)");
 
-            viewer.addHandler('tile-invalidated', fnA);
-            viewer.addHandler('tile-invalidated', fnB, null, 1);
+            viewer.addHandler("tile-invalidated", fnA);
+            viewer.addHandler("tile-invalidated", fnB, null, 1);
             // const promise = viewer.requestInvalidate();
 
-            viewer.addHandler('open', async () => {
+            viewer.addHandler("open", async () => {
                 await viewer.waitForFinishedJobsForTest();
 
                 let data = await readTileData();
@@ -165,7 +166,7 @@
                 assert.equal(data.data[3], 255);
 
                 // Test swap
-                viewer.addHandler('tile-invalidated', fnB);
+                viewer.addHandler("tile-invalidated", fnB);
                 await viewer.requestInvalidate();
 
                 data = await readTileData();
@@ -176,7 +177,7 @@
                 assert.equal(data.data[3], 255);
 
                 // Now B gets applied last! Red
-                viewer.addHandler('tile-invalidated', fnB, null, -1);
+                viewer.addHandler("tile-invalidated", fnB, null, -1);
                 await viewer.requestInvalidate();
                 // no change
                 data = await readTileData();
@@ -190,7 +191,11 @@
                     await tile[PROMISE_REF_KEY]; // to be sure all tiles has finished before checking
 
                     const caches = Object.entries(tile._caches);
-                    assert.equal(caches.length, 2, `Tile ${getTileDescription(tile)} has only two caches - main & original`);
+                    assert.equal(
+                        caches.length,
+                        2,
+                        `Tile ${getTileDescription(tile)} has only two caches - main & original`
+                    );
                     for (const [key, value] of caches) {
                         assert.ok(value.loaded, `Attached cache '${key}' is ready.`);
                         assert.notOk(value._destroyed, `Attached cache '${key}' is not destroyed.`);
@@ -202,18 +207,18 @@
             });
         });
 
-        QUnit.test(type + ' drawer: one calls tile restore.', function(assert) {
+        QUnit.test(type + " drawer: one calls tile restore.", function (assert) {
             whiteViewport();
 
             const done = assert.async();
             const fnA = getPluginCode("rgba(0,255,0,1)");
             const fnB = getResetTileDataCode();
 
-            viewer.addHandler('tile-invalidated', fnA);
-            viewer.addHandler('tile-invalidated', fnB, null, 1);
+            viewer.addHandler("tile-invalidated", fnA);
+            viewer.addHandler("tile-invalidated", fnB, null, 1);
             // const promise = viewer.requestInvalidate();
 
-            viewer.addHandler('open', async () => {
+            viewer.addHandler("open", async () => {
                 await viewer.waitForFinishedJobsForTest();
 
                 let data = await readTileData();
@@ -223,7 +228,7 @@
                 assert.equal(data.data[3], 255);
 
                 // Test swap - suddenly B applied since it was added later
-                viewer.addHandler('tile-invalidated', fnB);
+                viewer.addHandler("tile-invalidated", fnB);
                 await viewer.requestInvalidate();
                 data = await readTileData();
                 assert.equal(data.data[0], 255);
@@ -231,7 +236,7 @@
                 assert.equal(data.data[2], 255);
                 assert.equal(data.data[3], 255);
 
-                viewer.addHandler('tile-invalidated', fnB, null, -1);
+                viewer.addHandler("tile-invalidated", fnB, null, -1);
                 await viewer.requestInvalidate();
                 data = await readTileData();
                 //Erased!
@@ -257,4 +262,4 @@
             });
         });
     }
-}());
+})();

@@ -1,61 +1,56 @@
 /* global $, QUnit, Util */
 
 (function () {
-
     // ----------
     window.Util = {
         // ----------
-        simulateViewerClickWithDrag: function ( args ) {
+        simulateViewerClickWithDrag: function (args) {
             // args = { viewer, widthFactor, heightFactor, dragCount, dragDx, dragDy }
 
-            if ( args.hasOwnProperty( 'dragCount' ) ) {
+            if (args.hasOwnProperty("dragCount")) {
                 args.dragDx = args.dragDx || 1;
                 args.dragDy = args.dragDy || 1;
-            }
-            else {
+            } else {
                 args.dragCount = 0;
             }
 
-            if ( args.widthFactor === undefined ) {
+            if (args.widthFactor === undefined) {
                 args.widthFactor = 0.5;
             }
 
             //TODO Redefine to be the middle by default
-            if ( args.heightFactor === undefined ) {
+            if (args.heightFactor === undefined) {
                 args.heightFactor = 0.5;
             }
 
-            args.widthFactor = Math.min( 1, Math.max( 0, args.widthFactor ) );
+            args.widthFactor = Math.min(1, Math.max(0, args.widthFactor));
             //TODO Fix this.  The max height should be 1/AR
-            args.heightFactor = Math.min( 1, Math.max( 0, args.heightFactor ) );
+            args.heightFactor = Math.min(1, Math.max(0, args.heightFactor));
 
-            const $canvas = $( args.viewer.element ).find( '.openseadragon-canvas' ).not( '.navigator .openseadragon-canvas' );
+            const $canvas = $(args.viewer.element)
+                .find(".openseadragon-canvas")
+                .not(".navigator .openseadragon-canvas");
             const offset = $canvas.offset();
             const event = {
-                clientX: offset.left + Math.floor( $canvas.width() * args.widthFactor ),
-                clientY: offset.top + Math.floor( $canvas.height() * args.heightFactor )
+                clientX: offset.left + Math.floor($canvas.width() * args.widthFactor),
+                clientY: offset.top + Math.floor($canvas.height() * args.heightFactor),
             };
 
-            $canvas
-                .simulate( 'mouseenter', event )
-                .simulate( 'mousedown', event );
-            for ( let i = 0; i < args.dragCount; i++ ) {
+            $canvas.simulate("mouseenter", event).simulate("mousedown", event);
+            for (let i = 0; i < args.dragCount; i++) {
                 event.clientX += args.dragDx;
                 event.clientY += args.dragDy;
-                $canvas
-                    .simulate( "mousemove", event );
+                $canvas.simulate("mousemove", event);
             }
-            $canvas
-                .simulate( 'mouseup', event )
-                .simulate( 'mouseleave', event );
+            $canvas.simulate("mouseup", event).simulate("mouseleave", event);
         },
 
         // ----------
         initializeTestDOM: function () {
-            $( "#qunit-fixture" )
-                .append( '<div><div id="example"></div><div id="exampleNavigator"></div></div>' )
-                .append( '<div id="wideexample"></div>' )
-                .append( '<div id="tallexample"></div>' );
+            $("#qunit-fixture")
+                .append('<div><div id="example"></div><div id="exampleNavigator"></div></div>')
+                .append('<div id="wideexample"></div>')
+                .append('<div id="tallexample"></div>');
         },
 
         // ----------
@@ -83,37 +78,43 @@
             Util.assessNumericValue(assert, actualRect.y, expectedRect.y, precision, message + " y: ");
             Util.assessNumericValue(assert, actualRect.width, expectedRect.width, precision, message + " width: ");
             Util.assessNumericValue(assert, actualRect.height, expectedRect.height, precision, message + " height: ");
-            Util.assessNumericValue(assert, actualRect.degrees, expectedRect.degrees, precision, message + " degrees: ");
+            Util.assessNumericValue(
+                assert,
+                actualRect.degrees,
+                expectedRect.degrees,
+                precision,
+                message + " degrees: "
+            );
         },
 
         // ----------
-        timeWatcher: function ( assert, time ) {
+        timeWatcher: function (assert, time) {
             const done = assert.async();
             time = time || 2000;
             let finished = false;
 
-            setTimeout( function () {
-                if ( !finished ) {
+            setTimeout(function () {
+                if (!finished) {
                     finished = true;
-                    assert.ok( false, 'finishes in ' + time + 'ms' );
+                    assert.ok(false, "finishes in " + time + "ms");
                     done();
                 }
-            }, time );
+            }, time);
 
             return {
                 done: function () {
-                    if ( !finished ) {
+                    if (!finished) {
                         finished = true;
                         done();
                     }
-                }
+                },
             };
         },
 
         // ----------
-        spyOnce: function(obj, functionName, callback) {
+        spyOnce: function (obj, functionName, callback) {
             const original = obj[functionName];
-            obj[functionName] = function() {
+            obj[functionName] = function () {
                 obj[functionName] = original;
                 let result = callback.apply(this, arguments);
                 if (result === undefined) {
@@ -124,12 +125,12 @@
         },
 
         // ----------
-        testDeprecation: function(assert, obj0, member0, obj1, member1) {
+        testDeprecation: function (assert, obj0, member0, obj1, member1) {
             let called = false;
             let errored = false;
 
             if (obj1 && member1) {
-                this.spyOnce(obj1, member1, function() {
+                this.spyOnce(obj1, member1, function () {
                     called = true;
                     return false;
                 });
@@ -137,15 +138,15 @@
                 called = true;
             }
 
-            this.spyOnce(OpenSeadragon.console, 'error', function(message) {
+            this.spyOnce(OpenSeadragon.console, "error", function (message) {
                 if (/deprecated/.test(message)) {
                     errored = true;
                 }
             });
 
             obj0[member0]();
-            assert.equal(called, true, 'called through for ' + member0);
-            assert.equal(errored, true, 'errored for ' + member0);
+            assert.equal(called, true, "called through for " + member0);
+            assert.equal(errored, true, "errored for " + member0);
         },
     };
 
@@ -164,21 +165,21 @@
     3. The captured log arrays have a custom contains() method for ease of testing
     4. testLog.reset() will clear all of the message arrays, intended for use in test setup routines
     */
-    const testConsole = window.testConsole = {};
-    const testLog = window.testLog = {
-            log: [],
-            debug: [],
-            info: [],
-            warn: [],
-            error: [],
-            reset: function () {
-                for ( const i in testLog ) {
-                    if ( testLog.hasOwnProperty( i ) && 'length' in testLog[i] && 'push' in testLog[i] ) {
-                        testLog[i].length = 0;
-                    }
+    const testConsole = (window.testConsole = {});
+    const testLog = (window.testLog = {
+        log: [],
+        debug: [],
+        info: [],
+        warn: [],
+        error: [],
+        reset: function () {
+            for (const i in testLog) {
+                if (testLog.hasOwnProperty(i) && "length" in testLog[i] && "push" in testLog[i]) {
+                    testLog[i].length = 0;
                 }
             }
-        };
+        },
+    });
 
     // OSD has circular references, if a console log tries to serialize
     // certain object, remove these references from a clone (do not delete prop
@@ -187,16 +188,16 @@
     // a mock object! Try to mock functions only, or ensure mock objects
     // do not hold circular references.
     const circularOSDReferences = {
-        'Tile': 'tiledImage',
-        'CacheRecord': ['_tRef', '_tiles'],
-        'World': 'viewer',
-        'DrawerBase': ['viewer', 'viewport'],
-        'CanvasDrawer': ['viewer', 'viewport'],
-        'WebGLDrawer': ['viewer', 'viewport'],
-        'TiledImage': ['viewer', '_drawer'],
+        Tile: "tiledImage",
+        CacheRecord: ["_tRef", "_tiles"],
+        World: "viewer",
+        DrawerBase: ["viewer", "viewport"],
+        CanvasDrawer: ["viewer", "viewport"],
+        WebGLDrawer: ["viewer", "viewport"],
+        TiledImage: ["viewer", "_drawer"],
     };
-    for ( const i in testLog ) {
-        if ( testLog.hasOwnProperty( i ) && testLog[i].push ) {
+    for (const i in testLog) {
+        if (testLog.hasOwnProperty(i) && testLog[i].push) {
             // Circular reference removal
             const osdCircularStructureReplacer = function (key, value) {
                 for (const ClassType in circularOSDReferences) {
@@ -207,7 +208,7 @@
                         let circProps = circularOSDReferences[ClassType];
                         if (!Array.isArray(circProps)) circProps = [circProps];
                         for (const prop of circProps) {
-                            instance[prop] = '__circular_reference__';
+                            instance[prop] = "__circular_reference__";
                         }
                         return instance;
                     }
@@ -215,16 +216,16 @@
                 return value;
             };
 
-            testConsole[i] = ( function ( arr ) {
+            testConsole[i] = (function (arr) {
                 return function () {
-                    const args = Array.prototype.slice.call( arguments, 0 ); // Coerce to true Array
-                    arr.push( JSON.stringify( args, osdCircularStructureReplacer ) ); // Store as JSON to avoid tedious array-equality tests
+                    const args = Array.prototype.slice.call(arguments, 0); // Coerce to true Array
+                    arr.push(JSON.stringify(args, osdCircularStructureReplacer)); // Store as JSON to avoid tedious array-equality tests
                 };
-            } )( testLog[i] );
+            })(testLog[i]);
 
-            testLog[i].contains = function ( needle ) {
-                for ( let i = 0; i < this.length; i++ ) {
-                    if ( this[i] == needle ) {
+            testLog[i].contains = function (needle) {
+                for (let i = 0; i < this.length; i++) {
+                    if (this[i] == needle) {
                         return true;
                     }
                 }
@@ -233,7 +234,7 @@
         }
     }
 
-    testConsole.assert = function(condition, message) {
+    testConsole.assert = function (condition, message) {
         if (condition) {
             testConsole.error(message);
         }
@@ -241,15 +242,13 @@
 
     OpenSeadragon.console = testConsole;
 
-    OpenSeadragon.getBuiltInDrawersForTest = function() {
+    OpenSeadragon.getBuiltInDrawersForTest = function () {
         const drawers = [];
         for (const property in OpenSeadragon) {
-            const drawer = OpenSeadragon[ property ],
+            const drawer = OpenSeadragon[property],
                 proto = drawer.prototype;
-            if( proto &&
-                proto instanceof OpenSeadragon.DrawerBase &&
-                $.isFunction( proto.getType )){
-                drawers.push(proto.getType.call( drawer ));
+            if (proto && proto instanceof OpenSeadragon.DrawerBase && $.isFunction(proto.getType)) {
+                drawers.push(proto.getType.call(drawer));
             }
         }
         return drawers;
@@ -262,7 +261,6 @@
                 finish();
             }
         }, 50);
-        return new OpenSeadragon.Promise((resolve) => finish = resolve);
+        return new OpenSeadragon.Promise((resolve) => (finish = resolve));
     };
-} )();
-
+})();

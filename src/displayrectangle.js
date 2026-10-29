@@ -32,40 +32,38 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-(function( $ ){
-
-/**
- * @class DisplayRect
- * @classdesc A display rectangle is very similar to {@link OpenSeadragon.Rect} but adds two
- * fields, 'minLevel' and 'maxLevel' which denote the supported zoom levels
- * for this rectangle.
- *
- * @memberof OpenSeadragon
- * @extends OpenSeadragon.Rect
- * @param {Number} x The vector component 'x'.
- * @param {Number} y The vector component 'y'.
- * @param {Number} width The vector component 'height'.
- * @param {Number} height The vector component 'width'.
- * @param {Number} minLevel The lowest zoom level supported.
- * @param {Number} maxLevel The highest zoom level supported.
- */
-$.DisplayRect = function( x, y, width, height, minLevel, maxLevel ) {
-    $.Rect.apply( this, [ x, y, width, height ] );
-
+(function ($) {
     /**
-     * The lowest zoom level supported.
-     * @member {Number} minLevel
-     * @memberof OpenSeadragon.DisplayRect#
+     * @class DisplayRect
+     * @classdesc A display rectangle is very similar to {@link OpenSeadragon.Rect} but adds two
+     * fields, 'minLevel' and 'maxLevel' which denote the supported zoom levels
+     * for this rectangle.
+     *
+     * @memberof OpenSeadragon
+     * @extends OpenSeadragon.Rect
+     * @param {Number} x The vector component 'x'.
+     * @param {Number} y The vector component 'y'.
+     * @param {Number} width The vector component 'height'.
+     * @param {Number} height The vector component 'width'.
+     * @param {Number} minLevel The lowest zoom level supported.
+     * @param {Number} maxLevel The highest zoom level supported.
      */
-    this.minLevel = minLevel;
-    /**
-     * The highest zoom level supported.
-     * @member {Number} maxLevel
-     * @memberof OpenSeadragon.DisplayRect#
-     */
-    this.maxLevel = maxLevel;
-};
+    $.DisplayRect = function (x, y, width, height, minLevel, maxLevel) {
+        $.Rect.apply(this, [x, y, width, height]);
 
-$.extend( $.DisplayRect.prototype, $.Rect.prototype );
+        /**
+         * The lowest zoom level supported.
+         * @member {Number} minLevel
+         * @memberof OpenSeadragon.DisplayRect#
+         */
+        this.minLevel = minLevel;
+        /**
+         * The highest zoom level supported.
+         * @member {Number} maxLevel
+         * @memberof OpenSeadragon.DisplayRect#
+         */
+        this.maxLevel = maxLevel;
+    };
 
-}( OpenSeadragon ));
+    $.extend($.DisplayRect.prototype, $.Rect.prototype);
+})(OpenSeadragon);

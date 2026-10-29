@@ -1,7 +1,7 @@
 /* eslint-disable no-redeclare */
 /* global module */
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     /* eslint-disable no-undef */
 
     // ----------
@@ -14,8 +14,8 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks("grunt-contrib-clean");
     grunt.loadNpmTasks("grunt-eslint");
     grunt.loadNpmTasks("grunt-git-describe");
-    grunt.loadNpmTasks('grunt-text-replace');
-    grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks("grunt-text-replace");
+    grunt.loadNpmTasks("grunt-shell");
 
     // ----------
     const packageJson = grunt.file.readJSON("package.json"),
@@ -70,20 +70,21 @@ module.exports = function(grunt) {
             "src/world.js",
         ];
 
-    const banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
-                 "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
-                 "//! Git commit: <%= gitInfo %>\n" +
-                 "//! http://openseadragon.github.io\n" +
-                 "//! License: http://openseadragon.github.io/license/\n\n";
+    const banner =
+        "//! <%= pkg.name %> <%= pkg.version %>\n" +
+        "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
+        "//! Git commit: <%= gitInfo %>\n" +
+        "//! http://openseadragon.github.io\n" +
+        "//! License: http://openseadragon.github.io/license/\n\n";
 
     // ----------
-    grunt.event.once('git-describe', function (rev) {
-        grunt.config.set('gitInfo', rev);
+    grunt.event.once("git-describe", function (rev) {
+        grunt.config.set("gitInfo", rev);
     });
 
-    let moduleFilter =  '';
-    if (grunt.option('module')) {
-        moduleFilter = '?module=' + grunt.option('module')
+    let moduleFilter = "";
+    if (grunt.option("module")) {
+        moduleFilter = "?module=" + grunt.option("module");
     }
 
     // ----------
@@ -92,9 +93,9 @@ module.exports = function(grunt) {
         pkg: packageJson,
         osdVersion: {
             versionStr: packageJson.version,
-            major:      parseInt(packageJson.version.split('.')[0], 10),
-            minor:      parseInt(packageJson.version.split('.')[1], 10),
-            revision:   parseInt(packageJson.version.split('.')[2], 10)
+            major: parseInt(packageJson.version.split(".")[0], 10),
+            minor: parseInt(packageJson.version.split(".")[1], 10),
+            revision: parseInt(packageJson.version.split(".")[2], 10),
         },
         clean: {
             build: ["build"],
@@ -105,32 +106,32 @@ module.exports = function(grunt) {
             release: {
                 src: [releaseRoot],
                 options: {
-                    force: true
-                }
-            }
+                    force: true,
+                },
+            },
         },
         concat: {
             options: {
                 banner: banner,
                 process: true,
-                sourceMap: true
+                sourceMap: true,
             },
             dist: {
-                src:  [ "<banner>" ].concat(sources),
-                dest: distribution
-            }
+                src: ["<banner>"].concat(sources),
+                dest: distribution,
+            },
         },
         replace: {
             cleanPaths: {
-                src: ['build/openseadragon/*.map'],
+                src: ["build/openseadragon/*.map"],
                 overwrite: true,
                 replacements: [
                     {
                         from: /build\/openseadragon\//g,
-                        to: ''
-                    }
-                ]
-            }
+                        to: "",
+                    },
+                ],
+            },
         },
         uglify: {
             options: {
@@ -139,45 +140,41 @@ module.exports = function(grunt) {
                 compress: {
                     sequences: false,
                     /* eslint-disable camelcase */
-                    join_vars: false
+                    join_vars: false,
                 },
                 sourceMap: true,
-                sourceMapName: 'build/openseadragon/openseadragon.min.js.map',
-                sourceMapIn: 'build/openseadragon/openseadragon.js.map'
+                sourceMapName: "build/openseadragon/openseadragon.min.js.map",
+                sourceMapIn: "build/openseadragon/openseadragon.js.map",
             },
             openseadragon: {
                 src: distribution,
-                dest: minified
-            }
+                dest: minified,
+            },
         },
         compress: {
             zip: {
                 options: {
                     archive: "build/releases/" + packageDirName + ".zip",
-                    level: 9
+                    level: 9,
                 },
-                files: [
-                   { expand: true, cwd: "build/", src: [ packageDirName + "/**" ] }
-                ]
+                files: [{ expand: true, cwd: "build/", src: [packageDirName + "/**"] }],
             },
             tar: {
                 options: {
                     archive: "build/releases/" + packageDirName + ".tar.gz",
-                    level: 9
+                    level: 9,
                 },
-                files: [
-                   { expand: true, cwd: "build/", src: [ packageDirName + "/**" ] }
-                ]
-            }
+                files: [{ expand: true, cwd: "build/", src: [packageDirName + "/**"] }],
+            },
         },
         qunit: {
             normal: {
                 options: {
-                    urls: [ "http://localhost:8000/test/test.html" + moduleFilter ],
+                    urls: ["http://localhost:8000/test/test.html" + moduleFilter],
                     timeout: 10000,
                     puppeteer: {
-                        headless: 'new'
-                    }
+                        headless: "new",
+                    },
                 },
             },
             // NOTE: qunit:coverage is kept for manual debugging in a browser.
@@ -186,18 +183,18 @@ module.exports = function(grunt) {
             // window.__coverage__ after tests complete.
             coverage: {
                 options: {
-                    urls: [ "http://localhost:8000/test/coverage.html" + moduleFilter ],
+                    urls: ["http://localhost:8000/test/coverage.html" + moduleFilter],
                     timeout: 10000,
                     puppeteer: {
-                        headless: 'new'
-                    }
-                }
+                        headless: "new",
+                    },
+                },
             },
             all: {
                 options: {
-                    timeout: 10000
-                }
-            }
+                    timeout: 10000,
+                },
+            },
         },
         connect: {
             server: {
@@ -206,63 +203,63 @@ module.exports = function(grunt) {
                     base: {
                         path: ".",
                         options: {
-                            stylesheet: 'style.css'
-                        }
-                    }
-                }
-            }
+                            stylesheet: "style.css",
+                        },
+                    },
+                },
+            },
         },
         watch: {
-            files: [ "Gruntfile.js", "src/*.js", "images/*" ],
-            tasks: "watchTask"
+            files: ["Gruntfile.js", "src/*.js", "images/*"],
+            tasks: "watchTask",
         },
         eslint: {
-            target: sources
+            target: sources,
         },
         "git-describe": {
             options: {
-                failOnError: false
+                failOnError: false,
             },
-            build: {}
+            build: {},
         },
         gitInfo: "unknown",
         shell: {
             dts_check: {
-                command: "npx tsc --noEmit -p tsconfig.dts.json"
+                command: "npx tsc --noEmit -p tsconfig.dts.json",
             },
             dts_smoke: {
-                command: "npx tsd"
+                command: "npx tsd",
             },
             // Step 1: Instrument source files with nyc
             instrument: {
-                command: "npx nyc instrument src instrumented/src"
+                command: "npx nyc instrument src instrumented/src",
             },
             // Step 2: Run tests with instrumented sources via custom
             // Puppeteer script that captures window.__coverage__
             coverage_run: {
-                command: 'node test/coverage-runner.js',
+                command: "node test/coverage-runner.js",
                 options: {
-                    env: (function() {
+                    env: (function () {
                         var env = Object.assign({}, process.env);
-                        if (grunt.option('module')) {
-                            env.QUNIT_MODULE = grunt.option('module');
+                        if (grunt.option("module")) {
+                            env.QUNIT_MODULE = grunt.option("module");
                         }
                         return env;
-                    })()
-                }
+                    })(),
+                },
             },
             // Step 3: Generate coverage reports from .nyc_output/
             nyc_report: {
-                command: "npx nyc report"
-            }
+                command: "npx nyc report",
+            },
         },
     });
 
     // ----------
     // Copy:build task.
     // Copies the image files into the appropriate location in the build folder.
-    grunt.registerTask("copy:build", function() {
-        grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
+    grunt.registerTask("copy:build", function () {
+        grunt.file.recurse("images", function (abspath, rootdir, subdir, filename) {
             grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);
         });
     });
@@ -270,11 +267,9 @@ module.exports = function(grunt) {
     // ----------
     // Copy:package task.
     // Creates a directory tree to be compressed into a package.
-    grunt.registerTask("copy:package", function() {
-        grunt.file.recurse("build/openseadragon", function(abspath, rootdir, subdir, filename) {
-            const dest = packageDir +
-                (subdir ? subdir + "/" : '/') +
-                filename;
+    grunt.registerTask("copy:package", function () {
+        grunt.file.recurse("build/openseadragon", function (abspath, rootdir, subdir, filename) {
+            const dest = packageDir + (subdir ? subdir + "/" : "/") + filename;
             grunt.file.copy(abspath, dest);
         });
         grunt.file.copy("changelog.txt", packageDir + "changelog.txt");
@@ -284,15 +279,13 @@ module.exports = function(grunt) {
     // ----------
     // Copy:release task.
     // Copies the contents of the build folder into the release folder.
-    grunt.registerTask("copy:release", function() {
-        grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
-            if (subdir === 'releases') {
+    grunt.registerTask("copy:release", function () {
+        grunt.file.recurse("build", function (abspath, rootdir, subdir, filename) {
+            if (subdir === "releases") {
                 return;
             }
 
-            const dest = releaseRoot +
-                (subdir ? subdir + "/" : '/') +
-                filename;
+            const dest = releaseRoot + (subdir ? subdir + "/" : "/") + filename;
 
             grunt.file.copy(abspath, dest);
         });
@@ -301,7 +294,7 @@ module.exports = function(grunt) {
     // ----------
     // Bower task.
     // Generates the Bower file for site-build.
-    grunt.registerTask("bower", function() {
+    grunt.registerTask("bower", function () {
         const path = "../site-build/bower.json";
         const data = grunt.file.readJSON(path);
         data.version = packageJson.version;
@@ -312,8 +305,8 @@ module.exports = function(grunt) {
     // Watch task.
     // Called from the watch feature; does a full build or a minbuild, depending on
     // whether you used --min on the command line.
-    grunt.registerTask("watchTask", function() {
-        if (grunt.option('min')) {
+    grunt.registerTask("watchTask", function () {
+        if (grunt.option("min")) {
             grunt.task.run("minbuild");
         } else {
             grunt.task.run("build");
@@ -324,16 +317,19 @@ module.exports = function(grunt) {
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
     grunt.registerTask("build", [
-        "clean:build", "git-describe", "eslint", "concat", "uglify",
-        "replace:cleanPaths", "copy:build"
+        "clean:build",
+        "git-describe",
+        "eslint",
+        "concat",
+        "uglify",
+        "replace:cleanPaths",
+        "copy:build",
     ]);
 
     // ----------
     // Minimal build task.
     // For use during development as desired. Creates only the unminified version.
-    grunt.registerTask("minbuild", [
-        "git-describe", "concat", "copy:build"
-    ]);
+    grunt.registerTask("minbuild", ["git-describe", "concat", "copy:build"]);
 
     // ----------
     // Test task.
@@ -361,7 +357,7 @@ module.exports = function(grunt) {
         "build",
         "connect",
         "shell:coverage_run",
-        "shell:nyc_report"
+        "shell:nyc_report",
     ]);
 
     // ----------

@@ -1,12 +1,12 @@
 /* eslint-env node */
 /* eslint-disable no-implicit-globals */
 
-const fs = require('fs');
-const path = require('path');
-const zlib = require('zlib');
+const fs = require("fs");
+const path = require("path");
+const zlib = require("zlib");
 
-const root = path.resolve(__dirname, '..');
-const packageJson = require(path.join(root, 'package.json'));
+const root = path.resolve(__dirname, "..");
+const packageJson = require(path.join(root, "package.json"));
 const checks = packageJson.bundlesize || [];
 
 function parseMaxSize(size) {
@@ -25,7 +25,7 @@ function parseMaxSize(size) {
     const multipliers = {
         b: 1,
         kb: 1000,
-        mb: 1000 * 1000
+        mb: 1000 * 1000,
     };
 
     return amount * multipliers[unit];
@@ -42,11 +42,11 @@ function formatSize(bytes) {
 function getSize(filePath, compression) {
     const file = fs.readFileSync(filePath);
 
-    if (compression === 'gzip') {
+    if (compression === "gzip") {
         return zlib.gzipSync(file).length;
     }
 
-    if (compression === 'none') {
+    if (compression === "none") {
         return file.length;
     }
 
@@ -58,7 +58,7 @@ let failed = false;
 for (const check of checks) {
     const filePath = path.join(root, check.path);
     const maxSize = parseMaxSize(check.maxSize);
-    const compression = check.compression || 'gzip';
+    const compression = check.compression || "gzip";
 
     if (!fs.existsSync(filePath)) {
         console.error(`FAIL ${check.path}: file does not exist`);
@@ -68,11 +68,11 @@ for (const check of checks) {
 
     const size = getSize(filePath, compression);
     const passed = size <= maxSize;
-    const status = passed ? 'PASS' : 'FAIL';
-    const comparator = passed ? '<' : '>';
+    const status = passed ? "PASS" : "FAIL";
+    const comparator = passed ? "<" : ">";
 
     console.log(
-        `${status} ${check.path}: ${formatSize(size)} ${comparator} maxSize ${check.maxSize.replace(/\s+/g, '')} (${compression})`
+        `${status} ${check.path}: ${formatSize(size)} ${comparator} maxSize ${check.maxSize.replace(/\s+/g, "")} (${compression})`
     );
 
     failed = failed || !passed;

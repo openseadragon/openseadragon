@@ -1,22 +1,22 @@
 const sources = {
-    "rainbow":"../data/testpattern.dzi",
-    "leaves":"../data/iiif_2_0_sizes/info.json",
-    "bblue":{
-        type:'image',
+    rainbow: "../data/testpattern.dzi",
+    leaves: "../data/iiif_2_0_sizes/info.json",
+    bblue: {
+        type: "image",
         url: "../data/BBlue.png",
     },
-    "duomo":"https://openseadragon.github.io/example-images/duomo/duomo.dzi",
-}
+    duomo: "https://openseadragon.github.io/example-images/duomo/duomo.dzi",
+};
 const labels = {
-    rainbow: 'Rainbow Grid',
-    leaves: 'Leaves',
-    bblue: 'Blue B',
-    duomo: 'Duomo',
-}
+    rainbow: "Rainbow Grid",
+    leaves: "Leaves",
+    bblue: "Blue B",
+    duomo: "Duomo",
+};
 const drawers = {
     canvas: "Context2d drawer (default in OSD &lt;= 4.1.0)",
-    webgl: "New WebGL drawer"
-}
+    webgl: "New WebGL drawer",
+};
 
 const viewportMargins = {
     left: 100,
@@ -27,65 +27,64 @@ const viewportMargins = {
 
 //Support drawer type from the url
 const url = new URL(window.location.href);
-const drawer1 = url.searchParams.get("left") || 'canvas';
-const drawer2 = url.searchParams.get("right") || 'webgl';
+const drawer1 = url.searchParams.get("left") || "canvas";
+const drawer2 = url.searchParams.get("right") || "webgl";
 
 $("#title-w1").html(drawers[drawer1]);
 $("#title-w2").html(drawers[drawer2]);
 
 //Double viewer setup for comparison - CanvasDrawer and WebGLDrawer
 // viewer1: canvas drawer
-const viewer1 = window.viewer1 = OpenSeadragon({
+const viewer1 = (window.viewer1 = OpenSeadragon({
     id: "canvasdrawer",
     prefixUrl: "../../build/openseadragon/images/",
-    minZoomImageRatio:0.01,
-    maxZoomPixelRatio:100,
-    smoothTileEdgesMinZoom:1.1,
-    crossOriginPolicy: 'Anonymous',
+    minZoomImageRatio: 0.01,
+    maxZoomPixelRatio: 100,
+    smoothTileEdgesMinZoom: 1.1,
+    crossOriginPolicy: "Anonymous",
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
-    drawer:drawer1,
-    blendTime:0,
-    showNavigator:true,
+    drawer: drawer1,
+    blendTime: 0,
+    showNavigator: true,
     viewportMargins,
-});
+}));
 
 // viewer2: webgl drawer
-const viewer2 = window.viewer2 = OpenSeadragon({
+const viewer2 = (window.viewer2 = OpenSeadragon({
     id: "webgl",
     prefixUrl: "../../build/openseadragon/images/",
-    minZoomImageRatio:0.01,
-    maxZoomPixelRatio:100,
-    smoothTileEdgesMinZoom:1.1,
-    crossOriginPolicy: 'Anonymous',
+    minZoomImageRatio: 0.01,
+    maxZoomPixelRatio: 100,
+    smoothTileEdgesMinZoom: 1.1,
+    crossOriginPolicy: "Anonymous",
     ajaxWithCredentials: false,
     // maxImageCacheCount: 30,
-    drawer:drawer2,
-    blendTime:0,
-    showNavigator:true,
+    drawer: drawer2,
+    blendTime: 0,
+    showNavigator: true,
     viewportMargins,
-});
+}));
 
 // // viewer3: html drawer, unused
-const viewer3 = window.viewer3 = OpenSeadragon({
+const viewer3 = (window.viewer3 = OpenSeadragon({
     id: "htmldrawer",
-    drawer:'html',
-    blendTime:2,
+    drawer: "html",
+    blendTime: 2,
     prefixUrl: "../../build/openseadragon/images/",
-    minZoomImageRatio:0.01,
+    minZoomImageRatio: 0.01,
     customDrawer: OpenSeadragon.HTMLDrawer,
-    tileSources: [sources['leaves'], sources['rainbow'], sources['duomo']],
+    tileSources: [sources["leaves"], sources["rainbow"], sources["duomo"]],
     sequenceMode: true,
-    crossOriginPolicy: 'Anonymous',
-    ajaxWithCredentials: false
-});
-
+    crossOriginPolicy: "Anonymous",
+    ajaxWithCredentials: false,
+}));
 
 // Sync navigation of viewer1 and viewer 2
 let viewer1Leading = false;
 let viewer2Leading = false;
 
-const viewer1Handler = function() {
+const viewer1Handler = function () {
     if (viewer2Leading) {
         return;
     }
@@ -98,7 +97,7 @@ const viewer1Handler = function() {
     viewer1Leading = false;
 };
 
-const viewer2Handler = function() {
+const viewer2Handler = function () {
     if (viewer1Leading) {
         return;
     }
@@ -111,111 +110,122 @@ const viewer2Handler = function() {
     viewer2Leading = false;
 };
 
-viewer1.addHandler('zoom', viewer1Handler);
-viewer2.addHandler('zoom', viewer2Handler);
-viewer1.addHandler('pan', viewer1Handler);
-viewer2.addHandler('pan', viewer2Handler);
-viewer1.addHandler('rotate', viewer1Handler);
-viewer2.addHandler('rotate', viewer2Handler);
-viewer1.addHandler('flip', viewer1Handler);
-viewer2.addHandler('flip', viewer2Handler);
+viewer1.addHandler("zoom", viewer1Handler);
+viewer2.addHandler("zoom", viewer2Handler);
+viewer1.addHandler("pan", viewer1Handler);
+viewer2.addHandler("pan", viewer2Handler);
+viewer1.addHandler("rotate", viewer1Handler);
+viewer2.addHandler("rotate", viewer2Handler);
+viewer1.addHandler("flip", viewer1Handler);
+viewer2.addHandler("flip", viewer2Handler);
 
-
-$('#image-picker').sortable({
-    update: function(event, ui){
-        let thisItem = ui.item.find('.toggle').data('item1');
-        let items = $('#image-picker input.toggle:checked').toArray().map(item=>$(item).data('item1'));
+$("#image-picker").sortable({
+    update: function (event, ui) {
+        let thisItem = ui.item.find(".toggle").data("item1");
+        let items = $("#image-picker input.toggle:checked")
+            .toArray()
+            .map((item) => $(item).data("item1"));
         let newIndex = items.indexOf(thisItem);
-        if(thisItem){
+        if (thisItem) {
             viewer1.world.setItemIndex(thisItem, newIndex);
         }
 
-        thisItem = ui.item.find('.toggle').data('item2');
-        items = $('#image-picker input.toggle:checked').toArray().map(item=>$(item).data('item2'));
+        thisItem = ui.item.find(".toggle").data("item2");
+        items = $("#image-picker input.toggle:checked")
+            .toArray()
+            .map((item) => $(item).data("item2"));
         newIndex = items.indexOf(thisItem);
-        if(thisItem){
+        if (thisItem) {
             viewer2.world.setItemIndex(thisItem, newIndex);
         }
+    },
+});
+
+Object.keys(sources).forEach((key, index) => {
+    const element = makeImagePickerElement(key, labels[key]);
+    $("#image-picker").append(element);
+    if (index === 0) {
+        element.find(".toggle").prop("checked", true);
     }
 });
 
-Object.keys(sources).forEach((key, index)=>{
-    const element = makeImagePickerElement(key, labels[key])
-    $('#image-picker').append(element);
-    if(index === 0){
-        element.find('.toggle').prop('checked',true);
-    }
-})
+$("#image-picker").append(makeComparisonSwitcher());
 
-$('#image-picker').append(makeComparisonSwitcher());
-
-$('#image-picker input.toggle').on('change',function(){
-    const data = $(this).data();
-    if(this.checked){
-        addTileSource(viewer1, data.image, this);
-        addTileSource(viewer2, data.image, this);
-    } else {
-        if(data.item1){
-            viewer1.world.removeItem(data.item1);
-            viewer2.world.removeItem(data.item2);
-            $(this).data({item1: null, item2: null});
+$("#image-picker input.toggle")
+    .on("change", function () {
+        const data = $(this).data();
+        if (this.checked) {
+            addTileSource(viewer1, data.image, this);
+            addTileSource(viewer2, data.image, this);
+        } else {
+            if (data.item1) {
+                viewer1.world.removeItem(data.item1);
+                viewer2.world.removeItem(data.item2);
+                $(this).data({ item1: null, item2: null });
+            }
         }
-    }
-}).trigger('change');
+    })
+    .trigger("change");
 
-$('#image-picker input:not(.toggle)').on('change',function(){
+$("#image-picker input:not(.toggle)").on("change", function () {
     const data = $(this).data();
     const value = $(this).val();
-    const tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
-    const tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
+    const tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data("item1");
+    const tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data("item2");
     updateTiledImage(tiledImage1, data, value, this);
     updateTiledImage(tiledImage2, data, value, this);
 });
 
-function updateTiledImage(tiledImage, data, value, item){
+function updateTiledImage(tiledImage, data, value, item) {
     const field = data.field;
 
-    if(tiledImage){
+    if (tiledImage) {
         //item = tiledImage
-        if(field == 'x'){
+        if (field == "x") {
             const bounds = tiledImage.getBoundsNoRotate();
             const position = new OpenSeadragon.Point(Number(value), bounds.y);
             tiledImage.setPosition(position);
-        } else if ( field == 'y'){
+        } else if (field == "y") {
             const bounds = tiledImage.getBoundsNoRotate();
             const position = new OpenSeadragon.Point(bounds.x, Number(value));
             tiledImage.setPosition(position);
-        } else if (field == 'width'){
+        } else if (field == "width") {
             tiledImage.setWidth(Number(value));
-        } else if (field == 'degrees'){
+        } else if (field == "degrees") {
             tiledImage.setRotation(Number(value));
-        } else if (field == 'opacity'){
+        } else if (field == "opacity") {
             tiledImage.setOpacity(Number(value));
-        } else if (field == 'flipped'){
-            tiledImage.setFlip($(item).prop('checked'));
-        } else if (field == 'smoothing'){
-            const checked = $(item).prop('checked');
+        } else if (field == "flipped") {
+            tiledImage.setFlip($(item).prop("checked"));
+        } else if (field == "smoothing") {
+            const checked = $(item).prop("checked");
             viewer1.drawer.setImageSmoothingEnabled(checked);
             viewer2.drawer.setImageSmoothingEnabled(checked);
-            $('[data-field=smoothing]').prop('checked', checked);
-        } else if (field == 'cropped'){
-            if( $(item).prop('checked') ){
+            $("[data-field=smoothing]").prop("checked", checked);
+        } else if (field == "cropped") {
+            if ($(item).prop("checked")) {
                 const scale = tiledImage.source.width;
-                const croppingPolygons = [ [{x:0.2*scale, y:0.2*scale}, {x:0.8*scale, y:0.2*scale}, {x:0.5*scale, y:0.8*scale}] ];
+                const croppingPolygons = [
+                    [
+                        { x: 0.2 * scale, y: 0.2 * scale },
+                        { x: 0.8 * scale, y: 0.2 * scale },
+                        { x: 0.5 * scale, y: 0.8 * scale },
+                    ],
+                ];
                 tiledImage.setCroppingPolygons(croppingPolygons);
             } else {
                 tiledImage.resetCroppingPolygons();
             }
-        } else if (field == 'clipped'){
-            if( $(item).prop('checked') ){
+        } else if (field == "clipped") {
+            if ($(item).prop("checked")) {
                 const scale = tiledImage.source.width;
-                const clipRect = new OpenSeadragon.Rect(0.1*scale, 0.2*scale, 0.6*scale, 0.4*scale);
+                const clipRect = new OpenSeadragon.Rect(0.1 * scale, 0.2 * scale, 0.6 * scale, 0.4 * scale);
                 tiledImage.setClip(clipRect);
             } else {
                 tiledImage.setClip(null);
             }
-        } else if (field == 'debug'){
-            if( $(item).prop('checked') ){
+        } else if (field == "debug") {
+            if ($(item).prop("checked")) {
                 tiledImage.debugMode = true;
             } else {
                 tiledImage.debugMode = false;
@@ -226,105 +236,158 @@ function updateTiledImage(tiledImage, data, value, item){
     }
 }
 
-$('.image-options select[data-field=composite]').append(getCompositeOperationOptions()).on('change',function(){
-    const data = $(this).data();
-    const tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
-    if(tiledImage1){
-        tiledImage1.setCompositeOperation(this.value == 'null' ? null : this.value);
-    }
-    const tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
-    if(tiledImage2){
-        tiledImage2.setCompositeOperation(this.value == 'null' ? null : this.value);
-    }
-}).trigger('change');
-
-$('.image-options select[data-field=wrapping]').append(getWrappingOptions()).on('change',function(){
-    const data = $(this).data();
-    let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item1');
-    if(tiledImage){
-        switch(this.value){
-            case "None": tiledImage.wrapHorizontal = tiledImage.wrapVertical = false; break;
-            case "Horizontal": tiledImage.wrapHorizontal = true; tiledImage.wrapVertical = false; break;
-            case "Vertical": tiledImage.wrapHorizontal = false; tiledImage.wrapVertical = true; break;
-            case "Both": tiledImage.wrapHorizontal = tiledImage.wrapVertical = true; break;
+$(".image-options select[data-field=composite]")
+    .append(getCompositeOperationOptions())
+    .on("change", function () {
+        const data = $(this).data();
+        const tiledImage1 = $(`#image-picker input.toggle[data-image=${data.image}]`).data("item1");
+        if (tiledImage1) {
+            tiledImage1.setCompositeOperation(this.value == "null" ? null : this.value);
         }
-        tiledImage.redraw();//trigger a redraw for the webgl renderer.
-    }
-    tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data('item2');
-    if(tiledImage){
-        switch(this.value){
-            case "None": tiledImage.wrapHorizontal = tiledImage.wrapVertical = false; break;
-            case "Horizontal": tiledImage.wrapHorizontal = true; tiledImage.wrapVertical = false; break;
-            case "Vertical": tiledImage.wrapHorizontal = false; tiledImage.wrapVertical = true; break;
-            case "Both": tiledImage.wrapHorizontal = tiledImage.wrapVertical = true; break;
+        const tiledImage2 = $(`#image-picker input.toggle[data-image=${data.image}]`).data("item2");
+        if (tiledImage2) {
+            tiledImage2.setCompositeOperation(this.value == "null" ? null : this.value);
         }
-        tiledImage.redraw();//trigger a redraw for the webgl renderer.
-    }
-}).trigger('change');
+    })
+    .trigger("change");
 
-function getWrappingOptions(){
-    const opts = ['None', 'Horizontal', 'Vertical', 'Both'];
-    const elements = opts.map((opt, i)=>{
-        const el = $('<option>',{value:opt}).text(opt);
-        if(i===0){
-            el.attr('selected',true);
+$(".image-options select[data-field=wrapping]")
+    .append(getWrappingOptions())
+    .on("change", function () {
+        const data = $(this).data();
+        let tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data("item1");
+        if (tiledImage) {
+            switch (this.value) {
+                case "None":
+                    tiledImage.wrapHorizontal = tiledImage.wrapVertical = false;
+                    break;
+                case "Horizontal":
+                    tiledImage.wrapHorizontal = true;
+                    tiledImage.wrapVertical = false;
+                    break;
+                case "Vertical":
+                    tiledImage.wrapHorizontal = false;
+                    tiledImage.wrapVertical = true;
+                    break;
+                case "Both":
+                    tiledImage.wrapHorizontal = tiledImage.wrapVertical = true;
+                    break;
+            }
+            tiledImage.redraw(); //trigger a redraw for the webgl renderer.
+        }
+        tiledImage = $(`#image-picker input.toggle[data-image=${data.image}]`).data("item2");
+        if (tiledImage) {
+            switch (this.value) {
+                case "None":
+                    tiledImage.wrapHorizontal = tiledImage.wrapVertical = false;
+                    break;
+                case "Horizontal":
+                    tiledImage.wrapHorizontal = true;
+                    tiledImage.wrapVertical = false;
+                    break;
+                case "Vertical":
+                    tiledImage.wrapHorizontal = false;
+                    tiledImage.wrapVertical = true;
+                    break;
+                case "Both":
+                    tiledImage.wrapHorizontal = tiledImage.wrapVertical = true;
+                    break;
+            }
+            tiledImage.redraw(); //trigger a redraw for the webgl renderer.
+        }
+    })
+    .trigger("change");
+
+function getWrappingOptions() {
+    const opts = ["None", "Horizontal", "Vertical", "Both"];
+    const elements = opts.map((opt, i) => {
+        const el = $("<option>", { value: opt }).text(opt);
+        if (i === 0) {
+            el.attr("selected", true);
         }
         return el[0];
         // $('.image-options select').append(el);
     });
     return $(elements);
 }
-function getCompositeOperationOptions(){
-    const opts = [null,'source-over','source-in','source-out','source-atop',
-                'destination-over','destination-in','destination-out','destination-atop',
-                'lighten','darken','copy','xor','multiply','screen','overlay','color-dodge',
-                'color-burn','hard-light','soft-light','difference','exclusion',
-                'hue','saturation','color','luminosity'];
-    const elements = opts.map((opt, i)=>{
-        const el = $('<option>',{value:opt}).text(opt);
-        if(i===0){
-            el.attr('selected',true);
+function getCompositeOperationOptions() {
+    const opts = [
+        null,
+        "source-over",
+        "source-in",
+        "source-out",
+        "source-atop",
+        "destination-over",
+        "destination-in",
+        "destination-out",
+        "destination-atop",
+        "lighten",
+        "darken",
+        "copy",
+        "xor",
+        "multiply",
+        "screen",
+        "overlay",
+        "color-dodge",
+        "color-burn",
+        "hard-light",
+        "soft-light",
+        "difference",
+        "exclusion",
+        "hue",
+        "saturation",
+        "color",
+        "luminosity",
+    ];
+    const elements = opts.map((opt, i) => {
+        const el = $("<option>", { value: opt }).text(opt);
+        if (i === 0) {
+            el.attr("selected", true);
         }
         return el[0];
         // $('.image-options select').append(el);
     });
     return $(elements);
-
 }
 
-function addTileSource(viewer, image, checkbox){
-    const options = $(`#image-picker input[data-image=${image}][type=number]`).toArray().reduce((acc, input)=>{
-        const field = $(input).data('field');
-        if(field){
-            acc[field] = Number(input.value);
-        }
-        return acc;
-    }, {});
+function addTileSource(viewer, image, checkbox) {
+    const options = $(`#image-picker input[data-image=${image}][type=number]`)
+        .toArray()
+        .reduce((acc, input) => {
+            const field = $(input).data("field");
+            if (field) {
+                acc[field] = Number(input.value);
+            }
+            return acc;
+        }, {});
 
-    options.flipped = $(`#image-picker input[data-image=${image}][data-type=flipped]`).prop('checked');
+    options.flipped = $(`#image-picker input[data-image=${image}][data-type=flipped]`).prop("checked");
 
-    const items = $('#image-picker input.toggle:checked').toArray();
+    const items = $("#image-picker input.toggle:checked").toArray();
     const insertionIndex = items.indexOf(checkbox);
 
     const tileSource = sources[image];
-    if(tileSource){
-        viewer&&viewer.addTiledImage({tileSource: tileSource, ...options, index: insertionIndex});
-        viewer&&viewer.world.addOnceHandler('add-item',function(ev){
-            const item = ev.item;
-            const field = viewer === viewer1 ? 'item1' : 'item2';
-            $(checkbox).data(field,item);
-            // item.source.hasTransparency = ()=>true; //simulate image with transparency, to show seams in default renderer
-        });
+    if (tileSource) {
+        viewer && viewer.addTiledImage({ tileSource: tileSource, ...options, index: insertionIndex });
+        viewer &&
+            viewer.world.addOnceHandler("add-item", function (ev) {
+                const item = ev.item;
+                const field = viewer === viewer1 ? "item1" : "item2";
+                $(checkbox).data(field, item);
+                // item.source.hasTransparency = ()=>true; //simulate image with transparency, to show seams in default renderer
+            });
     }
 }
 
 function getAvailableDrawerSelect(name, selectedDrawer) {
     return `
 <select name="${name}">
-  ${Object.entries(drawers).map(([k, v]) => {
-      const selected = selectedDrawer === k ? "selected" : "";
-      return `<option value="${k}" ${selected}>${v}</option>`;
-    }).join("\n")}
+  ${Object.entries(drawers)
+      .map(([k, v]) => {
+          const selected = selectedDrawer === k ? "selected" : "";
+          return `<option value="${k}" ${selected}>${v}</option>`;
+      })
+      .join("\n")}
 </select>`;
 }
 
@@ -342,8 +405,9 @@ function makeComparisonSwitcher() {
 </div>`;
 }
 
-function makeImagePickerElement(key, label){
-    return $(`<div class="image-options">
+function makeImagePickerElement(key, label) {
+    return $(
+        `<div class="image-options">
         <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
         <label><input type="checkbox" data-image="" class="toggle"> __title__</label>
         <div class="option-grid">
@@ -362,10 +426,8 @@ function makeImagePickerElement(key, label){
             <label>Wrap: <select data-image="" data-field="wrapping"></select></label>
             <label>Smoothing: <input type="checkbox" data-image="" data-field="smoothing" checked></label>
         </div>
-    </div>`.replaceAll('data-image=""', `data-image="${key}"`).replace('__title__', label));
-
+    </div>`
+            .replaceAll('data-image=""', `data-image="${key}"`)
+            .replace("__title__", label)
+    );
 }
-
-
-
-

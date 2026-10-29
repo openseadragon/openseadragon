@@ -1,5 +1,4 @@
-(function($) {
-
+(function ($) {
     /**
      * @class ZoomifyTileSource
      * @classdesc A tilesource implementation for the zoomify format.
@@ -43,32 +42,37 @@
      * @param {Number} tileSize
      * @param {String} tilesUrl
      */
-    $.ZoomifyTileSource = function(options) {
-        if(typeof options.tileSize === 'undefined'){
+    $.ZoomifyTileSource = function (options) {
+        if (typeof options.tileSize === "undefined") {
             options.tileSize = 256;
         }
 
-        if(typeof options.fileFormat === 'undefined'){
-            options.fileFormat = 'jpg';
+        if (typeof options.fileFormat === "undefined") {
+            options.fileFormat = "jpg";
             this.fileFormat = options.fileFormat;
         }
 
         const currentImageSize = {
             x: options.width,
-            y: options.height
+            y: options.height,
         };
-        options.imageSizes = [{
-            x: options.width,
-            y: options.height
-        }];
+        options.imageSizes = [
+            {
+                x: options.width,
+                y: options.height,
+            },
+        ];
         options.gridSize = [this._getGridSize(options.width, options.height, options.tileSize)];
 
-        while (parseInt(currentImageSize.x, 10) > options.tileSize || parseInt(currentImageSize.y, 10) > options.tileSize) {
+        while (
+            parseInt(currentImageSize.x, 10) > options.tileSize ||
+            parseInt(currentImageSize.y, 10) > options.tileSize
+        ) {
             currentImageSize.x = Math.floor(currentImageSize.x / 2);
             currentImageSize.y = Math.floor(currentImageSize.y / 2);
             options.imageSizes.push({
                 x: currentImageSize.x,
-                y: currentImageSize.y
+                y: currentImageSize.y,
             });
             options.gridSize.push(this._getGridSize(currentImageSize.x, currentImageSize.y, options.tileSize));
         }
@@ -80,77 +84,77 @@
         $.TileSource.apply(this, [options]);
     };
 
-    $.extend($.ZoomifyTileSource.prototype, $.TileSource.prototype, /** @lends OpenSeadragon.ZoomifyTileSource.prototype */ {
+    $.extend(
+        $.ZoomifyTileSource.prototype,
+        $.TileSource.prototype,
+        /** @lends OpenSeadragon.ZoomifyTileSource.prototype */ {
+            //private
+            _getGridSize: function (width, height, tileSize) {
+                return {
+                    x: Math.ceil(width / tileSize),
+                    y: Math.ceil(height / tileSize),
+                };
+            },
 
-        //private
-        _getGridSize: function(width, height, tileSize) {
-            return {
-                x: Math.ceil(width / tileSize),
-                y: Math.ceil(height / tileSize)
-            };
-        },
+            //private
+            _calculateAbsoluteTileNumber: function (level, x, y) {
+                let num = 0;
+                let size;
 
-        //private
-        _calculateAbsoluteTileNumber: function(level, x, y) {
-            let num = 0;
-            let size;
+                //Sum up all tiles below the level we want the number of tiles
+                for (let z = 0; z < level; z++) {
+                    size = this.gridSize[z];
+                    num += size.x * size.y;
+                }
+                //Add the tiles of the level
+                size = this.gridSize[level];
+                num += size.x * y + x;
+                return num;
+            },
 
-            //Sum up all tiles below the level we want the number of tiles
-            for (let z = 0; z < level; z++) {
-                size = this.gridSize[z];
-                num += size.x * size.y;
-            }
-            //Add the tiles of the level
-            size = this.gridSize[level];
-            num += size.x * y + x;
-            return num;
-        },
+            /**
+             * Determine if the data and/or url imply the image service is supported by
+             * this tile source.
+             * @function
+             * @param {Object|Array} data
+             * @param {String} [url]
+             */
+            supports: function (data, url) {
+                return data.type && "zoomifytileservice" === data.type;
+            },
 
-        /**
-         * Determine if the data and/or url imply the image service is supported by
-         * this tile source.
-         * @function
-         * @param {Object|Array} data
-         * @param {String} [url]
-         */
-        supports: function(data, url) {
-            return (data.type && "zoomifytileservice" === data.type);
-        },
+            /**
+             *
+             * @function
+             * @param {Object} data - the raw configuration
+             * @param {String} url - the url the data was retrieved from if any.
+             * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
+             * @returns {Object} options - A dictionary of keyword arguments sufficient
+             *      to configure this tile sources constructor.
+             */
+            configure: function (data, url, postData) {
+                return data;
+            },
 
-        /**
-         *
-         * @function
-         * @param {Object} data - the raw configuration
-         * @param {String} url - the url the data was retrieved from if any.
-         * @param {String} postData - HTTP POST data in k=v&k2=v2... form or null
-         * @returns {Object} options - A dictionary of keyword arguments sufficient
-         *      to configure this tile sources constructor.
-         */
-        configure: function(data, url, postData) {
-            return data;
-        },
+            /**
+             * @function
+             * @param {Number} level
+             * @param {Number} x
+             * @param {Number} y
+             */
+            getTileUrl: function (level, x, y) {
+                //console.log(level);
+                const num = this._calculateAbsoluteTileNumber(level, x, y);
+                const result = Math.floor(num / 256);
+                return this.tilesUrl + "TileGroup" + result + "/" + level + "-" + x + "-" + y + "." + this.fileFormat;
+            },
 
-        /**
-         * @function
-         * @param {Number} level
-         * @param {Number} x
-         * @param {Number} y
-         */
-        getTileUrl: function(level, x, y) {
-            //console.log(level);
-            const num = this._calculateAbsoluteTileNumber(level, x, y);
-            const result = Math.floor(num / 256);
-            return this.tilesUrl + 'TileGroup' + result + '/' + level + '-' + x + '-' + y + '.' + this.fileFormat;
-
-        },
-
-        /**
-         * Equality comparator
-         */
-        equals: function (otherSource) {
-            return otherSource && this.tilesUrl === otherSource.tilesUrl;
+            /**
+             * Equality comparator
+             */
+            equals: function (otherSource) {
+                return otherSource && this.tilesUrl === otherSource.tilesUrl;
+            },
         }
-    });
-
-}(OpenSeadragon));
-
+    );
+})(OpenSeadragon);

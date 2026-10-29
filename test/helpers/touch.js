@@ -1,7 +1,6 @@
 /* global TouchUtil, $ */
 
 (function () {
-
     let touches;
     let identifier;
     let target;
@@ -13,28 +12,28 @@
             identifier = 0;
         },
 
-        initTracker: function ( tracker ) {
+        initTracker: function (tracker) {
             // for testing in other touch-enabled browsers
-            if ( !('ontouchstart' in window) ) {
-                tracker.setTracking( false );
-                OpenSeadragon.MouseTracker.subscribeEvents.push( 'touchstart', 'touchend' );
-                tracker.setTracking( true );
+            if (!("ontouchstart" in window)) {
+                tracker.setTracking(false);
+                OpenSeadragon.MouseTracker.subscribeEvents.push("touchstart", "touchend");
+                tracker.setTracking(true);
             }
 
             target = tracker.element;
         },
 
-        resetTracker: function ( tracker ) {
+        resetTracker: function (tracker) {
             // for testing in other touch-enabled browsers
-            if ( !('ontouchstart' in window) ) {
-                tracker.setTracking( false );
-                ['touchstart', 'touchend'].forEach(function ( type ) {
-                    const index = OpenSeadragon.MouseTracker.subscribeEvents.indexOf( type );
-                    if ( index > -1 ) {
-                      OpenSeadragon.MouseTracker.subscribeEvents.splice( index, 1 );
+            if (!("ontouchstart" in window)) {
+                tracker.setTracking(false);
+                ["touchstart", "touchend"].forEach(function (type) {
+                    const index = OpenSeadragon.MouseTracker.subscribeEvents.indexOf(type);
+                    if (index > -1) {
+                        OpenSeadragon.MouseTracker.subscribeEvents.splice(index, 1);
                     }
                 });
-                tracker.setTracking( true );
+                tracker.setTracking(true);
             }
 
             target = null;
@@ -44,89 +43,84 @@
             let touch;
             const newTouches = [];
 
-            for ( let i = 0; i < arguments.length; i++ ) {
-                touch = createTouch(
-                    target.offsetLeft + arguments[ i ][ 0 ],
-                    target.offsetTop  + arguments[ i ][ 1 ]
-                );
+            for (let i = 0; i < arguments.length; i++) {
+                touch = createTouch(target.offsetLeft + arguments[i][0], target.offsetTop + arguments[i][1]);
 
-                touches.push( touch );
-                newTouches.push( touch );
+                touches.push(touch);
+                newTouches.push(touch);
             }
 
-            const event = createTouchEvent( 'touchstart', newTouches );
-            target.dispatchEvent( event );
-            return newTouches.length === 1 ? newTouches[ 0 ] : newTouches;
+            const event = createTouchEvent("touchstart", newTouches);
+            target.dispatchEvent(event);
+            return newTouches.length === 1 ? newTouches[0] : newTouches;
         },
 
-        end: function ( changedTouches ) {
-            if ( !$.isArray( changedTouches ) ) {
-                changedTouches = [ changedTouches ];
+        end: function (changedTouches) {
+            if (!$.isArray(changedTouches)) {
+                changedTouches = [changedTouches];
             }
 
-            touches = touches.filter(function ( touch ) {
-                return changedTouches.indexOf( touch ) === -1;
+            touches = touches.filter(function (touch) {
+                return changedTouches.indexOf(touch) === -1;
             });
 
-            const event = createTouchEvent( 'touchend', changedTouches );
-            target.dispatchEvent( event );
-        }
-
+            const event = createTouchEvent("touchend", changedTouches);
+            target.dispatchEvent(event);
+        },
     };
 
     // ----------
-    function createTouch( x, y ) {
+    function createTouch(x, y) {
         try {
             // new spec
             return new Touch({
                 identifier: identifier++,
                 target: target,
                 pageX: target.offsetLeft + x,
-                pageY: target.offsetTop + y
-            } );
+                pageY: target.offsetTop + y,
+            });
         } catch (e) {
             // legacy
-            return document.createTouch( window, target, identifier++, x, y, x, y );
+            return document.createTouch(window, target, identifier++, x, y, x, y);
         }
     }
 
-    function createTouchList( touches ) {
+    function createTouchList(touches) {
         // legacy
-        return document.createTouchList.apply( document, touches );
+        return document.createTouchList.apply(document, touches);
     }
 
-    function createTouchEvent( type, changedTouches ) {
+    function createTouchEvent(type, changedTouches) {
         try {
             // new spec
-            return new TouchEvent( type, {
+            return new TouchEvent(type, {
                 view: window,
                 bubbles: true,
                 cancelable: true,
                 touches: touches,
                 targetTouches: touches,
-                changedTouches: changedTouches
-            } );
+                changedTouches: changedTouches,
+            });
         } catch (e) {
             // legacy
-            const touchEvent = document.createEvent( 'TouchEvent' );
-            const touch1 = changedTouches[ 0 ];
+            const touchEvent = document.createEvent("TouchEvent");
+            const touch1 = changedTouches[0];
             touchEvent.initTouchEvent(
-                createTouchList( touches ),         // touches
-                createTouchList( touches ),         // targetTouches
-                createTouchList( changedTouches ),  // changedTouches
-                type,                               // type
-                window,                             // view
-                touch1.screenX,                     // screenX
-                touch1.screenY,                     // screenY
-                touch1.clientX,                     // clientX
-                touch1.clientY,                     // clientY
-                false,                              // ctrlKey
-                false,                              // altKey
-                false,                              // shiftKey
-                false                               // metaKey
+                createTouchList(touches), // touches
+                createTouchList(touches), // targetTouches
+                createTouchList(changedTouches), // changedTouches
+                type, // type
+                window, // view
+                touch1.screenX, // screenX
+                touch1.screenY, // screenY
+                touch1.clientX, // clientX
+                touch1.clientY, // clientY
+                false, // ctrlKey
+                false, // altKey
+                false, // shiftKey
+                false // metaKey
             );
             return touchEvent;
         }
     }
-
 })();
