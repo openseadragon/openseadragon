@@ -4,8 +4,8 @@
 /**
  * Audits types/index.d.ts against the public API surface of src/*.js.
  *
- * Neither `grunt dts:check` (tsc compiles the .d.ts in isolation) nor
- * `grunt dts:smoke` (tsd runs the assertions in test-dts/) ever look at
+ * Neither `tsc -p tsconfig.dts.json` (compiles the .d.ts in isolation) nor
+ * `tsd` (runs the assertions in test-dts/) ever look at
  * src/*.js, so a public method/property can exist in the JS with no
  * declaration -- or a declaration can outlive the JS it once described --
  * without either check noticing. This script diffs the two directly.
@@ -54,19 +54,15 @@ const ROOT = path.resolve(__dirname, "..");
 // ---------- source file list ----------
 
 function loadSourceList(root) {
-    const gruntfile = fs.readFileSync(path.join(root, "Gruntfile.js"), "utf8");
-    const arrayMatch = gruntfile.match(/sources\s*=\s*\[([\s\S]*?)\]/);
-    if (!arrayMatch) {
-        throw new Error("Could not find `sources = [...]` array in Gruntfile.js");
-    }
+    const index = fs.readFileSync(path.join(root, "src/index.js"), "utf8");
     const files = [];
-    for (const line of arrayMatch[1].split("\n")) {
-        const uncommented = line.replace(/\/\/.*/, "");
-        const entryPattern = /["'](src\/[^"']+\.js)["']/g;
-        let entry;
-        while ((entry = entryPattern.exec(uncommented))) {
-            files.push(entry[1]);
-        }
+    const importPattern = /^import (?:\w+ from )?"\.\/([^"]+\.js)";/gm;
+    let entry;
+    while ((entry = importPattern.exec(index))) {
+        files.push("src/" + entry[1]);
+    }
+    if (files[0] !== "src/openseadragon.js") {
+        throw new Error("Could not read the source list from src/index.js");
     }
     return files;
 }
