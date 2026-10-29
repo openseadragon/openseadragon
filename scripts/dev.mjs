@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Rebuilds build/openseadragon/ on every change to src/ and serves the repo
+ * Rebuilds build/openseadragon/ on every change to src/ or images/ and serves the repo
  * root on http://localhost:8000, so test/test.html and test/demo/ pages load
  * the current build. The root URL lists the test page and every demo, and
  * open pages reload after each rebuild.
@@ -40,11 +40,21 @@ function indexPage() {
 <ul>${links.join("")}</ul>`;
 }
 
-console.log("Starting watch builds...");
-await build({ mode: "production", build: { watch } });
-await build({ mode: "min", build: { watch } });
+let server;
 
-const server = await createServer({
+// One watcher, with the min build run after each rebuild, so the two never clear each other's
+// output and pages reload only once both files are written.
+console.log("Starting watch build...");
+const watcher = await build({ mode: "production", build: { watch, emptyOutDir: false } });
+watcher.on("event", async (event) => {
+    if (event.code !== "END") {
+        return;
+    }
+    await build({ mode: "min", logLevel: "warn" });
+    server?.ws.send({ type: "full-reload" });
+});
+
+server = await createServer({
     configFile: false,
     logLevel: "error",
     server: { port: 8000, strictPort: true, open: "/" },
@@ -60,12 +70,6 @@ const server = await createServer({
                 }
                 res.setHeader("Content-Type", "text/html");
                 devServer.transformIndexHtml("/", indexPage()).then((html) => res.end(html), next);
-            });
-            // Pages load the build as a classic script, which Vite doesn't track.
-            devServer.watcher.on("change", (file) => {
-                if (file.endsWith("build/openseadragon/openseadragon.js")) {
-                    devServer.ws.send({ type: "full-reload" });
-                }
             });
         }
     }]

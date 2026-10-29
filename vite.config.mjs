@@ -36,6 +36,12 @@ const versionTag = {
 
 const copyImages = {
     name: "copy-images",
+    buildStart() {
+        // Nothing imports the images, so watch mode only sees them if they are added here.
+        for (const file of fs.readdirSync("images")) {
+            this.addWatchFile(`images/${file}`);
+        }
+    },
     closeBundle() {
         fs.cpSync("images", `${outDir}/images`, { recursive: true });
     }
