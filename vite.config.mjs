@@ -26,6 +26,14 @@ const banner = [
     ""
 ].join("\n");
 
+// site-build reads the version from this JSDoc tag in the unminified bundle.
+const versionTag = {
+    name: "version-tag",
+    renderChunk(code) {
+        return { code: code.replace("__OSD_VERSION__", pkg.version), map: null };
+    }
+};
+
 const copyImages = {
     name: "copy-images",
     closeBundle() {
@@ -40,7 +48,7 @@ export default defineConfig(({ mode }) => {
         publicDir: false,
         plugins: coverage ?
             [istanbul({ include: "src/*", forceBuildInstrument: true, requireEnv: false })] :
-            [copyImages],
+            [versionTag, copyImages],
         build: {
             outDir: coverage ? "instrumented" : outDir,
             // The min build runs second and must keep the unminified files.

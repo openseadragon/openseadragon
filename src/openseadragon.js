@@ -86,6 +86,7 @@ import { version } from "../package.json";
 
 /**
  * @namespace OpenSeadragon
+ * @version openseadragon __OSD_VERSION__
  * @classdesc The root namespace for OpenSeadragon.  All utility methods
  * and classes are defined on or below this namespace.
  *
