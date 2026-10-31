@@ -77,6 +77,10 @@ declare namespace OpenSeadragon {
         LEFT,
     }
 
+    const settings: {
+        readonly ajaxLoaderLimit: number;
+    };
+
     class SUBPIXEL_ROUNDING_OCCURRENCES {
         static NEVER: number;
         static ALWAYS: number;
@@ -198,6 +202,8 @@ declare namespace OpenSeadragon {
         handler: EventHandler<any>,
         useCapture?: boolean | { capture?: boolean },
     ): void;
+
+    function setAjaxLoaderLimit(maxNumAjaxRequests: number): void;
 
     function setElementOpacity(
         element: Element | string,
