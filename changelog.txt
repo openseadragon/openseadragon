@@ -9,6 +9,7 @@ OPENSEADRAGON CHANGELOG
 * The default control buttons are now <button type="button"> elements, so keyboard and screen reader users can reach them; Space activates them as well as Enter (#2989 @lukew-cogapp)
 * The zoom in/out buttons are now disabled at maximum/minimum zoom. Buttons passed in via zoomInButton/zoomOutButton get element.disabled, as previousButton/nextButton already do. Calling enable() on a zoom button at its limit leaves it disabled until the zoom moves away (#2995 @lukew-cogapp)
 * Added controls-fade event so custom controls can fade in step with the built-in ones (#2991 @lukew-cogapp)
+* Added OpenSeadragon.setAjaxLoaderLimit(), a global cap on concurrent AJAX requests across all viewers, so pages that open thousands of tile sources can stay under the browser's request limit (#2242 @ChiliJohnson, #3010 @dgesteves)
 * We now expose the HTTP status code in open-failed events when possible (#2972 @a-sayed123)
 * Improved tile loading speed. As part of this, panning or zooming into new territory now starts a short burst of extra tile requests to catch up quickly (#2953 @Aiosa)
 * The WebGL drawer now accepts ImageBitmaps (#2953 @Aiosa)
