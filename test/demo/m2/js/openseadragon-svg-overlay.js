@@ -1,5 +1,4 @@
-(function() {
-
+(function () {
     if (!window.OpenSeadragon) {
         console.error('[openseadragon-svg-overlay] requires OpenSeadragon');
         return;
@@ -7,7 +6,7 @@
 
     const svgNS = 'http://www.w3.org/2000/svg';
 
-    const update = function(viewer) {
+    const update = function (viewer) {
         const info = viewer._svgOverlayInfo;
 
         if (info.containerWidth !== viewer.container.clientWidth) {
@@ -23,11 +22,10 @@
         const p = viewer.viewport.pixelFromPoint(new OpenSeadragon.Point(0, 0), true);
         const zoom = viewer.viewport.getZoom(true);
         const scale = viewer.container.clientWidth * zoom;
-        info.node.setAttribute('transform',
-            'translate(' + p.x + ',' + p.y + ') scale(' + scale + ')');
+        info.node.setAttribute('transform', 'translate(' + p.x + ',' + p.y + ') scale(' + scale + ')');
     };
 
-    OpenSeadragon.Viewer.prototype.svgOverlay = function(command) {
+    OpenSeadragon.Viewer.prototype.svgOverlay = function (command) {
         const self = this;
 
         if (command === undefined) {
@@ -36,10 +34,10 @@
                 return;
             }
 
-            const info = this._svgOverlayInfo = {
+            const info = (this._svgOverlayInfo = {
                 containerWidth: 0,
                 containerHeight: 0
-            };
+            });
 
             info.svg = document.createElementNS(svgNS, 'svg');
             info.svg.setAttribute('pointer-events', 'none');
@@ -53,11 +51,11 @@
             info.node = document.createElementNS(svgNS, 'g');
             info.svg.appendChild(info.node);
 
-            this.addHandler('animation', function() {
+            this.addHandler('animation', function () {
                 update(self);
             });
 
-            this.addHandler('open', function() {
+            this.addHandler('open', function () {
                 update(self);
             });
 
@@ -69,5 +67,4 @@
             console.error('[openseadragon-svg-overlay] unknown command: ' + command);
         }
     };
-
 })();

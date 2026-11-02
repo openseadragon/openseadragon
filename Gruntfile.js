@@ -1,89 +1,90 @@
 /* eslint-disable no-redeclare */
 /* global module */
 
-module.exports = function(grunt) {
+module.exports = function (grunt) {
     /* eslint-disable no-undef */
 
     // ----------
-    grunt.loadNpmTasks("grunt-contrib-compress");
-    grunt.loadNpmTasks("grunt-contrib-concat");
-    grunt.loadNpmTasks("grunt-contrib-uglify");
-    grunt.loadNpmTasks("grunt-contrib-qunit");
-    grunt.loadNpmTasks("grunt-contrib-connect");
-    grunt.loadNpmTasks("grunt-contrib-watch");
-    grunt.loadNpmTasks("grunt-contrib-clean");
-    grunt.loadNpmTasks("grunt-eslint");
-    grunt.loadNpmTasks("grunt-git-describe");
+    grunt.loadNpmTasks('grunt-contrib-compress');
+    grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-contrib-qunit');
+    grunt.loadNpmTasks('grunt-contrib-connect');
+    grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-contrib-clean');
+    grunt.loadNpmTasks('grunt-eslint');
+    grunt.loadNpmTasks('grunt-git-describe');
     grunt.loadNpmTasks('grunt-text-replace');
     grunt.loadNpmTasks('grunt-shell');
 
     // ----------
-    const packageJson = grunt.file.readJSON("package.json"),
-        distribution = "build/openseadragon/openseadragon.js",
-        minified = "build/openseadragon/openseadragon.min.js",
-        packageDirName = "openseadragon-bin-" + packageJson.version,
-        packageDir = "build/" + packageDirName + "/",
-        releaseRoot = "../site-build/built-openseadragon/",
+    const packageJson = grunt.file.readJSON('package.json'),
+        distribution = 'build/openseadragon/openseadragon.js',
+        minified = 'build/openseadragon/openseadragon.min.js',
+        packageDirName = 'openseadragon-bin-' + packageJson.version,
+        packageDir = 'build/' + packageDirName + '/',
+        releaseRoot = '../site-build/built-openseadragon/',
         sources = [
-            "src/openseadragon.js",
-            "src/matrix3.js",
-            "src/fullscreen.js",
-            "src/eventsource.js",
-            "src/mousetracker.js",
-            "src/control.js",
-            "src/controldock.js",
-            "src/placement.js",
-            "src/viewer.js",
-            "src/navigator.js",
-            "src/strings.js",
-            "src/point.js",
+            'src/openseadragon.js',
+            'src/matrix3.js',
+            'src/fullscreen.js',
+            'src/eventsource.js',
+            'src/mousetracker.js',
+            'src/control.js',
+            'src/controldock.js',
+            'src/placement.js',
+            'src/viewer.js',
+            'src/navigator.js',
+            'src/strings.js',
+            'src/point.js',
             //"src/profiler.js",
-            "src/tilesource.js",
-            "src/dzitilesource.js",
-            "src/iiiftilesource.js",
-            "src/iiptilesource.js",
-            "src/iristilesource.js",
-            "src/osmtilesource.js",
-            "src/tmstilesource.js",
-            "src/zoomifytilesource.js",
-            "src/legacytilesource.js",
-            "src/imagetilesource.js",
-            "src/tilesourcecollection.js",
-            "src/priorityqueue.js",
-            "src/datatypeconverter.js",
-            "src/button.js",
-            "src/buttongroup.js",
-            "src/rectangle.js",
-            "src/referencestrip.js",
-            "src/displayrectangle.js",
-            "src/spring.js",
-            "src/imageloader.js",
-            "src/tile.js",
-            "src/overlay.js",
-            "src/drawerbase.js",
-            "src/htmldrawer.js",
-            "src/canvasdrawer.js",
-            "src/webgldrawer.js",
-            "src/viewport.js",
-            "src/tiledimage.js",
-            "src/tilecache.js",
-            "src/world.js",
+            'src/tilesource.js',
+            'src/dzitilesource.js',
+            'src/iiiftilesource.js',
+            'src/iiptilesource.js',
+            'src/iristilesource.js',
+            'src/osmtilesource.js',
+            'src/tmstilesource.js',
+            'src/zoomifytilesource.js',
+            'src/legacytilesource.js',
+            'src/imagetilesource.js',
+            'src/tilesourcecollection.js',
+            'src/priorityqueue.js',
+            'src/datatypeconverter.js',
+            'src/button.js',
+            'src/buttongroup.js',
+            'src/rectangle.js',
+            'src/referencestrip.js',
+            'src/displayrectangle.js',
+            'src/spring.js',
+            'src/imageloader.js',
+            'src/tile.js',
+            'src/overlay.js',
+            'src/drawerbase.js',
+            'src/htmldrawer.js',
+            'src/canvasdrawer.js',
+            'src/webgldrawer.js',
+            'src/viewport.js',
+            'src/tiledimage.js',
+            'src/tilecache.js',
+            'src/world.js'
         ];
 
-    const banner = "//! <%= pkg.name %> <%= pkg.version %>\n" +
-                 "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
-                 "//! Git commit: <%= gitInfo %>\n" +
-                 "//! http://openseadragon.github.io\n" +
-                 "//! License: http://openseadragon.github.io/license/\n\n";
+    const banner =
+        '//! <%= pkg.name %> <%= pkg.version %>\n' +
+        "//! Built on <%= grunt.template.today('yyyy-mm-dd') %>\n" +
+        '//! Git commit: <%= gitInfo %>\n' +
+        '//! http://openseadragon.github.io\n' +
+        '//! License: http://openseadragon.github.io/license/\n\n';
 
     // ----------
     grunt.event.once('git-describe', function (rev) {
         grunt.config.set('gitInfo', rev);
     });
 
-    let moduleFilter =  '';
+    let moduleFilter = '';
     if (grunt.option('module')) {
-        moduleFilter = '?module=' + grunt.option('module')
+        moduleFilter = '?module=' + grunt.option('module');
     }
 
     // ----------
@@ -92,16 +93,16 @@ module.exports = function(grunt) {
         pkg: packageJson,
         osdVersion: {
             versionStr: packageJson.version,
-            major:      parseInt(packageJson.version.split('.')[0], 10),
-            minor:      parseInt(packageJson.version.split('.')[1], 10),
-            revision:   parseInt(packageJson.version.split('.')[2], 10)
+            major: parseInt(packageJson.version.split('.')[0], 10),
+            minor: parseInt(packageJson.version.split('.')[1], 10),
+            revision: parseInt(packageJson.version.split('.')[2], 10)
         },
         clean: {
-            build: ["build"],
+            build: ['build'],
             package: [packageDir],
             // Clean ALL coverage artifacts: instrumented sources,
             // raw coverage data, and generated reports
-            coverage: ["instrumented", ".nyc_output", "coverage"],
+            coverage: ['instrumented', '.nyc_output', 'coverage'],
             release: {
                 src: [releaseRoot],
                 options: {
@@ -116,7 +117,7 @@ module.exports = function(grunt) {
                 sourceMap: true
             },
             dist: {
-                src:  [ "<banner>" ].concat(sources),
+                src: ['<banner>'].concat(sources),
                 dest: distribution
             }
         },
@@ -153,32 +154,28 @@ module.exports = function(grunt) {
         compress: {
             zip: {
                 options: {
-                    archive: "build/releases/" + packageDirName + ".zip",
+                    archive: 'build/releases/' + packageDirName + '.zip',
                     level: 9
                 },
-                files: [
-                   { expand: true, cwd: "build/", src: [ packageDirName + "/**" ] }
-                ]
+                files: [{ expand: true, cwd: 'build/', src: [packageDirName + '/**'] }]
             },
             tar: {
                 options: {
-                    archive: "build/releases/" + packageDirName + ".tar.gz",
+                    archive: 'build/releases/' + packageDirName + '.tar.gz',
                     level: 9
                 },
-                files: [
-                   { expand: true, cwd: "build/", src: [ packageDirName + "/**" ] }
-                ]
+                files: [{ expand: true, cwd: 'build/', src: [packageDirName + '/**'] }]
             }
         },
         qunit: {
             normal: {
                 options: {
-                    urls: [ "http://localhost:8000/test/test.html" + moduleFilter ],
+                    urls: ['http://localhost:8000/test/test.html' + moduleFilter],
                     timeout: 10000,
                     puppeteer: {
                         headless: 'new'
                     }
-                },
+                }
             },
             // NOTE: qunit:coverage is kept for manual debugging in a browser.
             // The actual coverage task uses shell:coverage_run (custom
@@ -186,7 +183,7 @@ module.exports = function(grunt) {
             // window.__coverage__ after tests complete.
             coverage: {
                 options: {
-                    urls: [ "http://localhost:8000/test/coverage.html" + moduleFilter ],
+                    urls: ['http://localhost:8000/test/coverage.html' + moduleFilter],
                     timeout: 10000,
                     puppeteer: {
                         headless: 'new'
@@ -204,7 +201,7 @@ module.exports = function(grunt) {
                 options: {
                     port: 8000,
                     base: {
-                        path: ".",
+                        path: '.',
                         options: {
                             stylesheet: 'style.css'
                         }
@@ -213,36 +210,36 @@ module.exports = function(grunt) {
             }
         },
         watch: {
-            files: [ "Gruntfile.js", "src/*.js", "images/*" ],
-            tasks: "watchTask"
+            files: ['Gruntfile.js', 'src/*.js', 'images/*'],
+            tasks: 'watchTask'
         },
         eslint: {
             target: sources
         },
-        "git-describe": {
+        'git-describe': {
             options: {
                 failOnError: false
             },
             build: {}
         },
-        gitInfo: "unknown",
+        gitInfo: 'unknown',
         shell: {
             dts_check: {
-                command: "npx tsc --noEmit -p tsconfig.dts.json"
+                command: 'npx tsc --noEmit -p tsconfig.dts.json'
             },
             dts_smoke: {
-                command: "npx tsd"
+                command: 'npx tsd'
             },
             // Step 1: Instrument source files with nyc
             instrument: {
-                command: "npx nyc instrument src instrumented/src"
+                command: 'npx nyc instrument src instrumented/src'
             },
             // Step 2: Run tests with instrumented sources via custom
             // Puppeteer script that captures window.__coverage__
             coverage_run: {
                 command: 'node test/coverage-runner.js',
                 options: {
-                    env: (function() {
+                    env: (function () {
                         var env = Object.assign({}, process.env);
                         if (grunt.option('module')) {
                             env.QUNIT_MODULE = grunt.option('module');
@@ -253,46 +250,42 @@ module.exports = function(grunt) {
             },
             // Step 3: Generate coverage reports from .nyc_output/
             nyc_report: {
-                command: "npx nyc report"
+                command: 'npx nyc report'
             }
-        },
+        }
     });
 
     // ----------
     // Copy:build task.
     // Copies the image files into the appropriate location in the build folder.
-    grunt.registerTask("copy:build", function() {
-        grunt.file.recurse("images", function(abspath, rootdir, subdir, filename) {
-            grunt.file.copy(abspath, "build/openseadragon/images/" + (subdir || "") + filename);
+    grunt.registerTask('copy:build', function () {
+        grunt.file.recurse('images', function (abspath, rootdir, subdir, filename) {
+            grunt.file.copy(abspath, 'build/openseadragon/images/' + (subdir || '') + filename);
         });
     });
 
     // ----------
     // Copy:package task.
     // Creates a directory tree to be compressed into a package.
-    grunt.registerTask("copy:package", function() {
-        grunt.file.recurse("build/openseadragon", function(abspath, rootdir, subdir, filename) {
-            const dest = packageDir +
-                (subdir ? subdir + "/" : '/') +
-                filename;
+    grunt.registerTask('copy:package', function () {
+        grunt.file.recurse('build/openseadragon', function (abspath, rootdir, subdir, filename) {
+            const dest = packageDir + (subdir ? subdir + '/' : '/') + filename;
             grunt.file.copy(abspath, dest);
         });
-        grunt.file.copy("changelog.txt", packageDir + "changelog.txt");
-        grunt.file.copy("LICENSE.txt", packageDir + "LICENSE.txt");
+        grunt.file.copy('changelog.txt', packageDir + 'changelog.txt');
+        grunt.file.copy('LICENSE.txt', packageDir + 'LICENSE.txt');
     });
 
     // ----------
     // Copy:release task.
     // Copies the contents of the build folder into the release folder.
-    grunt.registerTask("copy:release", function() {
-        grunt.file.recurse("build", function(abspath, rootdir, subdir, filename) {
+    grunt.registerTask('copy:release', function () {
+        grunt.file.recurse('build', function (abspath, rootdir, subdir, filename) {
             if (subdir === 'releases') {
                 return;
             }
 
-            const dest = releaseRoot +
-                (subdir ? subdir + "/" : '/') +
-                filename;
+            const dest = releaseRoot + (subdir ? subdir + '/' : '/') + filename;
 
             grunt.file.copy(abspath, dest);
         });
@@ -301,44 +294,47 @@ module.exports = function(grunt) {
     // ----------
     // Bower task.
     // Generates the Bower file for site-build.
-    grunt.registerTask("bower", function() {
-        const path = "../site-build/bower.json";
+    grunt.registerTask('bower', function () {
+        const path = '../site-build/bower.json';
         const data = grunt.file.readJSON(path);
         data.version = packageJson.version;
-        grunt.file.write(path, JSON.stringify(data, null, 2) + "\n");
+        grunt.file.write(path, JSON.stringify(data, null, 2) + '\n');
     });
 
     // ----------
     // Watch task.
     // Called from the watch feature; does a full build or a minbuild, depending on
     // whether you used --min on the command line.
-    grunt.registerTask("watchTask", function() {
+    grunt.registerTask('watchTask', function () {
         if (grunt.option('min')) {
-            grunt.task.run("minbuild");
+            grunt.task.run('minbuild');
         } else {
-            grunt.task.run("build");
+            grunt.task.run('build');
         }
     });
 
     // ----------
     // Build task.
     // Cleans out the build folder and builds the code and images into it, checking lint.
-    grunt.registerTask("build", [
-        "clean:build", "git-describe", "eslint", "concat", "uglify",
-        "replace:cleanPaths", "copy:build"
+    grunt.registerTask('build', [
+        'clean:build',
+        'git-describe',
+        'eslint',
+        'concat',
+        'uglify',
+        'replace:cleanPaths',
+        'copy:build'
     ]);
 
     // ----------
     // Minimal build task.
     // For use during development as desired. Creates only the unminified version.
-    grunt.registerTask("minbuild", [
-        "git-describe", "concat", "copy:build"
-    ]);
+    grunt.registerTask('minbuild', ['git-describe', 'concat', 'copy:build']);
 
     // ----------
     // Test task.
     // Builds and runs unit tests.
-    grunt.registerTask("test", ["build", "connect", "qunit:normal", "dts"]);
+    grunt.registerTask('test', ['build', 'connect', 'qunit:normal', 'dts']);
 
     // ----------
     // Coverage task.
@@ -355,38 +351,38 @@ module.exports = function(grunt) {
     // Usage:
     //   grunt coverage              — run all tests with coverage
     //   grunt coverage --module=X   — run specific module with coverage
-    grunt.registerTask("coverage", [
-        "clean:coverage",
-        "shell:instrument",
-        "build",
-        "connect",
-        "shell:coverage_run",
-        "shell:nyc_report"
+    grunt.registerTask('coverage', [
+        'clean:coverage',
+        'shell:instrument',
+        'build',
+        'connect',
+        'shell:coverage_run',
+        'shell:nyc_report'
     ]);
 
     // ----------
     // Package task.
     // Builds and creates the .zip and .tar.gz files.
-    grunt.registerTask("package", ["build", "copy:package", "compress", "clean:package"]);
+    grunt.registerTask('package', ['build', 'copy:package', 'compress', 'clean:package']);
 
     // ----------
     // Publish task.
     // Cleans the built files out of the release folder and copies newly built ones over.
-    grunt.registerTask("publish", ["package", "clean:release", "copy:release", "bower"]);
+    grunt.registerTask('publish', ['package', 'clean:release', 'copy:release', 'bower']);
 
     // ----------
     // Dev task.
     // Builds, fires up a server and watches for changes.
-    grunt.registerTask("dev", ["build", "connect", "watch"]);
+    grunt.registerTask('dev', ['build', 'connect', 'watch']);
 
     // ----------
     // Default task.
     // Does a normal build.
-    grunt.registerTask("default", ["build"]);
+    grunt.registerTask('default', ['build']);
 
     // ----------
     // DTS tasks
-    grunt.registerTask("dts:check", ["shell:dts_check"]);
-    grunt.registerTask("dts:smoke", ["shell:dts_smoke"]);
-    grunt.registerTask("dts", ["dts:check", "dts:smoke"]);
+    grunt.registerTask('dts:check', ['shell:dts_check']);
+    grunt.registerTask('dts:smoke', ['shell:dts_smoke']);
+    grunt.registerTask('dts', ['dts:check', 'dts:smoke']);
 };

@@ -1,4 +1,4 @@
-(function() {
+(function () {
     QUnit.module('Iris');
 
     const mockMetadata = {
@@ -14,29 +14,29 @@
         }
     };
 
-    QUnit.test('IrisTileSource getMetadataUrl', function(assert) {
+    QUnit.test('IrisTileSource getMetadataUrl', function (assert) {
         const test = new OpenSeadragon.IrisTileSource({
-            serverUrl: "http://localhost",
-            slideId: "12345",
+            serverUrl: 'http://localhost',
+            slideId: '12345',
             metadata: mockMetadata
         });
 
-        assert.ok(test.ready, "IrisTileSource should be ready after metadata");
+        assert.ok(test.ready, 'IrisTileSource should be ready after metadata');
 
         const expectedWidth = Math.ceil(
             mockMetadata.extent.width * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
         );
 
-        assert.equal(test.width, expectedWidth, "Width should be correctly parsed from metadata");
+        assert.equal(test.width, expectedWidth, 'Width should be correctly parsed from metadata');
 
-        const expectedUrl = "http://localhost/slides/12345/metadata";
-        assert.equal(test.getMetadataUrl(), expectedUrl, "Metadata URL should match expected format");
+        const expectedUrl = 'http://localhost/slides/12345/metadata';
+        assert.equal(test.getMetadataUrl(), expectedUrl, 'Metadata URL should match expected format');
     });
 
-    QUnit.test('IrisTileSource metadata parsing', function(assert) {
+    QUnit.test('IrisTileSource metadata parsing', function (assert) {
         const test = new OpenSeadragon.IrisTileSource({
-            serverUrl: "http://localhost",
-            slideId: "12345",
+            serverUrl: 'http://localhost',
+            slideId: '12345',
             metadata: mockMetadata
         });
 
@@ -48,88 +48,96 @@
             mockMetadata.extent.height * mockMetadata.extent.layers[mockMetadata.extent.layers.length - 1].scale
         );
 
-        assert.ok(test.width, "Width exists");
-        assert.equal(test.width, expectedWidth, "Parsing width correctly");
-        assert.equal(test.height, expectedHeight, "Parsing height correctly");
+        assert.ok(test.width, 'Width exists');
+        assert.equal(test.width, expectedWidth, 'Parsing width correctly');
+        assert.equal(test.height, expectedHeight, 'Parsing height correctly');
 
         // Check level sizes and scales
-        assert.ok(test.levelSizes, "Level sizes exist");
-        assert.ok(Array.isArray(test.levelSizes), "Level sizes is an array");
-        assert.equal(test.levelSizes.length, mockMetadata.extent.layers.length, "Number of levels is correct");
-        assert.equal(test.maxLevel, mockMetadata.extent.layers.length - 1, "Max level is correctly set");
+        assert.ok(test.levelSizes, 'Level sizes exist');
+        assert.ok(Array.isArray(test.levelSizes), 'Level sizes is an array');
+        assert.equal(test.levelSizes.length, mockMetadata.extent.layers.length, 'Number of levels is correct');
+        assert.equal(test.maxLevel, mockMetadata.extent.layers.length - 1, 'Max level is correctly set');
 
-        assert.ok(test.levelScales, "Level scales exist");
-        assert.equal(test.levelScales.length, 4, "Number of scales matches number of levels");
+        assert.ok(test.levelScales, 'Level scales exist');
+        assert.equal(test.levelScales.length, 4, 'Number of scales matches number of levels');
         assert.deepEqual(
             test.levelScales,
             [
-                (mockMetadata.extent.layers[0].scale / mockMetadata.extent.layers[3].scale),
-                (mockMetadata.extent.layers[1].scale / mockMetadata.extent.layers[3].scale),
-                (mockMetadata.extent.layers[2].scale / mockMetadata.extent.layers[3].scale),
-                (mockMetadata.extent.layers[3].scale / mockMetadata.extent.layers[3].scale)
+                mockMetadata.extent.layers[0].scale / mockMetadata.extent.layers[3].scale,
+                mockMetadata.extent.layers[1].scale / mockMetadata.extent.layers[3].scale,
+                mockMetadata.extent.layers[2].scale / mockMetadata.extent.layers[3].scale,
+                mockMetadata.extent.layers[3].scale / mockMetadata.extent.layers[3].scale
             ],
-            "Parsing scales correctly"
+            'Parsing scales correctly'
         );
     });
 
-    QUnit.test('IrisTileSource getTileUrl', function(assert) {
+    QUnit.test('IrisTileSource getTileUrl', function (assert) {
         const test = new OpenSeadragon.IrisTileSource({
-            serverUrl: "http://localhost",
-            slideId: "12345",
+            serverUrl: 'http://localhost',
+            slideId: '12345',
             metadata: mockMetadata
         });
 
         assert.equal(
             test.getTileUrl(0, 0, 0),
-            "http://localhost/slides/12345/layers/0/tiles/0",
-            "Tile URL for level 0, x=0, y=0 should match expected format"
+            'http://localhost/slides/12345/layers/0/tiles/0',
+            'Tile URL for level 0, x=0, y=0 should match expected format'
         );
         assert.equal(
             test.getTileUrl(1, 1, 0),
-            "http://localhost/slides/12345/layers/1/tiles/1",
-            "Tile URL for level 1, x=1, y=0 should match expected format"
+            'http://localhost/slides/12345/layers/1/tiles/1',
+            'Tile URL for level 1, x=1, y=0 should match expected format'
         );
         assert.equal(
             test.getTileUrl(2, 1, 1),
-            "http://localhost/slides/12345/layers/2/tiles/125",
-            "Tile URL for level 2, x=1, y=1 should match expected format"
+            'http://localhost/slides/12345/layers/2/tiles/125',
+            'Tile URL for level 2, x=1, y=1 should match expected format'
         );
         assert.equal(
             test.getTileUrl(3, 2, 2),
-            "http://localhost/slides/12345/layers/3/tiles/994",
-            "Tile URL for level 3, x=2, y=2 should match expected format"
+            'http://localhost/slides/12345/layers/3/tiles/994',
+            'Tile URL for level 3, x=2, y=2 should match expected format'
         );
         assert.equal(
             test.getTileUrl(3, 3, 2),
-            "http://localhost/slides/12345/layers/3/tiles/995",
-            "Tile URL for level 3, x=3, y=2 should match expected format"
+            'http://localhost/slides/12345/layers/3/tiles/995',
+            'Tile URL for level 3, x=3, y=2 should match expected format'
         );
     });
 
-    QUnit.test('IrisTileSource throws without serverUrl', function(assert) {
-        assert.throws(function() {
-            return new OpenSeadragon.IrisTileSource({
-                slideId: "12345",
-                metadata: mockMetadata
-            });
-        }, /requires serverUrl and slideId/, 'should throw error');
+    QUnit.test('IrisTileSource throws without serverUrl', function (assert) {
+        assert.throws(
+            function () {
+                return new OpenSeadragon.IrisTileSource({
+                    slideId: '12345',
+                    metadata: mockMetadata
+                });
+            },
+            /requires serverUrl and slideId/,
+            'should throw error'
+        );
     });
 
-    QUnit.test('IrisTileSource throws without slideId', function(assert) {
-        assert.throws(function() {
-            return new OpenSeadragon.IrisTileSource({
-                serverUrl: "http://localhost",
-                metadata: mockMetadata
-            });
-        }, /requires serverUrl and slideId/, 'should throw error');
+    QUnit.test('IrisTileSource throws without slideId', function (assert) {
+        assert.throws(
+            function () {
+                return new OpenSeadragon.IrisTileSource({
+                    serverUrl: 'http://localhost',
+                    metadata: mockMetadata
+                });
+            },
+            /requires serverUrl and slideId/,
+            'should throw error'
+        );
     });
 
-    QUnit.test('IrisTileSource supports', function(assert) {
+    QUnit.test('IrisTileSource supports', function (assert) {
         assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports({
-                type: "iris",
-                serverUrl: "http://localhost",
-                slideId: "12345"
+                type: 'iris',
+                serverUrl: 'http://localhost',
+                slideId: '12345'
             }),
             true,
             'should return true (boolean) for valid iris data'
@@ -137,7 +145,7 @@
 
         assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports({
-                type: "dzi"
+                type: 'dzi'
             }),
             false,
             'should return false (boolean) for non-iris type'
@@ -157,17 +165,17 @@
 
         assert.strictEqual(
             OpenSeadragon.IrisTileSource.prototype.supports({
-                type: "iris"
+                type: 'iris'
             }),
             false,
             'should return false (boolean) without serverUrl'
         );
     });
 
-    QUnit.test('IrisTileSource getNumTiles', function(assert) {
+    QUnit.test('IrisTileSource getNumTiles', function (assert) {
         const test = new OpenSeadragon.IrisTileSource({
-            serverUrl: "http://localhost",
-            slideId: "12345",
+            serverUrl: 'http://localhost',
+            slideId: '12345',
             metadata: mockMetadata
         });
 
@@ -190,28 +198,20 @@
         assert.equal(invalidHigh.y, 0, 'invalid high level y should be 0');
     });
 
-    QUnit.test('IrisTileSource getLevelScale', function(assert) {
+    QUnit.test('IrisTileSource getLevelScale', function (assert) {
         const test = new OpenSeadragon.IrisTileSource({
-            serverUrl: "http://localhost",
-            slideId: "12345",
+            serverUrl: 'http://localhost',
+            slideId: '12345',
             metadata: mockMetadata
         });
 
         var maxScale = mockMetadata.extent.layers[3].scale;
 
-        assert.equal(
-            test.getLevelScale(0),
-            mockMetadata.extent.layers[0].scale / maxScale,
-            'level 0 scale'
-        );
-        assert.equal(
-            test.getLevelScale(3),
-            1,
-            'max level scale should be 1'
-        );
+        assert.equal(test.getLevelScale(0), mockMetadata.extent.layers[0].scale / maxScale, 'level 0 scale');
+        assert.equal(test.getLevelScale(3), 1, 'max level scale should be 1');
     });
 
-    QUnit.test('IrisTileSource configure', function(assert) {
+    QUnit.test('IrisTileSource configure', function (assert) {
         var options = { test: 'value' };
         var result = OpenSeadragon.IrisTileSource.prototype.configure(options);
         assert.equal(result, options, 'configure should return the options object');

@@ -1,16 +1,15 @@
 /* global QUnit, Util, console */
 
 (function () {
-
     let originalNow;
     let now;
 
-    QUnit.module("spring", {
+    QUnit.module('spring', {
         beforeEach: function () {
             now = 0;
             originalNow = OpenSeadragon.now;
 
-            OpenSeadragon.now = function() {
+            OpenSeadragon.now = function () {
                 return now;
             };
         },
@@ -19,7 +18,7 @@
         }
     });
 
-    QUnit.test('regular spring', function(assert) {
+    QUnit.test('regular spring', function (assert) {
         const done = assert.async();
         const spring = new OpenSeadragon.Spring({
             initial: 5,
@@ -47,7 +46,7 @@
         done();
     });
 
-    QUnit.test('exponential spring', function(assert) {
+    QUnit.test('exponential spring', function (assert) {
         const done = assert.async();
         const spring = new OpenSeadragon.Spring({
             exponential: true,
@@ -75,5 +74,4 @@
 
         done();
     });
-
 })();

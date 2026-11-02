@@ -1,22 +1,22 @@
 /* global QUnit, $, testLog */
 
-(function() {
+(function () {
     let viewer;
 
     QUnit.module('World', {
         beforeEach: function () {
-            $('<div id="example"></div>').appendTo("#qunit-fixture");
+            $('<div id="example"></div>').appendTo('#qunit-fixture');
 
             testLog.reset();
 
             viewer = OpenSeadragon({
-                id:            'example',
-                prefixUrl:     '/build/openseadragon/images/',
+                id: 'example',
+                prefixUrl: '/build/openseadragon/images/',
                 springStiffness: 100 // Faster animation = faster tests
             });
         },
         afterEach: function () {
-            if (viewer){
+            if (viewer) {
                 viewer.destroy();
             }
 
@@ -25,17 +25,17 @@
     });
 
     // ----------
-    const checkBounds = function(assert, expected, message) {
+    const checkBounds = function (assert, expected, message) {
         const bounds = viewer.world.getHomeBounds();
         assert.ok(bounds.equals(expected), message + ' ' + bounds.toString());
     };
 
     // ----------
-    QUnit.test('adding a tiled image', function(assert) {
-    const done = assert.async();
+    QUnit.test('adding a tiled image', function (assert) {
+        const done = assert.async();
         assert.ok(viewer.world, 'World exists');
 
-        viewer.world.addHandler('add-item', function(event) {
+        viewer.world.addHandler('add-item', function (event) {
             assert.ok(event, 'add-item handler received event data');
             assert.equal(event.eventSource, viewer.world, 'sender of add-item event was world');
             assert.ok(event.item, 'add-item event includes item');
@@ -51,9 +51,9 @@
     });
 
     // ----------
-    QUnit.test('metrics', function(assert) {
+    QUnit.test('metrics', function (assert) {
         const done = assert.async();
-        viewer.addHandler('open', function(event) {
+        viewer.addHandler('open', function (event) {
             checkBounds(assert, new OpenSeadragon.Rect(0, 0, 4, 4), 'bounds after open');
 
             const expectedContentFactor = viewer.world.getItemAt(1).getContentSize().x / 2;
@@ -80,7 +80,8 @@
             {
                 tileSource: '/test/data/testpattern.dzi',
                 width: 4
-            }, {
+            },
+            {
                 tileSource: '/test/data/testpattern.dzi',
                 width: 2
             }
@@ -88,16 +89,16 @@
     });
 
     // ----------
-    QUnit.test('remove/reorder tiled images', function(assert) {
+    QUnit.test('remove/reorder tiled images', function (assert) {
         const done = assert.async();
         let handlerCount = 0;
 
-        viewer.addHandler('open', function(event) {
+        viewer.addHandler('open', function (event) {
             assert.equal(viewer.world.getItemCount(), 3, 'there are now 3 items');
             const item0 = viewer.world.getItemAt(0);
             const item1 = viewer.world.getItemAt(1);
 
-            viewer.world.addHandler('item-index-change', function(event) {
+            viewer.world.addHandler('item-index-change', function (event) {
                 handlerCount++;
                 assert.ok(event, 'item-index-change handler received event data');
                 assert.equal(event.eventSource, viewer.world, 'sender of item-index-change event was world');
@@ -123,7 +124,7 @@
             viewer.world.removeItem(item1);
 
             let removeCount = 0;
-            viewer.world.addHandler('remove-item', function() {
+            viewer.world.addHandler('remove-item', function () {
                 removeCount++;
                 if (removeCount === 2) {
                     handlerCount++;
@@ -139,19 +140,15 @@
 
         assert.equal(viewer.world.getItemCount(), 0, 'no items to start with');
 
-        viewer.open([
-            '/test/data/testpattern.dzi',
-            '/test/data/testpattern.dzi',
-            '/test/data/testpattern.dzi'
-        ]);
+        viewer.open(['/test/data/testpattern.dzi', '/test/data/testpattern.dzi', '/test/data/testpattern.dzi']);
     });
 
     // ----------
-    QUnit.test('draw', function(assert) {
+    QUnit.test('draw', function (assert) {
         const done = assert.async();
         let handlerCount = 0;
 
-        viewer.addHandler('open', function(event) {
+        viewer.addHandler('open', function (event) {
             assert.equal(viewer.world.needsDraw(), true, 'needs draw after open');
 
             viewer.addHandler('update-level', function updateHandler() {
@@ -171,7 +168,7 @@
     });
 
     // ----------
-    QUnit.test('resetItems', function(assert) {
+    QUnit.test('resetItems', function (assert) {
         const done = assert.async();
         viewer.addHandler('tiled-image-drawn', function updateHandler() {
             viewer.removeHandler('tiled-image-drawn', updateHandler);
@@ -187,9 +184,9 @@
     });
 
     // ----------
-    QUnit.test('arrange', function(assert) {
+    QUnit.test('arrange', function (assert) {
         const done = assert.async();
-        viewer.addHandler('open', function(event) {
+        viewer.addHandler('open', function (event) {
             checkBounds(assert, new OpenSeadragon.Rect(0, 0, 1, 1), 'all stacked');
 
             viewer.world.arrange({
@@ -242,11 +239,6 @@
             done();
         });
 
-        viewer.open([
-            '/test/data/testpattern.dzi',
-            '/test/data/testpattern.dzi',
-            '/test/data/testpattern.dzi'
-        ]);
+        viewer.open(['/test/data/testpattern.dzi', '/test/data/testpattern.dzi', '/test/data/testpattern.dzi']);
     });
-
 })();

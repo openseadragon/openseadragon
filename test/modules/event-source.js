@@ -1,7 +1,11 @@
 /* global QUnit, $, TouchUtil, Util, testLog */
 
 (function () {
-    let context, result=[], eName = "test", eventCounter = 0, finished = false;
+    let context,
+        result = [],
+        eName = 'test',
+        eventCounter = 0,
+        finished = false;
 
     function evaluateTest(e) {
         if (finished) return;
@@ -11,13 +15,14 @@
     }
 
     function executor(i, ms) {
-        if (ms === undefined) return function (e) {
-            eventCounter++;
-            result.push(i);
-            if (eventCounter === context.numberOfHandlers(eName)) {
-                evaluateTest(e);
-            }
-        };
+        if (ms === undefined)
+            return function (e) {
+                eventCounter++;
+                result.push(i);
+                if (eventCounter === context.numberOfHandlers(eName)) {
+                    evaluateTest(e);
+                }
+            };
 
         return function (e) {
             return new Promise(function (resolve) {
@@ -30,28 +35,28 @@
                     resolve();
                 }, ms);
             });
-        }
+        };
     }
 
-    function runTest(e, async=false) {
+    function runTest(e, async = false) {
         context.raiseEvent(eName, e);
     }
 
-    function runTestAwaiting(e, async=false) {
+    function runTestAwaiting(e, async = false) {
         context.raiseEventAwaiting(eName, e);
     }
 
-    QUnit.module( 'EventSource', {
+    QUnit.module('EventSource', {
         beforeEach: function () {
             context = new OpenSeadragon.EventSource();
             eventCounter = 0;
             result = [];
             finished = false;
         }
-    } );
+    });
 
     // ----------
-    QUnit.test('EventSource: no events', function(assert) {
+    QUnit.test('EventSource: no events', function (assert) {
         context.addHandler(eName, evaluateTest);
         runTest({
             assert: assert,
@@ -61,7 +66,7 @@
         });
     });
 
-    QUnit.test('EventSource: simple callbacks order', function(assert) {
+    QUnit.test('EventSource: simple callbacks order', function (assert) {
         context.addHandler(eName, executor(1));
         context.addHandler(eName, executor(2));
         context.addHandler(eName, executor(3));
@@ -73,7 +78,7 @@
         });
     });
 
-    QUnit.test('EventSource: priority callbacks order', function(assert) {
+    QUnit.test('EventSource: priority callbacks order', function (assert) {
         context.addHandler(eName, executor(1), undefined, 20);
         context.addHandler(eName, executor(2), undefined, 124);
         context.addHandler(eName, executor(3), undefined, -5);
@@ -87,7 +92,7 @@
         });
     });
 
-    QUnit.test('EventSource: async non-synchronized order', function(assert) {
+    QUnit.test('EventSource: async non-synchronized order', function (assert) {
         context.addHandler(eName, executor(1, 5));
         context.addHandler(eName, executor(2, 50));
         context.addHandler(eName, executor(3));
@@ -100,7 +105,7 @@
         });
     });
 
-    QUnit.test('EventSource: async non-synchronized priority order', function(assert) {
+    QUnit.test('EventSource: async non-synchronized priority order', function (assert) {
         context.addHandler(eName, executor(1, 5));
         context.addHandler(eName, executor(2, 50), undefined, -100);
         context.addHandler(eName, executor(3), undefined, -500);
@@ -109,11 +114,12 @@
             assert: assert,
             done: assert.async(),
             expected: [4, 3, 1, 2],
-            message: 'Async callback order with priority should follow [4,3,1,2]. Async functions do not respect priority.'
+            message:
+                'Async callback order with priority should follow [4,3,1,2]. Async functions do not respect priority.'
         });
     });
 
-    QUnit.test('EventSource: async synchronized order', function(assert) {
+    QUnit.test('EventSource: async synchronized order', function (assert) {
         context.addHandler(eName, executor(1, 5));
         context.addHandler(eName, executor(2, 50));
         context.addHandler(eName, executor(3));
@@ -127,7 +133,7 @@
         });
     });
 
-    QUnit.test('EventSource: async synchronized priority order', function(assert) {
+    QUnit.test('EventSource: async synchronized priority order', function (assert) {
         context.addHandler(eName, executor(1, 5));
         context.addHandler(eName, executor(2), undefined, -500);
         context.addHandler(eName, executor(3, 50), undefined, -200);
@@ -137,7 +143,8 @@
             assert: assert,
             done: assert.async(),
             expected: [4, 1, 3, 2],
-            message: 'Async callback order with priority should follow [4,1,3,2], since priority is respected when synchronized.'
+            message:
+                'Async callback order with priority should follow [4,1,3,2], since priority is respected when synchronized.'
         });
     });
-} )();
+})();

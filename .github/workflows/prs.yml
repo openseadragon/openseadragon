@@ -6,12 +6,15 @@ on:
     paths:
       - 'src/**'
       - 'test/**'
+      - 'scripts/**'
+      - 'types/**'
+      - 'test-dts/**'
+      - '.prettierignore'
       - 'images/**'
       - '.github/workflows/prs.yml'
       - '*.json'
       - '*.js'
       - '*.css'
-      - '!test/demo/**'
 
 jobs:
   run_checks:
@@ -28,6 +31,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
 
       - name: Install Puppeteer Chrome
         run: |
