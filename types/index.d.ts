@@ -2061,6 +2061,7 @@ declare namespace OpenSeadragon {
         setContextRecoveryEnabled(enabled: boolean): void;
         isContextRecoveryEnabled(): boolean;
         isWebGL2(): boolean;
+        isGLSL3(): boolean;
         setUnpackWithPremultipliedAlpha(enabled: boolean): void;
     }
 
