@@ -77,10 +77,6 @@ declare namespace OpenSeadragon {
         LEFT,
     }
 
-    const settings: {
-        readonly ajaxLoaderLimit: number;
-    };
-
     class SUBPIXEL_ROUNDING_OCCURRENCES {
         static NEVER: number;
         static ALWAYS: number;

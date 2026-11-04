@@ -290,4 +290,3 @@ expectType<string>(OpenSeadragon.version.versionStr);
 expectType<boolean>(OpenSeadragon.supportsCanvas);
 expectType<void>(OpenSeadragon.setAjaxLoaderLimit(4));
 expectError(OpenSeadragon.setAjaxLoaderLimit("4"));
-expectType<number>(OpenSeadragon.settings.ajaxLoaderLimit);
