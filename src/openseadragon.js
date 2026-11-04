@@ -2477,10 +2477,12 @@ function OpenSeadragon( options ){
          * @type {Object}
          * @property {Function[]} requestFuncs Array of functions representing queued AJAX requests
          * @property {Number} numActiveRequests The number of AJAX requests currently in-flight
+         * @property {Boolean} isProcessing Whether processAjaxQueue is running
          */
         AjaxQueue: {
             requestFuncs: [],
-            numActiveRequests: 0
+            numActiveRequests: 0,
+            isProcessing: false
         },
 
         /**
@@ -2488,7 +2490,7 @@ function OpenSeadragon( options ){
          * @private
          * @param {XMLHttpRequest} request The request to be queued
          * @param {Function} sendRequestFunc A function which, when called, will send the request.
-         *     It returns false if the request could not be sent.
+         *     It returns true if the request went out, false if it could not be sent.
          */
         queueAjaxRequest: function (request, sendRequestFunc) {
             const queue = $.AjaxQueue;
@@ -2501,9 +2503,14 @@ function OpenSeadragon( options ){
 
             const startRequest = function() {
                 queue.numActiveRequests++;
-                if (sendRequestFunc() === false) {
-                    // It failed before going out, so it will never complete; free its slot now.
-                    onCompleteRequest();
+                let sent = false;
+                try {
+                    sent = sendRequestFunc();
+                } finally {
+                    if (!sent) {
+                        // It failed before going out, so it will never complete; free its slot now.
+                        onCompleteRequest();
+                    }
                 }
             };
 
@@ -2539,9 +2546,21 @@ function OpenSeadragon( options ){
          */
         processAjaxQueue: function() {
             const queue = $.AjaxQueue;
-            while (queue.requestFuncs.length > 0 &&
-                (!$.settings.ajaxLoaderLimit || queue.numActiveRequests < $.settings.ajaxLoaderLimit)) {
-                queue.requestFuncs.shift()();
+
+            // A queued request that fails to send comes back here before it returns.
+            // The loop below picks up the next one, so the stack doesn't grow with the queue.
+            if (queue.isProcessing) {
+                return;
+            }
+
+            queue.isProcessing = true;
+            try {
+                while (queue.requestFuncs.length > 0 &&
+                    (!$.settings.ajaxLoaderLimit || queue.numActiveRequests < $.settings.ajaxLoaderLimit)) {
+                    queue.requestFuncs.shift()();
+                }
+            } finally {
+                queue.isProcessing = false;
             }
         },
 

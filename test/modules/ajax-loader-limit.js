@@ -252,6 +252,57 @@
     });
 
     // ----------
+    QUnit.test('A large batch of queued requests that cannot be sent', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+
+        const first = request();
+        const batch = [];
+        for (let i = 0; i < 20000; i++) {
+            batch.push(request('throws-on-open'));
+        }
+        const last = request();
+
+        first.xhr.respond(200);
+        assert.strictEqual(first.successCount, 1, 'The request that freed the slot still gets its response');
+        assert.strictEqual(batch.filter(function(result) {
+            return result.errorCount === 1;
+        }).length, batch.length, 'Each failed request calls its error callback once');
+        assert.strictEqual(last.xhr.sendCount, 1, 'The request after the batch is sent');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.requestFuncs.length, 0, 'The queue is empty');
+
+        last.xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    QUnit.test('An error callback that throws does not jam the queue', function(assert) {
+        const throwingRequest = function() {
+            return OpenSeadragon.makeAjaxRequest({
+                url: 'throws-on-open',
+                success: function() {},
+                error: function() {
+                    throw new Error('Callback failed');
+                }
+            });
+        };
+
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        assert.throws(throwingRequest, /Callback failed/, 'A request sent right away throws to its caller');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It frees its slot');
+
+        const first = request();
+        throwingRequest();
+        const next = request();
+        assert.throws(function() {
+            first.xhr.respond(200);
+        }, /Callback failed/, 'A queued request throws to whatever was draining the queue');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It frees its slot too');
+
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        assert.strictEqual(next.xhr.sendCount, 1, 'The queue can still be drained afterwards');
+    });
+
+    // ----------
     QUnit.test('Real requests complete under a limit', function(assert) {
         OpenSeadragon.createAjaxRequest = originalCreateAjaxRequest;
         OpenSeadragon.setAjaxLoaderLimit(1);
