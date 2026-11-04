@@ -1614,7 +1614,8 @@ function OpenSeadragon( options ){
          * by any viewer on the page: tile source info files and, with loadTilesWithAjax,
          * the tiles themselves. Requests over the limit wait in a queue until an earlier
          * one completes. Raising or removing the limit sends queued requests right away;
-         * lowering it lets requests already in flight finish.
+         * setting or lowering it lets requests already in flight finish, and they count
+         * toward the limit until they do.
          * @function
          * @param {Number} maxNumAjaxRequests The maximum number of AJAX requests to make concurrently. Setting this to 0, the default, will allow an unlimited number of requests.
          */
@@ -2490,11 +2491,6 @@ function OpenSeadragon( options ){
          *     It returns false if the request could not be sent.
          */
         queueAjaxRequest: function (request, sendRequestFunc) {
-            if (!$.settings.ajaxLoaderLimit) {
-                sendRequestFunc();
-                return;
-            }
-
             const queue = $.AjaxQueue;
             const oldOnStateChange = request.onreadystatechange;
 
@@ -2518,7 +2514,7 @@ function OpenSeadragon( options ){
                 }
             };
 
-            if (queue.numActiveRequests >= $.settings.ajaxLoaderLimit) {
+            if ($.settings.ajaxLoaderLimit && queue.numActiveRequests >= $.settings.ajaxLoaderLimit) {
                 queue.requestFuncs.push(startRequest);
 
                 // XMLHttpRequest ignores abort() before open(), so a queued request

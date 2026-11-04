@@ -62,11 +62,21 @@
     };
 
     QUnit.module('AjaxLoaderLimit', {
-        beforeEach: function() {
-            fakeRequests = [];
-            OpenSeadragon.createAjaxRequest = function() {
-                return new FakeRequest();
+        beforeEach: function(assert) {
+            // Real requests left over from earlier tests count as active, so let them finish first.
+            const done = assert.async();
+            const startWhenIdle = function() {
+                if (OpenSeadragon.AjaxQueue.numActiveRequests > 0) {
+                    setTimeout(startWhenIdle, 10);
+                    return;
+                }
+                fakeRequests = [];
+                OpenSeadragon.createAjaxRequest = function() {
+                    return new FakeRequest();
+                };
+                done();
             };
+            startWhenIdle();
         },
         afterEach: function() {
             OpenSeadragon.createAjaxRequest = originalCreateAjaxRequest;
@@ -165,6 +175,45 @@
 
         results[3].xhr.respond(200);
         assert.deepEqual(sendCounts(results), [1, 1, 1, 1, 1], 'The last request is sent');
+    });
+
+    // ----------
+    QUnit.test('A limit set while requests are in flight counts them', function(assert) {
+        const inFlight = [request(), request(), request()];
+        assert.deepEqual(sendCounts(inFlight), [1, 1, 1], 'Without a limit, all requests are sent');
+
+        OpenSeadragon.setAjaxLoaderLimit(2);
+        const waiting = [request(), request()];
+        assert.deepEqual(sendCounts(waiting), [0, 0], 'New requests wait while over the new limit');
+
+        inFlight[0].xhr.respond(200);
+        assert.deepEqual(sendCounts(waiting), [0, 0], 'Nothing is sent while still at the limit');
+
+        inFlight[1].xhr.respond(200);
+        assert.deepEqual(sendCounts(waiting), [1, 0], 'One request is sent once under the limit');
+
+        inFlight[2].xhr.respond(200);
+        assert.deepEqual(sendCounts(waiting), [1, 1], 'The last request is sent');
+
+        waiting[0].xhr.respond(200);
+        waiting[1].xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+        assert.deepEqual(inFlight.map(function(result) {
+            return result.successCount;
+        }), [1, 1, 1], 'Each request sent without a limit still gets its callback');
+    });
+
+    // ----------
+    QUnit.test('Without a limit, requests that end early leave no slot taken', function(assert) {
+        const failed = request('throws-on-open');
+        assert.strictEqual(failed.errorCount, 1, 'A request that cannot be sent calls its error callback');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It leaves no slot taken');
+
+        const aborted = request();
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 1, 'A request in flight is counted');
+        aborted.xhr.abort();
+        assert.strictEqual(aborted.errorCount, 1, 'Aborting it calls its error callback');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It leaves no slot taken');
     });
 
     // ----------
