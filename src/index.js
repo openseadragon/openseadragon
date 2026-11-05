@@ -43,14 +43,17 @@ import "./tiledimage.js";
 import "./tilecache.js";
 import "./world.js";
 
-// Universal Module Definition. In a plain script tag the build's top-level
-// `var OpenSeadragon` is the global, as the function declaration was before.
+// Universal Module Definition. The build's top-level `var OpenSeadragon` is
+// only a global in a classic script, so a <script type="module"> load needs
+// the window assignment.
 if (typeof define === 'function' && define.amd) {
     define([], function () {
         return OpenSeadragon;
     });
 } else if (typeof module === 'object' && module.exports) {
     module.exports = OpenSeadragon;
+} else if (typeof window === 'object') {
+    window.OpenSeadragon = OpenSeadragon;
 }
 
 export default OpenSeadragon;
