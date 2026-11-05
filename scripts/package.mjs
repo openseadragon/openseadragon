@@ -6,6 +6,8 @@
  */
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
+import { zipSync } from "fflate";
 import pkg from "../package.json" with { type: "json" };
 
 const dirName = `openseadragon-bin-${pkg.version}`;
@@ -19,9 +21,14 @@ fs.copyFileSync("changelog.txt", `${packageDir}/changelog.txt`);
 fs.copyFileSync("LICENSE.txt", `${packageDir}/LICENSE.txt`);
 
 fs.mkdirSync("build/releases", { recursive: true });
-// zip adds to an existing archive, which would keep files removed since the last run.
-fs.rmSync(`build/releases/${dirName}.zip`, { force: true });
-execFileSync("zip", ["-qr9", `releases/${dirName}.zip`, dirName], { cwd: "build" });
+const zipEntries = {};
+for (const file of fs.readdirSync(packageDir, { recursive: true })) {
+    const filePath = path.join(packageDir, file);
+    if (fs.statSync(filePath).isFile()) {
+        zipEntries[`${dirName}/${file.split(path.sep).join("/")}`] = fs.readFileSync(filePath);
+    }
+}
+fs.writeFileSync(`build/releases/${dirName}.zip`, zipSync(zipEntries, { level: 9 }));
 execFileSync("tar", ["-czf", `releases/${dirName}.tar.gz`, dirName], { cwd: "build" });
 fs.rmSync(packageDir, { recursive: true });
 console.log(`Wrote build/releases/${dirName}.{zip,tar.gz}`);
@@ -35,7 +42,7 @@ if (process.argv.includes("--publish")) {
     fs.rmSync(releaseRoot, { recursive: true, force: true });
     fs.cpSync("build", releaseRoot, {
         recursive: true,
-        filter: (src) => src !== "build/releases"
+        filter: (src) => path.relative("build", src) !== "releases"
     });
 
     const bowerPath = "../site-build/bower.json";
