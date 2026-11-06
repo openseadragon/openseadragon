@@ -2554,14 +2554,17 @@ function OpenSeadragon( options ){
             }
 
             queue.isProcessing = true;
-            try {
-                while (queue.requestFuncs.length > 0 &&
-                    (!$.settings.ajaxLoaderLimit || queue.numActiveRequests < $.settings.ajaxLoaderLimit)) {
+            while (queue.requestFuncs.length > 0 &&
+                (!$.settings.ajaxLoaderLimit || queue.numActiveRequests < $.settings.ajaxLoaderLimit)) {
+                // The error callback of a request that can't be sent runs here. If it throws, that has
+                // nothing to do with what's draining the queue or with the requests behind this one.
+                try {
                     queue.requestFuncs.shift()();
+                } catch (e) {
+                    $.console.error("Exception in the error callback of a queued AJAX request:", e);
                 }
-            } finally {
-                queue.isProcessing = false;
             }
+            queue.isProcessing = false;
         },
 
         /**

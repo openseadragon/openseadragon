@@ -1,4 +1,4 @@
-/* global QUnit, Util */
+/* global QUnit, Util, testLog */
 
 (function() {
     const originalCreateAjaxRequest = OpenSeadragon.createAjaxRequest;
@@ -275,7 +275,7 @@
     });
 
     // ----------
-    QUnit.test('An error callback that throws does not jam the queue', function(assert) {
+    QUnit.test('An error callback that throws does not stall the queue', function(assert) {
         const throwingRequest = function() {
             return OpenSeadragon.makeAjaxRequest({
                 url: 'throws-on-open',
@@ -290,16 +290,57 @@
         assert.throws(throwingRequest, /Callback failed/, 'A request sent right away throws to its caller');
         assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It frees its slot');
 
+        testLog.reset();
         const first = request();
         throwingRequest();
         const next = request();
-        assert.throws(function() {
-            first.xhr.respond(200);
-        }, /Callback failed/, 'A queued request throws to whatever was draining the queue');
-        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It frees its slot too');
+        first.xhr.respond(200);
+        assert.strictEqual(first.successCount, 1, 'The request that freed the slot still gets its response');
+        assert.strictEqual(next.xhr.sendCount, 1, 'The request behind the failed one is sent right away');
+        assert.strictEqual(testLog.error.filter(function(message) {
+            return /queued AJAX request/.test(message);
+        }).length, 1, 'The exception is logged');
 
+        next.xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    QUnit.test('A success callback that throws does not stall the queue', function(assert) {
         OpenSeadragon.setAjaxLoaderLimit(1);
-        assert.strictEqual(next.xhr.sendCount, 1, 'The queue can still be drained afterwards');
+        const first = OpenSeadragon.makeAjaxRequest({
+            url: 'fake-url',
+            success: function() {
+                throw new Error('Callback failed');
+            }
+        });
+        const next = request();
+
+        assert.throws(function() {
+            first.respond(200);
+        }, /Callback failed/, 'It throws to whatever delivered the response, like any XMLHttpRequest handler');
+        assert.strictEqual(next.xhr.sendCount, 1, 'The next request is sent anyway');
+    });
+
+    // ----------
+    QUnit.test('An error callback that throws does not reach setAjaxLoaderLimit', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        OpenSeadragon.makeAjaxRequest({
+            url: 'throws-on-open',
+            success: function() {},
+            error: function() {
+                throw new Error('Callback failed');
+            }
+        });
+        const next = request();
+
+        OpenSeadragon.setAjaxLoaderLimit(0);
+        assert.strictEqual(next.xhr.sendCount, 1, 'The request behind the failed one is sent');
+
+        first.xhr.respond(200);
+        next.xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
     });
 
     // ----------
