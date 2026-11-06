@@ -166,6 +166,7 @@ declare namespace OpenSeadragon {
         responseType: string;
         postData: string;
         withCredentials?: boolean;
+        beforeSend?: () => void;
     }): XMLHttpRequest;
 
     function makeCenteredNode(element: Element | string): Element;

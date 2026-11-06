@@ -1,4 +1,4 @@
-/* global QUnit, Util, testLog */
+/* global QUnit, Util, $, testLog */
 
 (function() {
     const originalCreateAjaxRequest = OpenSeadragon.createAjaxRequest;
@@ -341,6 +341,171 @@
         first.xhr.respond(200);
         next.xhr.respond(200);
         assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    // The timeout of a tile, through the real ImageJob and TileSource with a fake request.
+    const startTileJob = function() {
+        const result = { completions: [] };
+        result.job = new OpenSeadragon.ImageJob({
+            src: 'fake-tile',
+            source: new OpenSeadragon.TileSource({ width: 1, height: 1, tileSize: 1 }),
+            loadWithAjax: true,
+            timeout: 40,
+            callback: function(job) {
+                result.completions.push({
+                    data: job.data,
+                    errorMsg: job.errorMsg
+                });
+            }
+        });
+        result.job.start();
+        result.xhr = result.job.userData.request;
+        return result;
+    };
+
+    const respondWithTile = function(xhr) {
+        xhr.response = new ArrayBuffer(1);
+        xhr.respond(200);
+    };
+
+    // ----------
+    QUnit.test('Waiting for a slot does not count toward the timeout of a tile', function(assert) {
+        const done = assert.async();
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        const tile = startTileJob();
+        assert.strictEqual(tile.xhr.sendCount, 0, 'The tile waits for a slot');
+
+        setTimeout(function() {
+            assert.deepEqual(tile.completions, [], 'The tile is still waiting well after its timeout');
+
+            first.xhr.respond(200);
+            assert.strictEqual(tile.xhr.sendCount, 1, 'The tile is sent when a slot frees up');
+
+            respondWithTile(tile.xhr);
+            assert.strictEqual(tile.completions.length, 1, 'The tile job completes once');
+            assert.strictEqual(tile.completions[0].errorMsg, null, 'The tile job succeeds');
+            assert.ok(tile.completions[0].data, 'The tile job has its data');
+            done();
+        }, 120);
+    });
+
+    // ----------
+    QUnit.test('The timeout of a tile starts when its request is sent', function(assert) {
+        const done = assert.async();
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        const tile = startTileJob();
+
+        setTimeout(function() {
+            first.xhr.respond(200);
+            assert.strictEqual(tile.xhr.sendCount, 1, 'The tile is sent');
+            assert.deepEqual(tile.completions, [], 'Its timeout has not run out yet');
+
+            setTimeout(function() {
+                assert.strictEqual(tile.completions.length, 1, 'A tile that takes too long once sent times out');
+                assert.ok(tile.completions[0].errorMsg, 'The tile job fails');
+                assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'The tile frees its slot');
+                done();
+            }, 120);
+        }, 120);
+    });
+
+    // ----------
+    QUnit.test('A tile sent right away still times out', function(assert) {
+        const done = assert.async();
+        const tile = startTileJob();
+        assert.strictEqual(tile.xhr.sendCount, 1, 'The tile is sent right away');
+
+        setTimeout(function() {
+            assert.strictEqual(tile.completions.length, 1, 'The tile times out');
+            assert.ok(tile.completions[0].errorMsg, 'The tile job fails');
+            done();
+        }, 120);
+    });
+
+    // ----------
+    QUnit.test('A tile can be aborted while it waits for a slot', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        const tile = startTileJob();
+
+        tile.job.abort('Stopped');
+        assert.strictEqual(tile.completions.length, 1, 'The tile job completes');
+        assert.strictEqual(tile.completions[0].errorMsg, 'Stopped', 'The tile job fails with the abort message');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.requestFuncs.length, 0, 'The tile leaves the queue');
+
+        first.xhr.respond(200);
+        assert.strictEqual(tile.xhr.sendCount, 0, 'The tile is never sent');
+    });
+
+    // ----------
+    QUnit.test('A tile in a batch leaves its timeout to the batch', function(assert) {
+        const done = assert.async();
+        const source = new OpenSeadragon.TileSource({ width: 1, height: 1, tileSize: 1 });
+        const jobs = [
+            new OpenSeadragon.ImageJob({ src: 'fake-tile', source: source, loadWithAjax: true, isBatched: true, callback: function() {} })
+        ];
+        const batch = new OpenSeadragon.BatchImageJob({
+            source: source,
+            jobs: jobs,
+            timeout: 40,
+            callback: function() {
+                assert.ok(true, 'The batch times out');
+                done();
+            }
+        });
+        batch.start();
+        assert.strictEqual(jobs[0].jobId, -1, 'The tile has no timer of its own');
+    });
+
+    // ----------
+    QUnit.test('A viewer loads its tiles after waiting longer than its timeout', function(assert) {
+        const done = assert.async();
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        OpenSeadragon.createAjaxRequest = originalCreateAjaxRequest;
+
+        $('<div id="example"></div>').appendTo('#qunit-fixture');
+        const viewer = OpenSeadragon({
+            id: 'example',
+            prefixUrl: '/build/openseadragon/images/',
+            loadTilesWithAjax: true,
+            timeout: 40,
+            springStiffness: 100
+        });
+
+        let released = false;
+        const failures = [];
+        viewer.addHandler('tile-load-failed', function(event) {
+            failures.push(event.message);
+        });
+        viewer.addHandler('tile-loaded', function tileLoaded() {
+            viewer.removeHandler('tile-loaded', tileLoaded);
+            assert.ok(released, 'The tile only loads once a slot frees up');
+            assert.deepEqual(failures, [], 'No tile fails while waiting');
+            viewer.destroy();
+            done();
+        });
+
+        viewer.open({
+            width: 1000,
+            height: 1000,
+            tileSize: 254,
+            tileOverlap: 1,
+            minLevel: 0,
+            maxLevel: 10,
+            getTileUrl: function(level, x, y) {
+                return '/test/data/testpattern_files/' + level + '/' + x + '_' + y + '.jpg';
+            }
+        });
+
+        setTimeout(function() {
+            assert.deepEqual(failures, [], 'No tile has failed after waiting well past the timeout');
+            released = true;
+            first.xhr.respond(200);
+        }, 200);
     });
 
     // ----------

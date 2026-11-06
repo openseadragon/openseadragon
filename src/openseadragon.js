@@ -1615,7 +1615,8 @@ function OpenSeadragon( options ){
          * the tiles themselves. Requests over the limit wait in a queue until an earlier
          * one completes. Raising or removing the limit sends queued requests right away;
          * setting or lowering it lets requests already in flight finish, and they count
-         * toward the limit until they do.
+         * toward the limit until they do. The timeout of a tile starts when its request
+         * is sent, so waiting in the queue doesn't count toward it.
          * @function
          * @param {Number} maxNumAjaxRequests The maximum number of AJAX requests to make concurrently. Setting this to 0, the default, will allow an unlimited number of requests.
          */
@@ -2586,6 +2587,8 @@ function OpenSeadragon( options ){
          * @param {String} options.postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
          *      see TileSource::getTilePostData), GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
+         * @param {Function} [options.beforeSend] - a function to call right before the request is sent,
+         *      which can be after this function returns if it has to wait for {@link OpenSeadragon.setAjaxLoaderLimit}
          * @throws {Error}
          * @returns {XMLHttpRequest}
          */
@@ -2594,6 +2597,7 @@ function OpenSeadragon( options ){
             let headers;
             let responseType;
             let postData;
+            let beforeSend;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2604,6 +2608,7 @@ function OpenSeadragon( options ){
                 headers = url.headers;
                 responseType = url.responseType || null;
                 postData = url.postData || null;
+                beforeSend = url.beforeSend;
                 url = url.url;
             } else {
                 $.console.warn("OpenSeadragon.makeAjaxRequest() deprecated usage!");
@@ -2645,6 +2650,10 @@ function OpenSeadragon( options ){
             // so it reports its own errors.
             const sendRequest = function () {
                 try {
+                    if (beforeSend) {
+                        beforeSend();
+                    }
+
                     request.open( method, url, true );
 
                     if (responseType) {
