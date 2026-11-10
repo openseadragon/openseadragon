@@ -197,9 +197,7 @@ $.ImageTileSource = class extends $.TileSource {
         }
 
         if (tileData.level >= this.minLevel && tileData.level <= this.maxLevel) {
-            const levelData = this.levels[tileData.level];
-            const context = this._createContext2D(this.image, levelData.width, levelData.height);
-            job.finish(context, null, "context2d");
+            job.finish(this._createLevelContext2D(tileData.level), null, "context2d");
             return;
         }
         job.fail(`Invalid level ${tileData.level} for plain image source. Did you forget to set buildPyramid=true?`);
@@ -240,6 +238,19 @@ $.ImageTileSource = class extends $.TileSource {
         return levels.reverse();
     }
 
+    // Downscales the image one level at a time, so each level is drawn from
+    // the one above it. Drawing straight from the full image to a small level
+    // skips most source pixels and aliases.
+    _createLevelContext2D(level) {
+        let source = this.image;
+        let context = null;
+        for (let i = this.maxLevel - 1; i >= level; i--) {
+            const levelData = this.levels[i];
+            context = this._createContext2D(source, levelData.width, levelData.height);
+            source = context.canvas;
+        }
+        return context;
+    }
 
     _createContext2D(data, w, h) {
         const canvas = document.createElement("canvas"),
