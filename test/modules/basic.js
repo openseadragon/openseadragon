@@ -466,15 +466,12 @@
         assert.strictEqual(viewer.isMouseNavEnabled(), true, "Mouse navigation is enabled again.");
     });
 
-    //Version numbers are injected by the build process, so skip version tests if we are only running code coverage
-    if(!window.COVERAGE_RUN){
-        QUnit.test('version object', function(assert) {
-            assert.equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
-            assert.ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
-            assert.ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
-            assert.ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
-        });
-    }
+    QUnit.test('version object', function(assert) {
+        assert.equal(typeof OpenSeadragon.version.versionStr, "string", "versionStr should be a string");
+        assert.ok(OpenSeadragon.version.major >= 0, "major should be a positive number");
+        assert.ok(OpenSeadragon.version.minor >= 0, "minor should be a positive number");
+        assert.ok(OpenSeadragon.version.revision >= 0, "revision should be a positive number");
+    });
     // Ensures positiveModulo returns a positive result for negative inputs
     QUnit.test('positiveModulo', function(assert) {
         assert.equal(OpenSeadragon.positiveModulo(-1, 5), 4, 'positiveModulo(-1, 5) should be 4');

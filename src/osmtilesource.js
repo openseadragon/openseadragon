@@ -40,6 +40,8 @@
  */
 
 
+import OpenSeadragon from "./openseadragon.js";
+
 (function( $ ){
 
 /**

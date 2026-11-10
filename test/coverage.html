@@ -24,14 +24,6 @@
 
         // Set config on the existing QUnit object (do not overwrite window.QUnit)
         QUnit.config.testTimeout = isInteractiveMode() ? 30000 : 10000;
-
-        // Reliable completion signal for the Puppeteer coverage runner.
-        QUnit.done(function () {
-            window.__qunitDone = true;
-        });
-
-        // Flag to indicate this is a coverage run
-        window.COVERAGE_RUN = true;
     </script>
 
     <script src="/test/lib/jquery-1.9.1.min.js"></script>
@@ -39,48 +31,7 @@
     <script src="/test/lib/jquery.simulate.js"></script>
 
     <!-- OpenSeadragon INSTRUMENTED sources for coverage -->
-    <script src="/instrumented/src/openseadragon.js"></script>
-    <script src="/instrumented/src/matrix3.js"></script>
-    <script src="/instrumented/src/fullscreen.js"></script>
-    <script src="/instrumented/src/eventsource.js"></script>
-    <script src="/instrumented/src/mousetracker.js"></script>
-    <script src="/instrumented/src/control.js"></script>
-    <script src="/instrumented/src/controldock.js"></script>
-    <script src="/instrumented/src/placement.js"></script>
-    <script src="/instrumented/src/viewer.js"></script>
-    <script src="/instrumented/src/navigator.js"></script>
-    <script src="/instrumented/src/strings.js"></script>
-    <script src="/instrumented/src/point.js"></script>
-    <script src="/instrumented/src/tilesource.js"></script>
-    <script src="/instrumented/src/dzitilesource.js"></script>
-    <script src="/instrumented/src/iiiftilesource.js"></script>
-    <script src="/instrumented/src/iiptilesource.js"></script>
-    <script src="/instrumented/src/iristilesource.js"></script>
-    <script src="/instrumented/src/osmtilesource.js"></script>
-    <script src="/instrumented/src/tmstilesource.js"></script>
-    <script src="/instrumented/src/zoomifytilesource.js"></script>
-    <script src="/instrumented/src/legacytilesource.js"></script>
-    <script src="/instrumented/src/imagetilesource.js"></script>
-    <script src="/instrumented/src/tilesourcecollection.js"></script>
-    <script src="/instrumented/src/priorityqueue.js"></script>
-    <script src="/instrumented/src/datatypeconverter.js"></script>
-    <script src="/instrumented/src/button.js"></script>
-    <script src="/instrumented/src/buttongroup.js"></script>
-    <script src="/instrumented/src/rectangle.js"></script>
-    <script src="/instrumented/src/referencestrip.js"></script>
-    <script src="/instrumented/src/displayrectangle.js"></script>
-    <script src="/instrumented/src/spring.js"></script>
-    <script src="/instrumented/src/imageloader.js"></script>
-    <script src="/instrumented/src/tile.js"></script>
-    <script src="/instrumented/src/overlay.js"></script>
-    <script src="/instrumented/src/drawerbase.js"></script>
-    <script src="/instrumented/src/htmldrawer.js"></script>
-    <script src="/instrumented/src/canvasdrawer.js"></script>
-    <script src="/instrumented/src/webgldrawer.js"></script>
-    <script src="/instrumented/src/viewport.js"></script>
-    <script src="/instrumented/src/tiledimage.js"></script>
-    <script src="/instrumented/src/tilecache.js"></script>
-    <script src="/instrumented/src/world.js"></script>
+    <script src="/instrumented/openseadragon.js"></script>
 
     <!-- Helpers -->
     <script src="/test/helpers/legacy.mouse.shim.js"></script>

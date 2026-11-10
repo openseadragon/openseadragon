@@ -2,23 +2,18 @@
     // See https://go.microsoft.com/fwlink/?LinkId=733558
     // for the documentation about the tasks.json format
     "version": "2.0.0",
-    "command": "grunt",
     "tasks": [
         {
             "label": "build",
-            "type": "grunt",
-            "task": "build",
-            "problemMatcher": [
-                "$lessCompile",
-                "$tsc",
-                "$jshint"
-            ],
+            "type": "npm",
+            "script": "build",
+            "problemMatcher": [],
             "group": "build"
         },
         {
             "label": "test",
-            "type": "grunt",
-            "task": "test",
+            "type": "npm",
+            "script": "test",
             "problemMatcher": [],
             "group": "test"
         }
