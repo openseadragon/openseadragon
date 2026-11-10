@@ -166,6 +166,7 @@ declare namespace OpenSeadragon {
         responseType: string;
         postData: string;
         withCredentials?: boolean;
+        beforeSend?: () => void;
     }): XMLHttpRequest;
 
     function makeCenteredNode(element: Element | string): Element;
@@ -198,6 +199,8 @@ declare namespace OpenSeadragon {
         handler: EventHandler<any>,
         useCapture?: boolean | { capture?: boolean },
     ): void;
+
+    function setAjaxLoaderLimit(maxNumAjaxRequests: number): void;
 
     function setElementOpacity(
         element: Element | string,
