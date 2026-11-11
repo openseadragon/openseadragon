@@ -208,6 +208,9 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
      * @private
      */
     _raiseTileDrawingEvent(tiledImage, context, tile, rendered){
+        if (!this.viewer.numberOfHandlers('tile-drawing')) {
+            return;
+        }
         /**
          * This event is fired just before the tile is drawn giving the application a chance to alter the image.
          *
@@ -303,7 +306,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             // Note: Disabled on iOS devices per default as it causes a native crash
             useSketch = true;
 
-            const context = tile.length && this.getDataToDraw(tile);
+            const context = this.getDataToDraw(tile);
             if (context) {
                 sketchScale = context.canvas.width / (tile.size.x * $.pixelDensityRatio);
             } else {
@@ -416,7 +419,7 @@ class CanvasDrawer extends OpenSeadragon.DrawerBase{
             this._drawTile( tile, tiledImage, useSketch, sketchScale,
                 sketchTranslate, shouldRoundPositionAndSize, tiledImage.source );
 
-            if( this.viewer ){
+            if (this.viewer && this.viewer.numberOfHandlers('tile-drawn')) {
                 /**
                  * Raised when a tile is drawn to the canvas. Only valid for
                  * context2d and html drawers.
