@@ -314,6 +314,72 @@
     });
 
     // ----------
+    QUnit.test('destination tiles outrank tiles on the animation path', function(assert) {
+        const compare = OpenSeadragon.TiledImage.prototype._sortTilesComparator;
+
+        // A tile only on the path is stale by the time the user arrives, so it must lose to a destination
+        // tile even when it scores better on both of the other keys.
+        const onPath = {inLoadArea: false, visibility: 100, squaredDistance: 0};
+        const atDestination = {inLoadArea: true, visibility: 1, squaredDistance: 1000};
+
+        assert.ok(compare(atDestination, onPath) < 0, 'A destination tile sorts before a path tile.');
+        assert.ok(compare(onPath, atDestination) > 0, 'And the comparator is antisymmetric.');
+
+        // Within one area the existing visibility-then-distance ordering is untouched.
+        const near = {inLoadArea: true, visibility: 1, squaredDistance: 1};
+        const far = {inLoadArea: true, visibility: 1, squaredDistance: 2};
+        assert.ok(compare(near, far) < 0, 'Equal visibility still falls back to the closer tile.');
+        assert.ok(compare({inLoadArea: true, visibility: 2, squaredDistance: 9}, near) < 0,
+            'Higher visibility still wins within the same area.');
+    });
+
+    // ----------
+    QUnit.test('tiles are selected for the destination of an animation', function(assert) {
+        const done = assert.async();
+
+        viewer.addHandler('open', function() {
+            const image = viewer.world.getItemAt(0);
+            assert.ok(image.loadDestinationTilesOnAnimation, 'Loading at the destination is the default.');
+
+            // Retarget the viewport without advancing the springs, so the current view and the destination
+            // are far apart - the state the viewer is in for the whole of a long pan.
+            viewer.viewport.zoomTo(4, null, true);
+            viewer.viewport.panTo(new OpenSeadragon.Point(0.1, 0.1), true);
+            viewer.viewport.panTo(new OpenSeadragon.Point(0.9, 0.4), false);
+
+            const drawArea = image.getDrawArea();
+            const loadArea = image.getLoadArea();
+            assert.ok(loadArea && !loadArea.equals(drawArea),
+                'The destination area differs from the drawn area mid-animation.');
+
+            // Under the default serverProtocol the frame only ranks tiles into the wish list; the scheduler
+            // dispatches them later, so the ranking is read from there.
+            image._updateLevelsForViewport();
+            const selected = image._wishList.slice();
+            assert.ok(selected.length > 0, 'Tiles were selected.');
+
+            // Path tiles stay eligible, but every one of them must rank behind every destination tile.
+            let seenPathTile = false;
+            let destinationCount = 0;
+            for (const tile of selected) {
+                if (tile.inLoadArea) {
+                    destinationCount++;
+                    assert.ok(!seenPathTile, 'No destination tile is ranked behind a path tile.');
+                } else {
+                    seenPathTile = true;
+                }
+            }
+            assert.ok(destinationCount > 0, 'At least one tile at the destination was selected.');
+
+            done();
+        });
+
+        viewer.open({
+            tileSource: '/test/data/testpattern.dzi'
+        });
+    });
+
+    // ----------
     QUnit.test('clip-change event', function(assert) {
         const done = assert.async();
         assert.expect(0);
