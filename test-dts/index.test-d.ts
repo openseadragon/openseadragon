@@ -6,6 +6,13 @@ const viewer = OpenSeadragon({ id: "viewer" });
 expectType<OpenSeadragon.Viewer>(viewer);
 expectType<OpenSeadragon.Viewer>(OpenSeadragon({ element: document.createElement("div") }));
 expectError(OpenSeadragon({ id: 123 }));
+expectType<OpenSeadragon.Viewer>(OpenSeadragon({
+    id: "shared-viewer",
+    drawer: "webgl",
+    drawerOptions: { webgl: { useSharedRenderer: true } }
+}));
+expectAssignable<OpenSeadragon.WebGLDrawerOptions>({ useSharedRenderer: false });
+expectError<OpenSeadragon.WebGLDrawerOptions>({ useSharedRenderer: "true" });
 expectType<boolean>(viewer.isOpen());
 expectType<boolean>(viewer.isFullPage());
 expectType<OpenSeadragon.Viewer>(viewer.close());

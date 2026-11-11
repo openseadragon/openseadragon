@@ -725,6 +725,8 @@ declare namespace OpenSeadragon {
 
     interface WebGLDrawerOptions extends BaseDrawerOptions {
         unpackWithPremultipliedAlpha?: boolean;
+        /** Share an offscreen WebGL context with other opted-in drawers. Default: false. */
+        useSharedRenderer?: boolean;
     }
 
     interface DrawerOptions {
@@ -732,7 +734,7 @@ declare namespace OpenSeadragon {
         canvas?: BaseDrawerOptions;
         html?: BaseDrawerOptions;
         custom?: BaseDrawerOptions;
-        [key: string]: BaseDrawerOptions | undefined;
+        [key: string]: BaseDrawerOptions | WebGLDrawerOptions | undefined;
     }
 
     class DrawerBase {
