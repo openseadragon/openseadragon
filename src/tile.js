@@ -203,6 +203,16 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.visibility = null;
+    /**
+     * Whether this tile lies in the area the viewport is animating towards, as opposed to only in the
+     * area it currently covers. Tiles along the animation path are usually irrelevant by the time the
+     * user arrives, so they are ranked below tiles at the destination.
+     * Use for comparing tiles.
+     * @member {Boolean} inLoadArea
+     * @memberof OpenSeadragon.Tile#
+     * @private
+     */
+    this.inLoadArea = true;
 
     /**
      * The transparency indicator of this tile.

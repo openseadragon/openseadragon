@@ -324,10 +324,30 @@
   *     The number of degrees to rotate right or left when the rotate buttons or keyboard shortcuts are activated.
   *
   * @property {Number} [maxTilesPerFrame=1]
-  *     The maximum number of tiles whose download is started per frame, per tiled image, during steady-state
-  *     loading. After tiled image load and initial movement after a settled state, this allowance is temporarily
-  *     boosted to ten times the configured value and then decays back over the following frames.
-  *     The actual rate also depends on the browser, machine, and image-loader concurrency limit.
+  *     Deprecated, and only used when {@link OpenSeadragon.Options.serverProtocol} is `false`.
+  *     The maximum number of tiles whose download is started per frame, initially boosted at load time:
+  *     right after a viewport change the value is temporarily boosted to ten times this number and then
+  *     decays back down over the following frames.
+  *     Note that the actual frame rate is given by the client's browser and machine, so this value alone bounds
+  *     throughput at `maxTilesPerFrame * fps` tiles per second per tiled image - a rate that has nothing to
+  *     do with what the network can deliver.
+  *
+  * @property {Boolean|String} [serverProtocol='auto']
+  *     What the tile server speaks: `'http/1.1'`, `'h2'` or `'h3'` (`'http/2'` and `'http/3'` are accepted
+  *     too), or `'auto'` (same as `true`) to detect it. Tile downloads are paced by a page-wide scheduler that
+  *     keeps as many requests in flight as the origin can usefully carry, and starts the next one whenever
+  *     one completes - so download speed does not depend on how fast the client can draw. Set to `false` to
+  *     instead start at most {@link OpenSeadragon.Options.maxTilesPerFrame} downloads per rendered frame.
+  *     An HTTP/1.1 origin is limited to about six connections by the browser itself, so more than that only
+  *     queues inside the browser where OpenSeadragon can no longer reprioritize; HTTP/2 and HTTP/3
+  *     multiplex and take considerably more. The protocol sets the ceiling; below it the number of requests
+  *     in flight adapts to what the origin actually keeps up with, so a slow server or a thin link gets
+  *     fewer requests rather than a longer queue.
+  *     `'auto'` reads the protocol from the Performance API, which reports it for same-origin responses and
+  *     for cross-origin responses carrying a `Timing-Allow-Origin` header. Most tile servers do not send one,
+  *     in which case the budget starts at the HTTP/1.1 figure and is grown from there only while the origin
+  *     shows no sign of queueing - state the protocol outright to skip that.
+  *     The budget is counted per origin, so several viewers sharing a tile server share one budget.
   *
   * @property {Number} [pixelsPerWheelLine=40]
   *     For pixel-resolution scrolling devices, the number of pixels equal to one scroll line.
@@ -374,8 +394,11 @@
   *     which occur when the image is dragged, zoomed or rotated.
   *
   * @property {Boolean} [loadDestinationTilesOnAnimation=true]
-  *    If true, tiles are loaded only at the destination of an animation.
-  *    If false, tiles are loaded along the animation path during the animation.
+  *    If true, tiles at the destination of an animation are loaded first: tiles that only lie along the
+  *    animation path are still eligible, but rank below every tile at the destination, so they are only
+  *    requested when there is spare capacity. Since a tile on the path is usually irrelevant by the time
+  *    the user arrives, this keeps the download pipeline pointed at where the user is going.
+  *    If false, the current view and the destination are treated alike.
   * @property {Boolean} [cooperativeGestures=false]
   *     When true, prevents the viewer from trapping scroll/gesture on an embedded page
   *     (modelled on the cooperative gesture handling in Google Maps / Leaflet / MapTiler).
@@ -1440,6 +1463,7 @@ function OpenSeadragon( options ){
             minScrollDeltaTime:     50,
             rotationIncrement:      90,
             maxTilesPerFrame:       1,
+            serverProtocol:         'auto',
 
             //DEFAULT CONTROL SETTINGS
             showSequenceControl:     true,  //SEQUENCE

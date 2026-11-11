@@ -2086,6 +2086,7 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
                 wrapHorizontal: this.wrapHorizontal,
                 wrapVertical: this.wrapVertical,
                 maxTilesPerFrame: this.maxTilesPerFrame,
+                serverProtocol: this.serverProtocol,
                 loadDestinationTilesOnAnimation: this.loadDestinationTilesOnAnimation,
                 immediateRender: this.immediateRender,
                 blendTime: this.blendTime,
@@ -4539,6 +4540,11 @@ function updateOnce( viewer ) {
     let animated = viewer.world.update(viewportChange) || viewportChange;
     // Whether the set of wanted tiles could have moved, so that queued jobs might be stale.
     const tileSelectionChanged = viewer.world.tileSelectionChanged() || viewportChange;
+
+    // world.update() is what rebuilds each tiled image's wish list, so this is the first point at which the
+    // scheduler has this frame's selection to work from. It must not move into the drawWorld() branch below,
+    // which is skipped whenever the world is quiescent - loading would then stall while still incomplete.
+    $.tileLoadScheduler.pump();
 
     if (viewportChange) {
         /**

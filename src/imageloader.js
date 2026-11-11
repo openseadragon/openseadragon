@@ -525,6 +525,8 @@ $.ImageLoader.prototype = {
             newJob = new $.ImageJob(jobOptions);
         newJob._generation = this._generation;
 
+        _bookOrigin(newJob);
+
         const sourceWantsBatching = options.source && options.source.batchEnabled();
         if (sourceWantsBatching) {
             // Mark job as batched so completeJob knows not to decrement global counters
@@ -533,13 +535,7 @@ $.ImageLoader.prototype = {
             return false;
         }
 
-        if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
-            newJob.start();
-            this.jobsInProgress++;
-            return true;
-        }
-        this.jobQueue.push( newJob );
-        return false;
+        return _submitJob(this, newJob);
     },
 
     /**
@@ -609,12 +605,7 @@ $.ImageLoader.prototype = {
             // no abort here
         });
 
-        if ( !this.jobLimit || this.jobsInProgress < this.jobLimit ) {
-            batchJob.start();
-            this.jobsInProgress++;
-        } else {
-            this.jobQueue.push(batchJob);
-        }
+        _submitJob(this, batchJob);
     },
 
     /**
@@ -634,6 +625,11 @@ $.ImageLoader.prototype = {
     clear: function(cancelRetries) {
         for( let i = 0; i < this.jobQueue.length; i++ ) {
             const job = this.jobQueue[i];
+            // Aborting never reaches completeJob, so the origin has to be released here or its budget leaks.
+            _releaseOrigin(job);
+            if (job.jobs) {
+                job.jobs.forEach(_releaseOrigin);
+            }
             if ( typeof job.abort === "function" ) {
                 job.abort();
             }
@@ -650,6 +646,7 @@ $.ImageLoader.prototype = {
                 // "loading", so it is never re-selected for download.
                 for (let j = 0; j < bucket.jobs.length; j++) {
                     const job = bucket.jobs[j];
+                    _releaseOrigin(job);
                     if ( typeof job.abort === "function" ) {
                         job.abort();
                     }
@@ -670,7 +667,8 @@ $.ImageLoader.prototype = {
             // tells completeJob() not to queue a retry for them, which would undo the cancellation below.
             this._generation++;
             for (let i = 0; i < this._retryTimers.length; i++) {
-                clearTimeout(this._retryTimers[i]);
+                clearTimeout(this._retryTimers[i].timer);
+                _releaseOrigin(this._retryTimers[i].job);
             }
             // _pumpQueue() incremented jobsInProgress once per timer it scheduled, so give back exactly that
             // many slots - the jobs those timers would have started never ran.
@@ -700,6 +698,9 @@ function completeJob(loader, job, callback) {
     // BatchImageJob, never for its children, so deciding on the post-retry value would decrement it twice.
     const wasBatched = job.isBatched;
 
+    // Unlike jobsInProgress, this is booked per job rather than per batch, so a batch child releases here too.
+    _releaseOrigin(job, job.data !== null && job.data !== undefined);
+
     // A job from an earlier generation belongs to a view that has been torn down (see clear()), so it is
     // allowed to finish, but not to queue more work.
     if (job.errorMsg && job.data === null && job.tries < 1 + loader.tileRetryMax &&
@@ -722,6 +723,10 @@ function completeJob(loader, job, callback) {
     if (callback) {
         callback(job.data, job.errorMsg, job.request, job.dataType, job.tries);
     }
+
+    // After the callback, not before: _onTileLoad has to have marked the tile loaded, or the scheduler can
+    // pick the very tile that just finished straight back out of a wish list built before it landed.
+    $.tileLoadScheduler.pump();
 }
 
 /**
@@ -736,6 +741,101 @@ function completeBatchJob(loader, job) {
     loader.jobsInProgress--;
     job.jobs.length = 0; // make sure items are detached
     _pumpQueue(loader);
+    $.tileLoadScheduler.pump();
+}
+
+/**
+ * Starts a job and books the slot it occupies. Every place that puts work on the wire goes through here,
+ * so the in-flight count has exactly one definition.
+ * @method
+ * @private
+ * @param {OpenSeadragon.ImageLoader} loader
+ * @param {OpenSeadragon.ImageJob|BatchImageJob} job
+ * @param {Number} [delay] milliseconds to wait before starting; the slot is booked immediately either way
+ */
+function _startJob(loader, job, delay) {
+    // A retry was released when its previous attempt completed, so it has to be booked again.
+    _bookOrigin(job);
+    // Counted before start(), not after: start() arms its timeout before handing control to the tile
+    // source, so even a downloadTileStart() that throws still ends in fail() -> completeJob() and releases
+    // the slot. Counting afterwards would skip the increment and let that release run the counter negative.
+    loader.jobsInProgress++;
+    if (delay) {
+        // Tracked so clear() can cancel it, give back the slot and release the origin booked above.
+        const pending = { job: job };
+        pending.timer = setTimeout(function () {
+            const index = loader._retryTimers.indexOf(pending);
+            if (index > -1) {
+                loader._retryTimers.splice(index, 1);
+            }
+            job.start();
+        }, delay);
+        loader._retryTimers.push(pending);
+    } else {
+        job.start();
+    }
+}
+
+/**
+ * Starts a job right away if a slot is free, otherwise queues it behind jobLimit for _pumpQueue().
+ * @method
+ * @private
+ * @param {OpenSeadragon.ImageLoader} loader
+ * @param {OpenSeadragon.ImageJob|BatchImageJob} job
+ * @returns {Boolean} true if the job was started, false if queued
+ */
+function _submitJob(loader, job) {
+    if (loader.canAcceptNewJob()) {
+        _startJob(loader, job);
+        return true;
+    }
+    loader.jobQueue.push(job);
+    return false;
+}
+
+/**
+ * Books a slot on the job's origin with the page-wide scheduler. Idempotent, because a job is booked when it
+ * is dispatched and again when a retry restarts it, and released exactly once in between.
+ *
+ * Called when the job is created rather than when its request reaches the wire: a job waiting behind
+ * jobLimit, or staged for batching, is work already committed to, and a scheduler that could not see it
+ * would keep handing out more. A parent BatchImageJob has no tile of its own and is never booked: its
+ * children are booked individually.
+ * @method
+ * @private
+ * @param {OpenSeadragon.ImageJob|BatchImageJob} job
+ */
+function _bookOrigin(job) {
+    if (job._originBooked) {
+        return;
+    }
+    const image = job.tile && job.tile.tiledImage;
+    if (!image || !image.serverProtocol || !image._schedulerOrigin) {
+        return;
+    }
+    // Kept on the job: the tile may be unloaded, and its tiledImage cleared, before the request completes.
+    job._schedulerOrigin = image._schedulerOrigin;
+    job._originBooked = true;
+    job._bookedAt = $.now();
+    job._concurrency = $.tileLoadScheduler.noteStart(job._schedulerOrigin);
+}
+
+/**
+ * Releases the slot booked by _bookOrigin. Must be reached on every way a job can end - completion,
+ * failure, timeout and abort - or the origin's budget leaks.
+ * @method
+ * @private
+ * @param {OpenSeadragon.ImageJob|BatchImageJob} job
+ * @param {Boolean} [completed] true when the job delivered data: only then does its wait say anything
+ *   about the origin, so only then is it reported to the scheduler's budget controller
+ */
+function _releaseOrigin(job, completed) {
+    if (!job || !job._originBooked) {
+        return;
+    }
+    job._originBooked = false;
+    $.tileLoadScheduler.noteFinish(job._schedulerOrigin, completed ? $.now() - job._bookedAt : undefined,
+        job._concurrency);
 }
 
 /**
@@ -746,24 +846,17 @@ function completeBatchJob(loader, job) {
  * @param {OpenSeadragon.ImageLoader} loader
  */
 function _pumpQueue(loader) {
-    if (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
-        let nextJob = loader.jobQueue.shift();
-        nextJob.start();
-        loader.jobsInProgress++;
+    // Refill every slot that is free, not just one: a batch completing releases as many slots as it held,
+    // and raising jobLimit at runtime frees several at once. Bounded by jobLimit, and when jobLimit is 0
+    // nothing is ever queued in the first place.
+    while (loader.canAcceptNewJob() && loader.jobQueue.length > 0) {
+        _startJob(loader, loader.jobQueue.shift());
     }
 
+    // Retries are paced by tileRetryDelay rather than by free slots, so only one is released per completion.
     if (loader.tileRetryMax > 0 && loader.jobQueue.length === 0) {
         if (loader.canAcceptNewJob() && loader.failedTiles.length > 0) {
-            let nextJob = loader.failedTiles.shift();
-            const timer = setTimeout(function () {
-                const index = loader._retryTimers.indexOf(timer);
-                if (index > -1) {
-                    loader._retryTimers.splice(index, 1);
-                }
-                nextJob.start();
-            }, loader.tileRetryDelay);
-            loader._retryTimers.push(timer);
-            loader.jobsInProgress++;
+            _startJob(loader, loader.failedTiles.shift(), loader.tileRetryDelay);
         }
     }
 }

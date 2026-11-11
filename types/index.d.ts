@@ -381,6 +381,7 @@ declare namespace OpenSeadragon {
         minScrollDeltaTime?: number;
         rotationIncrement?: number;
         maxTilesPerFrame?: number;
+        serverProtocol?: boolean | "auto" | "http/1.1" | "http/2" | "h2" | "http/3" | "h3";
         pixelsPerWheelLine?: number;
         pixelsPerArrowPress?: number;
         visibilityRatio?: number;

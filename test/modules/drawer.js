@@ -83,7 +83,8 @@
         // ----------
         // The WebGL drawer preloads its internal cache, so gl.texImage2D happens in the tile
         // invalidation routine. Uploading from the drawing loop stalls exactly the frames on which
-        // new tiles arrive, which throttles tile downloads to maxTilesPerFrame * fps.
+        // new tiles arrive, which throttles frame-paced tile downloads to maxTilesPerFrame * fps and
+        // delays the completions the scheduler paces itself by.
         QUnit.test('webgl: textures are created outside of the drawing loop', function(assert) {
             const done = assert.async();
 
