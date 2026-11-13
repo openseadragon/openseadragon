@@ -37,6 +37,22 @@
 
     const OpenSeadragon = $; // alias for JSDoc
 
+    function getValidMaxTextureUnits(gl) {
+        if (!gl || ($.isFunction(gl.isContextLost) && gl.isContextLost())) {
+            return 0;
+        }
+
+        let maxTextures;
+        try {
+            maxTextures = gl.getParameter(gl.MAX_TEXTURE_IMAGE_UNITS);
+        } catch (error) {
+            $.console.warn('Error checking WebGL parameters:', error.message);
+            return 0;
+        }
+
+        return typeof maxTextures === 'number' && isFinite(maxTextures) && maxTextures > 0 ? maxTextures : 0;
+    }
+
     // Placeholder transform for batch slots that have no drawable tile: collapses the quad to a
     // point so nothing is rasterized. Needed because the batch arrays are reused across frames and
     // would otherwise hand a stale (or undefined) matrix to the shader.
@@ -86,9 +102,16 @@
             }
 
             if (this._gl) {
-                // MAX_TEXTURE_IMAGE_UNITS cached
-                this._glNumTextures = this._gl.getParameter(this._gl.MAX_TEXTURE_IMAGE_UNITS) || 0;
                 this._gl.pixelStorei(this._gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this._unpackWithPremultipliedAlpha);
+
+                if (!this.getMaxTextures()) {
+                    $.console.warn('WebGL context invalid: MAX_TEXTURE_IMAGE_UNITS is unavailable. Falling back to CanvasDrawer to prevent crashes.');
+                    const ext = this._gl.getExtension('WEBGL_lose_context');
+                    if (ext) {
+                        ext.loseContext();
+                    }
+                    this._gl = null;
+                }
             }
         }
 
@@ -113,12 +136,7 @@
          * @returns {Number} MAX_TEXTURE_IMAGE_UNITS value, 0 once the context is lost
          */
         getMaxTextures() {
-            // The cached value outlives the context: without this check a lost context keeps reporting
-            // a valid count, draws silently produce nothing and recovery is never triggered.
-            if (!this._gl || this._gl.isContextLost()) {
-                return 0;
-            }
-            return this._glNumTextures;
+            return getValidMaxTextureUnits(this._gl);
         }
 
         /**
@@ -218,6 +236,34 @@
         }
 
         /**
+         * Mark the WebGL context unusable and clear all dependent renderer state.
+         * @param {String} message - Warning message describing why the context is being invalidated
+         * @private
+         */
+        _invalidateContext(message) {
+            const gl = this._gl;
+
+            if (message) {
+                $.console.warn(message);
+            }
+
+            if (gl) {
+                const ext = gl.getExtension('WEBGL_lose_context');
+                if (ext) {
+                    ext.loseContext();
+                }
+            }
+
+            this._gl = null;
+            this._firstPass = null;
+            this._secondPass = null;
+            this._glFrameBuffer = null;
+            this._renderToTexture = null;
+            this._glNumTextures = 0;
+            this._unitQuad = null;
+        }
+
+        /**
          * Apply the current filter to the texture the caller has already bound, magnification included.
          * Tile textures and the render-to-texture target must agree, since the second rendering pass
          * samples the target rather than the tiles.
@@ -259,6 +305,12 @@
 
             // Create unit quad once
             this._unitQuad = this.makeQuadVertexBuffer(0, 1, 0, 1);
+
+            this._glNumTextures = this.getMaxTextures();
+            if (!this._glNumTextures) {
+                this._invalidateContext('WebGL error: bad value for gl parameter MAX_TEXTURE_IMAGE_UNITS. Falling back to CanvasDrawer to prevent crashes.');
+                return;
+            }
 
             this._makeFirstPassShaderProgram();
             this._makeSecondPassShaderProgram();
