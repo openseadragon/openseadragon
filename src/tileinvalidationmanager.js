@@ -146,6 +146,16 @@ $.TileInvalidationManager = class {
         originalCache.__finishProcessing = (asInvalidRun) => {
             state.wasOutdatedRun = state.wasOutdatedRun || asInvalidRun;
             tile.processing = false;
+            // Every tile sharing this cache was marked as processing below,
+            // so release the siblings as well. Only clear flags still holding
+            // this run's stamp, in case a sibling was claimed by a newer run.
+            if (originalCache._tiles) {
+                for (const t of originalCache._tiles) {
+                    if (t.processing === tStamp) {
+                        t.processing = false;
+                    }
+                }
+            }
             originalCache.__finishProcessing = null;
             if (!asInvalidRun) {
                 originalCache.__resolve(tile);
