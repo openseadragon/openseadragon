@@ -26,7 +26,12 @@
             tileSources: "../data/testpattern.dzi",
             showNavigator: true,
             keyboardNavEnabled: true
-        } ,1000);
+        });
+
+        setInterval(() => {
+            viewer.setKeyboardNavEnabled(!viewer.isKeyboardNavEnabled());
+            console.log("isKeyboardNavEnabled: " + viewer.isKeyboardNavEnabled());
+        },1000);
     </script>
 </body>
 </html>
