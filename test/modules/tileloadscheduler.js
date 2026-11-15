@@ -447,6 +447,92 @@
 
     // ----------
 
+    QUnit.test('a tile source that throws on start gives its slot back', function(assert) {
+        const done = assert.async();
+        const origin = 'https://tiles.example.com';
+
+        const source = MockSeadragon.getTileSource();
+        source.downloadTileStart = function() {
+            throw new Error('custom source failed');
+        };
+        source.downloadTileAbort = function() {};
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {timeout: 50}));
+        const loader = viewer.imageLoader;
+
+        // start() arms the timeout before it calls the tile source, so a source that throws still ends in
+        // fail() -> completeJob() when the timeout fires, and both counts come back to where they were.
+        const tile = {tiledImage: {serverProtocol: 'h2', _schedulerOrigin: origin}};
+        try {
+            loader.addJob({
+                src: 'test',
+                tile: tile,
+                source: source,
+                loadWithAjax: false,
+                crossOriginPolicy: false,
+                ajaxWithCredentials: false,
+                abort: function() {},
+                callback: function() {
+                    assert.equal(loader.jobsInProgress, 0, 'The loader slot was given back.');
+                    assert.equal(scheduler.inFlightFor(origin), 0, 'The origin slot was given back.');
+                    done();
+                }
+            });
+        } catch (e) {
+            // The exception reaching the caller is not what this test is about.
+        }
+    });
+
+    // ----------
+
+    QUnit.test('a tile that failed is not dispatched again', function(assert) {
+        const done = assert.async();
+        const starts = {};
+        const fails = url => /\/(9|10)\//.test(url);
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {
+            serverProtocol: 'http/1.1',
+            tileRetryMax: 0
+        }));
+
+        // completeJob() pumps right after a failure lands, from wish lists built before it. The failed tile
+        // left its list when it was dispatched and is never ranked again, so the retry policy still holds.
+        viewer.world.addHandler('add-item', function(event) {
+            event.item.addHandler('fully-loaded-change', function(e) {
+                if (!e.fullyLoaded) {
+                    return;
+                }
+                const failed = Object.keys(starts).filter(fails);
+                assert.ok(failed.length > 0, 'Some tiles failed.');
+                assert.deepEqual(failed.filter(url => starts[url] > 1), [], 'Each failed tile was requested once.');
+                done();
+            });
+        });
+
+        viewer.open({
+            width: 1024,
+            height: 1024,
+            tileSize: 256,
+            tileOverlap: 0,
+            getTileUrl: (level, x, y) => 'https://tiles.example.com/' + level + '/' + x + '_' + y,
+            downloadTileStart: function(context) {
+                starts[context.src] = (starts[context.src] || 0) + 1;
+                setTimeout(function() {
+                    if (fails(context.src)) {
+                        context.fail('unavailable', null);
+                    } else {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = canvas.height = 8;
+                        context.finish(canvas.getContext('2d'), null, 'context2d');
+                    }
+                }, 0);
+            },
+            downloadTileAbort: function() {}
+        });
+    });
+
+    // ----------
+
     QUnit.test('a scheduled viewer loads its tiles', function(assert) {
         const done = assert.async();
 
