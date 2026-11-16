@@ -137,4 +137,92 @@
         assert.ok(queue.containsValue('three'), 'containsValue finds the second value');
         assert.notOk(queue.containsValue(7), 'A key is not mistaken for a value');
     });
+
+    QUnit.test('interleaved decreases keep swapped node indices consistent', function(assert) {
+        const queue = new OpenSeadragon.PriorityQueue();
+        const eight = new OpenSeadragon.PriorityQueue.Node(8, 'eight');
+        const six = new OpenSeadragon.PriorityQueue.Node(6, 'six');
+        const nine = new OpenSeadragon.PriorityQueue.Node(9, 'nine');
+        const three = new OpenSeadragon.PriorityQueue.Node(3, 'three');
+        const seven = new OpenSeadragon.PriorityQueue.Node(7, 'seven');
+        [eight, six, nine, three, seven].forEach(function(node) {
+            queue.insertNode(node);
+        });
+
+        assert.deepEqual(
+            [three.index, six.index, nine.index, eight.index, seven.index],
+            [0, 1, 2, 3, 4], 'Initial inserts maintain each node index');
+
+        queue.decreaseKey(seven, 1);
+        assert.deepEqual(
+            [seven.index, three.index, nine.index, eight.index, six.index],
+            [0, 1, 2, 3, 4], 'First decrease updates both displaced ancestors');
+
+        queue.decreaseKey(eight, 2);
+        assert.deepEqual(
+            [seven.index, eight.index, nine.index, three.index, six.index],
+            [0, 1, 2, 3, 4], 'Second decrease uses updated indices');
+
+        assert.strictEqual(queue.remove(), seven, 'Minimum removal preserves node identity');
+        assert.strictEqual(seven.index, undefined, 'Removed node is detached');
+        queue.decreaseKey(six, 0);
+        assert.strictEqual(queue.peek(), 'six', 'A later decrease finds the moved node');
+        assert.deepEqual(
+            [six.index, eight.index, nine.index, three.index],
+            [0, 1, 2, 3], 'Index bookkeeping survives removal and another decrease');
+        assert.deepEqual(
+            [queue.remove().key, queue.remove().key,
+                queue.remove().key, queue.remove().key],
+            [0, 2, 3, 9], 'The interleaved operations preserve heap ordering');
+        assert.ok(queue.isEmpty(), 'All nodes are consumed');
+    });
+
+    QUnit.test('decreaseKey reinserts stale nodes after clear and slot reuse', function(assert) {
+        const queue = new OpenSeadragon.PriorityQueue();
+        const first = new OpenSeadragon.PriorityQueue.Node(7, 'first');
+        const smallest = new OpenSeadragon.PriorityQueue.Node(3, 'smallest');
+        const third = new OpenSeadragon.PriorityQueue.Node(5, 'third');
+        [first, smallest, third].forEach(function(node) {
+            queue.insertNode(node);
+        });
+        assert.deepEqual(
+            [smallest.index, first.index, third.index],
+            [0, 1, 2], 'Original nodes occupy distinct heap slots');
+
+        queue.clear();
+        queue.clear();
+        assert.ok(queue.isEmpty(), 'Repeated clear leaves the queue empty');
+        assert.strictEqual(queue.getCount(), 0, 'clear removes all active entries');
+        assert.strictEqual(queue.peekKey(), undefined, 'The former minimum is gone');
+        assert.notOk(queue.containsValue('smallest'), 'Cleared nodes are not members');
+
+        const replacement = new OpenSeadragon.PriorityQueue.Node(6, 'replacement');
+        queue.insertNode(replacement);
+        assert.strictEqual(replacement.index, 0, 'A new node reuses the former root slot');
+        queue.decreaseKey(smallest, 1);
+        assert.strictEqual(smallest.index, 0, 'Former root is reinserted, not mistaken for replacement');
+        assert.strictEqual(replacement.index, 1, 'Replacement remains in the heap');
+        queue.decreaseKey(first, 2);
+        assert.strictEqual(first.index, 2, 'Former child is reinserted at its new slot');
+        queue.decreaseKey(third, 0);
+        assert.strictEqual(third.index, 0, 'Another stale child can bubble to the root');
+        assert.strictEqual(queue.getCount(), 4, 'No replacement nodes are overwritten');
+        assert.deepEqual(
+            [queue.remove().key, queue.remove().key,
+                queue.remove().key, queue.remove().key],
+            [0, 1, 2, 6], 'All reinserted nodes and the replacement remain ordered');
+        assert.ok(queue.isEmpty(), 'Drain returns the queue to empty');
+    });
+
+    QUnit.test('decreaseKey inserts a never-attached Node', function(assert) {
+        const queue = new OpenSeadragon.PriorityQueue();
+        const fresh = new OpenSeadragon.PriorityQueue.Node(9, 'fresh');
+        queue.decreaseKey(fresh, 2);
+        assert.strictEqual(queue.getCount(), 1, 'A never-attached node is inserted');
+        assert.strictEqual(fresh.index, 0, 'The new node occupies the root');
+        assert.strictEqual(queue.peek(), 'fresh', 'The inserted node is visible');
+        assert.strictEqual(queue.remove(), fresh, 'It can be removed normally');
+        assert.strictEqual(fresh.index, undefined, 'Removal detaches it');
+    });
+
 })();
