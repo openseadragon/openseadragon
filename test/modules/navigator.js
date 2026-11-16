@@ -984,6 +984,71 @@
         });
     });
 
+    QUnit.test('Navigator keeps order after two reorders in one tick (#2654)', function(assert) {
+        const done = assert.async();
+
+        viewer = OpenSeadragon({
+            id:            'example',
+            prefixUrl:     '/build/openseadragon/images/',
+            tileSources:   [
+                '/test/data/testpattern.dzi',
+                '/test/data/testpattern.dzi',
+                '/test/data/testpattern.dzi'
+            ],
+            springStiffness: 100,
+            showNavigator: true
+        });
+
+        const onNavigatorReady = function() {
+            const navigator = viewer.navigator;
+            if (viewer.world.getItemCount() !== 3 || navigator.world.getItemCount() !== 3) {
+                return;
+            }
+            navigator.world.removeHandler('add-item', onNavigatorReady);
+
+            Promise.resolve().then(function() {
+                const a = viewer.world.getItemAt(0);
+                const b = viewer.world.getItemAt(1);
+                const c = viewer.world.getItemAt(2);
+                assert.strictEqual(navigator.world.getItemAt(2)._originalForNavigator, c,
+                    'navigator item reference is ready');
+
+                // Both reorders happen before either deferred navigator update runs.
+                const nativeSetTimeout = window.setTimeout;
+                const deferred = [];
+                window.setTimeout = function(callback, delay) {
+                    if (delay === 1) {
+                        deferred.push(callback);
+                        return 0;
+                    }
+                    return nativeSetTimeout.apply(window, arguments);
+                };
+                try {
+                    viewer.world.setItemIndex(c, 0);
+                    viewer.world.setItemIndex(b, 0);
+                } finally {
+                    window.setTimeout = nativeSetTimeout;
+                }
+                deferred.forEach(function(callback) {
+                    callback();
+                });
+
+                [b, c, a].forEach(function(item, i) {
+                    assert.strictEqual(viewer.world.getItemAt(i), item, 'viewer order at index ' + i);
+                    const navItem = navigator.world.getItemAt(i);
+                    assert.strictEqual(navItem && navItem._originalForNavigator, item,
+                        'navigator order at index ' + i);
+                });
+                done();
+            });
+        };
+
+        viewer.addHandler('open', function() {
+            viewer.navigator.world.addHandler('add-item', onNavigatorReady);
+            onNavigatorReady();
+        });
+    });
+
     QUnit.test('Item positions including collection mode', function(assert) {
         const done = assert.async();
 
