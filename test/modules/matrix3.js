@@ -131,4 +131,51 @@
             [1, 2, 0, -1, 3, 0, 7, -4, 1],
             'source matrix is not mutated');
     });
+
+    QUnit.test('scaleAndTranslate retains existing affine offsets', function(assert) {
+        const matrix = new Mat3([1, 2, 0, -1, 3, 0, 7, -4, 1]);
+        const original = matrix.values.slice();
+        const result = matrix.scaleAndTranslate(-2, 3, 5, -1);
+        const inPlace = new Mat3(original.slice());
+        inPlace.scaleAndTranslateSelf(-2, 3, 5, -1);
+        const general = matrix.multiply(new Mat3([
+            -2, 0, 0,
+            0, 3, 0,
+            5, -1, 1
+        ]));
+
+        assert.notStrictEqual(result, matrix, 'result is a new matrix');
+        assert.deepEqual(result.values,
+            [-2, -4, 0, -3, 9, 0, 13, 3, 1],
+            'translation composes with the existing offset, including homogeneous 1');
+        assert.deepEqual(result.values, inPlace.values,
+            'allocating and in-place compositions agree for the same affine input');
+        assert.deepEqual(result.values, general.values,
+            'optimized composition agrees with general matrix multiplication');
+        assert.deepEqual(matrix.values, original, 'source is unchanged');
+    });
+
+    QUnit.test('scaleAndTranslate retains all existing homogeneous-row values', function(assert) {
+        const matrix = new Mat3([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        const original = matrix.values.slice();
+        const result = matrix.scaleAndTranslate(2, -3, 4, 5);
+        const general = matrix.multiply(new Mat3([
+            2, 0, 0,
+            0, -3, 0,
+            4, 5, 1
+        ]));
+
+        assert.deepEqual(result.values,
+            [2, 4, 6, -12, -15, -18, 31, 41, 51],
+            'all nine entries agree with translation plus preexisting third row');
+        assert.deepEqual(result.values, general.values,
+            'optimized result agrees with full multiplication for a general 3x3');
+        assert.deepEqual(matrix.values, original, 'source is unchanged');
+
+        const translated = Mat3.makeTranslation(7, -4);
+        const collapsed = translated.scaleAndTranslate(0, 0, 0, 0);
+        assert.deepEqual(collapsed.values,
+            [0, 0, 0, 0, 0, 0, 7, -4, 1],
+            'zero scaling does not erase the existing translation');
+    });
 })();

@@ -221,6 +221,7 @@ class Mat3{
 
     /**
      * Scaling & translation only changes certain values, no need to compute full matrix multiplication.
+     * Existing translation and homogeneous terms are retained when composing transforms.
      * @memberof OpenSeadragon.Mat3
      * @returns {OpenSeadragon.Mat3} The result of matrix multiplication
      */
@@ -239,9 +240,9 @@ class Mat3{
             sy * a10,
             sy * a11,
             sy * a12,
-            tx * a00 + ty * a10,
-            tx * a01 + ty * a11,
-            tx * a02 + ty * a12,
+            tx * a00 + ty * a10 + a[6],
+            tx * a01 + ty * a11 + a[7],
+            tx * a02 + ty * a12 + a[8],
         ]);
     }
 
