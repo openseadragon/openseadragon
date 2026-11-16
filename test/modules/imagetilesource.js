@@ -125,6 +125,40 @@
         viewer.open({ type: 'image', url: '/test/data/A.png' });
     });
 
+    QUnit.test('lower levels are downscaled from the level above', function(assert) {
+        var done = assert.async();
+        var source = new OpenSeadragon.ImageTileSource({ url: '/test/data/A.png' });
+        source.addHandler('ready', function() {
+            assert.ok(source.maxLevel >= 2, 'needs at least three levels');
+            var level = source.maxLevel - 2;
+            var sourceWidths = [];
+            var createContext2D = source._createContext2D;
+            source._createContext2D = function(data, w, h) {
+                sourceWidths.push(data.width);
+                return createContext2D.call(this, data, w, h);
+            };
+
+            var result = null;
+            source.downloadTileStart({
+                postData: source.getTilePostData(level, 0, 0),
+                finish: function(data) {
+                    result = data;
+                },
+                fail: function(message) {
+                    assert.ok(false, message);
+                }
+            });
+
+            assert.deepEqual(sourceWidths, [
+                source.levels[source.maxLevel].width,
+                source.levels[source.maxLevel - 1].width
+            ], 'each level should be drawn from the level above it');
+            assert.equal(result.canvas.width, source.levels[level].width, 'tile width');
+            assert.equal(result.canvas.height, source.levels[level].height, 'tile height');
+            done();
+        });
+    });
+
     QUnit.test('getTileUrl for max level returns original url', function(assert) {
         var source = new OpenSeadragon.ImageTileSource({
             url: '/test/data/A.png',
