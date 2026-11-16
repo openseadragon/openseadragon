@@ -283,7 +283,7 @@ OpenSeadragon.PriorityQueue = class PriorityQueue {
      * @return {boolean} Whether the heap contains the key.
      */
     containsKey(key) {
-        return this.nodes_.some((node) => node.value == key);  // eslint-disable-line
+        return this.nodes_.some((node) => node.key == key);  // eslint-disable-line
     }
 
     /**
