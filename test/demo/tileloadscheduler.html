@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tile Load Scheduler Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='./simnetwork.js' defer></script>
+    <script type="text/javascript" src='./tileloadscheduler.js' defer></script>
+    <style type="text/css">
+        body{
+            font-family: sans-serif;
+            margin: 0 auto;
+            max-width: 1280px;
+            padding: 0 12px;
+        }
+        h1{
+            font-size: 1.3em;
+        }
+        p.info{
+            max-width: 1000px;
+            color: #444;
+        }
+        fieldset{
+            display: inline-block;
+            vertical-align: top;
+            margin: 0 8px 8px 0;
+        }
+        fieldset label{
+            display: block;
+            margin: 2px 0;
+        }
+        fieldset input[type=number]{
+            width: 5em;
+        }
+        #run{
+            font-size: 1.1em;
+            padding: 6px 18px;
+        }
+        .viewers{
+            display: flex;
+            gap: 12px;
+        }
+        .pane{
+            flex: 1;
+        }
+        .pane h2{
+            font-size: 1em;
+            margin: 6px 0;
+        }
+        .viewer{
+            width: 100%;
+            height: 380px;
+            background: #000;
+        }
+        table.stats{
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.9em;
+            font-family: monospace;
+        }
+        table.stats th, table.stats td{
+            border-bottom: 1px solid #ddd;
+            padding: 2px 6px;
+            text-align: right;
+        }
+        table.stats th:first-child, table.stats td:first-child{
+            text-align: left;
+            font-family: sans-serif;
+        }
+        table.stats tr.section td{
+            background: #eee;
+            font-weight: bold;
+            text-align: left;
+            font-family: sans-serif;
+        }
+        .better{
+            background: #dfd;
+        }
+        #status{
+            margin: 8px 0;
+            font-family: monospace;
+        }
+        #log{
+            font-family: monospace;
+            font-size: 0.8em;
+            white-space: pre;
+            max-height: 200px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            padding: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tile loading: completion-paced scheduler vs. frame-paced loading</h1>
+    <p class="info">
+        Both viewers open the same synthetic image through a simulated network: a browser connection pool
+        (6 connections for HTTP/1.1, effectively unlimited streams for HTTP/2), a round-trip latency, a
+        server with a fixed number of workers and a per-tile service time, and a link whose bandwidth is
+        shared by every transfer in progress. Nothing touches the real network.
+        Not modelled: tile decode cost on the main thread, packet loss, the 4 ms timer clamp and background
+        tab throttling, and the frame rate of this machine, on which the frame-paced side depends.
+        The left viewer uses the default <code>serverProtocol: 'auto'</code>; the right one is the previous
+        frame-paced behaviour (<code>serverProtocol: false</code>, <code>maxTilesPerFrame: 1</code>).
+        With "server sends Timing-Allow-Origin" the left viewer learns the protocol as it would from resource
+        timing; without it, detection fails and the scheduler falls back to the HTTP/1.1 budget.
+        Both viewers replay the same seeded sequence of zoom and pan hops, some of them faster than the
+        animation can settle. "Time to cover" is measured from the start of a hop until the animation has
+        settled and every tile the view needs is loaded; a hop interrupted before that counts as not covered.
+    </p>
+
+    <fieldset>
+        <legend>Backend</legend>
+        <label>Preset
+            <select id="preset">
+                <option value="h1-lan">HTTP/1.1, LAN (20 ms, 8 workers)</option>
+                <option value="h1-wan" selected>HTTP/1.1, WAN (120 ms, 8 workers)</option>
+                <option value="h2-wan">HTTP/2, WAN (120 ms, 16 workers)</option>
+                <option value="h2-slow">HTTP/2, slow server (60 ms, 4 workers x 40 ms)</option>
+                <option value="h2-mobile">HTTP/2, mobile 3G (300 ms, 4 Mbit/s)</option>
+                <option value="h1-satellite">HTTP/1.1, satellite (600 ms, 10 Mbit/s)</option>
+            </select>
+        </label>
+        <label>Protocol
+            <select id="protocol">
+                <option value="http/1.1">http/1.1 (6 connections)</option>
+                <option value="h2">h2 (100 streams)</option>
+            </select>
+        </label>
+        <label>Round trip latency (ms) <input id="latency" type="number" min="0" step="10" value="120"></label>
+        <label>Server workers <input id="workers" type="number" min="1" step="1" value="8"></label>
+        <label>Service time per tile (ms) <input id="service" type="number" min="0" step="1" value="10"></label>
+        <label>Jitter (0-1) <input id="jitter" type="number" min="0" max="1" step="0.1" value="0.3"></label>
+        <label>Link bandwidth (Mbit/s, 0 = unlimited) <input id="bandwidth" type="number" min="0" step="1" value="50"></label>
+        <label>Tile size (KB) <input id="tileKB" type="number" min="1" step="1" value="40"></label>
+        <label><input id="tao" type="checkbox" checked> server sends Timing-Allow-Origin (protocol detectable)</label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Navigation</legend>
+        <label>Hops <input id="hops" type="number" min="1" step="1" value="25"></label>
+        <label>Interval min (ms) <input id="intervalMin" type="number" min="50" step="50" value="400"></label>
+        <label>Interval max (ms) <input id="intervalMax" type="number" min="50" step="50" value="1800"></label>
+        <label>Immediate hops (0-1) <input id="immediate" type="number" min="0" max="1" step="0.1" value="0.25"></label>
+        <label>Seed <input id="seed" type="number" step="1" value="42"></label>
+        <label>Drawer
+            <select id="drawer">
+                <option value="webgl">webgl</option>
+                <option value="canvas">canvas</option>
+            </select>
+        </label>
+    </fieldset>
+
+    <div>
+        <button id="run">Run</button>
+        <button id="stop" disabled>Stop</button>
+        <span id="status"></span>
+        <span style="float: right">
+            <span id="sessions">0 sessions recorded</span>
+            <button id="export-json" disabled title="Every run since the page was opened: configuration, summary statistics, per-hop results and raw tile waits for both viewers">Export JSON</button>
+            <button id="export-csv" disabled title="One row per run and viewer with the summary statistics">Export CSV</button>
+        </span>
+    </div>
+
+    <div class="viewers">
+        <div class="pane">
+            <h2>A: scheduler (serverProtocol: 'auto')</h2>
+            <div id="viewer-a" class="viewer"></div>
+        </div>
+        <div class="pane">
+            <h2>B: frame-paced (serverProtocol: false)</h2>
+            <div id="viewer-b" class="viewer"></div>
+        </div>
+    </div>
+
+    <table class="stats" id="stats">
+        <thead><tr><th>Metric</th><th>A: scheduler</th><th>B: frame-paced</th></tr></thead>
+        <tbody></tbody>
+    </table>
+
+    <h2>Hop log</h2>
+    <div id="log"></div>
+</body>
+</html>

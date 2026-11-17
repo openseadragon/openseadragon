@@ -211,6 +211,25 @@ $.Spring.prototype = {
      */
     update: function() {
         this.current.time  = $.now();
+        this.current.value = this.valueAt(this.current.time);
+        return this.current.value !== this.target.value;
+    },
+
+    /**
+     * The value the spring will have at the given time, if its target does not change meanwhile.
+     * Does not modify the spring. Used to predict where an animation will be, e.g. to load tiles ahead.
+     * @function
+     * @private
+     * @param {Number} time timestamp in milliseconds, as returned by {@link OpenSeadragon.now}
+     * @returns {Number}
+     */
+    valueAt: function(time) {
+        if (time >= this.target.time) {
+            return this.target.value;
+        }
+        if (time <= this.start.time) {
+            return this.start.value;
+        }
 
         let startValue, targetValue;
         if (this._exponential) {
@@ -221,25 +240,12 @@ $.Spring.prototype = {
             targetValue = this.target.value;
         }
 
-        if(this.current.time >= this.target.time){
-            this.current.value = this.target.value;
-        } else {
-            let currentValue = startValue +
-                    ( targetValue - startValue ) *
-                    transform(
-                        this.springStiffness,
-                        ( this.current.time - this.start.time ) /
-                        ( this.target.time - this.start.time )
-                    );
-
-            if (this._exponential) {
-                this.current.value = Math.exp(currentValue);
-            } else {
-                this.current.value = currentValue;
-            }
-        }
-
-        return this.current.value !== this.target.value;
+        const value = startValue + ( targetValue - startValue ) *
+            transform(
+                this.springStiffness,
+                ( time - this.start.time ) / ( this.target.time - this.start.time )
+            );
+        return this._exponential ? Math.exp(value) : value;
     },
 
     /**

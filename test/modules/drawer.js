@@ -83,7 +83,8 @@
         // ----------
         // The WebGL drawer preloads its internal cache, so gl.texImage2D happens in the tile
         // invalidation routine. Uploading from the drawing loop stalls exactly the frames on which
-        // new tiles arrive, which throttles tile downloads to maxTilesPerFrame * fps.
+        // new tiles arrive, which throttles frame-paced tile downloads to maxTilesPerFrame * fps and
+        // delays the completions the scheduler paces itself by.
         QUnit.test('webgl: textures are created outside of the drawing loop', function(assert) {
             const done = assert.async();
 
@@ -433,6 +434,64 @@
                     });
                 };
                 image.src = '/test/data/A.png';
+            });
+
+            // ----------
+            QUnit.test('checks canvas tiles for taint once per tiled image', function(assert) {
+                createViewer();
+                const drawer = viewer.drawer;
+                if (drawer.getType() !== 'webgl') {
+                    assert.expect(0);
+                    return;
+                }
+
+                // The taint test reads a pixel back, a GPU readback per tile; one per image is enough.
+                const makeTile = function(tiledImage) {
+                    return {
+                        x: 0, y: 0, isRightMost: true, isBottomMost: true,
+                        sourceBounds: { width: 8, height: 8 },
+                        tiledImage: tiledImage
+                    };
+                };
+                const makeImage = function() {
+                    const issues = {};
+                    return {
+                        getIssue: function(name) { return issues[name]; },
+                        setIssue: function(name, value) { issues[name] = value; },
+                        source: { tileOverlap: 0 }
+                    };
+                };
+                const makeContext = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = canvas.height = 8;
+                    return canvas.getContext('2d');
+                };
+
+                const originalTainted = OpenSeadragon.isCanvasTainted;
+                let checks = 0;
+                let tainted = false;
+                OpenSeadragon.isCanvasTainted = function() {
+                    checks++;
+                    return tainted;
+                };
+                try {
+                    const first = makeImage();
+                    for (let i = 0; i < 3; i++) {
+                        const info = drawer.internalCacheCreate({ data: makeContext() }, makeTile(first));
+                        assert.ok(info && info.texture, 'Canvas tile ' + i + ' uploads.');
+                        drawer.internalCacheFree(info);
+                    }
+                    assert.equal(checks, 1, 'Three tiles of one image are checked once.');
+
+                    // A tainted first tile still disables WebGL for its image, with the taint message.
+                    tainted = true;
+                    const second = makeImage();
+                    drawer.internalCacheCreate({ data: makeContext() }, makeTile(second));
+                    assert.equal(checks, 2, 'Another image is checked on its own.');
+                    assert.ok(/tainted/.test(second.getIssue('webgl')), 'A tainted first tile sets the webgl issue.');
+                } finally {
+                    OpenSeadragon.isCanvasTainted = originalTainted;
+                }
             });
 
             // ----------

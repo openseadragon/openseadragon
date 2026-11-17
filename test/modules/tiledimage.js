@@ -314,6 +314,243 @@
     });
 
     // ----------
+    QUnit.test('load candidates are ranked by deadline first', function(assert) {
+        const compare = OpenSeadragon.TiledImage.prototype._sortTilesComparator;
+
+        // The tile that has to be requested first goes first, whatever its other scores.
+        const later = {loadDeadline: 200, visibility: 100, squaredDistance: 0};
+        const sooner = {loadDeadline: 100, visibility: 1, squaredDistance: 1000};
+        assert.ok(compare(sooner, later) < 0, 'An earlier deadline sorts first.');
+        assert.ok(compare(later, sooner) > 0, 'And the comparator is antisymmetric.');
+
+        // Equal deadlines fall back to the visibility-then-distance ordering.
+        const near = {loadDeadline: 5, visibility: 1, squaredDistance: 1};
+        const far = {loadDeadline: 5, visibility: 1, squaredDistance: 2};
+        assert.ok(compare(near, far) < 0, 'Equal visibility still falls back to the closer tile.');
+        assert.ok(compare({loadDeadline: 5, visibility: 2, squaredDistance: 9}, near) < 0,
+            'Higher visibility still wins at the same deadline.');
+    });
+
+    // ----------
+    // Load planning while animating. Time is stubbed so the springs are deterministic. The callback gets
+    // `configure(seconds, stiffness)` to set every spring's duration and stiffness, and `startAt(zoom, center)`
+    // to jump there and let enough time pass that the next animation is a single, deliberate one.
+    const withPlanningViewer = function(assert, callback) {
+        const done = assert.async();
+        const originalNow = OpenSeadragon.now;
+        // Ahead of every timestamp the springs already carry, so that the stubbed clock never runs backwards.
+        let now = originalNow() + 60000;
+        const clock = {
+            get: () => now,
+            set: t => {
+                now = t;
+            }
+        };
+
+        viewer.addOnceHandler('open', function() {
+            const image = viewer.world.getItemAt(0);
+            const viewport = viewer.viewport;
+            const scheduler = OpenSeadragon.tileLoadScheduler;
+            const originalLatency = scheduler.latencyFor;
+            OpenSeadragon.now = () => now;
+            // The measured latency depends on whatever ran before; the plans below assume 150 ms.
+            scheduler.latencyFor = () => 150;
+            try {
+                const configure = function(seconds, stiffness) {
+                    const springs = [viewport.zoomSpring, viewport.centerSpringX, viewport.centerSpringY,
+                        viewport.degreesSpring, image._xSpring, image._ySpring, image._scaleSpring,
+                        image._degreesSpring];
+                    for (const spring of springs) {
+                        spring.animationTime = seconds;
+                        spring.springStiffness = stiffness;
+                    }
+                };
+                const startAt = function(zoom, center) {
+                    viewport.zoomTo(zoom, null, true);
+                    viewport.panTo(center, true);
+                    viewport.update();
+                    now += 5000;
+                    viewport.update();
+                };
+                callback(image, viewport, clock, configure, startAt);
+            } finally {
+                OpenSeadragon.now = originalNow;
+                scheduler.latencyFor = originalLatency;
+            }
+            done();
+        });
+        viewer.open({tileSource: '/test/data/testpattern.dzi'});
+    };
+
+    QUnit.test('at rest there is no load plan', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock) {
+            viewport.update();
+            assert.strictEqual(image._planLoad(clock.get()), null, 'A settled view loads what it shows.');
+        });
+    });
+
+    QUnit.test('a fast animation loads only its destination', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            configure(0.3, 6.5);
+            startAt(4, new OpenSeadragon.Point(0.1, 0.1));
+            viewport.panTo(new OpenSeadragon.Point(0.9, 0.4));
+
+            const plan = image._planLoad(clock.get());
+            assert.ok(plan, 'An animating view has a plan.');
+            assert.equal(plan.samples.length, 1, 'Only the destination is planned.');
+            assert.ok(plan.samples[0].destination, 'And it is the destination.');
+            assert.equal(plan.samples[0].deadline, clock.get(), 'It is to be requested right away.');
+        });
+    });
+
+    QUnit.test('a slow animation loads ahead without delaying its destination', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            configure(10, 1);
+            startAt(4, new OpenSeadragon.Point(0.1, 0.1));
+            viewport.panTo(new OpenSeadragon.Point(0.9, 0.4));
+
+            const now = clock.get();
+            const plan = image._planLoad(now);
+            const destination = plan.samples.find(s => s.destination);
+            const path = plan.samples.filter(s => !s.destination);
+            assert.ok(destination, 'The destination is always planned.');
+            assert.ok(path.length > 0, 'Positions along the way are planned.');
+
+            const latency = OpenSeadragon.tileLoadScheduler.latencyFor(image._schedulerOrigin);
+            for (let i = 0; i < path.length; i++) {
+                assert.ok(path[i].deadline >= now, 'A path sample is never already late.');
+                assert.ok(path[i].deadline <= destination.deadline,
+                    'A path sample is requested before the destination has to start.');
+                if (i > 0) {
+                    assert.ok(path[i].deadline > path[i - 1].deadline, 'Path samples follow the animation.');
+                }
+            }
+            assert.ok(destination.deadline + latency <= plan.arrival,
+                'The destination still starts in time to arrive before the user does.');
+
+            // The wish list follows the deadlines and holds destination tiles as well as tiles on the way.
+            image._updateLevelsForViewport();
+            const wish = image._wishList;
+            assert.ok(wish.length > 0, 'Tiles were selected.');
+            for (let i = 1; i < wish.length; i++) {
+                assert.ok(wish[i - 1].loadDeadline <= wish[i].loadDeadline, 'The wish list is sorted by deadline.');
+            }
+            assert.ok(wish.some(tile => tile.inLoadArea), 'Destination tiles are wanted.');
+            assert.ok(wish.some(tile => !tile.inLoadArea), 'Tiles along the way are wanted.');
+        });
+    });
+
+    QUnit.test('positions the view only rushes through are not loaded', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            configure(10, 1);
+            startAt(4, new OpenSeadragon.Point(0.1, 0.1));
+            viewport.panTo(new OpenSeadragon.Point(0.9, 0.4));
+
+            image._minPathDwell = 1e9;
+            const plan = image._planLoad(clock.get());
+            assert.equal(plan.samples.length, 1, 'With no position worth the dwell, only the destination is left.');
+            assert.equal(plan.samples[0].deadline, clock.get(),
+                'The destination is not put off for positions that were not planned after all.');
+            assert.equal(plan.pathReason, 'dwell', 'The plan says why nothing along the way was planned.');
+        });
+    });
+
+    // _planPath() with a chosen arrival and destination demand, on a slow pan whose positions all dwell long
+    // enough. Latency is stubbed to 150 ms.
+    const planPathWith = function(image, viewport, clock, configure, startAt, arrivalIn, demand) {
+        configure(10, 1);
+        startAt(4, new OpenSeadragon.Point(0.1, 0.1));
+        viewport.panTo(new OpenSeadragon.Point(0.9, 0.4));
+        const now = clock.get();
+        const plan = image._planLoad(now, false);
+        plan.arrival = now + arrivalIn;
+        // The scheduler is page-wide: images left over from other tests would add their own demand.
+        const scheduler = OpenSeadragon.tileLoadScheduler;
+        const originalDemand = scheduler.destinationDemandFor;
+        scheduler.destinationDemandFor = (origin, self, own) => own;
+        try {
+            image._planPath(plan, now, demand);
+        } finally {
+            scheduler.destinationDemandFor = originalDemand;
+        }
+        return plan;
+    };
+
+    QUnit.test('a destination that fits one round of requests leaves time for the way there', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            // The budget _planPath() divides by: the scheduler's for a scheduled image, else the loader's.
+            const scheduler = OpenSeadragon.tileLoadScheduler;
+            const budget = Math.max(1, image.serverProtocol ? scheduler.budgetFor(image._schedulerOrigin) :
+                (image._imageLoader && image._imageLoader.jobLimit) || 6);
+            // Requests run in parallel, so a budget-full of destination tiles takes one latency (150 ms),
+            // 225 ms with the safety factor: 400 ms to arrival leave room for the way there.
+            const plan = planPathWith(image, viewport, clock, configure, startAt, 400, budget);
+            assert.ok(plan.samples.length > 1, 'Positions along the way are planned.');
+            assert.equal(plan.pathReason, 'ok', 'The plan says so.');
+            assert.ok(plan.samples[0].deadline + 150 <= plan.arrival,
+                'The destination still starts in time to arrive before the user does.');
+        });
+    });
+
+    QUnit.test('a destination fully requested leaves the rest of the way open', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            const plan = planPathWith(image, viewport, clock, configure, startAt, 200, 0);
+            assert.ok(plan.samples.length > 1, 'With nothing left to protect, a position just ahead is planned.');
+            assert.ok(plan.samples.slice(1).every(s => s.time >= clock.get() + 150 && s.time <= plan.arrival),
+                'Only positions a request can still reach before arrival.');
+        });
+    });
+
+    QUnit.test('nothing is planned along the way when no request could arrive in time', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            const plan = planPathWith(image, viewport, clock, configure, startAt, 100, 0);
+            assert.equal(plan.samples.length, 1, 'Only the destination.');
+            assert.equal(plan.pathReason, 'noTime', 'Latency exceeds the time to arrival.');
+
+            const busy = planPathWith(image, viewport, clock, configure, startAt, 400, 1000);
+            assert.equal(busy.samples.length, 1, 'A destination that needs all the time gets it.');
+            assert.equal(busy.pathReason, 'noSlack', 'The plan says so.');
+            assert.equal(busy.samples[0].deadline, clock.get(), 'And it is requested right away.');
+        });
+    });
+
+    QUnit.test('a target that keeps changing loads its destination coarse and first', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            configure(10, 1);
+            startAt(2, new OpenSeadragon.Point(0.5, 0.5));
+            // A burst of wheel zooms, one every 80 ms.
+            for (let i = 0; i < 4; i++) {
+                viewport.zoomBy(1.2, new OpenSeadragon.Point(0.6, 0.6));
+                clock.set(clock.get() + 80);
+                viewport.update();
+            }
+            const plan = image._planLoad(clock.get());
+            assert.equal(plan.samples.length, 1, 'Nothing along the way is planned.');
+            const destination = plan.samples[0];
+            assert.deepEqual(destination.levels, [destination.level - 1],
+                'The destination is loaded one level coarser while it may still move.');
+        });
+    });
+
+    QUnit.test('a zoom animation loads the destination at the destination zoom level', function(assert) {
+        withPlanningViewer(assert, function(image, viewport, clock, configure, startAt) {
+            configure(0.3, 6.5);
+            // Zoomed out far enough that the 1000 px test image is drawn from a coarse level.
+            startAt(0.25, new OpenSeadragon.Point(0.5, 0.5));
+            const levelBefore = image._levelForZoom(viewport.getZoom(true), image._scaleSpring.current.value);
+            viewport.zoomTo(16);
+
+            const plan = image._planLoad(clock.get());
+            const destination = plan.samples[0];
+            assert.ok(destination.level > levelBefore, 'The destination asks for a finer level than the current one.');
+
+            image._updateLevelsForViewport();
+            assert.ok(image._wishList.some(tile => tile.level === destination.level),
+                'Tiles at the destination level are wanted while still zoomed out.');
+        });
+    });
+
+    // ----------
     QUnit.test('clip-change event', function(assert) {
         const done = assert.async();
         assert.expect(0);

@@ -1428,4 +1428,60 @@
       viewer.open(DZI_PATH);
     });
 
+    // ----------
+    QUnit.test('_predictAt matches the viewport after the animation advances', function(assert) {
+        const done = assert.async();
+        const originalNow = OpenSeadragon.now;
+        let now = originalNow() + 60000;
+
+        const checkRect = function(actual, expected, message) {
+            Util.assessNumericValue(assert, actual.x, expected.x, 1e-9, message + ' x');
+            Util.assessNumericValue(assert, actual.y, expected.y, 1e-9, message + ' y');
+            Util.assessNumericValue(assert, actual.width, expected.width, 1e-9, message + ' width');
+            Util.assessNumericValue(assert, actual.height, expected.height, 1e-9, message + ' height');
+            Util.assessNumericValue(assert, actual.degrees, expected.degrees, 1e-9, message + ' degrees');
+        };
+
+        const scenarios = [
+            {name: 'pan', run: vp => vp.panTo(new OpenSeadragon.Point(0.8, 0.3))},
+            {name: 'zoom', run: vp => vp.zoomTo(6)},
+            {name: 'zoom about a point', run: vp => vp.zoomBy(5, new OpenSeadragon.Point(0.2, 0.7))},
+            {name: 'zoom and pan', run: vp => {
+                vp.zoomTo(3);
+                vp.panTo(new OpenSeadragon.Point(0.1, 0.9));
+            }},
+            {name: 'rotate', run: vp => vp.rotateTo(40)}
+        ];
+
+        viewer.addOnceHandler('open', function() {
+            OpenSeadragon.now = () => now;
+            try {
+                const viewport = viewer.viewport;
+                for (const scenario of scenarios) {
+                    for (const elapsed of [60, 300, 900, 5000]) {
+                        viewport.goHome(true);
+                        viewport.setRotation(0, true);
+                        viewport.update();
+                        scenario.run(viewport);
+                        const start = now;
+                        const predicted = viewport._predictAt(start + elapsed);
+
+                        now = start + elapsed;
+                        viewport.update();
+                        checkRect(predicted.bounds, viewport.getBoundsWithMargins(true),
+                            scenario.name + ' after ' + elapsed + ' ms:');
+                        Util.assessNumericValue(assert, predicted.zoom, viewport.getZoom(true), 1e-9,
+                            scenario.name + ' after ' + elapsed + ' ms: zoom');
+                        now += 10000;
+                    }
+                }
+                assert.equal(viewport._animationEndTime(), 0, 'A settled viewport has no animation end time.');
+            } finally {
+                OpenSeadragon.now = originalNow;
+            }
+            done();
+        });
+        viewer.open(DZI_PATH);
+    });
+
 })();

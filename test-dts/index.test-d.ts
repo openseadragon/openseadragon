@@ -240,6 +240,8 @@ expectType<string>(tile.getUrl());
 expectType<OpenSeadragon.Point>(tile.getTranslationForEdgeSmoothing(1, new OpenSeadragon.Point(256, 256), new OpenSeadragon.Point(256, 256)));
 expectType<string>(tile.toString());
 expectType<void>(tile.unload());
+expectType<boolean>(tile.inLoadArea);
+expectType<number>(tile.loadDeadline);
 
 // Spring
 const spring = new OpenSeadragon.Spring({ springStiffness: 5, animationTime: 1.5 });
@@ -247,6 +249,17 @@ expectType<number>(spring.current.value);
 spring.springTo(1);
 spring.update();
 expectType<boolean>(spring.isAtTargetValue());
+expectType<number>(spring.valueAt(OpenSeadragon.now() + 100));
+
+// TileLoadScheduler
+expectType<OpenSeadragon.TileLoadScheduler>(OpenSeadragon.tileLoadScheduler);
+expectType<void>(OpenSeadragon.tileLoadScheduler.pump());
+expectType<void>(OpenSeadragon.tileLoadScheduler.reset());
+
+// ImageLoader
+const imageLoader = new OpenSeadragon.ImageLoader({ jobLimit: 4 });
+imageLoader.clear();
+imageLoader.clear(true);
 
 // Mat3
 const mat = OpenSeadragon.Mat3.makeIdentity();
