@@ -76,4 +76,29 @@
         done();
     });
 
+    QUnit.test('valueAt predicts update without changing the spring', function(assert) {
+        [false, true].forEach(function(exponential) {
+            const name = exponential ? 'exponential' : 'linear';
+            const spring = new OpenSeadragon.Spring({
+                exponential: exponential,
+                initial: 2,
+                animationTime: 1,
+                springStiffness: 6.5
+            });
+            now = 0;
+            spring.springTo(16);
+
+            const predicted = [0, 100, 250, 600, 999, 1000, 5000].map(t => spring.valueAt(t));
+            assert.equal(spring.current.value, 2, name + ': predicting does not move the spring');
+            assert.equal(spring.valueAt(Infinity), 16, name + ': the end of time is the target');
+
+            [0, 100, 250, 600, 999, 1000, 5000].forEach(function(t, i) {
+                now = t;
+                spring.update();
+                Util.assessNumericValue(assert, predicted[i], spring.current.value, 1e-9,
+                    name + ': value at ' + t + ' ms matches update()');
+            });
+        });
+    });
+
 })();

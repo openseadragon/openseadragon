@@ -1039,7 +1039,7 @@ declare namespace OpenSeadragon {
 
         addJob(options: TImageJobOptions): boolean;
         canAcceptNewJob(): boolean;
-        clear(cancelRetries: boolean): void;
+        clear(cancelRetries?: boolean): void;
     }
 
     interface ImageTileSourceOptions extends TileSourceOptions {
@@ -1427,6 +1427,8 @@ declare namespace OpenSeadragon {
         shiftBy(delta: number): void;
         springTo(target: number): void;
         update(): boolean;
+        /** The value at a given time if the target does not change, without updating the spring. */
+        valueAt(time: number): number;
     }
 
     class Tile {
@@ -1443,6 +1445,8 @@ declare namespace OpenSeadragon {
         hasTransparency: boolean;
         image: object;
         imgElement: Element;
+        /** Whether the tile is part of the area the current animation ends in. */
+        inLoadArea: boolean;
         isBottomMost: boolean;
         isRightMost: boolean;
         lastTouchTime: number;
@@ -1450,6 +1454,8 @@ declare namespace OpenSeadragon {
         loaded: boolean;
         loading: boolean;
         loadWithAjax: boolean;
+        /** Latest time (ms, as OpenSeadragon.now()) by which the tile has to be requested; ranks load candidates. */
+        loadDeadline: number;
         opacity: number | null;
         originalCacheKey: string;
         position: Point | null;
@@ -1499,6 +1505,21 @@ declare namespace OpenSeadragon {
         /** @deprecated */
         getScaleForEdgeSmoothing(): number;
     }
+
+    /**
+     * Decides how many tile downloads may be in flight per origin, and which tiles they should be.
+     * Internal: configured through the serverProtocol option, not used directly.
+     */
+    class TileLoadScheduler {
+        constructor();
+        /** Dispatch as many wanted tiles as the origins have room for. */
+        pump(): void;
+        /** Drop all state. Intended for tests. */
+        reset(): void;
+    }
+
+    /** The page-wide tile load scheduler. */
+    const tileLoadScheduler: TileLoadScheduler;
 
     class TileCache {
         constructor(options: { maxImageCacheCount?: number });

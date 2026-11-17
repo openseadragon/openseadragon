@@ -239,9 +239,22 @@ $.TiledImage = function( options ) {
         // _updateLevelsForViewport(), dispatched by the scheduler when serverProtocol is set.
         _wishList:                         [],
         _wishListTime:                     0,
-        // Tiles merely on the animation path dispatched from the current wish list; the scheduler allows
-        // one per frame.
-        _pathDispatched:                   0,
+        // Bumped once per _updateLevelsForViewport(); see there.
+        _frameStamp:                       0,
+        // What _planLoad() decided for this frame: null at rest, else the load samples along the animation.
+        _loadPlan:                         null,
+        // Destination tiles not yet loaded, counted by the last frame; summed per origin by the scheduler.
+        _destinationPending:               0,
+        _destinationKnown:                 false,
+        _destinationCount:                 0,
+        // Animation load planning, private and tunable for experiments (test/demo/animationprefetch.html):
+        // 'lookahead' loads ahead along the animation when there is time to spare, 'destination' loads only
+        // the destination while animating.
+        _loadPlanner:                      'lookahead',
+        // A path position is only worth loading if the view stays there at least this long (ms).
+        _minPathDwell:                     400,
+        // Destination load time estimate is multiplied by this before deciding there is time to spare.
+        _arrivalSafety:                    1.5,
         // The origin this image's tiles come from; discovered from the first tile actually dispatched.
         _schedulerOrigin:                  null,
         // How many requests that origin may carry, refreshed once per frame by _updateLevelsForViewport().
@@ -1571,12 +1584,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _updateLevelsForViewport: function(){
         const drawArea = this.getDrawArea();
 
-        let loadArea = drawArea;
         let bestLoadTileCandidates = this._getCachedArray('bestLoadTileCandidates', 0);
-
-        if (this.loadDestinationTilesOnAnimation) {
-            loadArea = this.getLoadArea();
-        }
         const currentTime = $.now();
 
         // The ranked candidates double as the scheduler's wish list. The array is emptied on every frame by
@@ -1584,7 +1592,10 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         // be aborted - and the scheduler dispatches from it as the origin has room.
         this._wishList = bestLoadTileCandidates;
         this._wishListTime = currentTime;
-        this._pathDispatched = 0;
+        // Tiles are stamped with the frame that offered them, so a tile reached by several passes (the draw
+        // area and the planned load samples overlap) is listed once, with the earliest deadline.
+        this._frameStamp++;
+        this._destinationCount = 0;
 
         // reset each tile's beingDrawn flag
         for (const tileInfo of this._lastDrawn) {
@@ -1609,9 +1620,14 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         if (!drawArea){
+            this._loadPlan = null;
             this._needsDraw = false;
             return this._fullyLoaded;
         }
+
+        // Where the view is heading, and which of those places are worth loading for; null at rest. Read by
+        // _updateLevel() to rank the tiles of the current view against the planned ones.
+        this._loadPlan = this._planLoad(currentTime, false);
 
         // Figure the list of levels we should draw at the current zoom
         const minLevel = this.source.minLevel || 0;
@@ -1661,7 +1677,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 levelOpacity,
                 levelVisibility,
                 drawArea,
-                loadArea,
+                drawArea,
                 currentTime,
                 bestLoadTileCandidates
             );
@@ -1716,7 +1732,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 levelOpacity,
                 levelVisibility,
                 drawArea,
-                loadArea,
+                drawArea,
                 currentTime,
                 bestLoadTileCandidates
             );
@@ -1735,7 +1751,48 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             this._currentMaxTilesPerFrame = Math.max(Math.ceil(this._currentMaxTilesPerFrame / 2), this.maxTilesPerFrame);
         }
 
+        // Then the places the view is heading to, each at the level its own predicted zoom calls for: the
+        // destination first, which also counts how much of it is still missing - that decides whether there
+        // is time to spare for positions along the way.
+        const plan = this._loadPlan;
+        if (plan) {
+            const destination = plan.samples[0];
+            for (const level of destination.levels) {
+                bestLoadTileCandidates = this._visitLoadSample(level, destination, currentTime, bestLoadTileCandidates);
+            }
+            if (plan.lookAhead) {
+                this._planPath(plan, currentTime, this._destinationCount);
+                // Time to spare moves the destination's deadline later; its tiles were offered with "now".
+                for (const tile of bestLoadTileCandidates) {
+                    if (tile.inLoadArea) {
+                        tile.loadDeadline = destination.deadline;
+                    }
+                }
+                for (let i = 1; i < plan.samples.length; i++) {
+                    const sample = plan.samples[i];
+                    for (const level of sample.levels) {
+                        bestLoadTileCandidates = this._visitLoadSample(level, sample, currentTime, bestLoadTileCandidates);
+                    }
+                }
+            }
+        }
+        const withheld = this._rankLoadCandidates(bestLoadTileCandidates, currentTime);
+        this._destinationPending = this._destinationCount;
+        // Whether that count describes a running animation; see TileLoadScheduler#destinationDemandFor.
+        this._destinationKnown = !!this._loadPlan;
+
         // Load the new 'best' n tiles
+        if (withheld) {
+            // Tiles of the current view were left out because the view moves on before they could arrive;
+            // the image is not fully loaded for all that.
+            if (!this.serverProtocol) {
+                for (const tile of bestLoadTileCandidates) {
+                    this._loadTile(tile, currentTime);
+                }
+                this._needsDraw = this._needsDraw || bestLoadTileCandidates.length > 0;
+            }
+            return false;
+        }
         if (bestLoadTileCandidates && bestLoadTileCandidates.length > 0) {
             // Under the scheduler the ranked list is the wish list (see above): it is dispatched by
             // $.tileLoadScheduler.pump() from the viewer's frame loop, as the origin has room, not here.
@@ -1883,7 +1940,8 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
      * @param {Number} levelOpacity
      * @param {Number} levelVisibility
      * @param {OpenSeadragon.Rect} drawArea
-     * @param {OpenSeadragon.Rect} loadArea
+     * @param {OpenSeadragon.Rect} loadArea falsey to only draw; otherwise the draw area's tiles are also load
+     *   candidates (what is loaded beyond the draw area while animating is decided by _planLoad)
      * @param {Number} currentTime
      * @param {OpenSeadragon.Tile[]} bestLoadTileCandidates Array of the current best tiles
      * @returns {Object} Dictionary {
@@ -1936,110 +1994,19 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         this._resetCoverage(this.coverage, level);
         this._resetCoverage(this.loadingCoverage, level);
 
-        // drawArea is where the viewport is now, loadArea where it is heading. They differ only while an
-        // animation is in flight; at rest the springs sit exactly on their targets, so the two rects are
-        // identical and the common case runs a single pass exactly as before.
-        const hasSeparateLoadArea = !!loadArea && loadArea !== drawArea && !loadArea.equals(drawArea);
+        // At rest the tiles of the current view are what is wanted. While animating, the load plan decides
+        // (see _planLoad); the current view's tiles are then offered with no deadline and _rankLoadCandidates
+        // keeps only the coarsest level of them, so the view never goes blank but the network is not spent on
+        // detail the view moves away from before it could arrive.
+        const drawDeadline = loadArea ? (this._loadPlan ? Infinity : currentTime) : null;
 
         let tilesToDraw = null;
         let tileIndex = 0;
 
-        // Announce, position and rank one tile. Runs for every tile of the load area and of the draw area,
-        // so this is where a tile is considered for loading; drawing is decided by the draw pass below.
-        const visitTile = (x, y, inLoadArea) => {
-            const tile = this._getTile(
-                x, y,
-                level,
-                currentTime,
-                numberOfTiles
-            );
-
-            /////////////////////////////////////////////////////
-            // First Part: Decide if tile will be used to draw //
-            /////////////////////////////////////////////////////
-            if (this.viewer && this.viewer.numberOfHandlers("update-tile")) {
-                /**
-                 * This event is called before tile is being updated: its position, coverage and other properties.
-                 * Note that this does not mean the tile will be loaded, it might be just updated greedily to avoid
-                 * visible load animation (happens if position is updated lazily when tile.loaded / loading is true).
-                 *
-                 * @event update-tile
-                 * @memberof OpenSeadragon.Viewer
-                 * @type {object}
-                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
-                 * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
-                 * @property {OpenSeadragon.Tile} tile
-                 * @property {?Object} userData - Arbitrary subscriber-defined object.
-                 */
-                this.viewer.raiseEvent( 'update-tile', {
-                    tiledImage: this,
-                    tile: tile
-                });
-            }
-
-            if (tile.exists) {
-                // Positioning is what sets the visibility and distance the candidates are ranked by,
-                // so it is required even for a tile that is only being loaded, never drawn.
-                this._positionTile(
-                    tile,
-                    this.source.tileOverlap,
-                    this.viewport,
-                    viewportCenter,
-                    levelVisibility,
-                    inLoadArea
-                );
-            }
-
-            /////////////////////////////////////////////////////
-            // Second Part: Decide if tile will be loaded      //
-            /////////////////////////////////////////////////////
-
-            if (loadArea && !tile.loaded) {
-                let loadingCoverage = tile.loading || this._isCovered(this.loadingCoverage, level, x, y);
-                this._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
-
-                if ( !tile.exists ) {
-                    return tile;
-                }
-
-                // Try-find will populate tile with data if equal tile exists in system
-                if (!tile.loading && this._tryFindTileCacheRecord(tile)) {
-                    loadingCoverage = true;
-                }
-
-                if (tile.loading) {
-                    // the tile is already in the download queue or being processed
-                    this._tilesLoading++;
-                } else if (!loadingCoverage) {
-                    // add tile to best tiles to load only when not loaded already
-                    bestLoadTileCandidates = this._compareTiles(bestLoadTileCandidates, tile, this._loadCandidateLimit);
-                }
-            }
-            return tile;
-        };
-
-        // The destination is visited first, so its tiles are ranked ahead of the ones that are merely on
-        // the way there - those are picked up by the draw pass below. Note this is two viewport-sized
-        // passes and not one pass over the union of the two areas: the union spans everything between
-        // them, which for a long pan at a deep level is the entire level.
-        // Keyed by tile index rather than by geometry, so the draw pass can tell what the load pass handled
-        // without recomputing tile bounds. Row indices are far below 1e6, so the key is unambiguous.
-        const loadPassVisited = hasSeparateLoadArea ? new Set() : null;
-        if (hasSeparateLoadArea) {
-            this._visitTiles(level, loadArea, (x, y) => {
-                loadPassVisited.add(x * 1e6 + y);
-                visitTile(x, y, true);
-            });
-        }
-
         // Iterate over tiles and decide, which will be drawn
         this._visitTiles(level, drawArea, (x, y, total) => {
-            // A tile shared with the destination was already announced, positioned and considered above.
-            const handledByLoadPass = loadPassVisited !== null && loadPassVisited.has(x * 1e6 + y);
-
-            const tile = handledByLoadPass ?
-                this._getTile(x, y, level, currentTime, numberOfTiles) :
-                visitTile(x, y, !hasSeparateLoadArea);
+            const tile = this._visitTileForLoad(x, y, level, numberOfTiles, viewportCenter, levelVisibility,
+                currentTime, drawDeadline, !this._loadPlan, bestLoadTileCandidates);
 
             if (!tilesToDraw) {
                 tilesToDraw = this._getCachedArray(level, total);
@@ -2071,6 +2038,448 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
             bestLoadTileCandidates: bestLoadTileCandidates,
             tilesToDraw: tilesToDraw || []
         };
+    },
+
+    /**
+     * Announce, position and consider one tile for loading. Runs for every tile of the draw area and of every
+     * planned load sample; a tile reached by several of them is announced and positioned once, and listed
+     * once with the earliest of the deadlines it was offered with.
+     * @private
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} level
+     * @param {OpenSeadragon.Point} numberOfTiles
+     * @param {OpenSeadragon.Point} viewportCenter
+     * @param {Number} levelVisibility
+     * @param {Number} currentTime
+     * @param {Number|null} deadline when the tile has to be requested; null if it is not to be loaded
+     * @param {Boolean} isDestination whether the tile is part of where the animation ends
+     * @param {OpenSeadragon.Tile[]} candidates
+     * @returns {OpenSeadragon.Tile}
+     */
+    _visitTileForLoad: function(x, y, level, numberOfTiles, viewportCenter, levelVisibility, currentTime,
+                                deadline, isDestination, candidates) {
+        const tile = this._getTile(x, y, level, currentTime, numberOfTiles);
+        const stamp = this._frameStamp;
+        const firstVisit = tile._visitStamp !== stamp;
+
+        if (firstVisit) {
+            tile._visitStamp = stamp;
+            if (this.viewer && this.viewer.numberOfHandlers("update-tile")) {
+                /**
+                 * This event is called before tile is being updated: its position, coverage and other properties.
+                 * Note that this does not mean the tile will be loaded, it might be just updated greedily to avoid
+                 * visible load animation (happens if position is updated lazily when tile.loaded / loading is true).
+                 *
+                 * @event update-tile
+                 * @memberof OpenSeadragon.Viewer
+                 * @type {object}
+                 * @property {OpenSeadragon.Viewer} eventSource - A reference to the Viewer which raised the event.
+                 * @property {OpenSeadragon.TiledImage} tiledImage - Which TiledImage is being drawn.
+                 * @property {OpenSeadragon.Tile} tile
+                 * @property {?Object} userData - Arbitrary subscriber-defined object.
+                 */
+                this.viewer.raiseEvent( 'update-tile', {
+                    tiledImage: this,
+                    tile: tile
+                });
+            }
+            if (tile.exists) {
+                // Positioning is what sets the visibility and distance the candidates are ranked by,
+                // so it is required even for a tile that is only being loaded, never drawn.
+                this._positionTile(tile, this.source.tileOverlap, this.viewport, viewportCenter,
+                    levelVisibility, isDestination);
+            }
+        } else if (isDestination) {
+            tile.inLoadArea = true;
+        }
+
+        if (deadline === null || tile.loaded) {
+            return tile;
+        }
+
+        if (isDestination && tile.exists && tile._destinationStamp !== stamp) {
+            tile._destinationStamp = stamp;
+            this._destinationCount++;
+        }
+
+        if (!firstVisit) {
+            // Already considered this frame; only an earlier deadline can change anything.
+            if (tile._candidateStamp === stamp && deadline < tile.loadDeadline) {
+                tile.loadDeadline = deadline;
+            }
+            return tile;
+        }
+
+        let loadingCoverage = tile.loading || this._isCovered(this.loadingCoverage, level, x, y);
+        this._setCoverage(this.loadingCoverage, level, x, y, loadingCoverage);
+
+        if ( !tile.exists ) {
+            return tile;
+        }
+
+        // Try-find will populate tile with data if equal tile exists in system
+        if (!tile.loading && this._tryFindTileCacheRecord(tile)) {
+            loadingCoverage = true;
+        }
+
+        if (tile.loading) {
+            // the tile is already in the download queue or being processed
+            this._tilesLoading++;
+        } else if (!loadingCoverage) {
+            tile._candidateStamp = stamp;
+            tile.loadDeadline = deadline;
+            candidates.push(tile);
+        }
+        return tile;
+    },
+
+    /**
+     * Consider the tiles of one planned load sample at one level.
+     * @private
+     * @param {Number} level
+     * @param {Object} sample see _planLoad()
+     * @param {Number} currentTime
+     * @param {OpenSeadragon.Tile[]} candidates
+     * @returns {OpenSeadragon.Tile[]} candidates
+     */
+    _visitLoadSample: function(level, sample, currentTime, candidates) {
+        if (!this.loadingCoverage[level]) {
+            this._resetCoverage(this.loadingCoverage, level);
+        }
+        const numberOfTiles = this.source.getNumTiles(level);
+        const viewportCenter = this.viewport.pixelFromPoint(this.viewport.getCenter());
+        const visibility = this._levelVisibility(level);
+        this._visitTiles(level, sample.area, (x, y) => {
+            this._visitTileForLoad(x, y, level, numberOfTiles, viewportCenter, visibility, currentTime,
+                sample.deadline, sample.destination, candidates);
+        });
+        return candidates;
+    },
+
+    /**
+     * Turn this frame's candidates into the ranked wish list: drop current-view tiles that are not worth
+     * loading while animating, sort by deadline, keep the best _loadCandidateLimit.
+     * @private
+     * @param {OpenSeadragon.Tile[]} candidates modified in place
+     * @param {Number} currentTime
+     * @returns {Boolean} whether a wanted tile of the current view was left out
+     */
+    _rankLoadCandidates: function(candidates, currentTime) {
+        let coarsestDrawn = Infinity;
+        if (this._loadPlan) {
+            for (let level = 0; level < this._tilesToDraw.length; level++) {
+                if (this._tilesToDraw[level]) {
+                    coarsestDrawn = level;
+                    break;
+                }
+            }
+        }
+
+        let withheld = false;
+        let count = 0;
+        for (let i = 0; i < candidates.length; i++) {
+            const tile = candidates[i];
+            if (tile.loadDeadline === Infinity) {
+                // The coarsest level drawn is cheap and keeps the moving view from going blank.
+                if (tile.level <= coarsestDrawn) {
+                    tile.loadDeadline = currentTime;
+                } else {
+                    withheld = true;
+                    continue;
+                }
+            }
+            candidates[count++] = tile;
+        }
+        candidates.length = count;
+        candidates.sort(this._sortTilesComparator);
+        if (candidates.length > this._loadCandidateLimit) {
+            candidates.length = this._loadCandidateLimit;
+        }
+        return withheld;
+    },
+
+    /**
+     * Visibility score of a level, as computed by _updateLevelsForViewport(): how close the level's pixel
+     * ratio at the destination zoom is to the optimal one.
+     * @private
+     * @param {Number} level
+     * @returns {Number}
+     */
+    _levelVisibility: function(level) {
+        const scale = this._scaleSpring.current.value;
+        const optimalRatio = this.immediateRender ? 1 : this.viewport.deltaPixelsFromPointsNoRotate(
+            this.source.getPixelRatio(Math.max(this.savedCutOffLevel, 0)), false).x * scale;
+        const targetRenderPixelRatio = this.viewport.deltaPixelsFromPointsNoRotate(
+            this.source.getPixelRatio(level), false).x * scale;
+        return optimalRatio / Math.abs(optimalRatio - targetRenderPixelRatio);
+    },
+
+    /**
+     * The finest level worth drawing at the given zoom: the same rule _updateLevelsForViewport() applies to
+     * the current zoom, so a load sample asks for the level that will actually be drawn there.
+     * @private
+     * @param {Number} viewportZoom
+     * @param {Number} scale the image's scale (its width in viewport units)
+     * @returns {Number}
+     */
+    _levelForZoom: function(viewportZoom, scale) {
+        const minLevel = this.source.minLevel || 0;
+        const maxLevel = this.source.maxLevel || 0;
+        const pixelsPerPoint = this.viewport._containerInnerSize.x * viewportZoom * scale;
+        let lastRatio = this.source.getPixelRatio(maxLevel).x;
+        for (let level = maxLevel; level > minLevel; level--) {
+            const ratio = this.source.getPixelRatio(level).x;
+            if (this.discardLevelsBelowDownsampleRatio > 1 && level !== maxLevel &&
+                ratio / lastRatio < this.discardLevelsBelowDownsampleRatio) {
+                continue;
+            }
+            lastRatio = ratio;
+            if (ratio * pixelsPerPoint >= this.minPixelRatio) {
+                return level;
+            }
+        }
+        return minLevel;
+    },
+
+    /**
+     * @private
+     * @returns {Number} time at which this image's own animation (position, scale, rotation) ends, 0 at rest
+     */
+    _animationEndTime: function() {
+        let end = 0;
+        const springs = [this._xSpring, this._ySpring, this._scaleSpring, this._degreesSpring];
+        for (let i = 0; i < springs.length; i++) {
+            if (!springs[i].isAtTargetValue()) {
+                end = Math.max(end, springs[i].target.time);
+            }
+        }
+        return end;
+    },
+
+    /**
+     * Predicts where this image's tiles will be needed at a given time, assuming no animation target changes.
+     * @private
+     * @param {Number} time timestamp in ms; Infinity for the end of the animation
+     * @returns {Object|null} {time, area (image coordinates), zoom, center (viewport), scale, level};
+     *   null if the predicted view does not show the image
+     */
+    _sampleAt: function(time) {
+        const view = this.viewport._predictAt(time);
+        const x = this._xSpring.valueAt(time);
+        const y = this._ySpring.valueAt(time);
+        const scale = this._scaleSpring.valueAt(time);
+        const degrees = this._degreesSpring.valueAt(time);
+
+        // _viewportToTiledImageRectangle() with the springs taken at `time`.
+        const rotationPoint = new $.Point(x + scale / 2, y + this.normHeight * scale / 2);
+        const rect = view.bounds.rotate(-degrees, rotationPoint);
+        let area = new $.Rect((rect.x - x) / scale, (rect.y - y) / scale,
+            rect.width / scale, rect.height / scale, rect.degrees);
+
+        if (!this.wrapHorizontal && !this.wrapVertical) {
+            const imageBounds = this._clip ?
+                this._clip.times(1 / this.source.dimensions.x) :
+                new $.Rect(0, 0, 1, this.normHeight);
+            area = area.intersection(imageBounds);
+            if (!area) {
+                return null;
+            }
+        }
+
+        return {
+            time: time,
+            area: area,
+            zoom: view.zoom,
+            center: view.center,
+            scale: scale,
+            level: this._levelForZoom(view.zoom, scale)
+        };
+    },
+
+    /**
+     * When the user perceives the animation as arrived: the first moment the predicted view is within one
+     * destination tile of the destination and within half a pyramid level of its zoom. A spring approaches
+     * its target exponentially, so this is usually well before the spring formally ends.
+     * @private
+     * @param {Number} now
+     * @param {Number} end time the animation formally ends
+     * @param {Object} destination sample at the end, see _sampleAt()
+     * @returns {Number}
+     */
+    _perceivedArrival: function(now, end, destination) {
+        const tileWidth = this.getTileBounds(destination.level, 0, 0).width * destination.scale;
+        const maxZoomStep = Math.LN2 / 2;
+        const viewport = this.viewport;
+        const arrived = function(time) {
+            const view = viewport._predictAt(time);
+            return Math.abs(Math.log(view.zoom / destination.zoom)) <= maxZoomStep &&
+                view.center.distanceTo(destination.center) <= tileWidth;
+        };
+        if (arrived(now)) {
+            return now;
+        }
+        let lo = now;
+        let hi = end;
+        for (let i = 0; i < 8; i++) {
+            const mid = (lo + hi) / 2;
+            if (arrived(mid)) {
+                hi = mid;
+            } else {
+                lo = mid;
+            }
+        }
+        return hi;
+    },
+
+    /**
+     * How long the view stays roughly where it is predicted to be at `time`: until it has panned by a
+     * viewport width, or zoomed by a pyramid level, whichever comes first.
+     * @private
+     * @param {Number} time
+     * @returns {Number} milliseconds
+     */
+    _dwellAt: function(time) {
+        const step = 50;
+        const a = this.viewport._predictAt(time);
+        const b = this.viewport._predictAt(time + step);
+        const panSpeed = a.center.distanceTo(b.center) / step;
+        const zoomSpeed = Math.abs(Math.log(b.zoom / a.zoom)) / step;
+        const panDwell = panSpeed > 0 ? (1 / a.zoom) / panSpeed : Infinity;
+        const zoomDwell = zoomSpeed > 0 ? Math.LN2 / zoomSpeed : Infinity;
+        return Math.min(panDwell, zoomDwell);
+    },
+
+    /**
+     * Decide what to load while the view animates. Returns null at rest, when the current view is what is
+     * wanted. Otherwise the destination is always a sample, and is loaded first unless there is time to
+     * spare: the destination tiles of every image on the origin can still be delivered before the user
+     * perceives the animation as arrived. Only then are positions along the way added, each one only if the
+     * view stays there long enough to be worth showing at full resolution. Deadlines say when a sample's
+     * tiles have to be requested and are what the wish list is sorted by.
+     * @private
+     * @param {Number} now
+     * @param {Boolean} [withPath=true] false to plan only the destination: the frame first counts how many
+     *   destination tiles this image still needs, then calls _planPath() itself with that count
+     * @returns {Object|null} {samples: [{area, levels, deadline, destination}], arrival, lookAhead, pathReason}
+     *   pathReason: 'destination' (look-ahead off or not planned yet), 'retargeting', 'noTime' (nothing
+     *   requested now arrives before arrival), 'noSlack' (the destination needs all the time there is),
+     *   'dwell' (no position along the way stays on screen long enough) or 'ok'
+     */
+    _planLoad: function(now, withPath) {
+        if (!this.loadDestinationTilesOnAnimation || this._loadPlanner === 'current') {
+            return null;
+        }
+        const viewport = this.viewport;
+        const end = Math.max(viewport._animationEndTime(), this._animationEndTime());
+        if (!(end > now)) {
+            return null;
+        }
+
+        const destination = this._sampleAt(Infinity);
+        if (!destination) {
+            return null;
+        }
+        const minLevel = this.source.minLevel || 0;
+        destination.destination = true;
+        destination.deadline = now;
+        destination.levels = destination.level > minLevel ?
+            [destination.level, destination.level - 1] : [destination.level];
+        // pathReason says why positions along the way were or were not planned; set by _planPath(). Read only
+        // by diagnostics (the animation prefetch demo).
+        const plan = {samples: [destination], arrival: end, lookAhead: false, pathReason: 'destination'};
+
+        // A target that keeps changing (wheel zoom, repeated clicks) is not a destination yet: load it first,
+        // and only coarse, so abandoned targets cost little.
+        if (viewport._isRetargeting(now)) {
+            destination.levels = destination.level > minLevel ? [destination.level - 1] : [destination.level];
+            plan.pathReason = 'retargeting';
+            return plan;
+        }
+
+        plan.arrival = this._perceivedArrival(now, end, destination);
+        plan.lookAhead = this._loadPlanner !== 'destination';
+        if (plan.lookAhead && withPath !== false) {
+            // Outside a frame the count may describe no animation at all; unknown, not zero.
+            this._planPath(plan, now, this._destinationKnown ? this._destinationPending : undefined);
+        }
+        return plan;
+    },
+
+    /**
+     * Add the positions along the way to a plan, if there is time to spare: if the destination tiles of every
+     * image on the origin can still be delivered before arrival after these have been requested. The
+     * destination's deadline moves later only when some position was actually added.
+     * @private
+     * @param {Object} plan from _planLoad()
+     * @param {Number} now
+     * @param {Number} [ownDemand] destination tiles this image still needs; undefined if not counted yet
+     */
+    _planPath: function(plan, now, ownDemand) {
+        const destination = plan.samples[0];
+        const arrival = plan.arrival;
+        const scheduler = $.tileLoadScheduler;
+        const origin = this._schedulerOrigin;
+        const latency = scheduler.latencyFor(origin);
+        const budget = Math.max(1, this.serverProtocol ?
+            scheduler.budgetFor(origin) : (this._imageLoader && this._imageLoader.jobLimit) || 6);
+        if (ownDemand === undefined) {
+            // Not counted yet: assume a round of requests is still needed, never "nothing left".
+            ownDemand = budget;
+        }
+        const demand = this.serverProtocol ?
+            scheduler.destinationDemandFor(origin, this, ownDemand) : ownDemand;
+        if (now + latency >= arrival) {
+            // Nothing requested now arrives before the user does.
+            plan.pathReason = 'noTime';
+            return;
+        }
+
+        // Requests run in parallel up to the budget, so the destination takes about one latency per
+        // budget-full of tiles - never less than one. When its tiles have to be requested, at the latest, to be
+        // there on arrival:
+        const latestStart = arrival - this._arrivalSafety * latency * Math.max(1, demand / budget);
+        let last = arrival;
+        if (demand > 0) {
+            if (latestStart <= now) {
+                plan.pathReason = 'noSlack';
+                return;
+            }
+            last = Math.min(arrival, latestStart + latency);
+        }
+        // With nothing left to request for the destination there is nothing to protect: the whole way to
+        // arrival is open, as long as a request still arrives before the view passes.
+
+        // Time to spare: positions the view passes before the destination has to start loading, from the
+        // earliest one a request could still reach in time.
+        const first = now + latency;
+        const count = 3;
+        const step = count > 1 ? (last - first) / (count - 1) : 0;
+        for (let i = 0; i < count && first + i * step <= last; i++) {
+            const time = first + i * step;
+            if (this._dwellAt(time) < this._minPathDwell) {
+                continue;
+            }
+            const sample = this._sampleAt(time);
+            if (!sample) {
+                continue;
+            }
+            sample.destination = false;
+            sample.deadline = time - latency;
+            sample.levels = [sample.level];
+            plan.samples.push(sample);
+            if (step <= 0) {
+                break;
+            }
+        }
+
+        if (plan.samples.length > 1) {
+            // Only worth moving the destination back for if something actually takes its place.
+            destination.deadline = Math.max(now, latestStart);
+            plan.pathReason = 'ok';
+        } else {
+            plan.pathReason = 'dwell';
+        }
     },
 
     /**
@@ -2664,7 +3073,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     },
 
     /**
-     * Comparator for tile sorting, by destination membership first, then visibility and distance.
+     * Comparator for tile sorting, by load deadline first, then visibility and distance.
      * @private
      *
      * @param {OpenSeadragon.Tile} a The tile a.
@@ -2677,10 +3086,11 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         if (b === null) {
             return -1;
         }
-        if (a.inLoadArea !== b.inLoadArea) {
-            // A tile that is only on the animation path is stale by the time the user arrives, so it
-            // ranks below every tile at the destination - but stays eligible if there is spare capacity.
-            return a.inLoadArea ? -1 : 1;
+        const da = a.loadDeadline;
+        const db = b.loadDeadline;
+        if (typeof da === 'number' && typeof db === 'number' && da !== db) {
+            // The tile that has to be requested first goes first; see TiledImage#_planLoad.
+            return da < db ? -1 : 1;
         }
         if (a.visibility === b.visibility) {
             // sort by smallest squared distance

@@ -306,7 +306,7 @@
 
     // ----------
 
-    QUnit.test('path tiles trickle at one per frame', function(assert) {
+    QUnit.test('a slow pan is not throttled to one tile on the way per frame', function(assert) {
         const done = assert.async();
 
         viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {
@@ -315,11 +315,20 @@
 
         viewer.addHandler('open', function() {
             const image = viewer.world.getItemAt(0);
+            const viewport = viewer.viewport;
+            for (const spring of [viewport.zoomSpring, viewport.centerSpringX, viewport.centerSpringY]) {
+                spring.animationTime = 20;
+                spring.springStiffness = 1;
+            }
 
-            // Mid-pan state: current view and destination far apart, see the tiledimage tests.
-            viewer.viewport.zoomTo(4, null, true);
-            viewer.viewport.panTo(new OpenSeadragon.Point(0.1, 0.1), true);
-            viewer.viewport.panTo(new OpenSeadragon.Point(0.9, 0.4), false);
+            // Mid-pan state: a long, slow pan with plenty of time before the destination is needed.
+            viewport.zoomTo(4, null, true);
+            viewport.panTo(new OpenSeadragon.Point(0.1, 0.1), true);
+            viewport.update();
+            // The jumps above were only setup; the pan below is a single deliberate animation, not one of a
+            // burst of retargets.
+            viewport._retargetGap = Infinity;
+            viewport.panTo(new OpenSeadragon.Point(0.9, 0.4), false);
 
             const dispatched = [];
             image._loadTile = function(tile) {
@@ -327,18 +336,14 @@
                 tile.loading = true;
             };
 
-            let pathTotal = 0;
-            for (let frame = 0; frame < 3; frame++) {
-                dispatched.length = 0;
-                image._updateLevelsForViewport();
-                scheduler.pump();
-                const pathThisFrame = dispatched.filter(t => t.inLoadArea === false).length;
-                // Path tiles are stale a few frames later, so they must not flood the origin: one per frame
-                // keeps a pan from going blank and no more.
-                assert.ok(pathThisFrame <= 1, 'Frame ' + frame + ' dispatched ' + pathThisFrame + ' path tiles.');
-                pathTotal += pathThisFrame;
-            }
-            assert.ok(dispatched.length > 0 || pathTotal > 0, 'Tiles were dispatched.');
+            image._updateLevelsForViewport();
+            scheduler.pump();
+            const onTheWay = dispatched.filter(t => !t.inLoadArea).length;
+            // The plan only lists positions worth loading, so the origin's budget, not a per-frame trickle,
+            // is what bounds them.
+            assert.ok(onTheWay > 1, onTheWay + ' tiles on the way were dispatched in one frame.');
+            assert.ok(dispatched.length <= scheduler.budgetFor(image._schedulerOrigin),
+                'Dispatch stays within the origin budget.');
 
             done();
         });
@@ -499,7 +504,6 @@
         const dispatched = [];
         image._wishList = [failed, wanted];
         image._wishListTime = 0;
-        image._pathDispatched = 0;
         image._loadTile = function(tile) {
             dispatched.push(tile);
             tile.loading = true;
@@ -582,6 +586,277 @@
         });
 
         viewer.open({tileSource: '/test/data/testpattern.dzi'});
+    });
+
+    // ----------
+    // Many images at once. Users run up to 60 layers in one viewer (multiplexed channels stacked on top of
+    // each other); every one of them competes for the same origin budget.
+
+    // Enough cache for every tile of every layer, so that eviction does not cause legitimate re-requests.
+    const manyImageOptions = {maxImageCacheCount: 10000};
+
+    // A synthetic tile source answering after `latency` ms, logging every request into `log`.
+    const makeSyntheticSource = function(origin, index, latency, log) {
+        return {
+            width: 2048,
+            height: 2048,
+            tileSize: 256,
+            tileOverlap: 0,
+            getTileUrl: (level, x, y) => origin + '/' + index + '/' + level + '/' + x + '_' + y,
+            downloadTileStart: function(context) {
+                log.push({src: context.src, image: index, onTheWay: context.tile && context.tile.inLoadArea === false});
+                context.userData.timer = setTimeout(function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = canvas.height = 4;
+                    context.finish(canvas.getContext('2d'), null, 'context2d');
+                }, latency);
+            },
+            downloadTileAbort: function(context) {
+                clearTimeout(context.userData.timer);
+            }
+        };
+    };
+
+    // Watches noteStart() for the highest number of requests each origin and all origins together carried.
+    const watchConcurrency = function() {
+        const peaks = {total: 0, perOrigin: {}};
+        const original = scheduler.noteStart;
+        scheduler.noteStart = function(origin) {
+            const result = original.apply(this, arguments);
+            peaks.perOrigin[origin] = Math.max(peaks.perOrigin[origin] || 0, result);
+            let total = 0;
+            this._origins.forEach(record => {
+                total += record.inFlight;
+            });
+            peaks.total = Math.max(peaks.total, total);
+            return result;
+        };
+        peaks.restore = () => {
+            scheduler.noteStart = original;
+        };
+        return peaks;
+    };
+
+    // Resolves once every image of the world reports itself fully loaded.
+    const whenAllLoaded = function(count, callback) {
+        const loaded = new Set();
+        let fired = false;
+        viewer.world.addHandler('add-item', function(event) {
+            event.item.addHandler('fully-loaded-change', function(e) {
+                if (e.fullyLoaded) {
+                    loaded.add(event.item);
+                } else {
+                    loaded.delete(event.item);
+                }
+                if (!fired && loaded.size === count && viewer.world.getItemCount() === count) {
+                    fired = true;
+                    // Let the completion that triggered this finish unwinding before checking the counters.
+                    setTimeout(callback, 0);
+                }
+            });
+        });
+    };
+
+    QUnit.test('60 images take turns on one origin', function(assert) {
+        const origin = 'https://tiles.example.com';
+        const count = 60;
+        const served = [];
+        const images = [];
+        for (let i = 0; i < count; i++) {
+            const image = {
+                serverProtocol: 'h2',
+                _schedulerOrigin: null,
+                _imageLoader: {jobLimit: 0},
+                _wishList: [],
+                _wishListTime: 0,
+                _loadTile: function(tile) {
+                    tile.loading = true;
+                    served.push(i);
+                    scheduler.noteStart(this._schedulerOrigin);
+                }
+            };
+            for (let t = 0; t < 5; t++) {
+                image._wishList.push({
+                    exists: true, loaded: false, loading: false,
+                    getUrl: () => origin + '/' + i + '/' + t
+                });
+            }
+            scheduler.register(image);
+            images.push(image);
+        }
+
+        const budget = scheduler.budgetFor(origin);
+        scheduler.pump();
+        assert.equal(served.length, budget, 'One pump fills the budget and no more.');
+        assert.equal(new Set(served).size, budget, 'Every slot went to a different image.');
+
+        // Completions free the slots; each refill continues where the last one stopped, so nobody is served
+        // twice before everybody has been served once.
+        while (served.length < count) {
+            const inFlight = scheduler.inFlightFor(origin);
+            for (let i = 0; i < inFlight; i++) {
+                scheduler.noteFinish(origin);
+            }
+            scheduler.pump();
+        }
+        assert.equal(new Set(served.slice(0, count)).size, count,
+            'The first ' + count + ' requests reached all ' + count + ' images.');
+    });
+
+    // ----------
+
+    QUnit.test('60 images on one origin load within one budget', function(assert) {
+        const done = assert.async();
+        const count = 60;
+        const origin = 'https://tiles.example.com';
+        const log = [];
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, manyImageOptions, {serverProtocol: 'h2'}));
+        const peaks = watchConcurrency();
+
+        whenAllLoaded(count, function() {
+            peaks.restore();
+            assert.ok(log.length >= count, log.length + ' tiles were requested.');
+            assert.ok(peaks.perOrigin[origin] <= scheduler.limitFor(origin),
+                'The origin never carried more than its ceiling (' + peaks.perOrigin[origin] + ').');
+
+            const seen = new Set();
+            const repeated = log.filter(entry => {
+                const again = seen.has(entry.src);
+                seen.add(entry.src);
+                return again;
+            });
+            assert.deepEqual(repeated, [], 'No tile was requested twice.');
+
+            assert.equal(viewer.imageLoader.jobsInProgress, 0, 'The loader has no job left in progress.');
+            assert.equal(scheduler.inFlightFor(origin), 0, 'Every booked slot was released.');
+            done();
+        });
+
+        const sources = [];
+        for (let i = 0; i < count; i++) {
+            sources.push(makeSyntheticSource(origin, i, 10, log));
+        }
+        viewer.open(sources);
+    });
+
+    QUnit.test('60 images on three origins get independent budgets', function(assert) {
+        const done = assert.async();
+        const count = 60;
+        const origins = ['https://a.example.com', 'https://b.example.com', 'https://c.example.com'];
+        const log = [];
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, manyImageOptions, {serverProtocol: 'http/1.1'}));
+        const peaks = watchConcurrency();
+
+        whenAllLoaded(count, function() {
+            peaks.restore();
+            for (const origin of origins) {
+                assert.ok(peaks.perOrigin[origin] <= scheduler.limitFor(origin),
+                    origin + ' stayed within its own ceiling (' + peaks.perOrigin[origin] + ').');
+                assert.equal(scheduler.inFlightFor(origin), 0, origin + ' released every slot.');
+            }
+            assert.ok(peaks.total > scheduler.limitFor(origins[0]),
+                'Together the origins carried more than one origin may (' + peaks.total + '): budgets are per origin.');
+            assert.equal(viewer.imageLoader.jobsInProgress, 0, 'The loader has no job left in progress.');
+            done();
+        });
+
+        const sources = [];
+        for (let i = 0; i < count; i++) {
+            sources.push(makeSyntheticSource(origins[i % origins.length], i, 15, log));
+        }
+        viewer.open(sources);
+    });
+
+    QUnit.test('60 images all load ahead during a slow pan', function(assert) {
+        const done = assert.async();
+        const count = 60;
+        const origin = 'https://tiles.example.com';
+        const log = [];
+        let panStartedAt = -1;
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, manyImageOptions, {serverProtocol: 'h2'}));
+
+        whenAllLoaded(count, function() {
+            const viewport = viewer.viewport;
+            for (const spring of [viewport.zoomSpring, viewport.centerSpringX, viewport.centerSpringY]) {
+                spring.animationTime = 20;
+                spring.springStiffness = 1;
+            }
+            viewport.zoomTo(6, null, true);
+            viewport.panTo(new OpenSeadragon.Point(0.1, 0.1), true);
+            panStartedAt = log.length;
+            viewport.panTo(new OpenSeadragon.Point(0.9, 0.9));
+
+            setTimeout(function() {
+                const imagesAhead = new Set(log.slice(panStartedAt).filter(e => e.onTheWay).map(e => e.image));
+                assert.equal(imagesAhead.size, count, 'Every image loaded tiles along the way; none was starved.');
+                done();
+            }, 1500);
+        });
+
+        const sources = [];
+        for (let i = 0; i < count; i++) {
+            sources.push(makeSyntheticSource(origin, i, 10, log));
+        }
+        viewer.open(sources);
+    });
+
+    QUnit.test('removing images while their tiles land keeps the accounting right', function(assert) {
+        const done = assert.async();
+        const count = 20;
+        const origin = 'https://tiles.example.com';
+        const log = [];
+        const removed = new Set();
+
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, manyImageOptions, {serverProtocol: 'h2'}));
+
+        // Every other image is removed from inside its first tile-loaded handler, i.e. from within a
+        // completion that is about to pump the scheduler again.
+        viewer.addHandler('tile-loaded', function(event) {
+            const image = event.tiledImage;
+            const index = viewer.world.getIndexOfItem(image);
+            if (index > -1 && !removed.has(image) && image._testIndex % 2 === 0) {
+                removed.add(image);
+                viewer.world.removeItem(image);
+            }
+        });
+        viewer.world.addHandler('add-item', function(event) {
+            event.item._testIndex = viewer.world.getItemCount() - 1;
+        });
+
+        const remaining = count / 2;
+        const loaded = new Set();
+        let finished = false;
+        const check = function() {
+            if (finished || loaded.size < remaining || removed.size < remaining) {
+                return;
+            }
+            finished = true;
+            setTimeout(function() {
+                assert.equal(viewer.world.getItemCount(), remaining, 'Half of the images were removed.');
+                assert.equal(scheduler._images.length, remaining, 'Removed images left the scheduler.');
+                assert.equal(viewer.imageLoader.jobsInProgress, 0, 'The loader has no job left in progress.');
+                assert.equal(scheduler.inFlightFor(origin), 0, 'Every booked slot was released.');
+                done();
+            }, 50);
+        };
+        viewer.addHandler('tile-loaded', check);
+        viewer.world.addHandler('add-item', function(event) {
+            event.item.addHandler('fully-loaded-change', function(e) {
+                if (e.fullyLoaded && !removed.has(event.item)) {
+                    loaded.add(event.item);
+                }
+                check();
+            });
+        });
+
+        const sources = [];
+        for (let i = 0; i < count; i++) {
+            sources.push(makeSyntheticSource(origin, i, 10, log));
+        }
+        viewer.open(sources);
     });
 
 })();

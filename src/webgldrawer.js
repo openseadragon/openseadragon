@@ -1695,6 +1695,29 @@
             });
         }
 
+        /**
+         * Taint test for canvas tile data, done for the first canvas tile of each TiledImage only.
+         * $.isCanvasTainted() reads a pixel back, which forces a GPU readback of the whole tile canvas: done
+         * per tile it cost more main-thread time than everything else together when many layers load at
+         * once. All tiles of a TiledImage come from one source under one crossOriginPolicy, so the first one
+         * answers for the rest - and a later tainted canvas is still caught, since texImage2D() refuses it
+         * and createTexture() returns null, which falls back the same way.
+         * @private
+         * @param {OpenSeadragon.TiledImage} tiledImage
+         * @param {HTMLCanvasElement|OffscreenCanvas} canvas
+         * @returns {Boolean}
+         */
+        _isFirstCanvasTainted(tiledImage, canvas) {
+            if (!this._taintCheckedImages) {
+                this._taintCheckedImages = new WeakSet();
+            }
+            if (this._taintCheckedImages.has(tiledImage)) {
+                return false;
+            }
+            this._taintCheckedImages.add(tiledImage);
+            return $.isCanvasTainted(canvas);
+        }
+
         internalCacheCreate(cache, tile) {
             const tiledImage = tile.tiledImage;
             const gl = this._glContext ? this._glContext.getContext() : null;
@@ -1718,7 +1741,7 @@
             }
 
             if (!tiledImage.getIssue('webgl')) {
-                if (isCanvas && $.isCanvasTainted(data)){
+                if (isCanvas && this._isFirstCanvasTainted(tiledImage, data)){
                     tiledImage.setIssue('webgl', 'WebGL cannot be used to draw this TiledImage because it has tainted data. Does crossOriginPolicy need to be set?');
                     this._raiseDrawerErrorEvent(tiledImage, this._canvasFallbackAllowed ?
                         'Tainted data cannot be used by the WebGLDrawer. Falling back to CanvasDrawer for this TiledImage.' :

@@ -78,6 +78,23 @@ const GROW_ROUNDS = 2;
 const STALE_ROUNDS = 6;
 const HOLD_ROUNDS = 4;
 
+// Request latency, as a moving average of the measured waits, tells the tile planner how far ahead of the
+// animation it has to request: a tile asked for now arrives about one latency later. Until an origin has
+// delivered anything, DEFAULT_LATENCY_MS stands in.
+const DEFAULT_LATENCY_MS = 150;
+const LATENCY_SMOOTHING = 0.2;
+// A wait longer than this says nothing about the network (a suspended tab, a clock that jumped) and would
+// make the planner believe it can never load ahead.
+const MAX_LATENCY_SAMPLE_MS = 60000;
+
+// Whether a wish list entry still needs loading: the list was built before the most recent completions
+// landed, so a tile in it may already have been satisfied elsewhere. A tile that no longer exists (it
+// failed, or its cache was dropped) is skipped too: a failed tile comes back only through the ImageLoader
+// retry queue, which enforces tileRetryMax and tileRetryDelay.
+function isWanted(tile) {
+    return !!tile && tile.exists !== false && !tile.loaded && !tile.loading;
+}
+
 const PROTOCOL_ALIASES = {
     'http/2': 'h2',
     http2: 'h2',
@@ -243,6 +260,10 @@ $.TileLoadScheduler.prototype = {
         if (typeof waitMs !== 'number' || !(waitMs >= 0)) {
             return;
         }
+        if (waitMs <= MAX_LATENCY_SAMPLE_MS) {
+            record.latency = record.latency ?
+                record.latency + LATENCY_SMOOTHING * (waitMs - record.latency) : waitMs;
+        }
 
         const budget = this.budgetFor(origin);
         // Dispatched into the emptier or the fuller half of the budget.
@@ -400,6 +421,42 @@ $.TileLoadScheduler.prototype = {
     },
 
     /**
+     * How long a tile requested now is expected to take to arrive.
+     * @private
+     * @param {String} [origin] falsey means the shared budget
+     * @returns {Number} milliseconds
+     */
+    latencyFor: function(origin) {
+        return this._recordFor(origin).latency || DEFAULT_LATENCY_MS;
+    },
+
+    /**
+     * Destination tiles still to be delivered across every image on the origin. The origin's throughput is
+     * shared, so this, not one image's count, is what decides whether the destination can still be finished in
+     * time. Other images report what their last frame counted; one that has not planned this animation yet -
+     * its last frame was at rest - is assumed to need as much as the asking image, which is exact for stacked
+     * layers and errs towards loading the destination first otherwise.
+     * @private
+     * @param {String} [origin] falsey means the shared budget
+     * @param {OpenSeadragon.TiledImage} [self] the asking image
+     * @param {Number} [ownDemand=0] what the asking image counted this frame
+     * @returns {Number}
+     */
+    destinationDemandFor: function(origin, self, ownDemand) {
+        origin = origin || null;
+        ownDemand = ownDemand || 0;
+        let demand = self ? ownDemand : 0;
+        for (let i = 0; i < this._images.length; i++) {
+            const image = this._images[i];
+            if (image === self || (image._schedulerOrigin || null) !== origin) {
+                continue;
+            }
+            demand += image._destinationKnown ? (image._destinationPending || 0) : ownDemand;
+        }
+        return demand;
+    },
+
+    /**
      * Dispatch as many wanted tiles as the origins have room for, taking one tile from each image in turn so
      * that a busy image cannot starve a quiet one. Visibility scores are computed against each image's own
      * pyramid, so they are not comparable across images and cannot be used to order them.
@@ -421,14 +478,22 @@ $.TileLoadScheduler.prototype = {
             do {
                 dispatched = false;
                 const count = images.length;
+                const start = this._cursor;
+                let next = start;
                 for (let i = 0; i < count && images.length; i++) {
-                    const image = images[(this._cursor + i) % images.length];
+                    const index = (start + i) % images.length;
+                    const image = images[index];
                     if (image && this._dispatchOne(image)) {
                         dispatched = true;
+                        next = index + 1;
                     }
                 }
+                // The next sweep - in this pump or the next one, once completions free slots - starts right
+                // after the last image served. Advancing by a fixed step instead would hand the freed slots
+                // back to the images just served while those beyond the budget wait: with 60 layers on a
+                // budget of 24, the same 24 images would be served over and over.
                 if (images.length) {
-                    this._cursor = (this._cursor + 1) % images.length;
+                    this._cursor = next % images.length;
                 }
             } while (dispatched && images.length);
         } finally {
@@ -444,6 +509,17 @@ $.TileLoadScheduler.prototype = {
             return false;
         }
 
+        if (image._schedulerOrigin === null) {
+            // The origin is learned from the first tile dispatched, but the budget has to be checked against it
+            // before that tile goes out: checked against the shared bucket instead, every image that has not
+            // loaded anything yet would get one request past its origin's budget - 60 at once for 60 layers.
+            const head = this._firstWanted(wishList);
+            if (!head) {
+                return false;
+            }
+            this.assignOrigin(image, head.getUrl());
+        }
+
         const record = this._recordFor(image._schedulerOrigin);
         if (record.inFlight >= this.budgetFor(image._schedulerOrigin)) {
             // Remembered for the controller: growing the budget only makes sense if it was actually used up.
@@ -451,28 +527,27 @@ $.TileLoadScheduler.prototype = {
             return false;
         }
 
+        // The list holds only tiles worth loading - TiledImage#_updateLevelsForViewport leaves out those the
+        // viewport will have passed before they could arrive - so the per-origin budget is the only throttle.
         while (wishList.length) {
-            const tile = wishList[0];
-            // Destination tiles are ranked ahead of tiles merely on the animation path, so the first path
-            // tile marks the end of the destination. Path tiles are stale a few frames later; they get one
-            // dispatch per frame, enough to keep a pan from going blank, not enough to flood the origin.
-            if (tile && tile.inLoadArea === false && image._pathDispatched >= 1) {
-                return false;
-            }
-            wishList.shift();
-            // The list was built before the most recent completions landed, so a tile in it may already
-            // have been satisfied elsewhere. A tile that no longer exists (it failed, or its cache was dropped)
-            // is skipped too: a failed tile comes back only through the ImageLoader retry queue, which
-            // enforces tileRetryMax and tileRetryDelay.
-            if (tile && tile.exists !== false && !tile.loaded && !tile.loading) {
-                if (tile.inLoadArea === false) {
-                    image._pathDispatched++;
-                }
+            const tile = wishList.shift();
+            if (isWanted(tile)) {
                 image._loadTile(tile, image._wishListTime);
                 return true;
             }
         }
         return false;
+    },
+
+    // private
+    // The first tile of a wish list that still needs loading, without taking it off the list.
+    _firstWanted: function(wishList) {
+        for (let i = 0; i < wishList.length; i++) {
+            if (isWanted(wishList[i])) {
+                return wishList[i];
+            }
+        }
+        return null;
     },
 
     // private
@@ -514,7 +589,9 @@ $.TileLoadScheduler.prototype = {
                 roundCount: 0,
                 saturated: false,
                 hold: 0,
-                flatRounds: 0
+                flatRounds: 0,
+                // moving average of completed waits, 0 until the first delivery; see latencyFor()
+                latency: 0
             };
             this._origins.set(origin, record);
         }

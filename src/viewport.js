@@ -34,6 +34,10 @@
 
 (function( $ ){
 
+// A target that changed again within this many ms of the previous change, and recently, is considered
+// unsettled; see Viewport#_isRetargeting().
+const RETARGET_QUIET_MS = 200;
+
 
 /**
  * @class Viewport
@@ -149,6 +153,10 @@ $.Viewport = function( options ) {
     this._oldDegrees = this.degreesSpring.current.value;
 
     this._sizeChanged = false;
+
+    // See _isRetargeting(): when the animation target last changed, and how long before that it had changed.
+    this._seenRetarget = -Infinity;
+    this._retargetGap = Infinity;
 
     this._setContentBounds(new $.Rect(0, 0, 1, 1), 1);
 
@@ -443,6 +451,91 @@ $.Viewport.prototype = {
         bounds.width += (this._margins.left + this._margins.right) / factor;
         bounds.height += (this._margins.top + this._margins.bottom) / factor;
         return bounds;
+    },
+
+    /**
+     * Predicts the viewport at a future time, assuming the animation targets do not change meanwhile.
+     * Mirrors {@link OpenSeadragon.Viewport#getBoundsWithMargins}(true) as it will be at that time: the
+     * springs are evaluated in closed form, and a zoom about a zoom point keeps that point fixed on screen,
+     * as {@link OpenSeadragon.Viewport#update} does frame by frame. A rotation pivot is not modelled.
+     * @function
+     * @private
+     * @param {Number} time timestamp in milliseconds, see {@link OpenSeadragon.now}
+     * @returns {{bounds: OpenSeadragon.Rect, zoom: Number, degrees: Number, center: OpenSeadragon.Point}}
+     *   bounds include margins and rotation, in viewport coordinates
+     */
+    _predictAt: function(time) {
+        const zoomNow = this.zoomSpring.current.value;
+        const zoom = this.zoomSpring.valueAt(time);
+        const degrees = this.degreesSpring.valueAt(time);
+
+        let cx = this.centerSpringX.valueAt(time);
+        let cy = this.centerSpringY.valueAt(time);
+        if (this.zoomPoint) {
+            // Keep the zoom point at the same screen position: (zp - c) * zoom is invariant. The centre spring
+            // only carries the part of the motion that is not caused by the zoom.
+            const zp = this.zoomPoint;
+            const ratio = zoomNow / zoom;
+            cx = zp.x - (zp.x - this.centerSpringX.current.value) * ratio + (cx - this.centerSpringX.current.value);
+            cy = zp.y - (zp.y - this.centerSpringY.current.value) * ratio + (cy - this.centerSpringY.current.value);
+        }
+
+        const width = 1.0 / zoom;
+        const height = width / this.getAspectRatio();
+        const factor = this._containerInnerSize.x * zoom;
+        const bounds = new $.Rect(
+            cx - width / 2.0 - this._margins.left / factor,
+            cy - height / 2.0 - this._margins.top / factor,
+            width + (this._margins.left + this._margins.right) / factor,
+            height + (this._margins.top + this._margins.bottom) / factor
+        );
+        const center = new $.Point(cx, cy);
+        return {
+            bounds: bounds.rotate(-degrees, center),
+            zoom: zoom,
+            degrees: degrees,
+            center: center
+        };
+    },
+
+    /**
+     * @function
+     * @private
+     * @returns {Number} time at which the running animation ends, or 0 when the viewport is at rest
+     */
+    _animationEndTime: function() {
+        let end = 0;
+        const springs = [this.zoomSpring, this.centerSpringX, this.centerSpringY, this.degreesSpring];
+        for (let i = 0; i < springs.length; i++) {
+            if (!springs[i].isAtTargetValue()) {
+                end = Math.max(end, springs[i].target.time);
+            }
+        }
+        return end;
+    },
+
+    /**
+     * Whether the animation target is still being changed in quick succession - a burst of wheel zooms, a
+     * series of clicks - so that where the animation is heading is not settled yet.
+     * @function
+     * @private
+     * @param {Number} now
+     * @returns {Boolean}
+     */
+    _isRetargeting: function(now) {
+        return now - this._seenRetarget < RETARGET_QUIET_MS && this._retargetGap < 2 * RETARGET_QUIET_MS;
+    },
+
+    /**
+     * When the animation was last given a new target. Springs record that moment as their start time; a
+     * zoom about a point only shifts the centre springs, which leaves the start time alone.
+     * @function
+     * @private
+     * @returns {Number}
+     */
+    _lastRetargetTime: function() {
+        return Math.max(this.zoomSpring.start.time, this.centerSpringX.start.time,
+            this.centerSpringY.start.time, this.degreesSpring.start.time);
     },
 
     /**
@@ -1172,6 +1265,13 @@ $.Viewport.prototype = {
         this._oldCenterY = this.centerSpringY.current.value;
         this._oldZoom    = this.zoomSpring.current.value;
         this._oldDegrees = this.degreesSpring.current.value;
+
+        // How quickly the targets change, see _isRetargeting().
+        const retarget = this._lastRetargetTime();
+        if (retarget !== this._seenRetarget) {
+            this._retargetGap = retarget - this._seenRetarget;
+            this._seenRetarget = retarget;
+        }
 
         const isAnimating = changed ||
                           !this.zoomSpring.isAtTargetValue() ||
