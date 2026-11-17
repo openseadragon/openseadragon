@@ -461,8 +461,10 @@ $.TileLoadScheduler.prototype = {
             }
             wishList.shift();
             // The list was built before the most recent completions landed, so a tile in it may already
-            // have been satisfied elsewhere.
-            if (tile && !tile.loaded && !tile.loading) {
+            // have been satisfied elsewhere. A tile that no longer exists (it failed, or its cache was dropped)
+            // is skipped too: a failed tile comes back only through the ImageLoader retry queue, which
+            // enforces tileRetryMax and tileRetryDelay.
+            if (tile && tile.exists !== false && !tile.loaded && !tile.loading) {
                 if (tile.inLoadArea === false) {
                     image._pathDispatched++;
                 }

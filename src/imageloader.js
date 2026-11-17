@@ -206,7 +206,15 @@ $.ImageJob.prototype = {
             self.abort("Image load exceeded timeout (" + self.timeout + " ms)");
         }, this.timeout);
 
-        this.source.downloadTileStart(this);
+        // A tile source that throws must still end the job here and now: otherwise the loader slot and the
+        // origin booking stay held until the timeout fires, and the exception escapes into whoever dispatched
+        // the job (the scheduler pump, a retry timer). fail() is a noop if the source already completed it.
+        try {
+            this.source.downloadTileStart(this);
+        } catch (e) {
+            $.console.error("[ImageJob] downloadTileStart threw:", e);
+            this.fail("[downloadTileStart] " + ((e && e.message) || e), null);
+        }
     },
 
     /**
@@ -374,7 +382,13 @@ $.BatchImageJob.prototype = {
             j.prepareForBatch();
         }
 
-        this.source.downloadTileBatchStart(this);
+        // Same reasoning as ImageJob#start: fail the still-running children now rather than at the timeout.
+        try {
+            this.source.downloadTileBatchStart(this);
+        } catch (e) {
+            $.console.error("[BatchImageJob] downloadTileBatchStart threw:", e);
+            this.fail("[downloadTileBatchStart] " + ((e && e.message) || e), null);
+        }
     },
 
     /**
@@ -756,9 +770,9 @@ function completeBatchJob(loader, job) {
 function _startJob(loader, job, delay) {
     // A retry was released when its previous attempt completed, so it has to be booked again.
     _bookOrigin(job);
-    // Counted before start(), not after: start() arms its timeout before handing control to the tile
-    // source, so even a downloadTileStart() that throws still ends in fail() -> completeJob() and releases
-    // the slot. Counting afterwards would skip the increment and let that release run the counter negative.
+    // Counted before start(), not after: start() can complete the job synchronously - a source that answers
+    // from cache, or one that throws, which start() turns into fail() -> completeJob() - and that release
+    // must find the slot already booked, or it runs the counter negative.
     loader.jobsInProgress++;
     if (delay) {
         // Tracked so clear() can cancel it, give back the slot and release the origin booked above.

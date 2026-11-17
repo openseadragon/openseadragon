@@ -457,30 +457,57 @@
         };
         source.downloadTileAbort = function() {};
 
-        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {timeout: 50}));
+        // A long timeout: the slot must come back right away, not when the timeout fires.
+        viewer = OpenSeadragon(OpenSeadragon.extend(true, {}, baseOptions, {timeout: 60000, tileRetryMax: 0}));
         const loader = viewer.imageLoader;
 
-        // start() arms the timeout before it calls the tile source, so a source that throws still ends in
-        // fail() -> completeJob() when the timeout fires, and both counts come back to where they were.
+        // start() turns the throw into fail() -> completeJob(), synchronously, so both counts come back to
+        // where they were and the exception does not reach whoever dispatched the job.
         const tile = {tiledImage: {serverProtocol: 'h2', _schedulerOrigin: origin}};
-        try {
-            loader.addJob({
-                src: 'test',
-                tile: tile,
-                source: source,
-                loadWithAjax: false,
-                crossOriginPolicy: false,
-                ajaxWithCredentials: false,
-                abort: function() {},
-                callback: function() {
-                    assert.equal(loader.jobsInProgress, 0, 'The loader slot was given back.');
-                    assert.equal(scheduler.inFlightFor(origin), 0, 'The origin slot was given back.');
-                    done();
-                }
-            });
-        } catch (e) {
-            // The exception reaching the caller is not what this test is about.
-        }
+        let error = null;
+        loader.addJob({
+            src: 'test',
+            tile: tile,
+            source: source,
+            loadWithAjax: false,
+            crossOriginPolicy: false,
+            ajaxWithCredentials: false,
+            abort: function() {},
+            callback: function(data, errorMsg) {
+                error = errorMsg;
+            }
+        });
+
+        assert.ok(error && /custom source failed/.test(error), 'The job failed with the thrown message.');
+        assert.equal(loader.jobsInProgress, 0, 'The loader slot was given back.');
+        assert.equal(scheduler.inFlightFor(origin), 0, 'The origin slot was given back.');
+        done();
+    });
+
+    // ----------
+
+    QUnit.test('a tile that no longer exists is skipped by dispatch', function(assert) {
+        const origin = 'https://tiles.example.com';
+        const image = {serverProtocol: 'h2', _schedulerOrigin: null, _imageLoader: {jobLimit: 0}};
+        scheduler.register(image);
+        scheduler.assignOrigin(image, origin + '/1.jpg');
+
+        // A wish list built before a failure landed still holds the failed tile; its retry belongs to the
+        // ImageLoader retry queue, never to the wish list.
+        const failed = {exists: false, loaded: false, loading: false};
+        const wanted = {exists: true, loaded: false, loading: false};
+        const dispatched = [];
+        image._wishList = [failed, wanted];
+        image._wishListTime = 0;
+        image._pathDispatched = 0;
+        image._loadTile = function(tile) {
+            dispatched.push(tile);
+            tile.loading = true;
+        };
+
+        assert.ok(scheduler._dispatchOne(image), 'A tile was dispatched.');
+        assert.deepEqual(dispatched, [wanted], 'Only the existing tile was dispatched.');
+        assert.equal(image._wishList.length, 0, 'The failed tile left the wish list.');
     });
 
     // ----------
