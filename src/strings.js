@@ -32,6 +32,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import OpenSeadragon from "./openseadragon.js";
+
 (function( $ ){
 
 //TODO: I guess this is where the i18n needs to be reimplemented.  I'll look

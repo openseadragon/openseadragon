@@ -156,6 +156,10 @@
                 .attr("pointer-events", "none");
 
             $(window).resize(function() {
+                // $el is set on open; there is nothing to lay out before then.
+                if (!self.$el) {
+                    return;
+                }
                 const newSize = new OpenSeadragon.Point(self.$el.width(), self.$el.height());
                 self.viewer.viewport.resize(newSize, false);
                 self.setMode({

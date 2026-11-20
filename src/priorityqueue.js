@@ -8,6 +8,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import OpenSeadragon from "./openseadragon.js";
+
 (function($) {
 
 const OpenSeadragon = $; // alias for JSDoc

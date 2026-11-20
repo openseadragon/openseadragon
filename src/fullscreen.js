@@ -32,6 +32,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import OpenSeadragon from "./openseadragon.js";
+
 (function( $ ) {
     /**
      * Determine native full screen support we can get from the browser.

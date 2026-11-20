@@ -72,6 +72,8 @@
 
 
 
+import OpenSeadragon from "./openseadragon.js";
+
 (function( $ ){
 
 // Modified from https://webglfundamentals.org/webgl/lessons/webgl-2d-matrices.html

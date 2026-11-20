@@ -100,5 +100,16 @@ module.exports = [
             // Defensive initialisations signal intent, so they are allowed.
             "no-useless-assignment": ["off"]
         }
+    },
+    {
+        files: ["src/**/*.js"],
+        languageOptions: {
+            sourceType: "module"
+        },
+        rules: {
+            // Handlers bound through $.delegate or .call use `this`, which the rule
+            // treats as undefined once the file is a module.
+            "no-invalid-this": ["off"]
+        }
     }
 ];
