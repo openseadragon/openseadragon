@@ -281,8 +281,10 @@
                 const style = this.style;
                 const innerStyle = this.element.style;
                 innerStyle.display = "block";
-                style.left = position.x + "px";
-                style.top = position.y + "px";
+                // Keep layout at the origin; CSS translation preserves fractional pixels.
+                style.left = "0px";
+                style.top = "0px";
+                const translation = "translate(" + position.x + "px, " + position.y + "px)";
                 if (this.width !== null) {
                     innerStyle.width = size.x + "px";
                 }
@@ -297,19 +299,19 @@
                     if (rotate && !viewport.flipped) {
                         innerStyle[transformProp] = "";
                         style[transformOriginProp] = this._getTransformOrigin();
-                        style[transformProp] = "rotate(" + rotate + "deg)";
+                        style[transformProp] = translation + " rotate(" + rotate + "deg)";
                     } else if (!rotate && viewport.flipped) {
                         innerStyle[transformProp] = outerScale;
                         style[transformOriginProp] = this._getTransformOrigin();
-                        style[transformProp] = scale;
+                        style[transformProp] = translation + scale;
                     } else if (rotate && viewport.flipped){
                         innerStyle[transformProp] = outerScale;
                         style[transformOriginProp] = this._getTransformOrigin();
-                        style[transformProp] = "rotate(" + rotate + "deg)" + scale;
+                        style[transformProp] = translation + " rotate(" + rotate + "deg)" + scale;
                     } else {
                         innerStyle[transformProp] = "";
                         style[transformOriginProp] = "";
-                        style[transformProp] = "";
+                        style[transformProp] = translation;
                     }
                 }
                 style.display = 'flex';

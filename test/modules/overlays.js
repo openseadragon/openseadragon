@@ -63,6 +63,14 @@
         }
     }
 
+    function getOverlayRenderedPosition(overlay) {
+        const bounds = overlay.elementWrapper.getBoundingClientRect();
+        const containerBounds = viewer.overlaysContainer.getBoundingClientRect();
+        return new OpenSeadragon.Point(
+            bounds.left - containerBounds.left,
+            bounds.top - containerBounds.top);
+    }
+
     QUnit.test('Overlays via viewer options', function(assert) {
         const done = assert.async();
         viewer = OpenSeadragon({
@@ -1028,10 +1036,11 @@
             const $overlay = $("#fully-scaled-overlay");
             const expectedRect = viewport.viewportToViewerElementRectangle(
                 new OpenSeadragon.Rect(0, 0, 1, 1)).getBoundingBox();
-            const actualPosition = $overlay.position();
-            Util.assessNumericValue(assert, actualPosition.left, expectedRect.x, epsilon,
+            const actualPosition = getOverlayRenderedPosition(
+                viewer.getOverlayById("fully-scaled-overlay"));
+            Util.assessNumericValue(assert, actualPosition.x, expectedRect.x, epsilon,
                 "Scaled overlay position.x should adjust to rotation.");
-            Util.assessNumericValue(assert, actualPosition.top, expectedRect.y, epsilon,
+            Util.assessNumericValue(assert, actualPosition.y, expectedRect.y, epsilon,
                 "Scaled overlay position.y should adjust to rotation.");
 
             const actualWidth = $overlay.width();
@@ -1084,6 +1093,58 @@
     });
 
     // ----------
+    QUnit.test('Sub-pixel viewport pan preserves overlay translation', function(assert) {
+        const done = assert.async();
+        viewer = OpenSeadragon({
+            id: 'example-overlays',
+            prefixUrl: '/build/openseadragon/images/',
+            tileSources: '/test/data/testpattern.dzi',
+            springStiffness: 100,
+            overlays: [{
+                id: "subpixel-overlay",
+                x: 0.35,
+                y: 0.4,
+                width: 0.12,
+                height: 0.08,
+                placement: OpenSeadragon.Placement.TOP_LEFT
+            }]
+        });
+
+        waitForViewer(function() {
+            const viewport = viewer.viewport;
+            const location = new OpenSeadragon.Point(0.35, 0.4);
+            const overlay = viewer.getOverlayById("subpixel-overlay");
+            const transformProp = OpenSeadragon.getCssPropertyWithVendorPrefix('transform');
+            viewer._drawOverlays();
+
+            const before = getOverlayRenderedPosition(overlay);
+            const beforePixel = viewport.pixelFromPoint(location, true);
+            const panPixels = new OpenSeadragon.Point(0.375, -0.625);
+            viewport.panBy(viewport.deltaPointsFromPixelsNoRotate(panPixels, true), true);
+            viewer._drawOverlays();
+
+            const after = getOverlayRenderedPosition(overlay);
+            const afterPixel = viewport.pixelFromPoint(location, true);
+            const expectedDelta = afterPixel.minus(beforePixel);
+            Util.assessNumericValue(assert, expectedDelta.x, -0.375, 0.000001,
+                "Positive 0.375px pan should shift the overlay left by 0.375px.");
+            Util.assessNumericValue(assert, expectedDelta.y, 0.625, 0.000001,
+                "Negative 0.625px pan should shift the overlay down by 0.625px.");
+            Util.assessNumericValue(assert, after.x - before.x, expectedDelta.x, 0.03,
+                "Rendered X movement should retain its fractional pixel component.");
+            Util.assessNumericValue(assert, after.y - before.y, expectedDelta.y, 0.03,
+                "Rendered Y movement should retain its fractional pixel component.");
+            assert.strictEqual(overlay.style.left, "0px",
+                "Layout left should remain zero after the pan.");
+            assert.strictEqual(overlay.style.top, "0px",
+                "Layout top should remain zero after the pan.");
+            assert.ok(overlay.style[transformProp].startsWith("translate("),
+                "The overlay position should be carried by the transform.");
+            done();
+        });
+    });
+
+    // ----------
     QUnit.test('Fully scaled overlay rotation mode EXACT', function(assert) {
         const done = assert.async();
         viewer = OpenSeadragon({
@@ -1111,14 +1172,18 @@
             const expectedPosition = viewport.pixelFromPoint(
                 new OpenSeadragon.Point(1, 1))
                 .minus(expectedSize);
-            // We can't rely on jQuery.position with transforms.
-            const actualStyle= viewer.getOverlayById("fully-scaled-overlay").style;
-            const left = Number(actualStyle.left.replace("px", ""));
-            const top = Number(actualStyle.top.replace("px", ""));
-            Util.assessNumericValue(assert, left, expectedPosition.x, epsilon,
-                "Scaled overlay position.x should adjust to rotation.");
-            Util.assessNumericValue(assert, top, expectedPosition.y, epsilon,
-                "Scaled overlay position.y should adjust to rotation.");
+            // CSS left/top are zero when positioning is handled by transform.
+            // Compare the rendered bounding box, including its rotation pivot.
+            const expectedRenderedRect = new OpenSeadragon.Rect(
+                expectedPosition.x, expectedPosition.y, expectedSize.x, expectedSize.y)
+                .rotate(45, expectedPosition.plus(expectedSize)).getBoundingBox();
+            const overlay = viewer.getOverlayById("fully-scaled-overlay");
+            const actualPosition = getOverlayRenderedPosition(overlay);
+            const actualStyle = overlay.style;
+            Util.assessNumericValue(assert, actualPosition.x, expectedRenderedRect.x, epsilon,
+                "Scaled overlay rendered position.x should adjust to rotation.");
+            Util.assessNumericValue(assert, actualPosition.y, expectedRenderedRect.y, epsilon,
+                "Scaled overlay rendered position.y should adjust to rotation.");
 
             const actualWidth = $overlay.width();
             const actualHeight = $overlay.height();
@@ -1135,8 +1200,9 @@
             // Some browsers replace "right bottom" by "100% 100%"
             assert.ok(transformOrigin.match(/(100% 100%)|(right bottom)/),
                 "Transform origin should be right bottom. Got: " + transformOrigin);
-            assert.equal(actualStyle[transformProp], "rotate(45deg)",
-                "Transform should be rotate(45deg).");
+            assert.ok(actualStyle[transformProp].startsWith("translate(") &&
+                actualStyle[transformProp].endsWith(" rotate(45deg)"),
+                "Transform should translate before rotate(45deg).");
 
             const actualBounds = viewer.getOverlayById("fully-scaled-overlay")
                 .getBounds(viewport);
