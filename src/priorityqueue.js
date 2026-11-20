@@ -146,7 +146,8 @@ OpenSeadragon.PriorityQueue = class PriorityQueue {
      * @param {K} key new ley, must be smaller than current key
      */
     decreaseKey(node, key) {
-        if (node.index === undefined) {
+        // A cleared queue can leave nodes holding stale indices.
+        if (node.index === undefined || this.nodes_[node.index] !== node) {
             node.key = key;
             this.insertNode(node);
         } else {
@@ -283,7 +284,7 @@ OpenSeadragon.PriorityQueue = class PriorityQueue {
      * @return {boolean} Whether the heap contains the key.
      */
     containsKey(key) {
-        return this.nodes_.some((node) => node.value == key);  // eslint-disable-line
+        return this.nodes_.some((node) => node.key == key);  // eslint-disable-line
     }
 
     /**
