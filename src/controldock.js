@@ -58,6 +58,7 @@
             this.element = $.getElement( this.element );
             this.element.appendChild( this.container );
             if( $.getElementStyle(this.element).position === 'static' ){
+                this._originalElementPosition = this.element.style.position;
                 this.element.style.position = 'relative';
             }
             this.container.style.width = '100%';

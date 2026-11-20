@@ -1117,6 +1117,12 @@ $.extend( $.Viewer.prototype, $.EventSource.prototype, $.ControlDock.prototype, 
         // Unregister the viewer
         $._viewers.delete(this.element);
 
+        // Restore only positioning applied by ControlDock, not later application changes.
+        if (this._originalElementPosition !== undefined &&
+            this.element.style.position === 'relative') {
+            this.element.style.position = this._originalElementPosition;
+        }
+
         // clear our reference to the main element - they will need to pass it in again, creating a new viewer
         this.element = null;
 

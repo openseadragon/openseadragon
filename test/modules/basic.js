@@ -326,6 +326,110 @@
     });
 
 
+    QUnit.test('Destroy restores the host element position', function(assert) {
+        const cases = [
+            { original: 'static', changed: null, expected: 'static' },
+            { original: '', changed: null, expected: '' },
+            { original: 'relative', changed: null, expected: 'relative' },
+            { original: 'static', changed: 'absolute', expected: 'absolute' }
+        ];
+
+        cases.forEach(function(testCase, index) {
+            const host = document.createElement('div');
+            host.id = 'position-host-' + index;
+            host.style.position = testCase.original;
+            host.style.width = '300px';
+            host.style.height = '200px';
+            const sibling = document.createElement('span');
+            host.appendChild(sibling);
+            document.getElementById('qunit-fixture').appendChild(host);
+
+            const instance = OpenSeadragon({
+                element: host,
+                id: host.id,
+                showNavigationControl: false
+            });
+            assert.strictEqual(host.style.position, 'relative',
+                'Viewer uses a positioned host (' + index + ')');
+            assert.strictEqual(host.children.length, 2,
+                'Viewer adds only its own container (' + index + ')');
+
+            if (testCase.changed !== null) {
+                host.style.position = testCase.changed;
+            }
+            instance.destroy();
+
+            assert.strictEqual(host.style.position, testCase.expected,
+                'Destroy preserves the correct host position (' + index + ')');
+            assert.strictEqual(host.children.length, 1,
+                'Destroy removes only its own container (' + index + ')');
+            assert.strictEqual(host.firstChild, sibling,
+                'Destroy keeps existing host content (' + index + ')');
+        });
+    });
+
+    QUnit.test('Destroy and recreate restores the same host styles', function(assert) {
+        ['static', ''].forEach(function(originalPosition, index) {
+            const host = document.createElement('div');
+            host.id = 'recreate-position-host-' + index;
+            host.style.width = '300px';
+            host.style.height = '200px';
+            host.style.position = originalPosition;
+            const appStyle = host.style.cssText;
+            document.getElementById('qunit-fixture').appendChild(host);
+
+            for (let cycle = 0; cycle < 2; cycle++) {
+                const instance = OpenSeadragon({
+                    element: host,
+                    id: host.id,
+                    showNavigationControl: false
+                });
+                assert.strictEqual(host.style.position, 'relative',
+                    'Viewer positions the host on cycle ' + cycle + ' (' + index + ')');
+                instance.destroy();
+                assert.strictEqual(host.style.position, originalPosition,
+                    'Destroy restores the application position on cycle ' + cycle + ' (' + index + ')');
+                assert.strictEqual(host.style.cssText, appStyle,
+                    'Destroy restores the complete application style on cycle ' + cycle + ' (' + index + ')');
+            }
+        });
+    });
+
+    QUnit.test('Destroy preserves application position changes during viewing', function(assert) {
+        const cases = [
+            { original: 'static', changed: 'fixed', installed: 'relative' },
+            { original: '', changed: 'absolute', installed: 'relative' },
+            { original: 'absolute', changed: 'static', installed: 'absolute' }
+        ];
+
+        cases.forEach(function(testCase, index) {
+            const host = document.createElement('div');
+            host.id = 'changed-position-host-' + index;
+            host.style.width = '300px';
+            host.style.height = '200px';
+            host.style.position = testCase.original;
+            document.getElementById('qunit-fixture').appendChild(host);
+
+            const instance = OpenSeadragon({
+                element: host,
+                id: host.id,
+                showNavigationControl: false
+            });
+            assert.strictEqual(host.style.position, testCase.installed,
+                'Viewer starts with the expected position (' + index + ')');
+
+            host.style.position = testCase.changed;
+            host.style.border = '1px solid red';
+            const appStyle = host.style.cssText;
+            instance.destroy();
+
+            assert.strictEqual(host.style.position, testCase.changed,
+                'Destroy retains the changed application position (' + index + ')');
+            assert.strictEqual(host.style.cssText, appStyle,
+                'Destroy keeps all application styles after the change (' + index + ')');
+        });
+    });
+
     // The Wikipedia logo has CORS enabled
     const corsImg = 'https://upload.wikimedia.org/wikipedia/en/b/bc/Wiki.png';
 
