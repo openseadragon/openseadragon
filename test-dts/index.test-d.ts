@@ -288,3 +288,5 @@ expectType<OpenSeadragon.Point>(OpenSeadragon.getWindowSize());
 expectType<void>(OpenSeadragon.setElementTouchAction("id", "pan-x pan-y"));
 expectType<string>(OpenSeadragon.version.versionStr);
 expectType<boolean>(OpenSeadragon.supportsCanvas);
+expectType<void>(OpenSeadragon.setAjaxLoaderLimit(4));
+expectError(OpenSeadragon.setAjaxLoaderLimit("4"));

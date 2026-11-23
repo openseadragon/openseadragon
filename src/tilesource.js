@@ -831,12 +831,18 @@ $.TileSource.prototype = {
         //  - <img> item can turn on/off cors, and include credentials if cors on, therefore `crossOriginPolicy` can have three values (one is null)
         //  --> we should merge these flags to a single value to avoid confusion with usage, and use modern fetch that can setup also cors to have consistent behavior
         if (context.loadWithAjax) {
+            // The request may have to wait for OpenSeadragon.setAjaxLoaderLimit,
+            // which doesn't count as the download taking too long.
+            context.stopTimeout();
             context.userData.request = $.makeAjaxRequest({
                 url: context.src,
                 withCredentials: context.ajaxWithCredentials,
                 headers: context.ajaxHeaders,
                 responseType: "arraybuffer",
                 postData: context.postData,
+                beforeSend: function() {
+                    context.startTimeout();
+                },
                 success: function(request) {
                     let blb;
                     // Make the raw data into a blob.

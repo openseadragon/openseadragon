@@ -202,11 +202,42 @@ $.ImageJob.prototype = {
             self.fail(abortMessage || "Image load aborted.", null);
         };
 
+        this.jobId = -1;
+        this.startTimeout();
+
+        this.source.downloadTileStart(this);
+    },
+
+    /**
+     * Starts the timeout of a job that doesn't have one running, see stopTimeout(). Does nothing if
+     * the job has completed, or if it's part of a batch, since the timeout then belongs to the batch.
+     * @method
+     * @private
+     * @memberof OpenSeadragon.ImageJob#
+     */
+    startTimeout: function() {
+        if (this.jobId !== -1 || this.isBatched) {
+            return;
+        }
+
+        const self = this;
         this.jobId = window.setTimeout(function () {
             self.abort("Image load exceeded timeout (" + self.timeout + " ms)");
         }, this.timeout);
+    },
 
-        this.source.downloadTileStart(this);
+    /**
+     * Stops the timeout of a job whose download has to wait before it goes out. Call startTimeout()
+     * once it does. Until then the job stays active, so it can still finish, fail or be aborted.
+     * @method
+     * @private
+     * @memberof OpenSeadragon.ImageJob#
+     */
+    stopTimeout: function() {
+        if (this.jobId) {
+            window.clearTimeout(this.jobId);
+            this.jobId = -1; // like prepareForBatch(): active, and calling clearTimeout is noop
+        }
     },
 
     /**

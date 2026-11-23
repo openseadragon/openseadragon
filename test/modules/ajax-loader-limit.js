@@ -1,0 +1,540 @@
+/* global QUnit, Util, $, testLog */
+
+(function() {
+    const originalCreateAjaxRequest = OpenSeadragon.createAjaxRequest;
+    let fakeRequests;
+
+    // A stand-in for XMLHttpRequest, so the tests decide when each request completes.
+    const FakeRequest = function() {
+        this.readyState = 0;
+        this.status = 0;
+        this.sendCount = 0;
+        fakeRequests.push(this);
+    };
+
+    FakeRequest.prototype = {
+        open: function(method, url) {
+            if (url === 'throws-on-open') {
+                throw new Error('Invalid URL');
+            }
+            this.url = url;
+            this.readyState = 1;
+        },
+        setRequestHeader: function() {},
+        send: function() {
+            this.sendCount++;
+        },
+        // Like XMLHttpRequest, aborting a request that was never sent does nothing.
+        abort: function() {
+            if (this.readyState === 1 && this.sendCount > 0) {
+                this.respond(0);
+            }
+        },
+        respond: function(status) {
+            this.status = status;
+            this.readyState = 4;
+            this.onreadystatechange();
+        }
+    };
+
+    // Starts a request through makeAjaxRequest and records which callbacks it gets.
+    const request = function(url) {
+        const result = {
+            successCount: 0,
+            errorCount: 0
+        };
+        result.xhr = OpenSeadragon.makeAjaxRequest({
+            url: url || 'fake-url',
+            success: function() {
+                result.successCount++;
+            },
+            error: function() {
+                result.errorCount++;
+            }
+        });
+        return result;
+    };
+
+    const sendCounts = function(results) {
+        return results.map(function(result) {
+            return result.xhr.sendCount;
+        });
+    };
+
+    QUnit.module('AjaxLoaderLimit', {
+        beforeEach: function(assert) {
+            // Real requests left over from earlier tests count as active, so let them finish first.
+            const done = assert.async();
+            const startWhenIdle = function() {
+                if (OpenSeadragon.AjaxQueue.numActiveRequests > 0) {
+                    setTimeout(startWhenIdle, 10);
+                    return;
+                }
+                fakeRequests = [];
+                OpenSeadragon.createAjaxRequest = function() {
+                    return new FakeRequest();
+                };
+                done();
+            };
+            startWhenIdle();
+        },
+        afterEach: function() {
+            OpenSeadragon.createAjaxRequest = originalCreateAjaxRequest;
+            OpenSeadragon.setAjaxLoaderLimit(0);
+            // Finish anything a failed test left behind, so the queue is empty for the next one.
+            fakeRequests.forEach(function(xhr) {
+                if (xhr.sendCount > 0 && xhr.readyState !== 4) {
+                    xhr.respond(200);
+                }
+            });
+        }
+    });
+
+    // ----------
+    QUnit.test('setAjaxLoaderLimit', function(assert) {
+        assert.strictEqual(OpenSeadragon.settings.ajaxLoaderLimit, 0, 'There is no limit by default');
+
+        OpenSeadragon.setAjaxLoaderLimit(4);
+        assert.strictEqual(OpenSeadragon.settings.ajaxLoaderLimit, 4, 'The limit is stored');
+
+        assert.throws(function() {
+            OpenSeadragon.setAjaxLoaderLimit(-1);
+        }, 'A negative limit is rejected');
+        assert.strictEqual(OpenSeadragon.settings.ajaxLoaderLimit, 4, 'A rejected limit leaves the old one in place');
+    });
+
+    // ----------
+    QUnit.test('Without a limit, each request is sent right away and only once', function(assert) {
+        const results = [request(), request(), request()];
+        assert.deepEqual(sendCounts(results), [1, 1, 1], 'All requests are sent right away');
+
+        results.forEach(function(result) {
+            result.xhr.respond(200);
+        });
+
+        assert.deepEqual(sendCounts(results), [1, 1, 1], 'No request is sent a second time');
+        assert.deepEqual(results.map(function(result) {
+            return result.successCount;
+        }), [1, 1, 1], 'Each success callback is called once');
+    });
+
+    // ----------
+    QUnit.test('With a limit, requests wait for a free slot', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(2);
+        const results = [request(), request(), request(), request(), request()];
+        assert.deepEqual(sendCounts(results), [1, 1, 0, 0, 0], 'Only two requests are sent');
+
+        results[0].xhr.respond(200);
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 0, 0], 'A successful response frees a slot');
+        assert.strictEqual(results[0].successCount, 1, 'The success callback is called');
+
+        results[1].xhr.respond(404);
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 1, 0], 'An error response frees a slot');
+        assert.strictEqual(results[1].errorCount, 1, 'The error callback is called');
+
+        results[2].xhr.respond(200);
+        results[3].xhr.respond(200);
+        results[4].xhr.respond(200);
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 1, 1], 'Every request is sent exactly once');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.requestFuncs.length, 0, 'The queue is empty');
+    });
+
+    // ----------
+    QUnit.test('Raising or removing the limit starts queued requests', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const results = [request(), request(), request(), request()];
+        assert.deepEqual(sendCounts(results), [1, 0, 0, 0], 'One request is sent');
+
+        OpenSeadragon.setAjaxLoaderLimit(2);
+        assert.deepEqual(sendCounts(results), [1, 1, 0, 0], 'Raising the limit sends one more');
+
+        OpenSeadragon.setAjaxLoaderLimit(0);
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 1], 'Removing the limit sends the rest');
+
+        results.forEach(function(result) {
+            result.xhr.respond(200);
+        });
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 1], 'No request is sent a second time');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    QUnit.test('Lowering the limit lets in-flight requests finish first', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(3);
+        const results = [request(), request(), request(), request(), request()];
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 0, 0], 'Three requests are sent');
+
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        results[0].xhr.respond(200);
+        results[1].xhr.respond(200);
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 0, 0], 'Nothing new is sent while over the new limit');
+
+        results[2].xhr.respond(200);
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 1, 0], 'One request is sent once under the new limit');
+
+        results[3].xhr.respond(200);
+        assert.deepEqual(sendCounts(results), [1, 1, 1, 1, 1], 'The last request is sent');
+    });
+
+    // ----------
+    QUnit.test('A limit set while requests are in flight counts them', function(assert) {
+        const inFlight = [request(), request(), request()];
+        assert.deepEqual(sendCounts(inFlight), [1, 1, 1], 'Without a limit, all requests are sent');
+
+        OpenSeadragon.setAjaxLoaderLimit(2);
+        const waiting = [request(), request()];
+        assert.deepEqual(sendCounts(waiting), [0, 0], 'New requests wait while over the new limit');
+
+        inFlight[0].xhr.respond(200);
+        assert.deepEqual(sendCounts(waiting), [0, 0], 'Nothing is sent while still at the limit');
+
+        inFlight[1].xhr.respond(200);
+        assert.deepEqual(sendCounts(waiting), [1, 0], 'One request is sent once under the limit');
+
+        inFlight[2].xhr.respond(200);
+        assert.deepEqual(sendCounts(waiting), [1, 1], 'The last request is sent');
+
+        waiting[0].xhr.respond(200);
+        waiting[1].xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+        assert.deepEqual(inFlight.map(function(result) {
+            return result.successCount;
+        }), [1, 1, 1], 'Each request sent without a limit still gets its callback');
+    });
+
+    // ----------
+    QUnit.test('Without a limit, requests that end early leave no slot taken', function(assert) {
+        const failed = request('throws-on-open');
+        assert.strictEqual(failed.errorCount, 1, 'A request that cannot be sent calls its error callback');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It leaves no slot taken');
+
+        const aborted = request();
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 1, 'A request in flight is counted');
+        aborted.xhr.abort();
+        assert.strictEqual(aborted.errorCount, 1, 'Aborting it calls its error callback');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It leaves no slot taken');
+    });
+
+    // ----------
+    QUnit.test('Aborting a queued request takes it out of the queue', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const results = [request(), request(), request()];
+
+        results[1].xhr.abort();
+        results[0].xhr.respond(200);
+        assert.deepEqual(sendCounts(results), [1, 0, 1], 'The aborted request is skipped');
+        assert.strictEqual(results[1].successCount + results[1].errorCount, 0,
+            'The aborted request gets no callback, like an XMLHttpRequest that was never sent');
+
+        results[2].xhr.abort();
+        assert.strictEqual(results[2].errorCount, 1, 'Aborting a request in flight still calls its error callback');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'Aborting a request in flight frees its slot');
+    });
+
+    // ----------
+    QUnit.test('A request that cannot be sent frees its slot', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+
+        const failsNow = request('throws-on-open');
+        assert.strictEqual(failsNow.errorCount, 1, 'The error callback is called right away');
+
+        const results = [request(), request('throws-on-open'), request()];
+        assert.deepEqual(sendCounts(results), [1, 0, 0], 'The slot freed by the failed request is reused');
+
+        results[0].xhr.respond(200);
+        assert.strictEqual(results[1].errorCount, 1, 'A queued request that fails to send calls its error callback');
+        assert.strictEqual(results[0].successCount, 1, 'The request that freed the slot still gets its response');
+        assert.deepEqual(sendCounts(results), [1, 0, 1], 'The next request is sent');
+
+        results[2].xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    QUnit.test('A large batch of queued requests that cannot be sent', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+
+        const first = request();
+        const batch = [];
+        for (let i = 0; i < 20000; i++) {
+            batch.push(request('throws-on-open'));
+        }
+        const last = request();
+
+        first.xhr.respond(200);
+        assert.strictEqual(first.successCount, 1, 'The request that freed the slot still gets its response');
+        assert.strictEqual(batch.filter(function(result) {
+            return result.errorCount === 1;
+        }).length, batch.length, 'Each failed request calls its error callback once');
+        assert.strictEqual(last.xhr.sendCount, 1, 'The request after the batch is sent');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.requestFuncs.length, 0, 'The queue is empty');
+
+        last.xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    QUnit.test('An error callback that throws does not stall the queue', function(assert) {
+        const throwingRequest = function() {
+            return OpenSeadragon.makeAjaxRequest({
+                url: 'throws-on-open',
+                success: function() {},
+                error: function() {
+                    throw new Error('Callback failed');
+                }
+            });
+        };
+
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        assert.throws(throwingRequest, /Callback failed/, 'A request sent right away throws to its caller');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'It frees its slot');
+
+        testLog.reset();
+        const first = request();
+        throwingRequest();
+        const next = request();
+        first.xhr.respond(200);
+        assert.strictEqual(first.successCount, 1, 'The request that freed the slot still gets its response');
+        assert.strictEqual(next.xhr.sendCount, 1, 'The request behind the failed one is sent right away');
+        assert.strictEqual(testLog.error.filter(function(message) {
+            return /queued AJAX request/.test(message);
+        }).length, 1, 'The exception is logged');
+
+        next.xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    QUnit.test('A success callback that throws does not stall the queue', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = OpenSeadragon.makeAjaxRequest({
+            url: 'fake-url',
+            success: function() {
+                throw new Error('Callback failed');
+            }
+        });
+        const next = request();
+
+        assert.throws(function() {
+            first.respond(200);
+        }, /Callback failed/, 'It throws to whatever delivered the response, like any XMLHttpRequest handler');
+        assert.strictEqual(next.xhr.sendCount, 1, 'The next request is sent anyway');
+    });
+
+    // ----------
+    QUnit.test('An error callback that throws does not reach setAjaxLoaderLimit', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        OpenSeadragon.makeAjaxRequest({
+            url: 'throws-on-open',
+            success: function() {},
+            error: function() {
+                throw new Error('Callback failed');
+            }
+        });
+        const next = request();
+
+        OpenSeadragon.setAjaxLoaderLimit(0);
+        assert.strictEqual(next.xhr.sendCount, 1, 'The request behind the failed one is sent');
+
+        first.xhr.respond(200);
+        next.xhr.respond(200);
+        assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+    });
+
+    // ----------
+    // The timeout of a tile, through the real ImageJob and TileSource with a fake request.
+    const startTileJob = function() {
+        const result = { completions: [] };
+        result.job = new OpenSeadragon.ImageJob({
+            src: 'fake-tile',
+            source: new OpenSeadragon.TileSource({ width: 1, height: 1, tileSize: 1 }),
+            loadWithAjax: true,
+            timeout: 40,
+            callback: function(job) {
+                result.completions.push({
+                    data: job.data,
+                    errorMsg: job.errorMsg
+                });
+            }
+        });
+        result.job.start();
+        result.xhr = result.job.userData.request;
+        return result;
+    };
+
+    const respondWithTile = function(xhr) {
+        xhr.response = new ArrayBuffer(1);
+        xhr.respond(200);
+    };
+
+    // ----------
+    QUnit.test('Waiting for a slot does not count toward the timeout of a tile', function(assert) {
+        const done = assert.async();
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        const tile = startTileJob();
+        assert.strictEqual(tile.xhr.sendCount, 0, 'The tile waits for a slot');
+
+        setTimeout(function() {
+            assert.deepEqual(tile.completions, [], 'The tile is still waiting well after its timeout');
+
+            first.xhr.respond(200);
+            assert.strictEqual(tile.xhr.sendCount, 1, 'The tile is sent when a slot frees up');
+
+            respondWithTile(tile.xhr);
+            assert.strictEqual(tile.completions.length, 1, 'The tile job completes once');
+            assert.strictEqual(tile.completions[0].errorMsg, null, 'The tile job succeeds');
+            assert.ok(tile.completions[0].data, 'The tile job has its data');
+            done();
+        }, 120);
+    });
+
+    // ----------
+    QUnit.test('The timeout of a tile starts when its request is sent', function(assert) {
+        const done = assert.async();
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        const tile = startTileJob();
+
+        setTimeout(function() {
+            first.xhr.respond(200);
+            assert.strictEqual(tile.xhr.sendCount, 1, 'The tile is sent');
+            assert.deepEqual(tile.completions, [], 'Its timeout has not run out yet');
+
+            setTimeout(function() {
+                assert.strictEqual(tile.completions.length, 1, 'A tile that takes too long once sent times out');
+                assert.ok(tile.completions[0].errorMsg, 'The tile job fails');
+                assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'The tile frees its slot');
+                done();
+            }, 120);
+        }, 120);
+    });
+
+    // ----------
+    QUnit.test('A tile sent right away still times out', function(assert) {
+        const done = assert.async();
+        const tile = startTileJob();
+        assert.strictEqual(tile.xhr.sendCount, 1, 'The tile is sent right away');
+
+        setTimeout(function() {
+            assert.strictEqual(tile.completions.length, 1, 'The tile times out');
+            assert.ok(tile.completions[0].errorMsg, 'The tile job fails');
+            done();
+        }, 120);
+    });
+
+    // ----------
+    QUnit.test('A tile can be aborted while it waits for a slot', function(assert) {
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        const tile = startTileJob();
+
+        tile.job.abort('Stopped');
+        assert.strictEqual(tile.completions.length, 1, 'The tile job completes');
+        assert.strictEqual(tile.completions[0].errorMsg, 'Stopped', 'The tile job fails with the abort message');
+        assert.strictEqual(OpenSeadragon.AjaxQueue.requestFuncs.length, 0, 'The tile leaves the queue');
+
+        first.xhr.respond(200);
+        assert.strictEqual(tile.xhr.sendCount, 0, 'The tile is never sent');
+    });
+
+    // ----------
+    QUnit.test('A tile in a batch leaves its timeout to the batch', function(assert) {
+        const done = assert.async();
+        const source = new OpenSeadragon.TileSource({ width: 1, height: 1, tileSize: 1 });
+        const jobs = [
+            new OpenSeadragon.ImageJob({ src: 'fake-tile', source: source, loadWithAjax: true, isBatched: true, callback: function() {} })
+        ];
+        const batch = new OpenSeadragon.BatchImageJob({
+            source: source,
+            jobs: jobs,
+            timeout: 40,
+            callback: function() {
+                assert.ok(true, 'The batch times out');
+                done();
+            }
+        });
+        batch.start();
+        assert.strictEqual(jobs[0].jobId, -1, 'The tile has no timer of its own');
+    });
+
+    // ----------
+    QUnit.test('A viewer loads its tiles after waiting longer than its timeout', function(assert) {
+        const done = assert.async();
+        OpenSeadragon.setAjaxLoaderLimit(1);
+        const first = request();
+        OpenSeadragon.createAjaxRequest = originalCreateAjaxRequest;
+
+        $('<div id="example"></div>').appendTo('#qunit-fixture');
+        const viewer = OpenSeadragon({
+            id: 'example',
+            prefixUrl: '/build/openseadragon/images/',
+            loadTilesWithAjax: true,
+            timeout: 40,
+            springStiffness: 100
+        });
+
+        let released = false;
+        const failures = [];
+        viewer.addHandler('tile-load-failed', function(event) {
+            failures.push(event.message);
+        });
+        viewer.addHandler('tile-loaded', function tileLoaded() {
+            viewer.removeHandler('tile-loaded', tileLoaded);
+            assert.ok(released, 'The tile only loads once a slot frees up');
+            assert.deepEqual(failures, [], 'No tile fails while waiting');
+            viewer.destroy();
+            done();
+        });
+
+        viewer.open({
+            width: 1000,
+            height: 1000,
+            tileSize: 254,
+            tileOverlap: 1,
+            minLevel: 0,
+            maxLevel: 10,
+            getTileUrl: function(level, x, y) {
+                return '/test/data/testpattern_files/' + level + '/' + x + '_' + y + '.jpg';
+            }
+        });
+
+        setTimeout(function() {
+            assert.deepEqual(failures, [], 'No tile has failed after waiting well past the timeout');
+            released = true;
+            first.xhr.respond(200);
+        }, 200);
+    });
+
+    // ----------
+    QUnit.test('Real requests complete under a limit', function(assert) {
+        OpenSeadragon.createAjaxRequest = originalCreateAjaxRequest;
+        OpenSeadragon.setAjaxLoaderLimit(1);
+
+        const timeWatcher = Util.timeWatcher(assert, 5000);
+        let remaining = 3;
+        const onSuccess = function(xhr) {
+            assert.equal(xhr.status, 200, 'Request succeeded');
+            remaining--;
+            if (remaining === 0) {
+                assert.strictEqual(OpenSeadragon.AjaxQueue.numActiveRequests, 0, 'No slot is left taken');
+                timeWatcher.done();
+            }
+        };
+        const onError = function() {
+            assert.ok(false, 'Error callback should not be called');
+            timeWatcher.done();
+        };
+
+        for (let i = 0; i < 3; i++) {
+            OpenSeadragon.makeAjaxRequest({
+                url: 'data/testpattern.dzi',
+                success: onSuccess,
+                error: onError
+            });
+        }
+    });
+
+})();

@@ -1597,6 +1597,39 @@ function OpenSeadragon( options ){
         },
 
         /**
+         * Global settings, shared across all viewers. Use the setter functions
+         * (such as {@link OpenSeadragon.setAjaxLoaderLimit}) to change them.
+         * @static
+         * @private
+         * @type {Object}
+         * @property {Number} ajaxLoaderLimit The maximum number of AJAX requests to make concurrently. By default it is set to 0 allowing an unlimited number of concurrent requests.
+         */
+        settings: {
+            ajaxLoaderLimit: 0
+        },
+
+        /**
+         * Sets the global concurrency limit for AJAX requests.
+         * The limit covers every request made through {@link OpenSeadragon.makeAjaxRequest}
+         * by any viewer on the page: tile source info files and, with loadTilesWithAjax,
+         * the tiles themselves. Requests over the limit wait in a queue until an earlier
+         * one completes. Raising or removing the limit sends queued requests right away;
+         * setting or lowering it lets requests already in flight finish, and they count
+         * toward the limit until they do. The timeout of a tile starts when its request
+         * is sent, so waiting in the queue doesn't count toward it.
+         * @function
+         * @param {Number} maxNumAjaxRequests The maximum number of AJAX requests to make concurrently. Setting this to 0, the default, will allow an unlimited number of requests.
+         */
+        setAjaxLoaderLimit: function ( maxNumAjaxRequests ) {
+            if( maxNumAjaxRequests < 0) {
+                throw new Error("The ajax loader limit must be >= 0");
+            }
+
+            $.settings.ajaxLoaderLimit = maxNumAjaxRequests;
+            $.processAjaxQueue();
+        },
+
+        /**
          * Keep track of which {@link Viewer}s have been created.
          * - Key: {@link Element} to which a Viewer is attached.
          * - Value: {@link Viewer} of the element defined by the key.
@@ -2439,6 +2472,103 @@ function OpenSeadragon( options ){
         },
 
         /**
+         * An object holding the AJAX queue state.
+         * @static
+         * @private
+         * @type {Object}
+         * @property {Function[]} requestFuncs Array of functions representing queued AJAX requests
+         * @property {Number} numActiveRequests The number of AJAX requests currently in-flight
+         * @property {Boolean} isProcessing Whether processAjaxQueue is running
+         */
+        AjaxQueue: {
+            requestFuncs: [],
+            numActiveRequests: 0,
+            isProcessing: false
+        },
+
+        /**
+         * Queues an AJAX request, or sends it right away if ajaxLoaderLimit allows.
+         * @private
+         * @param {XMLHttpRequest} request The request to be queued
+         * @param {Function} sendRequestFunc A function which, when called, will send the request.
+         *     It returns true if the request went out, false if it could not be sent.
+         */
+        queueAjaxRequest: function (request, sendRequestFunc) {
+            const queue = $.AjaxQueue;
+            const oldOnStateChange = request.onreadystatechange;
+
+            const onCompleteRequest = function() {
+                queue.numActiveRequests--;
+                $.processAjaxQueue();
+            };
+
+            const startRequest = function() {
+                queue.numActiveRequests++;
+                let sent = false;
+                try {
+                    sent = sendRequestFunc();
+                } finally {
+                    if (!sent) {
+                        // It failed before going out, so it will never complete; free its slot now.
+                        onCompleteRequest();
+                    }
+                }
+            };
+
+            request.onreadystatechange = function() {
+                if ( request.readyState === 4 ) {
+                    onCompleteRequest();
+                    oldOnStateChange();
+                }
+            };
+
+            if ($.settings.ajaxLoaderLimit && queue.numActiveRequests >= $.settings.ajaxLoaderLimit) {
+                queue.requestFuncs.push(startRequest);
+
+                // XMLHttpRequest ignores abort() before open(), so a queued request
+                // that gets aborted has to be taken out of the queue instead.
+                const abortRequest = request.abort;
+                request.abort = function() {
+                    const index = queue.requestFuncs.indexOf(startRequest);
+                    if (index === -1) {
+                        abortRequest.call(request);
+                    } else {
+                        queue.requestFuncs.splice(index, 1);
+                    }
+                };
+            } else {
+                startRequest();
+            }
+        },
+
+        /**
+         * Sends queued AJAX requests while ajaxLoaderLimit allows.
+         * @private
+         */
+        processAjaxQueue: function() {
+            const queue = $.AjaxQueue;
+
+            // A queued request that fails to send comes back here before it returns.
+            // The loop below picks up the next one, so the stack doesn't grow with the queue.
+            if (queue.isProcessing) {
+                return;
+            }
+
+            queue.isProcessing = true;
+            while (queue.requestFuncs.length > 0 &&
+                (!$.settings.ajaxLoaderLimit || queue.numActiveRequests < $.settings.ajaxLoaderLimit)) {
+                // The error callback of a request that can't be sent runs here. If it throws, that has
+                // nothing to do with what's draining the queue or with the requests behind this one.
+                try {
+                    queue.requestFuncs.shift()();
+                } catch (e) {
+                    $.console.error("Exception in the error callback of a queued AJAX request:", e);
+                }
+            }
+            queue.isProcessing = false;
+        },
+
+        /**
          * Makes an AJAX request.
          * @param {String} url - the url to request
          * @param {Function} onSuccess
@@ -2457,6 +2587,8 @@ function OpenSeadragon( options ){
          * @param {String} options.postData - HTTP POST data (usually but not necessarily in k=v&k2=v2... form,
          *      see TileSource::getTilePostData), GET method used if null
          * @param {Boolean} [options.withCredentials=false] - whether to set the XHR's withCredentials
+         * @param {Function} [options.beforeSend] - a function to call right before the request is sent,
+         *      which can be after this function returns if it has to wait for {@link OpenSeadragon.setAjaxLoaderLimit}
          * @throws {Error}
          * @returns {XMLHttpRequest}
          */
@@ -2465,6 +2597,7 @@ function OpenSeadragon( options ){
             let headers;
             let responseType;
             let postData;
+            let beforeSend;
 
             // Note that our preferred API is that you pass in a single object; the named
             // arguments are for legacy support.
@@ -2475,6 +2608,7 @@ function OpenSeadragon( options ){
                 headers = url.headers;
                 responseType = url.responseType || null;
                 postData = url.postData || null;
+                beforeSend = url.beforeSend;
                 url = url.url;
             } else {
                 $.console.warn("OpenSeadragon.makeAjaxRequest() deprecated usage!");
@@ -2510,35 +2644,49 @@ function OpenSeadragon( options ){
             };
 
             const method = postData ? "POST" : "GET";
-            try {
-                request.open( method, url, true );
 
-                if (responseType) {
-                    request.responseType = responseType;
-                }
+            // Returns false if the request could not be sent. It may run later than
+            // makeAjaxRequest() if the request had to wait for ajaxLoaderLimit,
+            // so it reports its own errors.
+            const sendRequest = function () {
+                try {
+                    if (beforeSend) {
+                        beforeSend();
+                    }
 
-                if (headers) {
-                    for (const headerName in headers) {
-                        if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
-                            request.setRequestHeader(headerName, headers[headerName]);
+                    request.open( method, url, true );
+
+                    if (responseType) {
+                        request.responseType = responseType;
+                    }
+
+                    if (headers) {
+                        for (const headerName in headers) {
+                            if (Object.prototype.hasOwnProperty.call(headers, headerName) && headers[headerName]) {
+                                request.setRequestHeader(headerName, headers[headerName]);
+                            }
                         }
                     }
+
+                    if (withCredentials) {
+                        request.withCredentials = true;
+                    }
+
+                    request.send(postData);
+                } catch (e) {
+                    $.console.error( "%s while making AJAX request: %s", e.name, e.message );
+
+                    request.onreadystatechange = function(){};
+
+                    if ( $.isFunction( onError ) ) {
+                        onError( request, e );
+                    }
+                    return false;
                 }
+                return true;
+            };
 
-                if (withCredentials) {
-                    request.withCredentials = true;
-                }
-
-                request.send(postData);
-            } catch (e) {
-                $.console.error( "%s while making AJAX request: %s", e.name, e.message );
-
-                request.onreadystatechange = function(){};
-
-                if ( $.isFunction( onError ) ) {
-                    onError( request, e );
-                }
-            }
+            $.queueAjaxRequest(request, sendRequest);
 
             return request;
         },
