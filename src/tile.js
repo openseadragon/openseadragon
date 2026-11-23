@@ -203,6 +203,22 @@ $.Tile = function(level, x, y, bounds, exists, url, context2D, loadWithAjax, aja
      * @memberof OpenSeadragon.Tile#
      */
     this.visibility = null;
+    /**
+     * Whether this tile lies in the area the viewport is animating towards, as opposed to only in the
+     * area it currently covers or passes on the way.
+     * @member {Boolean} inLoadArea
+     * @memberof OpenSeadragon.Tile#
+     * @private
+     */
+    this.inLoadArea = true;
+    /**
+     * When this tile has to be requested to arrive in time, as decided by TiledImage#_planLoad in the last
+     * frame that wanted it. Load candidates are ranked by it first.
+     * @member {Number} loadDeadline
+     * @memberof OpenSeadragon.Tile#
+     * @private
+     */
+    this.loadDeadline = 0;
 
     /**
      * The transparency indicator of this tile.

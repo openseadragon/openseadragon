@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Animation Prefetch Demo</title>
+    <script type="text/javascript" src='../../build/openseadragon/openseadragon.js'></script>
+    <script type="text/javascript" src='./simnetwork.js' defer></script>
+    <script type="text/javascript" src='./animationprefetch.js' defer></script>
+    <style type="text/css">
+        body{
+            font-family: sans-serif;
+            margin: 0 auto;
+            max-width: 1400px;
+            padding: 0 12px;
+        }
+        h1{
+            font-size: 1.3em;
+        }
+        p.info{
+            max-width: 1100px;
+            color: #444;
+        }
+        fieldset{
+            display: inline-block;
+            vertical-align: top;
+            margin: 0 8px 8px 0;
+        }
+        fieldset label{
+            display: block;
+            margin: 2px 0;
+        }
+        fieldset input[type=number]{
+            width: 5em;
+        }
+        fieldset .checks label{
+            display: inline-block;
+            margin-right: 10px;
+        }
+        button{
+            font-size: 1.05em;
+            padding: 5px 14px;
+        }
+        .viewers{
+            display: flex;
+            gap: 10px;
+        }
+        .pane{
+            flex: 1;
+            min-width: 0;
+        }
+        .pane h2{
+            font-size: 0.95em;
+            margin: 6px 0;
+        }
+        .viewer{
+            width: 100%;
+            height: 320px;
+            background: #000;
+        }
+        .live{
+            font-family: monospace;
+            font-size: 0.85em;
+            white-space: pre;
+            min-height: 6em;
+        }
+        #status{
+            margin: 8px 0;
+            font-family: monospace;
+        }
+        table.results{
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.85em;
+            font-family: monospace;
+        }
+        table.results th, table.results td{
+            border-bottom: 1px solid #ddd;
+            padding: 2px 6px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        table.results th{
+            position: sticky;
+            top: 0;
+            background: #fff;
+        }
+        table.results td.key{
+            text-align: left;
+            font-family: sans-serif;
+        }
+        table.results tr.group td{
+            border-top: 2px solid #999;
+        }
+        .better{
+            background: #dfd;
+        }
+        .worse{
+            background: #fdd;
+        }
+        .results-wrap{
+            max-height: 520px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tile loading during animations: look-ahead vs. destination only</h1>
+    <p class="info">
+        Each viewer opens the same synthetic layers through its own simulated network (see the tile load
+        scheduler demo for the model) and plays the same animation at the same moment. While it animates, the
+        view is sampled every frame on a grid: for each point and layer, how many pyramid levels the best tile
+        drawn there is below the level the current zoom calls for (<em>resolution deficit</em>), and whether
+        anything is drawn there at all (<em>blank</em>). The animation is considered <em>arrived</em> once the
+        view is within 2% of a viewport of its destination and within 5% of its zoom; from then on the user is
+        looking at the destination.
+        <br>
+        A: <code>_loadPlanner: 'lookahead'</code> (loads along the way when the destination can still be finished
+        before arrival). B: <code>_loadPlanner: 'destination'</code> (destination only while animating). C
+        (optional): look-ahead with the frame-paced loader (<code>serverProtocol: false</code>).
+        Lower is better everywhere; within a scenario the best value is green, the worst red.
+    </p>
+
+    <fieldset>
+        <legend>Network</legend>
+        <label>Preset
+            <select id="preset">
+                <option value="h1-lan">HTTP/1.1, LAN (20 ms)</option>
+                <option value="h1-wan">HTTP/1.1, WAN (120 ms)</option>
+                <option value="h2-wan" selected>HTTP/2, WAN (120 ms)</option>
+                <option value="h2-slow">HTTP/2, slow server (4 workers x 40 ms)</option>
+                <option value="h2-mobile">HTTP/2, mobile 3G (300 ms, 4 Mbit/s)</option>
+                <option value="h1-satellite">HTTP/1.1, satellite (600 ms)</option>
+            </select>
+        </label>
+        <label>Latency override (ms, empty = preset) <input id="latency" type="number" min="0" step="10"></label>
+        <label>Tile size (KB) <input id="tileKB" type="number" min="1" step="1" value="30"></label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Scenario (single run)</legend>
+        <label>Animation
+            <select id="scenario"></select>
+        </label>
+        <label>Animation time (s)
+            <select id="animationTime">
+                <option>0.3</option>
+                <option selected>1.2</option>
+                <option>4</option>
+                <option>10</option>
+            </select>
+        </label>
+        <label>Spring stiffness
+            <select id="stiffness">
+                <option value="6.5" selected>6.5 (default, fast start, long tail)</option>
+                <option value="1">1 (near linear)</option>
+            </select>
+        </label>
+        <label>Layers
+            <select id="layers">
+                <option>1</option>
+                <option>4</option>
+                <option selected>16</option>
+                <option>60</option>
+            </select>
+        </label>
+        <label>Layout
+            <select id="layout">
+                <option value="stacked" selected>stacked (multiplex channels)</option>
+                <option value="grid">grid (collection)</option>
+            </select>
+        </label>
+        <label>Origins
+            <select id="origins">
+                <option value="shared" selected>one origin for all layers</option>
+                <option value="each">one origin per layer</option>
+            </select>
+        </label>
+        <label><input id="withC" type="checkbox"> also run C (frame-paced)</label>
+        <label>Seed <input id="seed" type="number" step="1" value="7"></label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Matrix</legend>
+        <div class="checks" id="matrix-scenarios"></div>
+        <div class="checks">
+            Times:
+            <label><input type="checkbox" class="m-time" value="0.3" checked>0.3</label>
+            <label><input type="checkbox" class="m-time" value="1.2" checked>1.2</label>
+            <label><input type="checkbox" class="m-time" value="4" checked>4</label>
+            <label><input type="checkbox" class="m-time" value="10" checked>10</label>
+        </div>
+        <div class="checks">
+            Layers:
+            <label><input type="checkbox" class="m-layers" value="1" checked>1</label>
+            <label><input type="checkbox" class="m-layers" value="4">4</label>
+            <label><input type="checkbox" class="m-layers" value="16" checked>16</label>
+            <label><input type="checkbox" class="m-layers" value="60" checked>60</label>
+        </div>
+        <div class="checks">
+            Stiffness:
+            <label><input type="checkbox" class="m-stiffness" value="6.5" checked>6.5</label>
+            <label><input type="checkbox" class="m-stiffness" value="1" checked>1</label>
+        </div>
+        <div class="checks">
+            Presets:
+            <label><input type="checkbox" class="m-preset" value="h1-lan">LAN</label>
+            <label><input type="checkbox" class="m-preset" value="h2-wan" checked>h2 WAN</label>
+            <label><input type="checkbox" class="m-preset" value="h1-wan">h1 WAN</label>
+            <label><input type="checkbox" class="m-preset" value="h2-slow">h2 slow server</label>
+            <label><input type="checkbox" class="m-preset" value="h2-mobile">mobile</label>
+            <label><input type="checkbox" class="m-preset" value="h1-satellite">satellite</label>
+        </div>
+        <div id="matrix-size"></div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Sweep (matrix dimensions + these, unattended)</legend>
+        <div class="checks">
+            Layouts:
+            <label><input type="checkbox" class="s-layout" value="stacked" checked>stacked</label>
+            <label><input type="checkbox" class="s-layout" value="grid" checked>grid</label>
+        </div>
+        <div class="checks">
+            Origins:
+            <label><input type="checkbox" class="s-origins" value="shared" checked>shared</label>
+            <label><input type="checkbox" class="s-origins" value="each" checked>per layer</label>
+        </div>
+        <div class="checks">
+            A min path dwell (ms):
+            <label><input type="checkbox" class="s-dwell" value="200">200</label>
+            <label><input type="checkbox" class="s-dwell" value="400" checked>400</label>
+            <label><input type="checkbox" class="s-dwell" value="800">800</label>
+        </div>
+        <div class="checks">
+            A arrival safety:
+            <label><input type="checkbox" class="s-safety" value="1">1</label>
+            <label><input type="checkbox" class="s-safety" value="1.5" checked>1.5</label>
+            <label><input type="checkbox" class="s-safety" value="2.5">2.5</label>
+        </div>
+        <label>Order
+            <select id="sweep-order">
+                <option value="shuffled" selected>shuffled (seeded; stopping early still covers everything a little)</option>
+                <option value="ordered">in order</option>
+            </select>
+        </label>
+        <label>Repeats <input id="sweep-repeats" type="number" min="1" step="1" value="1"> (every second repeat creates viewer B first)</label>
+        <label><input id="sweep-loop" type="checkbox"> loop forever (reshuffled each pass)</label>
+        <label>Auto-export logs every <input id="sweep-export" type="number" min="0" step="1" value="25"> runs (0 = off)</label>
+        <label>Timeline sample every <input id="sweep-timeline" type="number" min="0" step="10" value="100"> ms (0 = no timeline)</label>
+        <div id="sweep-size"></div>
+    </fieldset>
+
+    <div>
+        <button id="run">Run scenario</button>
+        <button id="run-matrix">Run matrix</button>
+        <button id="run-sweep">Run sweep</button>
+        <button id="stop" disabled>Stop</button>
+        <span id="status"></span>
+        <span style="float: right">
+            <button id="clear">Clear results</button>
+            <button id="export-json" disabled title="Summaries and logs (timelines, planner stats) of every run kept in memory">Export JSON</button>
+            <button id="export-csv" disabled title="One row per run and viewer">Export CSV</button>
+        </span>
+    </div>
+    <div id="sweep-progress" class="live"></div>
+
+    <div class="viewers" id="viewers">
+        <div class="pane"><h2>A: look-ahead</h2><div id="viewer-a" class="viewer"></div><div class="live" id="live-a"></div></div>
+        <div class="pane"><h2>B: destination only</h2><div id="viewer-b" class="viewer"></div><div class="live" id="live-b"></div></div>
+        <div class="pane" id="pane-c" style="display: none"><h2>C: look-ahead, frame-paced</h2><div id="viewer-c" class="viewer"></div><div class="live" id="live-c"></div></div>
+    </div>
+
+    <h2>Aggregate (mean per scenario, animation time and stiffness, across every run so far)</h2>
+    <label><input id="agg-unreliable" type="checkbox"> include unreliable runs (main thread too busy, timer lag p95 &gt; 50 ms)</label>
+    <span id="agg-skipped"></span>
+    <div class="results-wrap">
+        <table class="results" id="aggregate">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <h2>Results (latest 100 runs; exports hold all)</h2>
+    <div class="results-wrap">
+        <table class="results" id="results">
+            <thead></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</body>
+</html>
