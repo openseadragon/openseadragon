@@ -2314,7 +2314,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
     _onTileLoad: function( tile, time, data, errorMsg, tileRequest, dataType, tries ) {
         //data is set to null on error by image loader, allow custom falsey values (e.g. 0)
         if ( data === null || data === undefined ) {
-            $.console.error( "Tile %s failed to load: %s - error: %s", tile, tile.getUrl(), errorMsg );
+            $.console.error( "Tile %s failed to load: %s - error: %s", tile.toString(), tile.getUrl(), errorMsg );
             /**
              * Triggered when a tile fails to load.
              *
@@ -2346,7 +2346,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
         }
 
         if ( time < this.lastResetTime ) {
-            $.console.warn( "Ignoring tile %s loaded before reset: %s", tile, tile.getUrl() );
+            $.console.warn( "Ignoring tile %s loaded before reset: %s", tile.toString(), tile.getUrl() );
             tile.loading = false;
             return;
         }
@@ -2359,7 +2359,7 @@ $.extend($.TiledImage.prototype, $.EventSource.prototype, /** @lends OpenSeadrag
                 $.converter.convert(tile, data, dataType, desiredType).then(newData => {
                     this._setTileLoaded(tile, newData, tileRequest, desiredType);
                 }).catch(e => {
-                    $.console.warn("Failed to satisfy original type [%s] %s from %s: %s", desiredType, tile, dataType, e);
+                    $.console.warn("Failed to satisfy original type [%s] %s from %s: %s", desiredType, tile.toString(), dataType, e);
                     this._setTileLoaded(tile, data, tileRequest, dataType);
                 });
             } else {
