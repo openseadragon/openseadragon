@@ -81,6 +81,23 @@
         });
 
         // ----------
+        QUnit.test('uses UBO-backed first pass in WebGL2 mode', function(assert) {
+            const done = assert.async();
+            createViewer();
+
+            if (viewer.drawer.getType() !== 'webgl' || !viewer.drawer.isWebGL2()) {
+                assert.expect(0);
+                done();
+                return;
+            }
+
+            assert.ok(
+                viewer.drawer._glContext._firstPassUBO,
+                'WebGL2 renderer initializes the UBO-backed first-pass resources'
+            );
+            done();
+        });
+
         // The WebGL drawer preloads its internal cache, so gl.texImage2D happens in the tile
         // invalidation routine. Uploading from the drawing loop stalls exactly the frames on which
         // new tiles arrive, which throttles tile downloads to maxTilesPerFrame * fps.
