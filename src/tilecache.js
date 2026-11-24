@@ -831,7 +831,7 @@
                     // proper initialization it is a bug
                     this._tiles.push(tile);
                 } else if (!tileExists) {
-                    $.console.warn("Tile %s caching attempt without data argument on uninitialized cache entry!", tile);
+                    $.console.warn("Tile %s caching attempt without data argument on uninitialized cache entry!", tile.toString());
                 }
             }
         }
