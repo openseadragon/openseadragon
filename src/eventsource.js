@@ -131,8 +131,9 @@ $.EventSource.prototype = {
                 events[ index - 1 ] = event;
                 index--;
             }
+            return true;
         }
-        return true;
+        return false;
     },
 
     /**
