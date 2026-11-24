@@ -148,12 +148,19 @@
         const canvasSize = new OSD.Point(100, 80);
         const sketchSize = new OSD.Point(108, 86);
 
-        tile.position = new OSD.Point(0.25 / density, 0.5 / density);
+        // Offsets scale to fractions away from whole pixels, so a non-integer
+        // pixelDensityRatio cannot round them across a pixel boundary.
+        tile.position = new OSD.Point(0, 0);
         let translation = tile.getTranslationForEdgeSmoothing(2, canvasSize, sketchSize);
+        assert.strictEqual(translation.x, 4, 'whole-pixel x position leaves four-pixel padding');
+        assert.strictEqual(translation.y, 3, 'whole-pixel y position leaves three-pixel padding');
+
+        tile.position = new OSD.Point(0.25 / density, 0.375 / density);
+        translation = tile.getTranslationForEdgeSmoothing(2, canvasSize, sketchSize);
         assert.ok(Math.abs(translation.x - 3.5) < 1e-9,
             'positive half-pixel x offset is subtracted from four-pixel padding');
-        assert.ok(Math.abs(translation.y - 3) < 1e-9,
-            'whole-pixel y offset leaves three-pixel padding');
+        assert.ok(Math.abs(translation.y - 2.25) < 1e-9,
+            'positive three-quarter-pixel y offset is subtracted from three-pixel padding');
 
         tile.position = new OSD.Point(-0.25 / density, -0.125 / density);
         translation = tile.getTranslationForEdgeSmoothing(2, canvasSize, sketchSize);
